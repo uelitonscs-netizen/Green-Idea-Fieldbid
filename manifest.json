@@ -1,0 +1,43 @@
+{
+  "name": "Green Idea FieldBid",
+  "short_name": "FieldBid",
+  "description": "Field Takeoff & Estimator — Green Idea Insulation",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1117",
+  "theme_color": "#3fb950",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Field Takeoff",
+      "short_name": "Takeoff",
+      "description": "Open Field Takeoff mode",
+      "url": "./index.html#field",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Estimator",
+      "short_name": "Estimate",
+      "description": "Open Estimator mode",
+      "url": "./index.html#est",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
