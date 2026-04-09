@@ -22,22 +22,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "categories": ["business", "productivity", "utilities"],
-  "shortcuts": [
-    {
-      "name": "Field Takeoff",
-      "short_name": "Takeoff",
-      "description": "Open Field Takeoff mode",
-      "url": "./index.html#field",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Estimator",
-      "short_name": "Estimate",
-      "description": "Open Estimator mode",
-      "url": "./index.html#est",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
-    }
   ]
 }
