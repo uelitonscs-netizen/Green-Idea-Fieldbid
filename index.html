@@ -305,6 +305,9 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .lb-x{position:absolute;top:16px;right:16px;width:36px;height:36px;background:rgba(255,255,255,.1);border:none;border-radius:50%;font-size:18px;color:#fff;display:flex;align-items:center;justify-content:center;}
 .lb-cap{margin-top:12px;font-size:12px;color:#7d8590;}
 
+.mmode{flex:1;padding:10px 6px;background:#1e2530;border:1px solid #2a3340;border-radius:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#7d8590;line-height:1.4;text-align:center;cursor:pointer;}
+.mmode.on{background:rgba(240,160,44,.15);border-color:rgba(240,160,44,.5);color:#f0a02c;}
+.mmode:active{opacity:.8;}
 .toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-10px);background:#3fb950;color:#000;font-size:13px;font-weight:700;padding:10px 22px;border-radius:20px;opacity:0;pointer-events:none;transition:all .2s;white-space:nowrap;z-index:300;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -539,11 +542,65 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div class="mtitle" id="faTitle">Add Area</div>
     <div class="fg"><label class="fl">Area Name</label><input class="fi af" id="fa_name" type="text" placeholder="e.g. North exterior wall"></div>
     <div class="fg"><label class="fl">Product / Type</label><div class="prod-picker" id="faPicker"></div></div>
-    <div class="frow">
-      <div class="fg"><label class="fl">Square Feet</label><input class="fi" id="fa_sf" type="number" placeholder="0" min="0"></div>
-      <div class="fg"><label class="fl">R-Value / Spec</label><input class="fi" id="fa_spec" type="text" placeholder="R-13..."></div>
+    <!-- MEASUREMENT CALCULATOR -->
+    <div class="fg">
+      <label class="fl">Measurement Mode</label>
+      <div style="display:flex;gap:6px;">
+        <button class="mmode on" id="mm1" data-mode="walls" onclick="setMMode(this)">📐 Walls<br><span style="font-size:9px;font-weight:400">L × H</span></button>
+        <button class="mmode" id="mm2" data-mode="floor" onclick="setMMode(this)">⬜ Floor/Ceiling<br><span style="font-size:9px;font-weight:400">L × W</span></button>
+        <button class="mmode" id="mm3" data-mode="manual" onclick="setMMode(this)">✏️ Manual<br><span style="font-size:9px;font-weight:400">Enter SF</span></button>
+      </div>
     </div>
-    <div class="fg"><label class="fl">Field Notes</label><input class="fi" id="fa_notes" type="text" placeholder="Access, condition, instructions..."></div>
+
+    <!-- MODE: WALLS (L × H) -->
+    <div id="mWalls">
+      <div class="fg">
+        <label class="fl">Length — use + to add measurements</label>
+        <input class="fi" id="mw_len" type="text" inputmode="decimal" placeholder="17+20+19+5+8" oninput="recalcSF()" style="font-size:16px;letter-spacing:.5px">
+        <div style="font-size:11px;color:#7d8590;margin-top:4px">e.g. <span style="color:#f0a02c">17+20+19+5</span> → adds all lengths</div>
+      </div>
+      <div class="fg">
+        <label class="fl">Height (ft)</label>
+        <input class="fi" id="mw_h" type="text" inputmode="decimal" placeholder="9" oninput="recalcSF()" style="font-size:16px;width:120px">
+      </div>
+    </div>
+
+    <!-- MODE: FLOOR/CEILING (L × W) -->
+    <div id="mFloor" style="display:none">
+      <div class="frow">
+        <div class="fg">
+          <label class="fl">Length (ft)</label>
+          <input class="fi" id="mf_l" type="text" inputmode="decimal" placeholder="20+15" oninput="recalcSF()" style="font-size:16px">
+        </div>
+        <div class="fg">
+          <label class="fl">Width (ft)</label>
+          <input class="fi" id="mf_w" type="text" inputmode="decimal" placeholder="12" oninput="recalcSF()" style="font-size:16px">
+        </div>
+      </div>
+    </div>
+
+    <!-- MODE: MANUAL -->
+    <div id="mManual" style="display:none">
+      <div class="fg">
+        <label class="fl">Square Feet</label>
+        <input class="fi" id="fa_sf_m" type="number" inputmode="decimal" placeholder="0" min="0" oninput="recalcSF()" style="font-size:18px">
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div style="background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.2);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#7d8590;margin-bottom:3px">Total SF</div>
+        <div id="calcSF" style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:#3fb950">0</div>
+      </div>
+      <div id="calcBreakdown" style="font-size:11px;color:#7d8590;text-align:right;font-family:'DM Mono',monospace;line-height:1.6"></div>
+    </div>
+    <input type="hidden" id="fa_sf" value="0">
+
+    <div class="frow">
+      <div class="fg"><label class="fl">R-Value / Spec</label><input class="fi" id="fa_spec" type="text" placeholder="R-13..."></div>
+      <div class="fg"><label class="fl">Field Notes</label><input class="fi" id="fa_notes" type="text" placeholder="Access, instructions..."></div>
+    </div>
     <div class="fg">
       <label class="fl">Photos</label>
       <div class="ph-row">
@@ -941,6 +998,7 @@ function openFAModal(btn){
   if(editFAIdx>=0){var a=fieldAreas[editFAIdx];document.getElementById('fa_name').value=a.name;document.getElementById('fa_sf').value=a.sf;document.getElementById('fa_spec').value=a.spec||'';document.getElementById('fa_notes').value=a.notes||'';faProd=a.productId||null;faPendPh=a.photos?a.photos.slice():[];}
   else{document.getElementById('fa_name').value='';document.getElementById('fa_sf').value='';document.getElementById('fa_spec').value='';document.getElementById('fa_notes').value='';faProd=products.length?products[0].id:null;}
   renderPicker('fa');renderPPGrid('fa');
+  initMeasCalc();
   openOv('faOverlay');
 }
 document.getElementById('faCancelBtn').addEventListener('click',function(){closeOv('faOverlay');});
@@ -1304,6 +1362,79 @@ document.getElementById('shareCtBtn').addEventListener('click',function(){
 var ovs=['faOverlay','eiOverlay','prodOverlay','feOverlay','importOverlay'];
 for(var oi=0;oi<ovs.length;oi++){
   (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(ovs[oi]);
+}
+
+
+// ── MEASUREMENT CALCULATOR ──
+var calcMode = 'walls';
+
+function setMMode(btn) {
+  calcMode = btn.getAttribute('data-mode');
+  var btns = document.querySelectorAll('.mmode');
+  for (var i = 0; i < btns.length; i++) btns[i].className = 'mmode';
+  btn.className = 'mmode on';
+  document.getElementById('mWalls').style.display  = calcMode === 'walls'  ? 'block' : 'none';
+  document.getElementById('mFloor').style.display  = calcMode === 'floor'  ? 'block' : 'none';
+  document.getElementById('mManual').style.display = calcMode === 'manual' ? 'block' : 'none';
+  recalcSF();
+}
+
+function initMeasCalc() {
+  calcMode = 'walls';
+  var btns = document.querySelectorAll('.mmode');
+  for (var i = 0; i < btns.length; i++) btns[i].className = 'mmode';
+  document.getElementById('mm1').className = 'mmode on';
+  document.getElementById('mWalls').style.display  = 'block';
+  document.getElementById('mFloor').style.display  = 'none';
+  document.getElementById('mManual').style.display = 'none';
+  var ids = ['mw_len','mw_h','mf_l','mf_w','fa_sf_m'];
+  for (var i = 0; i < ids.length; i++) {
+    var el = document.getElementById(ids[i]);
+    if (el) el.value = '';
+  }
+  document.getElementById('calcSF').textContent = '0';
+  document.getElementById('calcBreakdown').textContent = '';
+  document.getElementById('fa_sf').value = '0';
+}
+
+function parseSum(str) {
+  if (!str || !str.trim()) return 0;
+  var parts = str.replace(/\s/g,'').split('+');
+  var total = 0;
+  for (var i = 0; i < parts.length; i++) {
+    var n = parseFloat(parts[i]);
+    if (!isNaN(n)) total += n;
+  }
+  return total;
+}
+
+function recalcSF() {
+  var total = 0;
+  var breakdown = '';
+  if (calcMode === 'walls') {
+    var len = parseSum(document.getElementById('mw_len').value);
+    var h   = parseSum(document.getElementById('mw_h').value);
+    if (len > 0 && h > 0) {
+      total = len * h;
+      breakdown = len + ' ft × ' + h + ' ft';
+    }
+  } else if (calcMode === 'floor') {
+    var l = parseSum(document.getElementById('mf_l').value);
+    var w = parseSum(document.getElementById('mf_w').value);
+    if (l > 0 && w > 0) {
+      total = l * w;
+      breakdown = l + ' × ' + w + ' ft';
+    }
+  } else {
+    var m = parseFloat(document.getElementById('fa_sf_m').value) || 0;
+    total = m;
+  }
+  total = Math.round(total * 10) / 10;
+  var sfEl = document.getElementById('calcSF');
+  if (sfEl) sfEl.textContent = total > 0 ? total.toLocaleString() : '0';
+  var bd = document.getElementById('calcBreakdown');
+  if (bd) bd.textContent = breakdown;
+  document.getElementById('fa_sf').value = total;
 }
 
 // ── BOOT ──
