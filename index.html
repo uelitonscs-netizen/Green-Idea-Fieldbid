@@ -169,7 +169,7 @@ button{font-family:'Syne',sans-serif;cursor:pointer;-webkit-tap-highlight-color:
 .wo-photos::-webkit-scrollbar{display:none;}
 .wo-photo{flex-shrink:0;width:96px;height:96px;border-radius:10px;object-fit:cover;border:1px solid #2a3340;cursor:pointer;}
 .wo-note{margin:0 14px 14px;background:rgba(240,160,44,.06);border:1px solid rgba(240,160,44,.2);border-radius:8px;padding:10px 12px;font-size:13px;color:#f0a02c;line-height:1.5;}
-.wo-ck{display:flex;align-items:center;padding:11px 14px;border-top:1px solid #2a3340;gap:10px;cursor:pointer;}
+.wo-ck{display:flex;align-items:center;padding:11px 14px;border-top:1px solid #2a3340;gap:10px;cursor:pointer;width:100%;background:none;border-left:none;border-right:none;border-bottom:none;font-family:'Syne',sans-serif;}
 .wo-cb{width:22px;height:22px;border:2px solid #2a3340;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;}
 .wo-cb.done{background:#3fb950;border-color:#3fb950;color:#000;}
 .wo-cl{font-size:12px;color:#7d8590;font-weight:600;}
@@ -262,7 +262,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .fta{width:100%;background:#0d1117;border:1px solid #2a3340;border-radius:10px;padding:12px 14px;font-family:'Syne',sans-serif;font-size:13px;color:#e6edf3;outline:none;resize:vertical;min-height:80px;}
 .fta:focus{border-color:#3fb950;}
 .prod-picker{border:1px solid #2a3340;border-radius:10px;background:#0d1117;max-height:200px;overflow-y:auto;}
-.popt{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #2a3340;cursor:pointer;}
+.popt{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #2a3340;cursor:pointer;width:100%;background:none;border-left:none;border-right:none;border-top:none;font-family:'Syne',sans-serif;text-align:left;}
 .popt:last-child{border-bottom:none;}
 .popt.on{background:rgba(63,185,80,.1);}
 .po-l{display:flex;align-items:center;gap:10px;}
@@ -293,7 +293,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 /* IMPORT REVIEW */
 .imp-row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid #2a3340;gap:12px;}
 .imp-row:last-child{border-bottom:none;}
-.imp-chk{width:22px;height:22px;border:2px solid #2a3340;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.imp-chk{width:22px;height:22px;border:2px solid #2a3340;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;background:none;padding:0;cursor:pointer;}
 .imp-chk.on{background:#58a6ff;border-color:#58a6ff;color:#fff;}
 .imp-name{font-size:13px;font-weight:700;color:#e6edf3;}
 .imp-meta{font-size:11px;color:#7d8590;font-family:'DM Mono',monospace;margin-top:2px;}
@@ -368,7 +368,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
   <div class="app-hd">
     <button class="back-btn" id="backField">← Back</button>
     <div class="hd-icon field">📐</div>
-    <div class="hd-info" id="fieldJobInfo" style="cursor:pointer" onclick="openProjectModal()">
+    <div class="hd-info" id="fieldJobInfo" style="cursor:pointer">
       <div class="hd-title" id="fieldJobName" style="color:#f0a02c">Tap to set project</div>
       <div class="hd-sub" id="fieldJobSub">tap to name or switch</div>
     </div>
@@ -990,7 +990,7 @@ function buildWOTask(idx,name,product,sf,spec,notes,photos,checked,mode,t){
   var h='<div class="wo-task"><div class="wo-th"><div class="wo-num '+mode+'">'+(idx+1)+'</div><div class="wo-ti"><div class="wo-tn">'+name+'</div><div class="wo-tp">'+product+'</div><div class="wo-ts">'+sf+' SF'+(spec?' · '+spec:'')+'</div></div></div>';
   if(photos&&photos.length){h+='<div class="wo-photos">';for(var p=0;p<photos.length;p++)h+='<img class="wo-photo" src="'+photos[p]+'" onclick="this.style.display=\'none\'" alt="">';h+='</div>';}
   if(notes)h+='<div class="wo-note">📋 '+esc(notes)+'</div>';
-  h+='<div class="wo-ck" data-key="'+mode+idx+'" onclick="ckWO(this)"><div class="wo-cb '+ck+'" id="wocb_'+mode+idx+'">'+(checked?'✓':'')+'</div><span class="wo-cl">'+t.done+'</span></div>';
+  h+='<button class="wo-ck" data-key="'+mode+idx+'" onclick="ckWO(this)"><div class="wo-cb '+ck+'" id="wocb_'+mode+idx+'">'+(checked?'✓':'')+'</div><span class="wo-cl">'+t.done+'</span></button>';
   return h+'</div>';
 }
 function renderFWO(){
@@ -1081,7 +1081,7 @@ function renderPicker(mode){
   var h='';
   for(var i=0;i<products.length;i++){
     var pr=products[i];var on=pr.id===sel?' on':'';
-    h+='<div class="popt'+on+'" data-pid="'+pr.id+'" data-mode="'+mode+'" onclick="selProd(this)">';
+    h+='<button class="popt'+on+'" data-pid="'+pr.id+'" data-mode="'+mode+'" onclick="selProd(this)">';
     h+='<div class="po-l"><div class="po-em">'+pr.emoji+'</div><div><div class="po-nm">'+esc(pr.name)+'</div><div class="po-ct">'+esc(pr.cat)+'</div></div></div>';
     h+='<div style="display:flex;align-items:center">';
     if(mode==='ei')h+='<div class="po-pr">$'+parseFloat(pr.price).toFixed(2)+'/SF</div>';
@@ -1180,7 +1180,7 @@ document.getElementById('importBarBtn').addEventListener('click',function(){
   var h='';
   for(var i=0;i<fieldAreas.length;i++){
     importSel[i]=true;var a=fieldAreas[i];var pr=getProd(a.productId);var pn=pr?pr.name:'Unknown';
-    h+='<div class="imp-row"><div class="imp-chk on" data-idx="'+i+'" id="ichk'+i+'" onclick="togImp(this)">✓</div><div><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+esc(pn)+'</div></div></div>';
+    h+='<div class="imp-row"><button class="imp-chk on" data-idx="'+i+'" id="ichk'+i+'" onclick="togImp(this)">✓</button><div><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+esc(pn)+'</div></div></div>';
   }
   document.getElementById('importList').innerHTML=h;
   openOv('importOverlay');
@@ -1491,10 +1491,10 @@ function renderProjectList() {
     var p = projects[i];
     var active = currentProject && currentProject.id === p.id;
     h += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:' + (active ? 'rgba(240,160,44,.12)' : '#1e2530') + ';border:1px solid ' + (active ? 'rgba(240,160,44,.4)' : '#2a3340') + ';border-radius:10px;">';
-    h += '<div style="flex:1;cursor:pointer" data-pid="' + p.id + '" onclick="switchProject(this)">';
+    h += '<button style="flex:1;text-align:left;background:none;border:none;padding:0" data-pid="' + p.id + '" onclick="switchProject(this)">';
     h += '<div style="font-size:13px;font-weight:700;color:' + (active ? '#f0a02c' : '#e6edf3') + '">' + esc(p.name) + (active ? ' ✓' : '') + '</div>';
     h += '<div style="font-size:11px;color:#7d8590;font-family:'DM Mono',monospace">' + (p.areas ? p.areas.length : 0) + ' area' + ((p.areas && p.areas.length !== 1) ? 's' : '') + '</div>';
-    h += '</div>';
+    h += '</button>';
     h += '<button style="width:30px;height:30px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.2);border-radius:6px;color:#f85149;font-size:14px" data-pid="' + p.id + '" onclick="deleteProject(this)">🗑</button>';
     h += '</div>';
   }
@@ -1597,6 +1597,7 @@ saveFA = function() {
 
 // ── BOOT ──
 document.getElementById('createProjBtn').addEventListener('click', createProject);
+document.getElementById('fieldJobInfo').addEventListener('click', function() { openProjectModal(); });
 document.getElementById('projCancelBtn').addEventListener('click', function() { closeOv('projOverlay'); });
 document.getElementById('newProjName').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') createProject();
