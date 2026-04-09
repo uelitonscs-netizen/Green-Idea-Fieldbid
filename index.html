@@ -368,11 +368,11 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
   <div class="app-hd">
     <button class="back-btn" id="backField">← Back</button>
     <div class="hd-icon field">📐</div>
-    <div class="hd-info">
-      <div class="hd-title">Field Takeoff</div>
-      <div class="hd-sub" id="fieldJobSub">No job set</div>
+    <div class="hd-info" id="fieldJobInfo" style="cursor:pointer" onclick="openProjectModal()">
+      <div class="hd-title" id="fieldJobName" style="color:#f0a02c">Tap to set project</div>
+      <div class="hd-sub" id="fieldJobSub">tap to name or switch</div>
     </div>
-    <button class="hd-action" id="newJobBtn">New Job</button>
+    <button class="hd-action" id="newJobBtn">+ New</button>
   </div>
   <div class="tabs">
     <button class="tab on f" id="ft1">📐 Areas</button>
@@ -535,6 +535,34 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 </div>
 <button class="fab e" id="estFab" style="display:none">+</button>
 
+
+<!-- PROJECT MODAL -->
+<div class="overlay" id="projOverlay">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">Projects</div>
+
+    <!-- Create new project -->
+    <div class="fg">
+      <label class="fl">New Project Name</label>
+      <div style="display:flex;gap:8px">
+        <input class="fi" id="newProjName" type="text" placeholder="e.g. 8 Farm St Dover MA" style="flex:1">
+        <button class="btn bg" id="createProjBtn" style="flex:none;width:80px;height:50px;font-size:13px">Create</button>
+      </div>
+    </div>
+
+    <!-- Project list -->
+    <div class="fg">
+      <label class="fl">Saved Projects</label>
+      <div id="projectList2" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn bs" id="projCancelBtn">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- FIELD AREA MODAL -->
 <div class="overlay" id="faOverlay">
   <div class="modal">
@@ -556,12 +584,12 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div id="mWalls">
       <div class="fg">
         <label class="fl">Length — use + to add measurements</label>
-        <input class="fi" id="mw_len" type="text" inputmode="decimal" placeholder="17+20+19+5+8" oninput="recalcSF()" style="font-size:16px;letter-spacing:.5px">
+        <input class="fi" id="mw_len" type="text" inputmode="text" placeholder="17+20+19+5+8" oninput="recalcSF()" style="font-size:16px;letter-spacing:.5px">
         <div style="font-size:11px;color:#7d8590;margin-top:4px">e.g. <span style="color:#f0a02c">17+20+19+5</span> → adds all lengths</div>
       </div>
       <div class="fg">
         <label class="fl">Height (ft)</label>
-        <input class="fi" id="mw_h" type="text" inputmode="decimal" placeholder="9" oninput="recalcSF()" style="font-size:16px;width:120px">
+        <input class="fi" id="mw_h" type="text" inputmode="text" placeholder="9" oninput="recalcSF()" style="font-size:16px;width:120px">
       </div>
     </div>
 
@@ -570,11 +598,11 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       <div class="frow">
         <div class="fg">
           <label class="fl">Length (ft)</label>
-          <input class="fi" id="mf_l" type="text" inputmode="decimal" placeholder="20+15" oninput="recalcSF()" style="font-size:16px">
+          <input class="fi" id="mf_l" type="text" inputmode="text" placeholder="20+15" oninput="recalcSF()" style="font-size:16px">
         </div>
         <div class="fg">
           <label class="fl">Width (ft)</label>
-          <input class="fi" id="mf_w" type="text" inputmode="decimal" placeholder="12" oninput="recalcSF()" style="font-size:16px">
+          <input class="fi" id="mf_w" type="text" inputmode="text" placeholder="12" oninput="recalcSF()" style="font-size:16px">
         </div>
       </div>
     </div>
@@ -583,7 +611,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div id="mManual" style="display:none">
       <div class="fg">
         <label class="fl">Square Feet</label>
-        <input class="fi" id="fa_sf_m" type="number" inputmode="decimal" placeholder="0" min="0" oninput="recalcSF()" style="font-size:18px">
+        <input class="fi" id="fa_sf_m" type="number" inputmode="numeric" placeholder="0" min="0" oninput="recalcSF()" style="font-size:18px">
       </div>
     </div>
 
@@ -852,11 +880,7 @@ function showEPage(id,tab){
 }
 
 // ── NEW JOB / ESTIMATE ──
-document.getElementById('newJobBtn').addEventListener('click',function(){
-  if(fieldAreas.length&&!confirm('Start a new field job? Areas will be cleared.'))return;
-  fieldAreas=[];woChecked={};saveFA();localStorage.setItem('fb5_wc',JSON.stringify(woChecked));
-  renderFA();renderFWO();toast('✨ New job started');
-});
+// newJobBtn now handled in boot via openProjectModal
 document.getElementById('newEstBtn').addEventListener('click',function(){
   if(estItems.length&&!confirm('Start a new estimate? Items will be cleared.'))return;
   estItems=[];quoteInfo={client:'',address:''};
@@ -1437,7 +1461,149 @@ function recalcSF() {
   document.getElementById('fa_sf').value = total;
 }
 
+
+// ── PROJECT MANAGEMENT ──
+var currentProject = null;  // {id, name, areas:[]}
+
+function loadProjects() {
+  var p = localStorage.getItem('fb5_projects');
+  return p ? JSON.parse(p) : [];
+}
+function saveProjects(projects) {
+  localStorage.setItem('fb5_projects', JSON.stringify(projects));
+}
+
+function openProjectModal() {
+  renderProjectList();
+  openOv('projOverlay');
+  document.getElementById('newProjName').value = '';
+}
+
+function renderProjectList() {
+  var projects = loadProjects();
+  var list = document.getElementById('projectList2');
+  if (!projects.length) {
+    list.innerHTML = '<div style="padding:14px;text-align:center;color:#4d5560;font-size:13px">No saved projects yet</div>';
+    return;
+  }
+  var h = '';
+  for (var i = 0; i < projects.length; i++) {
+    var p = projects[i];
+    var active = currentProject && currentProject.id === p.id;
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:' + (active ? 'rgba(240,160,44,.12)' : '#1e2530') + ';border:1px solid ' + (active ? 'rgba(240,160,44,.4)' : '#2a3340') + ';border-radius:10px;">';
+    h += '<div style="flex:1;cursor:pointer" data-pid="' + p.id + '" onclick="switchProject(this)">';
+    h += '<div style="font-size:13px;font-weight:700;color:' + (active ? '#f0a02c' : '#e6edf3') + '">' + esc(p.name) + (active ? ' ✓' : '') + '</div>';
+    h += '<div style="font-size:11px;color:#7d8590;font-family:'DM Mono',monospace">' + (p.areas ? p.areas.length : 0) + ' area' + ((p.areas && p.areas.length !== 1) ? 's' : '') + '</div>';
+    h += '</div>';
+    h += '<button style="width:30px;height:30px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.2);border-radius:6px;color:#f85149;font-size:14px" data-pid="' + p.id + '" onclick="deleteProject(this)">🗑</button>';
+    h += '</div>';
+  }
+  list.innerHTML = h;
+}
+
+function createProject() {
+  var name = document.getElementById('newProjName').value.trim();
+  if (!name) { toast('Enter a project name'); return; }
+  var projects = loadProjects();
+  var proj = { id: 'proj_' + Date.now(), name: name, areas: [], created: new Date().toLocaleDateString('en-US') };
+  projects.unshift(proj);
+  saveProjects(projects);
+  // Save current areas to old project if exists
+  if (currentProject) {
+    saveCurrentProjectAreas();
+  }
+  // Switch to new project
+  currentProject = proj;
+  fieldAreas = [];
+  saveFA();
+  updateFieldHeader();
+  renderFA();
+  renderFWO();
+  closeOv('projOverlay');
+  toast('✅ Project "' + name + '" created');
+}
+
+function switchProject(el) {
+  var pid = el.getAttribute('data-pid');
+  var projects = loadProjects();
+  // Save current areas first
+  if (currentProject) saveCurrentProjectAreas();
+  // Load selected project
+  for (var i = 0; i < projects.length; i++) {
+    if (projects[i].id === pid) {
+      currentProject = projects[i];
+      fieldAreas = projects[i].areas ? JSON.parse(JSON.stringify(projects[i].areas)) : [];
+      break;
+    }
+  }
+  updateFieldHeader();
+  renderFA();
+  renderFWO();
+  closeOv('projOverlay');
+  toast('📂 Switched to "' + currentProject.name + '"');
+}
+
+function deleteProject(btn) {
+  var pid = btn.getAttribute('data-pid');
+  if (!confirm('Delete this project and all its areas?')) return;
+  var projects = loadProjects();
+  for (var i = 0; i < projects.length; i++) {
+    if (projects[i].id === pid) { projects.splice(i, 1); break; }
+  }
+  saveProjects(projects);
+  if (currentProject && currentProject.id === pid) {
+    currentProject = null;
+    fieldAreas = [];
+    saveFA();
+    updateFieldHeader();
+    renderFA();
+  }
+  renderProjectList();
+  toast('🗑 Project deleted');
+}
+
+function saveCurrentProjectAreas() {
+  if (!currentProject) return;
+  var projects = loadProjects();
+  for (var i = 0; i < projects.length; i++) {
+    if (projects[i].id === currentProject.id) {
+      projects[i].areas = JSON.parse(JSON.stringify(fieldAreas));
+      currentProject = projects[i];
+      break;
+    }
+  }
+  saveProjects(projects);
+}
+
+function updateFieldHeader() {
+  var nameEl = document.getElementById('fieldJobName');
+  var subEl  = document.getElementById('fieldJobSub');
+  if (currentProject) {
+    nameEl.textContent = currentProject.name;
+    subEl.textContent  = (fieldAreas.length || 0) + ' area' + (fieldAreas.length !== 1 ? 's' : '') + ' · tap to switch';
+  } else {
+    nameEl.textContent = 'Tap to set project';
+    subEl.textContent  = 'tap to name or switch';
+  }
+}
+
+// Override saveFA to also save to current project
+var _origSaveFA = saveFA;
+saveFA = function() {
+  _origSaveFA();
+  if (currentProject) saveCurrentProjectAreas();
+  updateFieldHeader();
+};
+
 // ── BOOT ──
+document.getElementById('createProjBtn').addEventListener('click', createProject);
+document.getElementById('projCancelBtn').addEventListener('click', function() { closeOv('projOverlay'); });
+document.getElementById('newProjName').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') createProject();
+});
+// Also wire newJobBtn to open project modal
+document.getElementById('newJobBtn').removeEventListener('click', function(){});
+document.getElementById('newJobBtn').addEventListener('click', function() { openProjectModal(); });
 load();
 </script>
 </body>
