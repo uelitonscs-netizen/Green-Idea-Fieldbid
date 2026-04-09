@@ -90,6 +90,10 @@ a, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-color: tr
 
 /* Mode cards */
 .mode-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font);
   border-radius: 16px;
   padding: 22px 20px;
   margin-bottom: 12px;
@@ -930,7 +934,7 @@ canvas#sigCanvas { width: 100%; height: 88px; cursor: crosshair; display: block;
     <div class="home-app-by">by Green Idea Insulation</div>
   </div>
 
-  <div class="mode-card field" onclick="enterMode('field')" role="button" tabindex="0">
+  <button class="mode-card field" onclick="enterMode('field')">
     <div class="mode-card-top">
       <div class="mode-card-icon-wrap">📐</div>
       <div>
@@ -940,9 +944,9 @@ canvas#sigCanvas { width: 100%; height: 88px; cursor: crosshair; display: block;
     </div>
     <div class="mode-card-desc">Measure areas, record square footage, take photos and field notes. No pricing involved.</div>
     <div class="mode-card-arrow">→</div>
-  </div>
+  </button>
 
-  <div class="mode-card est" onclick="enterMode('est')" role="button" tabindex="0">
+  <button class="mode-card est" onclick="enterMode('est')">
     <div class="mode-card-top">
       <div class="mode-card-icon-wrap">💼</div>
       <div>
@@ -952,7 +956,7 @@ canvas#sigCanvas { width: 100%; height: 88px; cursor: crosshair; display: block;
     </div>
     <div class="mode-card-desc">Build estimates, generate quotes and contracts with client signature. Manage product pricing.</div>
     <div class="mode-card-arrow">→</div>
-  </div>
+  </button>
 </div>
 
 <!-- ═══════════════════════════════════════
@@ -1386,11 +1390,7 @@ function calcItem(it){return it.sf*it.price*(1+cfg.markup/100);}
 function calcTotals(){var sub=0;for(var i=0;i<estItems.length;i++)sub+=calcItem(estItems[i]);var tax=sub*cfg.taxRate/100;return{sub:sub,tax:tax,total:sub+tax};}
 
 // ─── HOME / MODE ───
-var _enterLock=false;
 function enterMode(mode){
-  if(_enterLock) return;
-  _enterLock=true;
-  setTimeout(function(){_enterLock=false;},500);
   document.getElementById('home').classList.remove('on');
   if(mode==='field'){
     document.getElementById('field-app').classList.add('on');
