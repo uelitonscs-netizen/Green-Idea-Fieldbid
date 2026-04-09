@@ -934,7 +934,7 @@ canvas#sigCanvas { width: 100%; height: 88px; cursor: crosshair; display: block;
     <div class="home-app-by">by Green Idea Insulation</div>
   </div>
 
-  <button class="mode-card field" onclick="enterMode('field')">
+  <button class="mode-card field" onclick="enterMode('field')" style="cursor:pointer">
     <div class="mode-card-top">
       <div class="mode-card-icon-wrap">📐</div>
       <div>
@@ -946,7 +946,7 @@ canvas#sigCanvas { width: 100%; height: 88px; cursor: crosshair; display: block;
     <div class="mode-card-arrow">→</div>
   </button>
 
-  <button class="mode-card est" onclick="enterMode('est')">
+  <button class="mode-card est" onclick="enterMode('est')" style="cursor:pointer">
     <div class="mode-card-top">
       <div class="mode-card-icon-wrap">💼</div>
       <div>
@@ -1334,9 +1334,9 @@ function loadAll(){
   var sg=localStorage.getItem('gi5_sg'); if(sg) sigData=JSON.parse(sg);
   var wc=localStorage.getItem('gi5_wc'); if(wc) woChecked=JSON.parse(wc);
   var today=new Date();
-  document.getElementById('qDate').textContent=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  document.getElementById('qNumber').textContent='#'+quoteNumber;
-  document.getElementById('estQNum').textContent=quoteNumber;
+  var qd=document.getElementById('qDate'); if(qd) qd.textContent=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  var qn=document.getElementById('qNumber'); if(qn) qn.textContent='#'+quoteNumber;
+  var eq=document.getElementById('estQNum'); if(eq) eq.textContent=quoteNumber;
   applySettings(); applyCtFields(); applySigSaved();
 }
 function saveFA(){localStorage.setItem('gi5_fa',JSON.stringify(fieldAreas));}
@@ -2053,7 +2053,14 @@ function closeOvIf(e,id){if(e.target===document.getElementById(id))closeOv(id);}
 // ─── TOAST ───
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(function(){t.classList.remove('on');},2200);}
 
-try { loadAll(); } catch(e) { document.body.innerHTML="<div style='padding:30px;font-family:sans-serif;color:red'><h2>Error</h2><pre>"+e.message+"\n"+e.stack+"</pre></div>"; }
+try {
+  loadAll();
+} catch(e) {
+  var errDiv = document.createElement('div');
+  errDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#fff;padding:20px;font-family:monospace;font-size:12px;z-index:9999;overflow:auto;color:red';
+  errDiv.innerHTML = '<h3>JS Error:</h3><pre>' + (e.message||'unknown') + '\n\n' + (e.stack||'no stack') + '</pre>';
+  document.body.appendChild(errDiv);
+}
 
 // Register Service Worker
 if ("serviceWorker" in navigator) {
