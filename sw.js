@@ -1,114 +1,60 @@
-// ─── Green Idea Insulation — Service Worker ───
-// Version: bump this string to force cache refresh on update
 var CACHE_NAME = 'greenidea-v3';
 
-// Assets to cache on install (app shell)
-var PRECACHE = [
-  './index.html',
-  './manifest.json',
-  'https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap'
-];
-
-// ── INSTALL: pre-cache app shell ──
 self.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
-      // Cache what we can; don't fail install if Google Fonts is offline
       return cache.addAll(['./index.html', './manifest.json']).then(function() {
-        return cache.add('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap').catch(function() {
-          // Fonts are optional — app works without them
-          console.log('SW: Google Fonts not cached (offline install), continuing...');
-        });
+        return cache.add('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap').catch(function() {});
       });
     }).then(function() {
-      // Activate immediately without waiting for old SW to die
       return self.skipWaiting();
     })
   );
 });
 
-// ── ACTIVATE: clean up old caches ──
 self.addEventListener('activate', function(event) {
   event.waitUntil(
     caches.keys().then(function(keys) {
       return Promise.all(
-        keys.filter(function(key) {
-          return key !== CACHE_NAME;
-        }).map(function(key) {
-          console.log('SW: Deleting old cache:', key);
-          return caches.delete(key);
-        })
+        keys.filter(function(key) { return key !== CACHE_NAME; })
+            .map(function(key) { return caches.delete(key); })
       );
     }).then(function() {
-      // Take control of all open tabs immediately
       return self.clients.claim();
     })
   );
 });
 
-// ── FETCH: serve from cache, fall back to network ──
 self.addEventListener('fetch', function(event) {
   var url = event.request.url;
-
-  // Skip non-GET requests (POST, etc.)
   if (event.request.method !== 'GET') return;
-
-  // Skip Chrome extension requests
   if (url.startsWith('chrome-extension://')) return;
+  if (url.includes('firebaseio.com') || url.includes('googleapis.com/v1')) return;
 
-  // Skip Firebase requests — always need live data
-  if (url.includes('firebaseio.com') || url.includes('firebase') || url.includes('googleapis.com/v1')) return;
-
-  // Strategy: Cache First, then Network, then offline fallback
   event.respondWith(
     caches.match(event.request).then(function(cached) {
       if (cached) {
-        // Serve from cache AND update cache in background (stale-while-revalidate)
-        var fetchPromise = fetch(event.request).then(function(networkResponse) {
-          if (networkResponse && networkResponse.status === 200) {
-            var clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then(function(cache) {
-              cache.put(event.request, clone);
-            });
+        fetch(event.request).then(function(r) {
+          if (r && r.status === 200) {
+            var c = r.clone();
+            caches.open(CACHE_NAME).then(function(cache) { cache.put(event.request, c); });
           }
-          return networkResponse;
-        }).catch(function() {
-          // Network failed — that's fine, we already served from cache
-        });
+        }).catch(function() {});
         return cached;
       }
-
-      // Not in cache — try network
-      return fetch(event.request).then(function(networkResponse) {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'opaque') {
-          return networkResponse;
-        }
-        // Cache the new response for next time
-        var clone = networkResponse.clone();
-        caches.open(CACHE_NAME).then(function(cache) {
-          cache.put(event.request, clone);
-        });
-        return networkResponse;
+      return fetch(event.request).then(function(r) {
+        if (!r || r.status !== 200 || r.type === 'opaque') return r;
+        var c = r.clone();
+        caches.open(CACHE_NAME).then(function(cache) { cache.put(event.request, c); });
+        return r;
       }).catch(function() {
-        // Network failed and nothing in cache
-        // Return the cached index.html as offline fallback for navigation
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-        // For other assets, return a simple offline response
-        return new Response('Offline', {
-          status: 503,
-          statusText: 'Service Unavailable',
-          headers: new Headers({ 'Content-Type': 'text/plain' })
-        });
+        if (event.request.mode === 'navigate') return caches.match('./index.html');
+        return new Response('Offline', { status: 503 });
       });
     })
   );
 });
 
-// ── MESSAGE: force update from app ──
 self.addEventListener('message', function(event) {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
