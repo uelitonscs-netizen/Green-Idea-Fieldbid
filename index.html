@@ -744,6 +744,15 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 <div class="toast" id="toast"></div>
 
 <script>
+// ── ERROR DISPLAY ──
+window.onerror = function(msg, src, line, col, err) {
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f85149;color:#fff;padding:16px;font-family:monospace;font-size:13px;z-index:9999;word-break:break-all;';
+  d.textContent = 'JS ERROR line ' + line + ': ' + msg;
+  document.body.appendChild(d);
+  return false;
+};
+
 // ── STATE ──
 var fieldAreas=[], estItems=[], products=[];
 var cfg={markup:30,taxRate:0,company:'Green Idea Insulation',contact:'',license:''};
