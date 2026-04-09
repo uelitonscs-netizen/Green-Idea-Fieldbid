@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#3fb950">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FieldBid">
+<link rel="manifest" href="manifest.json">
+<title>FieldBid</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0d1117;color:#e6edf3;font-family:'Syne',sans-serif;min-height:100vh;overscroll-behavior:none;}
+button{font-family:'Syne',sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+
+/* SCREENS */
+.screen{display:none;}
+#home{display:flex;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;gap:14px;}
+
+/* HOME */
+.brand{text-align:center;margin-bottom:32px;}
+.brand-logo{width:90px;height:90px;margin:0 auto 16px;border-radius:22px;overflow:hidden;background:#f0faf0;}
+.brand-logo svg{width:90px;height:90px;}
+.brand-name{font-size:34px;font-weight:800;letter-spacing:-1.5px;color:#e6edf3;line-height:1;}
+.brand-sub{font-size:12px;color:#7d8590;text-transform:uppercase;letter-spacing:1.2px;margin-top:6px;}
+
+.mode-btn{width:100%;max-width:420px;padding:20px 18px;border-radius:14px;text-align:left;border:none;background:none;transition:transform .1s;}
+.mode-btn:active{transform:scale(.97);}
+.mode-btn.field{background:linear-gradient(145deg,#1c1500,#2e2200);border:1px solid rgba(240,160,44,.35);}
+.mode-btn.est{background:linear-gradient(145deg,#091510,#0d2918);border:1px solid rgba(63,185,80,.35);}
+.mode-top{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+.mode-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.field .mode-icon{background:rgba(240,160,44,.15);}
+.est .mode-icon{background:rgba(63,185,80,.12);}
+.mode-title{font-size:20px;font-weight:800;letter-spacing:-.3px;}
+.field .mode-title{color:#f0a02c;}
+.est .mode-title{color:#3fb950;}
+.mode-sub{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#7d8590;margin-top:2px;}
+.mode-desc{font-size:13px;color:#7d8590;line-height:1.6;}
+
+/* APP HEADER */
+.app-hd{background:#161b22;border-bottom:1px solid #2a3340;padding:12px 16px;position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;}
+.back-btn{background:#1e2530;border:1px solid #2a3340;border-radius:10px;padding:8px 14px;color:#e6edf3;font-size:13px;font-weight:700;}
+.back-btn:active{background:#2a3340;}
+.hd-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.hd-icon.field{background:rgba(240,160,44,.12);}
+.hd-icon.est{background:rgba(63,185,80,.1);}
+.hd-info{flex:1;}
+.hd-title{font-size:15px;font-weight:800;color:#e6edf3;}
+.hd-sub{font-size:11px;color:#7d8590;margin-top:1px;}
+.hd-action{padding:8px 14px;background:#1e2530;border:1px solid #2a3340;border-radius:8px;font-size:12px;font-weight:700;color:#7d8590;}
+.hd-action:active{background:#2a3340;}
+
+/* TABS */
+.tabs{display:flex;background:#161b22;border-bottom:1px solid #2a3340;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:none;padding:0 16px;height:44px;font-size:12px;font-weight:700;color:#7d8590;background:none;border:none;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:5px;}
+.tab.on{color:#3fb950;border-bottom-color:#3fb950;}
+.tab.on.f{color:#f0a02c;border-bottom-color:#f0a02c;}
+
+/* PAGES */
+.page{display:none;padding:16px;padding-bottom:90px;}
+.page.on{display:block;}
+
+/* STATS */
+.stat-row{display:flex;gap:10px;margin-bottom:14px;}
+.stat{flex:1;background:#161b22;border:1px solid #2a3340;border-radius:12px;padding:12px 14px;}
+.stat.g{background:rgba(63,185,80,.1);border-color:#238636;}
+.stat.a{background:rgba(240,160,44,.08);border-color:rgba(240,160,44,.3);}
+.stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#7d8590;margin-bottom:4px;}
+.stat-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:#e6edf3;}
+.stat.g .stat-val{color:#3fb950;}
+.stat.a .stat-val{color:#f0a02c;}
+.stat-note{font-size:10px;color:#7d8590;margin-top:3px;font-family:'DM Mono',monospace;}
+
+.total-bar{background:rgba(63,185,80,.1);border:1px solid #238636;border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.total-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#7d8590;}
+.total-val{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:#3fb950;}
+.total-note{font-size:10px;color:#7d8590;margin-top:2px;text-align:right;}
+
+/* SECTION */
+.sec{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sec-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7d8590;}
+.sec-ct{font-size:11px;color:#4d5560;font-family:'DM Mono',monospace;}
+
+/* CARDS */
+.cards{display:flex;flex-direction:column;gap:8px;}
+.card{background:#161b22;border:1px solid #2a3340;border-radius:12px;overflow:hidden;}
+.card-photos{display:flex;gap:6px;padding:10px 12px 0;overflow-x:auto;scrollbar-width:none;}
+.card-photos::-webkit-scrollbar{display:none;}
+.card-photo{flex-shrink:0;width:72px;height:72px;border-radius:8px;object-fit:cover;border:1px solid #2a3340;cursor:pointer;}
+.card-body{display:flex;align-items:flex-start;padding:12px 14px;gap:12px;}
+.card-em{font-size:20px;flex-shrink:0;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.card-em.f{background:rgba(240,160,44,.1);}
+.card-em.e{background:rgba(63,185,80,.08);}
+.card-info{flex:1;min-width:0;}
+.card-name{font-size:14px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
+.card-type{font-size:11px;font-weight:600;color:#7d8590;}
+.card-sf{font-size:12px;color:#7d8590;font-family:'DM Mono',monospace;margin-top:2px;}
+.card-note{font-size:11px;color:#f0a02c;margin-top:3px;}
+.card-ph{font-size:10px;color:#58a6ff;margin-top:3px;}
+.card-cost{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:#3fb950;flex-shrink:0;padding-top:2px;}
+.card-acts{display:flex;border-top:1px solid #2a3340;}
+.ca{flex:1;height:40px;background:none;border:none;font-size:12px;font-weight:600;color:#7d8590;display:flex;align-items:center;justify-content:center;gap:4px;}
+.ca:not(:last-child){border-right:1px solid #2a3340;}
+.ca:active{background:#1e2530;}
+.ca.del{color:#f85149;}
+.ca.ph{color:#58a6ff;}
+
+/* IMPORT */
+.import-bar{background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.2);border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+.import-bar-icon{font-size:20px;flex-shrink:0;}
+.import-bar-text{flex:1;}
+.import-bar-title{font-size:13px;font-weight:700;color:#58a6ff;}
+.import-bar-sub{font-size:11px;color:#7d8590;margin-top:2px;}
+.import-bar-btn{padding:9px 14px;background:#58a6ff;color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;}
+
+/* QUOTE */
+.q-info{background:#161b22;border:1px solid #2a3340;border-radius:12px;margin-bottom:14px;overflow:hidden;}
+.q-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #2a3340;}
+.q-row:last-child{border-bottom:none;}
+.q-lbl{font-size:12px;font-weight:600;color:#7d8590;}
+.q-val{font-family:'DM Mono',monospace;font-size:13px;color:#e6edf3;}
+.q-val.tap{color:#58a6ff;cursor:pointer;border-bottom:1px dotted #58a6ff;}
+.q-table{background:#161b22;border:1px solid #2a3340;border-radius:12px;overflow:hidden;margin-bottom:14px;}
+.q-thead{display:grid;grid-template-columns:1fr 52px 52px 68px;padding:9px 14px;background:#1e2530;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#4d5560;}
+.q-trow{display:grid;grid-template-columns:1fr 52px 52px 68px;padding:10px 14px;border-top:1px solid #2a3340;font-size:12px;}
+.q-tn{color:#e6edf3;font-weight:600;}
+.q-tnote{font-size:11px;color:#7d8590;margin-top:2px;font-weight:400;}
+.q-tv{font-family:'DM Mono',monospace;color:#7d8590;text-align:right;}
+.q-tt{font-family:'DM Mono',monospace;color:#3fb950;text-align:right;font-weight:500;}
+.q-foot{background:#1e2530;padding:12px 16px;border-top:1px solid #2a3340;}
+.q-frow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;}
+.q-frow.grand{margin-top:8px;padding-top:10px;border-top:1px solid #2a3340;}
+.q-fl{font-size:12px;font-weight:600;color:#7d8590;}
+.q-fv{font-family:'DM Mono',monospace;color:#e6edf3;}
+.q-frow.grand .q-fl{font-size:15px;font-weight:800;color:#e6edf3;}
+.q-frow.grand .q-fv{font-size:20px;color:#3fb950;}
+.act-row{display:flex;gap:8px;}
+.act-btn{flex:1;height:44px;background:#161b22;border:1px solid #2a3340;border-radius:10px;font-size:12px;font-weight:700;color:#7d8590;display:flex;align-items:center;justify-content:center;gap:5px;}
+.act-btn:active{background:#1e2530;color:#e6edf3;}
+
+/* WORK ORDER */
+.wo-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.lang-grp{display:flex;background:#1e2530;border:1px solid #2a3340;border-radius:8px;overflow:hidden;}
+.lang-btn{padding:8px 18px;font-size:12px;font-weight:700;background:none;border:none;color:#7d8590;}
+.lang-btn.on{background:#3fb950;color:#000;}
+.print-btn{height:36px;padding:0 14px;background:#161b22;border:1px solid #2a3340;border-radius:8px;font-size:12px;font-weight:700;color:#7d8590;}
+.wo-hd{background:#161b22;border:1px solid #2a3340;border-radius:12px;padding:16px;margin-bottom:14px;}
+.wo-co{font-size:17px;font-weight:800;color:#e6edf3;margin-bottom:2px;}
+.wo-badge{font-size:10px;color:#7d8590;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;}
+.wo-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.wo-mc{background:#0d1117;border:1px solid #2a3340;border-radius:8px;padding:9px 12px;}
+.wo-ml{font-size:10px;color:#7d8590;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;font-weight:700;}
+.wo-mv{font-size:13px;color:#e6edf3;font-weight:600;}
+.wo-tasks{display:flex;flex-direction:column;gap:10px;}
+.wo-task{background:#161b22;border:1px solid #2a3340;border-radius:12px;overflow:hidden;}
+.wo-th{display:flex;align-items:flex-start;padding:14px;gap:12px;}
+.wo-num{width:28px;height:28px;border-radius:8px;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.wo-num.f{background:rgba(240,160,44,.12);color:#f0a02c;}
+.wo-num.e{background:rgba(63,185,80,.1);color:#3fb950;}
+.wo-ti{flex:1;}
+.wo-tn{font-size:14px;font-weight:700;color:#e6edf3;}
+.wo-tp{font-size:11px;color:#7d8590;font-weight:600;margin-top:2px;}
+.wo-ts{font-size:12px;color:#7d8590;font-family:'DM Mono',monospace;margin-top:3px;}
+.wo-photos{display:flex;gap:8px;padding:0 14px 14px;overflow-x:auto;scrollbar-width:none;}
+.wo-photos::-webkit-scrollbar{display:none;}
+.wo-photo{flex-shrink:0;width:96px;height:96px;border-radius:10px;object-fit:cover;border:1px solid #2a3340;cursor:pointer;}
+.wo-note{margin:0 14px 14px;background:rgba(240,160,44,.06);border:1px solid rgba(240,160,44,.2);border-radius:8px;padding:10px 12px;font-size:13px;color:#f0a02c;line-height:1.5;}
+.wo-ck{display:flex;align-items:center;padding:11px 14px;border-top:1px solid #2a3340;gap:10px;cursor:pointer;}
+.wo-cb{width:22px;height:22px;border:2px solid #2a3340;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;}
+.wo-cb.done{background:#3fb950;border-color:#3fb950;color:#000;}
+.wo-cl{font-size:12px;color:#7d8590;font-weight:600;}
+
+/* CONTRACT */
+.ct-tabs{display:flex;background:#161b22;border:1px solid #2a3340;border-radius:10px;overflow:hidden;margin-bottom:16px;}
+.ct-tab{flex:1;height:40px;font-size:12px;font-weight:700;background:none;border:none;color:#7d8590;text-transform:uppercase;letter-spacing:.4px;}
+.ct-tab.on{background:#58a6ff;color:#fff;}
+.ct-sec{display:none;}
+.ct-sec.on{display:block;}
+.ct-doc{background:#fff;border-radius:12px;padding:22px 18px;color:#1a1a2e;font-family:Georgia,serif;font-size:13px;line-height:1.6;}
+.ct-dh{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.ct-dlogo{width:34px;height:34px;background:#2d7d3a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.ct-dco{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#1a1a2e;}
+.ct-dcontact{font-size:11px;color:#777;margin-bottom:12px;}
+.ct-rule{border:none;border-top:2px solid #2d7d3a;margin:10px 0;}
+.ct-dtitle{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:#1a1a2e;margin-bottom:3px;}
+.ct-dmeta{font-size:11px;color:#666;margin-bottom:14px;}
+.ct-ig{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.ct-ic{background:#f5f5f5;border-radius:8px;padding:9px 12px;}
+.ct-il{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.6px;font-family:'Syne',sans-serif;font-weight:700;margin-bottom:2px;}
+.ct-iv{font-size:13px;color:#1a1a2e;font-weight:600;font-family:'Syne',sans-serif;}
+.ct-sh{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#1a1a2e;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px;}
+.ct-sr{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid #eee;}
+.ct-se{font-size:14px;flex-shrink:0;}
+.ct-sd{flex:1;color:#333;font-size:13px;}
+.ct-sf{color:#888;font-family:monospace;font-size:12px;flex-shrink:0;}
+.ct-total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:12px 14px;background:#f0f8f0;border-radius:8px;border:1px solid #2d7d3a;}
+.ct-tl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#1a1a2e;}
+.ct-tv{font-family:monospace;font-size:20px;font-weight:700;color:#2d7d3a;}
+.ct-th{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#1a1a2e;margin:14px 0 5px;text-transform:uppercase;letter-spacing:.5px;}
+.ct-tb{font-size:12px;color:#444;line-height:1.7;}
+.ct-sig{margin-top:18px;padding-top:14px;border-top:2px dashed #ccc;}
+.ct-sigh{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+.ct-pill{display:inline-flex;align-items:center;gap:6px;background:#f0f8f0;border:1px solid #2d7d3a;border-radius:20px;padding:6px 14px;font-size:12px;font-family:'Syne',sans-serif;font-weight:700;color:#2d7d3a;margin-bottom:8px;}
+.sig-wrap{background:#fff;border-radius:10px 10px 0 0;border-bottom:2px solid #1a1a2e;}
+canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-action:none;}
+
+/* PRODUCTS */
+.cat-g{margin-bottom:18px;}
+.cat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#4d5560;display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.cat-lbl::after{content:'';flex:1;height:1px;background:#2a3340;}
+.prod-card{background:#161b22;border:1px solid #2a3340;border-radius:12px;display:flex;align-items:center;padding:12px 14px;gap:12px;margin-bottom:8px;}
+.prod-em{font-size:22px;flex-shrink:0;}
+.prod-info{flex:1;min-width:0;}
+.prod-name{font-size:14px;font-weight:700;color:#e6edf3;}
+.prod-desc{font-size:11px;color:#7d8590;margin-top:2px;}
+.prod-r{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.prod-price{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:#3fb950;}
+.prod-unit{font-size:10px;color:#7d8590;}
+.prod-eb{width:32px;height:32px;background:#1e2530;border:1px solid #2a3340;border-radius:8px;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.prod-eb:active{background:#2a3340;}
+.prod-note{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.15);border-radius:12px;padding:11px 14px;font-size:12px;color:#7d8590;line-height:1.6;margin-bottom:14px;}
+
+/* SETTINGS */
+.st-g{margin-bottom:22px;}
+.st-t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#4d5560;padding-bottom:8px;border-bottom:1px solid #2a3340;margin-bottom:10px;}
+.st-row{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:#161b22;border:1px solid #2a3340;border-radius:12px;margin-bottom:8px;}
+.st-row.stacked{flex-direction:column;align-items:flex-start;gap:8px;}
+.st-lbl{font-size:13px;font-weight:600;color:#e6edf3;}
+.st-sub{font-size:11px;color:#7d8590;margin-top:2px;}
+.st-inp{background:#0d1117;border:1px solid #2a3340;border-radius:6px;padding:8px 10px;font-family:'DM Mono',monospace;font-size:14px;color:#e6edf3;width:72px;text-align:right;outline:none;}
+.st-inp:focus{border-color:#3fb950;}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.6;}
+.empty-title{font-size:14px;font-weight:700;color:#7d8590;}
+.empty-body{font-size:12px;color:#4d5560;margin-top:4px;}
+
+/* FAB */
+.fab{position:fixed;bottom:24px;right:20px;width:56px;height:56px;border:none;border-radius:50%;font-size:26px;display:flex;align-items:center;justify-content:center;z-index:40;transition:transform .1s;}
+.fab:active{transform:scale(.92);}
+.fab.f{background:#f0a02c;color:#000;box-shadow:0 4px 18px rgba(240,160,44,.4);}
+.fab.e{background:#3fb950;color:#000;box-shadow:0 4px 18px rgba(63,185,80,.4);}
+
+/* MODALS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end;}
+.overlay.on{display:flex;}
+.modal{width:100%;background:#161b22;border-radius:20px 20px 0 0;border-top:1px solid #2a3340;padding:20px 20px 48px;max-height:93vh;overflow-y:auto;animation:slideUp .22s ease-out;}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.mhandle{width:40px;height:4px;background:#2a3340;border-radius:2px;margin:0 auto 20px;}
+.mtitle{font-size:18px;font-weight:800;margin-bottom:18px;color:#e6edf3;}
+.fg{margin-bottom:14px;}
+.fl{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#7d8590;margin-bottom:6px;}
+.fi,.fs{width:100%;background:#0d1117;border:1px solid #2a3340;border-radius:10px;padding:12px 14px;font-family:'Syne',sans-serif;font-size:15px;color:#e6edf3;outline:none;-webkit-appearance:none;}
+.fi:focus,.fs:focus{border-color:#3fb950;}
+.fi.af:focus{border-color:#f0a02c;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fta{width:100%;background:#0d1117;border:1px solid #2a3340;border-radius:10px;padding:12px 14px;font-family:'Syne',sans-serif;font-size:13px;color:#e6edf3;outline:none;resize:vertical;min-height:80px;}
+.fta:focus{border-color:#3fb950;}
+.prod-picker{border:1px solid #2a3340;border-radius:10px;background:#0d1117;max-height:200px;overflow-y:auto;}
+.popt{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #2a3340;cursor:pointer;}
+.popt:last-child{border-bottom:none;}
+.popt.on{background:rgba(63,185,80,.1);}
+.po-l{display:flex;align-items:center;gap:10px;}
+.po-em{font-size:18px;}
+.po-nm{font-size:13px;font-weight:700;color:#e6edf3;}
+.popt.on .po-nm{color:#3fb950;}
+.po-ct{font-size:10px;color:#7d8590;margin-top:1px;text-transform:uppercase;letter-spacing:.4px;}
+.po-pr{font-family:'DM Mono',monospace;font-size:12px;color:#3fb950;}
+.po-ck{font-size:14px;color:#3fb950;opacity:0;margin-left:8px;}
+.popt.on .po-ck{opacity:1;}
+.ph-row{display:flex;gap:8px;margin-bottom:8px;}
+.ph-btn{flex:1;padding:12px;background:#0d1117;border:1.5px dashed #2a3340;border-radius:10px;font-size:12px;font-weight:700;color:#7d8590;text-align:center;}
+.ph-btn:active{border-color:#58a6ff;color:#58a6ff;}
+.pp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px;}
+.ppw{position:relative;}
+.ppw img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid #2a3340;}
+.pp-del{position:absolute;top:-5px;right:-5px;width:18px;height:18px;background:#f85149;border:none;border-radius:50%;font-size:11px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.hint{font-size:11px;color:#7d8590;margin-top:4px;font-family:'DM Mono',monospace;}
+.hint strong{color:#3fb950;}
+.btn-row{display:flex;gap:10px;margin-top:20px;}
+.btn{flex:1;height:50px;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;transition:opacity .15s;}
+.btn:active{opacity:.8;}
+.bg{background:#3fb950;color:#000;}
+.ba{background:#f0a02c;color:#000;}
+.bs{background:#1e2530;color:#7d8590;}
+.bd{background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.2);}
+
+/* IMPORT REVIEW */
+.imp-row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid #2a3340;gap:12px;}
+.imp-row:last-child{border-bottom:none;}
+.imp-chk{width:22px;height:22px;border:2px solid #2a3340;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.imp-chk.on{background:#58a6ff;border-color:#58a6ff;color:#fff;}
+.imp-name{font-size:13px;font-weight:700;color:#e6edf3;}
+.imp-meta{font-size:11px;color:#7d8590;font-family:'DM Mono',monospace;margin-top:2px;}
+
+/* LIGHTBOX */
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;}
+.lb.on{display:flex;}
+.lb img{max-width:96vw;max-height:80vh;border-radius:10px;object-fit:contain;}
+.lb-x{position:absolute;top:16px;right:16px;width:36px;height:36px;background:rgba(255,255,255,.1);border:none;border-radius:50%;font-size:18px;color:#fff;display:flex;align-items:center;justify-content:center;}
+.lb-cap{margin-top:12px;font-size:12px;color:#7d8590;}
+
+.toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-10px);background:#3fb950;color:#000;font-size:13px;font-weight:700;padding:10px 22px;border-radius:20px;opacity:0;pointer-events:none;transition:all .2s;white-space:nowrap;z-index:300;}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media print{
+  #home,.app-hd,.tabs,.fab,.act-row,.wo-bar,.card-acts,button{display:none!important;}
+  body{background:#fff;color:#000;}
+  .page{display:block!important;padding:0;}
+  .card{background:#fff;border:1px solid #ccc;}
+}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home">
+  <div class="brand">
+    <div class="brand-logo">
+      <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+        <rect width="90" height="90" rx="20" fill="#f0faf0"/>
+        <ellipse cx="45" cy="34" rx="20" ry="22" fill="none" stroke="#2d8a3e" stroke-width="3"/>
+        <path d="M45 56 Q45 64 45 68" stroke="#2d8a3e" stroke-width="3" fill="none"/>
+        <path d="M37 68 Q45 66 53 68" stroke="#2d8a3e" stroke-width="2.5" fill="none"/>
+        <path d="M37 73 Q45 71 53 73" stroke="#2d8a3e" stroke-width="2" fill="none"/>
+        <path d="M37 78 Q45 76 53 78" stroke="#2d8a3e" stroke-width="1.5" fill="none"/>
+        <path d="M45 54 Q52 42 45 30 Q38 42 45 54Z" fill="#3fb950"/>
+        <path d="M45 30 Q56 26 58 36 Q51 44 45 40Z" fill="#5cd46c" opacity=".9"/>
+      </svg>
+    </div>
+    <div class="brand-name">FieldBid</div>
+    <div class="brand-sub">by Green Idea Insulation</div>
+  </div>
+
+  <button class="mode-btn field" id="btnField">
+    <div class="mode-top">
+      <div class="mode-icon">📐</div>
+      <div>
+        <div class="mode-title">Field Takeoff</div>
+        <div class="mode-sub">On-site measuring</div>
+      </div>
+    </div>
+    <div class="mode-desc">Measure areas, record square footage, take photos and field notes. No pricing involved.</div>
+  </button>
+
+  <button class="mode-btn est" id="btnEst">
+    <div class="mode-top">
+      <div class="mode-icon">💼</div>
+      <div>
+        <div class="mode-title">Estimator</div>
+        <div class="mode-sub">Quotes &amp; contracts</div>
+      </div>
+    </div>
+    <div class="mode-desc">Build estimates, generate quotes and contracts with client signature.</div>
+  </button>
+</div>
+
+<!-- FIELD APP -->
+<div id="field-app" class="screen">
+  <div class="app-hd">
+    <button class="back-btn" id="backField">← Back</button>
+    <div class="hd-icon field">📐</div>
+    <div class="hd-info">
+      <div class="hd-title">Field Takeoff</div>
+      <div class="hd-sub" id="fieldJobSub">No job set</div>
+    </div>
+    <button class="hd-action" id="newJobBtn">New Job</button>
+  </div>
+  <div class="tabs">
+    <button class="tab on f" id="ft1">📐 Areas</button>
+    <button class="tab f" id="ft2">🔧 Work Order</button>
+  </div>
+  <div id="fp-areas" class="page on">
+    <div class="stat-row">
+      <div class="stat a"><div class="stat-lbl">Areas</div><div class="stat-val" id="fAreaCount">0</div><div class="stat-note">measured</div></div>
+      <div class="stat a"><div class="stat-lbl">Total SF</div><div class="stat-val" id="fTotalSF">0</div><div class="stat-note">sq ft</div></div>
+    </div>
+    <div class="sec"><span class="sec-lbl">Measured Areas</span><span class="sec-ct" id="fAreaSub"></span></div>
+    <div id="fieldAreaList" class="cards"></div>
+  </div>
+  <div id="fp-wo" class="page">
+    <div class="wo-bar">
+      <div class="lang-grp">
+        <button class="lang-btn on" id="fLangEN">EN</button>
+        <button class="lang-btn" id="fLangPT">PT</button>
+      </div>
+      <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+    </div>
+    <div id="fieldWO"></div>
+  </div>
+</div>
+<button class="fab f" id="fieldFab" style="display:none">+</button>
+
+<!-- EST APP -->
+<div id="est-app" class="screen">
+  <div class="app-hd">
+    <button class="back-btn" id="backEst">← Back</button>
+    <div class="hd-icon est">💼</div>
+    <div class="hd-info">
+      <div class="hd-title">Estimator</div>
+      <div class="hd-sub">Quote #<span id="estQNum">1001</span></div>
+    </div>
+    <button class="hd-action" id="newEstBtn">New</button>
+  </div>
+  <div class="tabs">
+    <button class="tab on" id="et1">📋 Items</button>
+    <button class="tab" id="et2">💰 Quote</button>
+    <button class="tab" id="et3">🔧 W.Order</button>
+    <button class="tab" id="et4">📄 Contract</button>
+    <button class="tab" id="et5">🗄️ Products</button>
+    <button class="tab" id="et6">⚙️ Settings</button>
+  </div>
+
+  <div id="ep-items" class="page on">
+    <div class="import-bar" id="importBar" style="display:none">
+      <div class="import-bar-icon">📐</div>
+      <div class="import-bar-text">
+        <div class="import-bar-title">Field Takeoff Available</div>
+        <div class="import-bar-sub" id="importBarSub"></div>
+      </div>
+      <button class="import-bar-btn" id="importBarBtn">Review &amp; Import</button>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-lbl">Total SF</div><div class="stat-val" id="eTotalSF">0</div><div class="stat-note">sq ft</div></div>
+      <div class="stat"><div class="stat-lbl">Items</div><div class="stat-val" id="eItemCount">0</div><div class="stat-note">line items</div></div>
+    </div>
+    <div class="total-bar">
+      <div><div class="total-lbl">Estimated Total</div><div class="total-note" id="eTotalNote">with markup</div></div>
+      <div class="total-val" id="eTotalCost">$0.00</div>
+    </div>
+    <div class="sec"><span class="sec-lbl">Line Items</span><span class="sec-ct" id="eItemSub"></span></div>
+    <div id="estItemList" class="cards"></div>
+  </div>
+
+  <div id="ep-quote" class="page">
+    <div class="q-info">
+      <div class="q-row"><span class="q-lbl">Client</span><span class="q-val tap" id="qClient">Tap to add</span></div>
+      <div class="q-row"><span class="q-lbl">Address</span><span class="q-val tap" id="qAddress">Tap to add</span></div>
+      <div class="q-row"><span class="q-lbl">Date</span><span class="q-val" id="qDate"></span></div>
+      <div class="q-row"><span class="q-lbl">Quote #</span><span class="q-val" id="qNumber"></span></div>
+    </div>
+    <div class="q-table">
+      <div class="q-thead"><div>Description</div><div style="text-align:right">SF</div><div style="text-align:right">$/SF</div><div style="text-align:right">Total</div></div>
+      <div id="quoteLines"></div>
+      <div class="q-foot">
+        <div class="q-frow"><span class="q-fl">Subtotal</span><span class="q-fv" id="qSub">$0.00</span></div>
+        <div class="q-frow" id="qTaxRow"><span class="q-fl">Tax (<span id="qTaxPct">0</span>%)</span><span class="q-fv" id="qTax">$0.00</span></div>
+        <div class="q-frow grand"><span class="q-fl">TOTAL</span><span class="q-fv" id="qTotal">$0.00</span></div>
+      </div>
+    </div>
+    <div class="act-row">
+      <button class="act-btn" id="copyQuoteBtn">📋 Copy</button>
+      <button class="act-btn" id="shareQuoteBtn">📤 Share</button>
+      <button class="act-btn" onclick="window.print()">🖨️ Print</button>
+    </div>
+  </div>
+
+  <div id="ep-wo" class="page">
+    <div class="wo-bar">
+      <div class="lang-grp">
+        <button class="lang-btn on" id="eLangEN">EN</button>
+        <button class="lang-btn" id="eLangPT">PT</button>
+      </div>
+      <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+    </div>
+    <div id="estWO"></div>
+  </div>
+
+  <div id="ep-contract" class="page">
+    <div class="ct-tabs">
+      <button class="ct-tab on" id="ctTab1">📄 Preview</button>
+      <button class="ct-tab" id="ctTab2">✏️ Terms</button>
+      <button class="ct-tab" id="ctTab3">✍️ Sign</button>
+    </div>
+    <div id="ct-preview" class="ct-sec on">
+      <div class="ct-doc" id="ctDoc"></div>
+      <div class="act-row" style="margin-top:14px">
+        <button class="act-btn" id="copyCtBtn">📋 Copy</button>
+        <button class="act-btn" id="shareCtBtn">📤 Share</button>
+        <button class="act-btn" onclick="window.print()">🖨️ Print</button>
+      </div>
+    </div>
+    <div id="ct-edit" class="ct-sec">
+      <div class="fg"><label class="fl">Contract Title</label><input class="fi" id="ctTitle" type="text" value="INSULATION SERVICES AGREEMENT"></div>
+      <div class="fg"><label class="fl">Introduction</label><textarea class="fta" id="ctIntro">This agreement is entered into between Green Idea Insulation ("Contractor") and the Client identified below. The Contractor agrees to perform insulation services as described in the Scope of Work, in a professional manner using quality materials appropriate for the application.</textarea></div>
+      <div class="fg"><label class="fl">Payment Terms</label><textarea class="fta" id="ctPayment" style="min-height:70px">50% deposit required before work begins. Remaining balance due upon project completion. Accepted: check, cash, Zelle, or credit card (3% fee applies).</textarea></div>
+      <div class="fg"><label class="fl">Warranty</label><textarea class="fta" id="ctWarranty" style="min-height:70px">Contractor warrants all labor for 1 year from completion. Material warranties are provided by the manufacturer. Warranty is void if materials are altered or damaged by others after installation.</textarea></div>
+      <div class="fg"><label class="fl">Additional Terms</label><textarea class="fta" id="ctExtra">Client is responsible for clearing the work area before start date. Any unforeseen conditions requiring additional work will be discussed before proceeding.</textarea></div>
+    </div>
+    <div id="ct-sign" class="ct-sec">
+      <div class="fg"><label class="fl">Client Full Name</label><input class="fi" id="sigName" type="text" placeholder="Client name"></div>
+      <div class="fg">
+        <label class="fl">Signature</label>
+        <div class="sig-wrap"><canvas id="sigCanvas" width="800" height="160"></canvas></div>
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn bs" id="clearSigBtn" style="flex:none;padding:0 18px">🗑 Clear</button>
+          <button class="btn bg" id="saveSigBtn" style="flex:none;padding:0 18px">✅ Save</button>
+        </div>
+      </div>
+      <div id="sigSaved" style="display:none">
+        <label class="fl">Saved</label>
+        <img id="sigImg" src="" style="max-width:100%;border:1px solid #2a3340;border-radius:8px;background:#fff">
+        <div style="margin-top:6px;font-size:12px;color:#7d8590;font-family:'DM Mono',monospace" id="sigMeta"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ep-products" class="page">
+    <div class="sec"><span class="sec-lbl">Product Database</span><button class="btn bg" id="addProdBtn" style="flex:none;height:36px;padding:0 16px;font-size:12px">+ Add</button></div>
+    <div class="prod-note">Tap <strong style="color:#3fb950">+ Add</strong> for custom products. Prices only visible in Estimator.</div>
+    <div id="productList"></div>
+  </div>
+
+  <div id="ep-settings" class="page">
+    <div class="st-g">
+      <div class="st-t">Markup &amp; Tax</div>
+      <div class="st-row"><div><div class="st-lbl">Markup</div><div class="st-sub">On top of material cost</div></div><div style="display:flex;align-items:center;gap:4px"><input class="st-inp" type="number" id="cfgMarkup" value="30"><span style="color:#7d8590">%</span></div></div>
+      <div class="st-row"><div><div class="st-lbl">Tax Rate</div><div class="st-sub">Applied to final total</div></div><div style="display:flex;align-items:center;gap:4px"><input class="st-inp" type="number" id="cfgTax" value="0"><span style="color:#7d8590">%</span></div></div>
+    </div>
+    <div class="st-g">
+      <div class="st-t">Company Info</div>
+      <div class="st-row stacked"><div class="st-lbl">Company Name</div><input class="fi" type="text" id="cfgCompany" value="Green Idea Insulation" style="background:#0d1117"></div>
+      <div class="st-row stacked" style="margin-top:8px"><div class="st-lbl">Phone / Email</div><input class="fi" type="text" id="cfgContact" placeholder="(617) 000-0000" style="background:#0d1117"></div>
+      <div class="st-row stacked" style="margin-top:8px"><div class="st-lbl">License #</div><input class="fi" type="text" id="cfgLicense" placeholder="MA Lic. #000000" style="background:#0d1117"></div>
+    </div>
+  </div>
+</div>
+<button class="fab e" id="estFab" style="display:none">+</button>
+
+<!-- FIELD AREA MODAL -->
+<div class="overlay" id="faOverlay">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="faTitle">Add Area</div>
+    <div class="fg"><label class="fl">Area Name</label><input class="fi af" id="fa_name" type="text" placeholder="e.g. North exterior wall"></div>
+    <div class="fg"><label class="fl">Product / Type</label><div class="prod-picker" id="faPicker"></div></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Square Feet</label><input class="fi" id="fa_sf" type="number" placeholder="0" min="0"></div>
+      <div class="fg"><label class="fl">R-Value / Spec</label><input class="fi" id="fa_spec" type="text" placeholder="R-13..."></div>
+    </div>
+    <div class="fg"><label class="fl">Field Notes</label><input class="fi" id="fa_notes" type="text" placeholder="Access, condition, instructions..."></div>
+    <div class="fg">
+      <label class="fl">Photos</label>
+      <div class="ph-row">
+        <button class="ph-btn" id="faCamBtn">📷 Camera</button>
+        <button class="ph-btn" id="faGalBtn">🖼️ Gallery</button>
+      </div>
+      <input type="file" id="faCam" accept="image/*" capture="environment" style="display:none">
+      <input type="file" id="faGal" accept="image/*" multiple style="display:none">
+      <div class="pp-grid" id="faPhotoGrid"></div>
+      <div class="hint" id="faPhotoHint" style="display:none">📷 <span id="faPhotoCount">0</span> photo(s)</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn bs" id="faCancelBtn">Cancel</button>
+      <button class="btn ba" id="faSaveBtn">Add Area</button>
+    </div>
+  </div>
+</div>
+
+<!-- EST ITEM MODAL -->
+<div class="overlay" id="eiOverlay">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="eiTitle">Add Item</div>
+    <div class="fg"><label class="fl">Description</label><input class="fi" id="ei_name" type="text" placeholder="e.g. Exterior Walls – North Wing"></div>
+    <div class="fg"><label class="fl">Product</label><div class="prod-picker" id="eiPicker"></div></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Square Feet</label><input class="fi" id="ei_sf" type="number" placeholder="0" min="0"></div>
+      <div class="fg"><label class="fl">Price / SF ($)</label><input class="fi" id="ei_price" type="number" placeholder="0.00" step="0.01"></div>
+    </div>
+    <div class="hint" id="eiHint">Line total: <strong>$0.00</strong></div>
+    <div class="fg" style="margin-top:10px"><label class="fl">Notes</label><input class="fi" id="ei_notes" type="text" placeholder="R-value, fire-rated..."></div>
+    <div class="fg">
+      <label class="fl">Photos</label>
+      <div class="ph-row">
+        <button class="ph-btn" id="eiCamBtn">📷 Camera</button>
+        <button class="ph-btn" id="eiGalBtn">🖼️ Gallery</button>
+      </div>
+      <input type="file" id="eiCam" accept="image/*" capture="environment" style="display:none">
+      <input type="file" id="eiGal" accept="image/*" multiple style="display:none">
+      <div class="pp-grid" id="eiPhotoGrid"></div>
+      <div class="hint" id="eiPhotoHint" style="display:none">📷 <span id="eiPhotoCount">0</span> photo(s)</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn bs" id="eiCancelBtn">Cancel</button>
+      <button class="btn bg" id="eiSaveBtn">Add Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="overlay" id="prodOverlay">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="prodTitle">Add Product</div>
+    <div class="fg"><label class="fl">Product Name</label><input class="fi" id="p_name" type="text" placeholder="e.g. Closed-Cell Spray Foam"></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Emoji</label><input class="fi" id="p_emoji" type="text" placeholder="💧" maxlength="4" style="font-size:22px;text-align:center"></div>
+      <div class="fg"><label class="fl">Default $/SF</label><input class="fi" id="p_price" type="number" placeholder="0.00" step="0.01"></div>
+    </div>
+    <div class="fg"><label class="fl">Category</label>
+      <select class="fs" id="p_cat">
+        <option>Spray Foam</option><option>Hybrid</option><option>Blown-In</option>
+        <option>Batt</option><option>Mineral Wool</option><option>Board / Rigid</option>
+        <option>Air Barrier</option><option>Other</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Description</label><input class="fi" id="p_desc" type="text" placeholder="R-value, specs..."></div>
+    <div class="btn-row">
+      <button class="btn bs" id="prodCancelBtn">Cancel</button>
+      <button class="btn bg" id="prodSaveBtn">Save</button>
+    </div>
+    <div id="prodDelRow" style="display:none;margin-top:10px">
+      <button class="btn bd" id="prodDelBtn" style="width:100%">🗑 Delete Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIELD EDIT MODAL -->
+<div class="overlay" id="feOverlay">
+  <div class="modal" style="padding-bottom:32px">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="feTitle">Edit</div>
+    <div class="fg"><input class="fi" id="feInput" type="text"></div>
+    <div class="btn-row">
+      <button class="btn bs" id="feCancelBtn">Cancel</button>
+      <button class="btn bg" id="feSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="overlay" id="importOverlay">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">Import from Field Takeoff</div>
+    <p style="font-size:13px;color:#7d8590;margin-bottom:14px">Select areas to import. Price from product database will be applied.</p>
+    <div id="importList"></div>
+    <div class="btn-row">
+      <button class="btn bs" id="importCancelBtn">Cancel</button>
+      <button class="btn bg" id="importConfirmBtn">Import Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lb" id="lb">
+  <button class="lb-x" id="lbClose">✕</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lb-cap" id="lbCap"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+var fieldAreas=[], estItems=[], products=[];
+var cfg={markup:30,taxRate:0,company:'Green Idea Insulation',contact:'',license:''};
+var quoteInfo={client:'',address:''};
+var quoteNum=1001;
+var fieldJob={name:'',address:''};
+var editFAIdx=-1, editEIIdx=-1, editProdIdx=-1;
+var faProd=null, eiProd=null;
+var faPendPh=[], eiPendPh=[];
+var woChecked={}, fwLang='en', ewLang='en';
+var ctData={title:'',intro:'',payment:'',warranty:'',extra:''};
+var sigData={img:'',name:'',date:''};
+var importSel={};
+var curFieldEdit='';
+var quickPhTarget={mode:'',idx:-1};
+
+var DEFAULTS=[
+  {id:'p1',name:'Open-Cell Spray Foam',emoji:'💧',cat:'Spray Foam',price:1.80,desc:'R-3.7/in'},
+  {id:'p2',name:'Closed-Cell Spray Foam',emoji:'🔵',cat:'Spray Foam',price:2.80,desc:'R-6.5/in'},
+  {id:'p3',name:'Hybrid — Closed + Open Cell',emoji:'🔀',cat:'Hybrid',price:2.20,desc:'Closed cell base + open cell top'},
+  {id:'p4',name:'Blown-In Cellulose',emoji:'🌬',cat:'Blown-In',price:1.10,desc:'R-3.7/in'},
+  {id:'p5',name:'Blown-In Fiberglass',emoji:'🌀',cat:'Blown-In',price:1.20,desc:'R-2.5/in'},
+  {id:'p6',name:'Fiberglass Batt R-13',emoji:'🧱',cat:'Batt',price:0.75,desc:'R-13, 2x4'},
+  {id:'p7',name:'Fiberglass Batt R-21',emoji:'🟧',cat:'Batt',price:0.95,desc:'R-21, 2x6'},
+  {id:'p8',name:'Mineral Wool Batt',emoji:'🔥',cat:'Mineral Wool',price:2.10,desc:'Fire-rated'},
+  {id:'p9',name:'Mineral Wool Board',emoji:'🟥',cat:'Mineral Wool',price:2.50,desc:'Exterior continuous'},
+  {id:'p10',name:'Rigid EPS Board',emoji:'📦',cat:'Board / Rigid',price:1.60,desc:'R-4/in'},
+  {id:'p11',name:'Air Barrier Membrane',emoji:'🌊',cat:'Air Barrier',price:0.60,desc:'WRB layer'}
+];
+
+// ── HELPERS ──
+function fmt(n){return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function fmtN(n){return (''+Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function getProd(id){for(var i=0;i<products.length;i++)if(products[i].id===id)return products[i];return null;}
+function calcItem(it){return it.sf*it.price*(1+cfg.markup/100);}
+function calcTotals(){var s=0;for(var i=0;i<estItems.length;i++)s+=calcItem(estItems[i]);var t=s*cfg.taxRate/100;return{sub:s,tax:t,total:s+t};}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast on';setTimeout(function(){t.className='toast';},2200);}
+function closeOv(id){document.getElementById(id).className='overlay';}
+function openOv(id){document.getElementById(id).className='overlay on';}
+
+// ── PERSIST ──
+function saveFA(){localStorage.setItem('fb5_fa',JSON.stringify(fieldAreas));}
+function saveEI(){localStorage.setItem('fb5_ei',JSON.stringify(estItems));localStorage.setItem('fb5_qi',JSON.stringify(quoteInfo));}
+function savePR(){localStorage.setItem('fb5_pr',JSON.stringify(products));}
+function saveCfg(){localStorage.setItem('fb5_cfg',JSON.stringify(cfg));}
+
+function load(){
+  var fa=localStorage.getItem('fb5_fa');if(fa)fieldAreas=JSON.parse(fa);
+  var ei=localStorage.getItem('fb5_ei');if(ei)estItems=JSON.parse(ei);
+  var c=localStorage.getItem('fb5_cfg');if(c){var cp=JSON.parse(c);for(var k in cp)cfg[k]=cp[k];}
+  var pr=localStorage.getItem('fb5_pr');products=pr?JSON.parse(pr):JSON.parse(JSON.stringify(DEFAULTS));
+  if(!pr)savePR();
+  var q=localStorage.getItem('fb5_qi');if(q)quoteInfo=JSON.parse(q);
+  var n=localStorage.getItem('fb5_qn');if(n)quoteNum=parseInt(n);
+  var fj=localStorage.getItem('fb5_fj');if(fj)fieldJob=JSON.parse(fj);
+  var ct=localStorage.getItem('fb5_ct');if(ct)ctData=JSON.parse(ct);
+  var sg=localStorage.getItem('fb5_sg');if(sg)sigData=JSON.parse(sg);
+  var wc=localStorage.getItem('fb5_wc');if(wc)woChecked=JSON.parse(wc);
+  applySettings();
+  applyCtFields();
+  if(sigData&&sigData.img){
+    document.getElementById('sigSaved').style.display='block';
+    document.getElementById('sigImg').src=sigData.img;
+    document.getElementById('sigMeta').textContent='Signed: '+sigData.name+' · '+sigData.date;
+  }
+  var today=new Date();
+  var ds=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  var qd=document.getElementById('qDate');if(qd)qd.textContent=ds;
+  var qn=document.getElementById('qNumber');if(qn)qn.textContent='#'+quoteNum;
+  var eq=document.getElementById('estQNum');if(eq)eq.textContent=quoteNum;
+}
+
+// ── NAVIGATION ──
+document.getElementById('btnField').addEventListener('click',function(){
+  document.getElementById('home').style.display='none';
+  document.getElementById('field-app').style.display='block';
+  document.getElementById('fieldFab').style.display='flex';
+  updateFieldSub();
+  renderFA();
+  renderFWO();
+});
+
+document.getElementById('btnEst').addEventListener('click',function(){
+  document.getElementById('home').style.display='none';
+  document.getElementById('est-app').style.display='block';
+  document.getElementById('estFab').style.display='flex';
+  renderEst();
+  renderProds();
+});
+
+document.getElementById('backField').addEventListener('click',function(){
+  document.getElementById('field-app').style.display='none';
+  document.getElementById('fieldFab').style.display='none';
+  document.getElementById('home').style.display='flex';
+});
+
+document.getElementById('backEst').addEventListener('click',function(){
+  document.getElementById('est-app').style.display='none';
+  document.getElementById('estFab').style.display='none';
+  document.getElementById('home').style.display='flex';
+});
+
+// ── FIELD TABS ──
+document.getElementById('ft1').addEventListener('click',function(){showFPage('areas',this);});
+document.getElementById('ft2').addEventListener('click',function(){showFPage('wo',this);});
+function showFPage(id,tab){
+  var pages=['areas','wo'];
+  for(var i=0;i<pages.length;i++)document.getElementById('fp-'+pages[i]).className='page';
+  document.getElementById('fp-'+id).className='page on';
+  var tabs=document.querySelectorAll('#field-app .tab');
+  for(var i=0;i<tabs.length;i++)tabs[i].className='tab f';
+  tab.className='tab on f';
+  if(id==='wo')renderFWO();
+}
+
+// ── EST TABS ──
+document.getElementById('et1').addEventListener('click',function(){showEPage('items',this);});
+document.getElementById('et2').addEventListener('click',function(){showEPage('quote',this);});
+document.getElementById('et3').addEventListener('click',function(){showEPage('wo',this);});
+document.getElementById('et4').addEventListener('click',function(){showEPage('contract',this);renderCtDoc();});
+document.getElementById('et5').addEventListener('click',function(){showEPage('products',this);renderProds();});
+document.getElementById('et6').addEventListener('click',function(){showEPage('settings',this);});
+function showEPage(id,tab){
+  var pages=['items','quote','wo','contract','products','settings'];
+  for(var i=0;i<pages.length;i++)document.getElementById('ep-'+pages[i]).className='page';
+  document.getElementById('ep-'+id).className='page on';
+  var tabs=document.querySelectorAll('#est-app .tab');
+  for(var i=0;i<tabs.length;i++)tabs[i].className='tab';
+  tab.className='tab on';
+  document.getElementById('estFab').style.display=(id==='items')?'flex':'none';
+  if(id==='wo')renderEWO();
+  if(id==='contract')renderCtDoc();
+  if(id==='products')renderProds();
+}
+
+// ── NEW JOB / ESTIMATE ──
+document.getElementById('newJobBtn').addEventListener('click',function(){
+  if(fieldAreas.length&&!confirm('Start a new field job? Areas will be cleared.'))return;
+  fieldAreas=[];woChecked={};saveFA();localStorage.setItem('fb5_wc',JSON.stringify(woChecked));
+  renderFA();renderFWO();toast('✨ New job started');
+});
+document.getElementById('newEstBtn').addEventListener('click',function(){
+  if(estItems.length&&!confirm('Start a new estimate? Items will be cleared.'))return;
+  estItems=[];quoteInfo={client:'',address:''};
+  quoteNum++;localStorage.setItem('fb5_qn',quoteNum);
+  document.getElementById('estQNum').textContent=quoteNum;
+  document.getElementById('qNumber').textContent='#'+quoteNum;
+  var today=new Date();
+  document.getElementById('qDate').textContent=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  saveEI();renderEst();toast('✨ New estimate started');
+});
+
+// ── FABs ──
+document.getElementById('fieldFab').addEventListener('click',function(){openFAModal();});
+document.getElementById('estFab').addEventListener('click',function(){openEIModal();});
+
+// ── RENDER FIELD AREAS ──
+function updateFieldSub(){
+  document.getElementById('fieldJobSub').textContent=fieldJob.name||'No job set';
+}
+function renderFA(){
+  var list=document.getElementById('fieldAreaList');
+  var sf=0;for(var i=0;i<fieldAreas.length;i++)sf+=fieldAreas[i].sf||0;
+  document.getElementById('fAreaCount').textContent=fieldAreas.length;
+  document.getElementById('fTotalSF').textContent=fmtN(sf);
+  document.getElementById('fAreaSub').textContent=fieldAreas.length?fieldAreas.length+' area'+(fieldAreas.length>1?'s':'')+' measured':'';
+  checkImportBar();
+  if(!fieldAreas.length){list.innerHTML='<div class="empty"><div class="empty-icon">📐</div><div class="empty-title">No areas yet</div><div class="empty-body">Tap + to measure your first area</div></div>';return;}
+  var h='';
+  for(var i=0;i<fieldAreas.length;i++){
+    var a=fieldAreas[i];var pr=getProd(a.productId);
+    var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Unknown';
+    h+='<div class="card">';
+    if(a.photos&&a.photos.length){h+='<div class="card-photos">';for(var p=0;p<a.photos.length;p++)h+='<img class="card-photo" src="'+a.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
+    h+='<div class="card-body"><div class="card-em f">'+em+'</div><div class="card-info"><div class="card-name">'+esc(a.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(a.sf)+' SF'+(a.spec?' · '+esc(a.spec):'')+'</div>'+(a.notes?'<div class="card-note">📋 '+esc(a.notes)+'</div>':'')+(a.photos&&a.photos.length?'<div class="card-ph">📷 '+a.photos.length+' photo'+(a.photos.length>1?'s':'')+'</div>':'')+'</div></div>';
+    h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" onclick="qkPhoto(\'field\',this)">📷 Photo</button><button class="ca" data-idx="'+i+'" onclick="openFAModal(this)">✏️ Edit</button><button class="ca del" data-idx="'+i+'" onclick="delFA(this)">🗑 Del</button></div></div>';
+  }
+  list.innerHTML=h;
+}
+
+// ── RENDER EST ──
+function renderEst(){
+  var list=document.getElementById('estItemList');
+  var totals=calcTotals();
+  var sf=0;for(var i=0;i<estItems.length;i++)sf+=estItems[i].sf;
+  document.getElementById('eTotalSF').textContent=fmtN(sf);
+  document.getElementById('eItemCount').textContent=estItems.length;
+  document.getElementById('eTotalCost').textContent=fmt(totals.total);
+  document.getElementById('eTotalNote').textContent=cfg.markup+'% markup'+(cfg.taxRate>0?' + '+cfg.taxRate+'% tax':'');
+  document.getElementById('eItemSub').textContent=estItems.length?estItems.length+' item'+(estItems.length>1?'s':''):'';
+  checkImportBar();
+  if(!estItems.length){list.innerHTML='<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">No items yet</div><div class="empty-body">Tap + or import from Field Takeoff</div></div>';renderQuote();return;}
+  var h='';
+  for(var i=0;i<estItems.length;i++){
+    var it=estItems[i];var pr=getProd(it.productId);var cost=calcItem(it);
+    var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Custom';
+    h+='<div class="card">';
+    if(it.photos&&it.photos.length){h+='<div class="card-photos">';for(var p=0;p<it.photos.length;p++)h+='<img class="card-photo" src="'+it.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
+    h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+it.price.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
+    h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" onclick="qkPhoto(\'est\',this)">📷 Photo</button><button class="ca" data-idx="'+i+'" onclick="openEIModal(this)">✏️ Edit</button><button class="ca del" data-idx="'+i+'" onclick="delEI(this)">🗑 Del</button></div></div>';
+  }
+  list.innerHTML=h;
+  renderQuote();
+}
+
+function renderQuote(){
+  var totals=calcTotals();
+  var qc=document.getElementById('qClient');if(qc)qc.textContent=quoteInfo.client||'Tap to add';
+  var qa=document.getElementById('qAddress');if(qa)qa.textContent=quoteInfo.address||'Tap to add';
+  var qs=document.getElementById('qSub');if(qs)qs.textContent=fmt(totals.sub);
+  var qt=document.getElementById('qTax');if(qt)qt.textContent=fmt(totals.tax);
+  var qtt=document.getElementById('qTotal');if(qtt)qtt.textContent=fmt(totals.total);
+  var tp=document.getElementById('qTaxPct');if(tp)tp.textContent=cfg.taxRate;
+  var tr=document.getElementById('qTaxRow');if(tr)tr.style.display=cfg.taxRate>0?'flex':'none';
+  var lines='';
+  for(var j=0;j<estItems.length;j++){
+    var it=estItems[j];var c=calcItem(it);var pr=getProd(it.productId);
+    lines+='<div class="q-trow"><div class="q-tn">'+(pr?pr.emoji:'📦')+' '+esc(it.name)+(it.notes?'<div class="q-tnote">'+esc(it.notes)+'</div>':'')+'</div><div class="q-tv">'+fmtN(it.sf)+'</div><div class="q-tv">$'+it.price.toFixed(2)+'</div><div class="q-tt">'+fmt(c)+'</div></div>';
+  }
+  if(!estItems.length)lines='<div style="padding:20px;text-align:center;color:#4d5560;font-size:13px">No items yet</div>';
+  var ql=document.getElementById('quoteLines');if(ql)ql.innerHTML=lines;
+}
+
+function checkImportBar(){
+  var bar=document.getElementById('importBar');if(!bar)return;
+  if(fieldAreas.length>0){
+    bar.style.display='flex';
+    document.getElementById('importBarSub').textContent=fieldAreas.length+' area'+(fieldAreas.length>1?'s':'')+' measured';
+  }else{bar.style.display='none';}
+}
+
+// ── WORK ORDERS ──
+var WO={
+  en:{title:'WORK ORDER',sub:'Field Instructions — No Pricing',wo:'W.O.',date:'Date',client:'Job',addr:'Address',done:'Mark as completed',none:'No areas yet.'},
+  pt:{title:'ORDEM DE SERVIÇO',sub:'Instruções de Campo — Sem Preços',wo:'O.S.',date:'Data',client:'Serviço',addr:'Endereço',done:'Marcar como concluído',none:'Nenhuma área ainda.'}
+};
+document.getElementById('fLangEN').addEventListener('click',function(){fwLang='en';document.getElementById('fLangEN').className='lang-btn on';document.getElementById('fLangPT').className='lang-btn';renderFWO();});
+document.getElementById('fLangPT').addEventListener('click',function(){fwLang='pt';document.getElementById('fLangPT').className='lang-btn on';document.getElementById('fLangEN').className='lang-btn';renderFWO();});
+document.getElementById('eLangEN').addEventListener('click',function(){ewLang='en';document.getElementById('eLangEN').className='lang-btn on';document.getElementById('eLangPT').className='lang-btn';renderEWO();});
+document.getElementById('eLangPT').addEventListener('click',function(){ewLang='pt';document.getElementById('eLangPT').className='lang-btn on';document.getElementById('eLangEN').className='lang-btn';renderEWO();});
+
+function buildWOHeader(t,lang,job1,job2,num){
+  var today=new Date().toLocaleDateString(lang==='pt'?'pt-BR':'en-US',{year:'numeric',month:'long',day:'numeric'});
+  return '<div class="wo-hd"><div class="wo-co">'+esc(cfg.company)+'</div><div class="wo-badge">'+t.title+' — '+t.sub+'</div><div class="wo-meta"><div class="wo-mc"><div class="wo-ml">'+t.wo+' #</div><div class="wo-mv">'+num+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.date+'</div><div class="wo-mv">'+today+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.client+'</div><div class="wo-mv">'+(job1||'—')+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.addr+'</div><div class="wo-mv">'+(job2||'—')+'</div></div></div></div>';
+}
+function buildWOTask(idx,name,product,sf,spec,notes,photos,checked,mode,t){
+  var ck=checked?'done':'';
+  var h='<div class="wo-task"><div class="wo-th"><div class="wo-num '+mode+'">'+(idx+1)+'</div><div class="wo-ti"><div class="wo-tn">'+name+'</div><div class="wo-tp">'+product+'</div><div class="wo-ts">'+sf+' SF'+(spec?' · '+spec:'')+'</div></div></div>';
+  if(photos&&photos.length){h+='<div class="wo-photos">';for(var p=0;p<photos.length;p++)h+='<img class="wo-photo" src="'+photos[p]+'" onclick="this.style.display=\'none\'" alt="">';h+='</div>';}
+  if(notes)h+='<div class="wo-note">📋 '+esc(notes)+'</div>';
+  h+='<div class="wo-ck" data-key="'+mode+idx+'" onclick="ckWO(this)"><div class="wo-cb '+ck+'" id="wocb_'+mode+idx+'">'+(checked?'✓':'')+'</div><span class="wo-cl">'+t.done+'</span></div>';
+  return h+'</div>';
+}
+function renderFWO(){
+  var t=WO[fwLang];var h=buildWOHeader(t,fwLang,fieldJob.name,fieldJob.address,quoteNum);
+  if(!fieldAreas.length){h+='<div class="empty"><div class="empty-body">'+t.none+'</div></div>';}
+  else{h+='<div class="wo-tasks">';for(var i=0;i<fieldAreas.length;i++){var a=fieldAreas[i];var pr=getProd(a.productId);h+=buildWOTask(i,(pr?pr.emoji:'📦')+' '+esc(a.name),pr?esc(pr.name):'—',fmtN(a.sf),a.spec,a.notes,a.photos,woChecked['f'+i],'f',t);}h+='</div>';}
+  document.getElementById('fieldWO').innerHTML=h;
+}
+function renderEWO(){
+  var t=WO[ewLang];var h=buildWOHeader(t,ewLang,quoteInfo.client,quoteInfo.address,quoteNum);
+  if(!estItems.length){h+='<div class="empty"><div class="empty-body">'+t.none+'</div></div>';}
+  else{h+='<div class="wo-tasks">';for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);h+=buildWOTask(i,(pr?pr.emoji:'📦')+' '+esc(it.name),pr?esc(pr.name):'—',fmtN(it.sf),'',it.notes,it.photos,woChecked['e'+i],'e',t);}h+='</div>';}
+  document.getElementById('estWO').innerHTML=h;
+}
+function ckWO(el){
+  var key=el.getAttribute('data-key');
+  woChecked[key]=!woChecked[key];
+  localStorage.setItem('fb5_wc',JSON.stringify(woChecked));
+  var cb=document.getElementById('wocb_'+key);
+  if(cb){cb.className='wo-cb'+(woChecked[key]?' done':'');cb.textContent=woChecked[key]?'✓':'';}
+}
+
+// ── FIELD AREA MODAL ──
+function openFAModal(btn){
+  editFAIdx=btn?parseInt(btn.getAttribute('data-idx')):-1;
+  document.getElementById('faTitle').textContent=editFAIdx>=0?'Edit Area':'Add Area';
+  document.getElementById('faSaveBtn').textContent=editFAIdx>=0?'Update':'Add Area';
+  faPendPh=[];
+  if(editFAIdx>=0){var a=fieldAreas[editFAIdx];document.getElementById('fa_name').value=a.name;document.getElementById('fa_sf').value=a.sf;document.getElementById('fa_spec').value=a.spec||'';document.getElementById('fa_notes').value=a.notes||'';faProd=a.productId||null;faPendPh=a.photos?a.photos.slice():[];}
+  else{document.getElementById('fa_name').value='';document.getElementById('fa_sf').value='';document.getElementById('fa_spec').value='';document.getElementById('fa_notes').value='';faProd=products.length?products[0].id:null;}
+  renderPicker('fa');renderPPGrid('fa');
+  openOv('faOverlay');
+}
+document.getElementById('faCancelBtn').addEventListener('click',function(){closeOv('faOverlay');});
+document.getElementById('faSaveBtn').addEventListener('click',function(){
+  var name=document.getElementById('fa_name').value.trim();
+  var sf=parseFloat(document.getElementById('fa_sf').value);
+  var spec=document.getElementById('fa_spec').value.trim();
+  var notes=document.getElementById('fa_notes').value.trim();
+  if(!name){toast('Add an area name');return;}
+  if(!sf||sf<=0){toast('Enter square feet');return;}
+  var area={name:name,productId:faProd,sf:sf,spec:spec,notes:notes,photos:faPendPh.slice()};
+  if(editFAIdx>=0)fieldAreas[editFAIdx]=area;else fieldAreas.push(area);
+  saveFA();renderFA();renderFWO();closeOv('faOverlay');
+  toast(editFAIdx>=0?'✅ Area updated':'✅ Area added');
+});
+function delFA(btn){if(!confirm('Delete?'))return;fieldAreas.splice(parseInt(btn.getAttribute('data-idx')),1);saveFA();renderFA();renderFWO();toast('🗑 Deleted');}
+
+// ── EST ITEM MODAL ──
+function openEIModal(btn){
+  editEIIdx=btn?parseInt(btn.getAttribute('data-idx')):-1;
+  document.getElementById('eiTitle').textContent=editEIIdx>=0?'Edit Item':'Add Item';
+  document.getElementById('eiSaveBtn').textContent=editEIIdx>=0?'Update':'Add Item';
+  eiPendPh=[];
+  if(editEIIdx>=0){var it=estItems[editEIIdx];document.getElementById('ei_name').value=it.name;document.getElementById('ei_sf').value=it.sf;document.getElementById('ei_price').value=it.price;document.getElementById('ei_notes').value=it.notes||'';eiProd=it.productId||null;eiPendPh=it.photos?it.photos.slice():[];}
+  else{document.getElementById('ei_name').value='';document.getElementById('ei_sf').value='';document.getElementById('ei_price').value=products.length?products[0].price:'';document.getElementById('ei_notes').value='';eiProd=products.length?products[0].id:null;}
+  renderPicker('ei');renderPPGrid('ei');updateEIHint();
+  openOv('eiOverlay');
+}
+document.getElementById('ei_sf').addEventListener('input',updateEIHint);
+document.getElementById('ei_price').addEventListener('input',updateEIHint);
+function updateEIHint(){
+  var sf=parseFloat(document.getElementById('ei_sf').value)||0;
+  var price=parseFloat(document.getElementById('ei_price').value)||0;
+  document.getElementById('eiHint').innerHTML='Line total (w/ markup): <strong>'+fmt(sf*price*(1+cfg.markup/100))+'</strong>';
+}
+document.getElementById('eiCancelBtn').addEventListener('click',function(){closeOv('eiOverlay');});
+document.getElementById('eiSaveBtn').addEventListener('click',function(){
+  var name=document.getElementById('ei_name').value.trim();
+  var sf=parseFloat(document.getElementById('ei_sf').value);
+  var price=parseFloat(document.getElementById('ei_price').value);
+  var notes=document.getElementById('ei_notes').value.trim();
+  if(!name){toast('Add a description');return;}
+  if(!sf||sf<=0){toast('Enter square feet');return;}
+  if(!price||price<=0){toast('Enter price/SF');return;}
+  var item={name:name,productId:eiProd,sf:sf,price:price,notes:notes,photos:eiPendPh.slice()};
+  if(editEIIdx>=0)estItems[editEIIdx]=item;else estItems.push(item);
+  saveEI();renderEst();closeOv('eiOverlay');
+  toast(editEIIdx>=0?'✅ Updated':'✅ Item added');
+});
+function delEI(btn){if(!confirm('Delete?'))return;estItems.splice(parseInt(btn.getAttribute('data-idx')),1);saveEI();renderEst();toast('🗑 Deleted');}
+
+// ── PRODUCT PICKER ──
+function renderPicker(mode){
+  var id=mode==='fa'?'faPicker':'eiPicker';
+  var sel=mode==='fa'?faProd:eiProd;
+  var h='';
+  for(var i=0;i<products.length;i++){
+    var pr=products[i];var on=pr.id===sel?' on':'';
+    h+='<div class="popt'+on+'" data-pid="'+pr.id+'" data-mode="'+mode+'" onclick="selProd(this)">';
+    h+='<div class="po-l"><div class="po-em">'+pr.emoji+'</div><div><div class="po-nm">'+esc(pr.name)+'</div><div class="po-ct">'+esc(pr.cat)+'</div></div></div>';
+    h+='<div style="display:flex;align-items:center">';
+    if(mode==='ei')h+='<div class="po-pr">$'+parseFloat(pr.price).toFixed(2)+'/SF</div>';
+    h+='<div class="po-ck">✓</div></div></div>';
+  }
+  if(!h)h='<div style="padding:14px;color:#4d5560;font-size:12px;text-align:center">No products — add in 🗄️ Products</div>';
+  document.getElementById(id).innerHTML=h;
+}
+function selProd(el){
+  var mode=el.getAttribute('data-mode');var pid=el.getAttribute('data-pid');
+  if(mode==='fa')faProd=pid;else eiProd=pid;
+  var container=el.parentNode;
+  var opts=container.querySelectorAll('.popt');
+  for(var i=0;i<opts.length;i++)opts[i].className='popt';
+  el.className='popt on';
+  if(mode==='ei'){var pr=getProd(pid);if(pr){document.getElementById('ei_price').value=pr.price;updateEIHint();}}
+}
+
+// ── PHOTOS ──
+document.getElementById('faCamBtn').addEventListener('click',function(){document.getElementById('faCam').click();});
+document.getElementById('faGalBtn').addEventListener('click',function(){document.getElementById('faGal').click();});
+document.getElementById('eiCamBtn').addEventListener('click',function(){document.getElementById('eiCam').click();});
+document.getElementById('eiGalBtn').addEventListener('click',function(){document.getElementById('eiGal').click();});
+document.getElementById('faCam').addEventListener('change',function(){handlePH(this,'fa');});
+document.getElementById('faGal').addEventListener('change',function(){handlePH(this,'fa');});
+document.getElementById('eiCam').addEventListener('change',function(){handlePH(this,'ei');});
+document.getElementById('eiGal').addEventListener('change',function(){handlePH(this,'ei');});
+
+function handlePH(input,mode){
+  var arr=mode==='fa'?faPendPh:eiPendPh;
+  var files=input.files;if(!files||!files.length)return;
+  var space=6-arr.length;if(space<=0){toast('Max 6 photos');return;}
+  var count=Math.min(files.length,space);var done=0;
+  for(var i=0;i<count;i++){(function(f){var r=new FileReader();r.onload=function(e){arr.push(e.target.result);done++;if(done===count){renderPPGrid(mode);input.value='';}};r.readAsDataURL(f);})(files[i]);}
+}
+function renderPPGrid(mode){
+  var arr=mode==='fa'?faPendPh:eiPendPh;
+  var grid=document.getElementById(mode+'PhotoGrid');
+  var hint=document.getElementById(mode+'PhotoHint');
+  if(!arr.length){grid.innerHTML='';hint.style.display='none';return;}
+  var h='';
+  for(var i=0;i<arr.length;i++)h+='<div class="ppw"><img src="'+arr[i]+'"><button class="pp-del" data-mode="'+mode+'" data-i="'+i+'" onclick="rmPH(this)">×</button></div>';
+  grid.innerHTML=h;
+  document.getElementById(mode+'PhotoCount').textContent=arr.length;
+  hint.style.display='block';
+}
+function rmPH(btn){
+  var mode=btn.getAttribute('data-mode');var idx=parseInt(btn.getAttribute('data-i'));
+  var arr=mode==='fa'?faPendPh:eiPendPh;arr.splice(idx,1);renderPPGrid(mode);
+}
+function qkPhoto(mode,btn){
+  quickPhTarget={mode:mode,idx:parseInt(btn.getAttribute('data-idx'))};
+  var gal=mode==='field'?document.getElementById('faGal'):document.getElementById('eiGal');
+  gal.onchange=function(){
+    var arr=mode==='field'?fieldAreas:estItems;
+    var it=arr[quickPhTarget.idx];if(!it)return;
+    if(!it.photos)it.photos=[];
+    var space=6-it.photos.length;if(space<=0){toast('Max 6 photos');return;}
+    var files=gal.files;if(!files||!files.length)return;
+    var count=Math.min(files.length,space);var done=0;
+    for(var i=0;i<count;i++){(function(f){var r=new FileReader();r.onload=function(e){it.photos.push(e.target.result);done++;if(done===count){
+      if(mode==='field'){saveFA();renderFA();}else{saveEI();renderEst();}
+      toast('📷 '+done+' added');gal.onchange=null;gal.value='';
+    }};r.readAsDataURL(f);})(files[i]);}
+  };
+  gal.click();
+}
+
+// ── LIGHTBOX ──
+function openLB(img){
+  document.getElementById('lbImg').src=img.src;
+  document.getElementById('lbCap').textContent=img.alt||'';
+  document.getElementById('lb').className='lb on';
+}
+document.getElementById('lbClose').addEventListener('click',function(){document.getElementById('lb').className='lb';});
+document.getElementById('lb').addEventListener('click',function(e){if(e.target===this)this.className='lb';});
+
+// ── QUOTE FIELDS ──
+document.getElementById('qClient').addEventListener('click',function(){openFE('client','Client Name',quoteInfo.client);});
+document.getElementById('qAddress').addEventListener('click',function(){openFE('address','Job Address',quoteInfo.address);});
+function openFE(field,title,val){
+  curFieldEdit=field;
+  document.getElementById('feTitle').textContent=title;
+  document.getElementById('feInput').value=val||'';
+  openOv('feOverlay');
+}
+document.getElementById('feCancelBtn').addEventListener('click',function(){closeOv('feOverlay');});
+document.getElementById('feSaveBtn').addEventListener('click',function(){
+  quoteInfo[curFieldEdit]=document.getElementById('feInput').value.trim();
+  saveEI();renderEst();closeOv('feOverlay');
+});
+
+// ── IMPORT ──
+document.getElementById('importBarBtn').addEventListener('click',function(){
+  importSel={};
+  var h='';
+  for(var i=0;i<fieldAreas.length;i++){
+    importSel[i]=true;var a=fieldAreas[i];var pr=getProd(a.productId);var pn=pr?pr.name:'Unknown';
+    h+='<div class="imp-row"><div class="imp-chk on" data-idx="'+i+'" id="ichk'+i+'" onclick="togImp(this)">✓</div><div><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+esc(pn)+'</div></div></div>';
+  }
+  document.getElementById('importList').innerHTML=h;
+  openOv('importOverlay');
+});
+function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':'';}
+document.getElementById('importCancelBtn').addEventListener('click',function(){closeOv('importOverlay');});
+document.getElementById('importConfirmBtn').addEventListener('click',function(){
+  var added=0;
+  for(var i=0;i<fieldAreas.length;i++){
+    if(!importSel[i])continue;
+    var a=fieldAreas[i];var pr=getProd(a.productId);
+    estItems.push({name:a.name,productId:a.productId,sf:a.sf,price:pr?pr.price:0,notes:a.notes||'',photos:a.photos?a.photos.slice():[]});
+    added++;
+  }
+  saveEI();renderEst();closeOv('importOverlay');
+  toast('✅ '+added+' area'+(added>1?'s':'')+' imported');
+});
+
+// ── CONTRACT TABS ──
+document.getElementById('ctTab1').addEventListener('click',function(){showCtSec('preview',0);renderCtDoc();});
+document.getElementById('ctTab2').addEventListener('click',function(){showCtSec('edit',1);});
+document.getElementById('ctTab3').addEventListener('click',function(){showCtSec('sign',2);initSig();});
+function showCtSec(id,idx){
+  var secs=['preview','edit','sign'];var tabs=['ctTab1','ctTab2','ctTab3'];
+  for(var i=0;i<secs.length;i++){document.getElementById('ct-'+secs[i]).className='ct-sec';document.getElementById(tabs[i]).className='ct-tab';}
+  document.getElementById('ct-'+id).className='ct-sec on';document.getElementById(tabs[idx]).className='ct-tab on';
+}
+
+// ── CONTRACT TERMS ──
+function applyCtFields(){
+  document.getElementById('ctTitle').value=ctData.title||'INSULATION SERVICES AGREEMENT';
+  document.getElementById('ctIntro').value=ctData.intro||'This agreement is entered into between Green Idea Insulation ("Contractor") and the Client identified below. The Contractor agrees to perform insulation services as described in the Scope of Work, in a professional manner using quality materials appropriate for the application.';
+  document.getElementById('ctPayment').value=ctData.payment||'50% deposit required before work begins. Remaining balance due upon project completion. Accepted: check, cash, Zelle, or credit card (3% fee applies).';
+  document.getElementById('ctWarranty').value=ctData.warranty||'Contractor warrants all labor for 1 year from completion. Material warranties are provided by the manufacturer. Warranty is void if materials are altered or damaged by others after installation.';
+  document.getElementById('ctExtra').value=ctData.extra||'Client is responsible for clearing the work area before start date. Any unforeseen conditions requiring additional work will be discussed before proceeding.';
+}
+function saveCt(){
+  ctData.title=document.getElementById('ctTitle').value;
+  ctData.intro=document.getElementById('ctIntro').value;
+  ctData.payment=document.getElementById('ctPayment').value;
+  ctData.warranty=document.getElementById('ctWarranty').value;
+  ctData.extra=document.getElementById('ctExtra').value;
+  localStorage.setItem('fb5_ct',JSON.stringify(ctData));
+}
+document.getElementById('ctTitle').addEventListener('input',saveCt);
+document.getElementById('ctIntro').addEventListener('input',saveCt);
+document.getElementById('ctPayment').addEventListener('input',saveCt);
+document.getElementById('ctWarranty').addEventListener('input',saveCt);
+document.getElementById('ctExtra').addEventListener('input',saveCt);
+
+function renderCtDoc(){
+  var totals=calcTotals();
+  var today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  var title=document.getElementById('ctTitle').value||ctData.title||'INSULATION SERVICES AGREEMENT';
+  var intro=document.getElementById('ctIntro').value||ctData.intro||'';
+  var payment=document.getElementById('ctPayment').value||ctData.payment||'';
+  var warranty=document.getElementById('ctWarranty').value||ctData.warranty||'';
+  var extra=document.getElementById('ctExtra').value||ctData.extra||'';
+  var h='<div class="ct-dh"><div class="ct-dlogo">🌿</div><div class="ct-dco">'+esc(cfg.company)+'</div></div>';
+  if(cfg.contact||cfg.license)h+='<div class="ct-dcontact">'+esc(cfg.contact)+(cfg.license?' · Lic. '+esc(cfg.license):'')+'</div>';
+  h+='<hr class="ct-rule"><div class="ct-dtitle">'+esc(title)+'</div><div class="ct-dmeta">Quote #'+quoteNum+' · '+today+'</div>';
+  h+='<div class="ct-ig"><div class="ct-ic"><div class="ct-il">Client</div><div class="ct-iv">'+(quoteInfo.client||'—')+'</div></div><div class="ct-ic"><div class="ct-il">Address</div><div class="ct-iv">'+(quoteInfo.address||'—')+'</div></div></div>';
+  h+='<p style="font-size:13px;color:#444;line-height:1.7;margin-bottom:12px">'+esc(intro).replace(/\n/g,'<br>')+'</p>';
+  h+='<div class="ct-sh">Scope of Work</div>';
+  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);h+='<div class="ct-sr"><div class="ct-se">'+(pr?pr.emoji:'📦')+'</div><div class="ct-sd"><strong>'+esc(it.name)+'</strong> — '+(pr?esc(pr.name):'Custom')+(it.notes?'<br><em style="font-size:12px;color:#888">'+esc(it.notes)+'</em>':'')+'</div><div class="ct-sf">'+fmtN(it.sf)+' SF</div></div>';}
+  h+='<div class="ct-total"><span class="ct-tl">Total Contract Value</span><span class="ct-tv">'+fmt(totals.total)+'</span></div>';
+  h+='<div class="ct-th">Payment Terms</div><div class="ct-tb">'+esc(payment).replace(/\n/g,'<br>')+'</div>';
+  h+='<div class="ct-th">Warranty</div><div class="ct-tb">'+esc(warranty).replace(/\n/g,'<br>')+'</div>';
+  if(extra)h+='<div class="ct-th">Additional Terms</div><div class="ct-tb">'+esc(extra).replace(/\n/g,'<br>')+'</div>';
+  h+='<div class="ct-sig"><div class="ct-sigh">Acceptance &amp; Signature</div>';
+  if(sigData&&sigData.img){h+='<div class="ct-pill">✅ Signed</div><br><img src="'+sigData.img+'" style="max-width:180px;border-bottom:2px solid #1a1a2e"><br><div style="font-size:12px;color:#555">'+esc(sigData.name)+'</div><div style="font-size:12px;color:#888">'+esc(sigData.date)+'</div>';}
+  else{h+='<div style="display:flex;gap:20px;margin-top:8px"><div style="flex:1"><div style="border-bottom:2px solid #1a1a2e;height:44px;margin-bottom:4px"></div><div style="font-size:11px;color:#888">Client Signature &amp; Date</div></div><div style="flex:1"><div style="border-bottom:1px solid #ccc;height:44px;margin-bottom:4px"></div><div style="font-size:11px;color:#aaa">Contractor</div></div></div><p style="font-size:12px;color:#888;margin-top:12px">By signing, Client agrees to all terms.</p>';}
+  h+='</div>';
+  document.getElementById('ctDoc').innerHTML=h;
+}
+
+// ── SIGNATURE ──
+var sigC,sigCtx,sigDraw=false,sigMark=false;
+function initSig(){
+  sigC=document.getElementById('sigCanvas');if(!sigC)return;
+  sigCtx=sigC.getContext('2d');sigCtx.clearRect(0,0,sigC.width,sigC.height);sigMark=false;
+  function pos(e){var r=sigC.getBoundingClientRect();var sx=sigC.width/r.width,sy=sigC.height/r.height;return{x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy};}
+  sigC.onmousedown=function(e){sigDraw=true;var p=pos(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y);};
+  sigC.onmousemove=function(e){if(!sigDraw)return;var p=pos(e);sigCtx.lineTo(p.x,p.y);sigCtx.strokeStyle='#1a1a2e';sigCtx.lineWidth=3;sigCtx.lineCap='round';sigCtx.stroke();sigMark=true;};
+  sigC.onmouseup=function(){sigDraw=false;};
+  sigC.ontouchstart=function(e){e.preventDefault();sigDraw=true;var p=pos(e.touches[0]);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y);};
+  sigC.ontouchmove=function(e){e.preventDefault();if(!sigDraw)return;var p=pos(e.touches[0]);sigCtx.lineTo(p.x,p.y);sigCtx.strokeStyle='#1a1a2e';sigCtx.lineWidth=3;sigCtx.lineCap='round';sigCtx.stroke();sigMark=true;};
+  sigC.ontouchend=function(){sigDraw=false;};
+}
+document.getElementById('clearSigBtn').addEventListener('click',function(){if(sigCtx)sigCtx.clearRect(0,0,sigC.width,sigC.height);sigMark=false;});
+document.getElementById('saveSigBtn').addEventListener('click',function(){
+  if(!sigMark){toast('Draw your signature first');return;}
+  var name=document.getElementById('sigName').value.trim();
+  if(!name){toast('Enter client name first');return;}
+  var today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  sigData={img:sigC.toDataURL('image/png'),name:name,date:today};
+  localStorage.setItem('fb5_sg',JSON.stringify(sigData));
+  document.getElementById('sigSaved').style.display='block';
+  document.getElementById('sigImg').src=sigData.img;
+  document.getElementById('sigMeta').textContent='Signed: '+name+' · '+today;
+  toast('✅ Signature saved!');
+});
+
+// ── PRODUCTS ──
+function renderProds(){
+  var list=document.getElementById('productList');
+  if(!products.length){list.innerHTML='<div class="empty"><div class="empty-icon">🗄️</div><div class="empty-title">No products</div></div>';return;}
+  var cats={},catOrder=[];
+  for(var i=0;i<products.length;i++){var c=products[i].cat||'Other';if(!cats[c]){cats[c]=[];catOrder.push(c);}cats[c].push({p:products[i],idx:i});}
+  var h='';
+  for(var ci=0;ci<catOrder.length;ci++){
+    var cat=catOrder[ci];h+='<div class="cat-g"><div class="cat-lbl">'+esc(cat)+'</div>';
+    var grp=cats[cat];
+    for(var j=0;j<grp.length;j++){var pr=grp[j].p;var idx=grp[j].idx;
+      h+='<div class="prod-card"><div class="prod-em">'+pr.emoji+'</div><div class="prod-info"><div class="prod-name">'+esc(pr.name)+'</div>'+(pr.desc?'<div class="prod-desc">'+esc(pr.desc)+'</div>':'')+'</div><div class="prod-r"><div><div class="prod-price">$'+parseFloat(pr.price).toFixed(2)+'</div><div class="prod-unit">/SF</div></div><button class="prod-eb" data-idx="'+idx+'" onclick="openProdModal(this)">✏️</button></div></div>';
+    }
+    h+='</div>';
+  }
+  list.innerHTML=h;
+}
+document.getElementById('addProdBtn').addEventListener('click',function(){openProdModal(null);});
+function openProdModal(btn){
+  editProdIdx=btn?parseInt(btn.getAttribute('data-idx')):-1;
+  document.getElementById('prodTitle').textContent=editProdIdx>=0?'Edit Product':'Add Product';
+  document.getElementById('prodSaveBtn').textContent=editProdIdx>=0?'Update':'Save';
+  document.getElementById('prodDelRow').style.display=editProdIdx>=0?'block':'none';
+  if(editProdIdx>=0){var pr=products[editProdIdx];document.getElementById('p_name').value=pr.name;document.getElementById('p_emoji').value=pr.emoji;document.getElementById('p_price').value=pr.price;document.getElementById('p_cat').value=pr.cat;document.getElementById('p_desc').value=pr.desc||'';}
+  else{document.getElementById('p_name').value='';document.getElementById('p_emoji').value='📦';document.getElementById('p_price').value='';document.getElementById('p_cat').value='Other';document.getElementById('p_desc').value='';}
+  openOv('prodOverlay');
+}
+document.getElementById('prodCancelBtn').addEventListener('click',function(){closeOv('prodOverlay');});
+document.getElementById('prodSaveBtn').addEventListener('click',function(){
+  var name=document.getElementById('p_name').value.trim();
+  var emoji=document.getElementById('p_emoji').value.trim()||'📦';
+  var price=parseFloat(document.getElementById('p_price').value);
+  var cat=document.getElementById('p_cat').value;
+  var desc=document.getElementById('p_desc').value.trim();
+  if(!name){toast('Add a product name');return;}
+  if(!price||price<=0){toast('Enter a valid price');return;}
+  var prod={name:name,emoji:emoji,price:price,cat:cat,desc:desc};
+  if(editProdIdx>=0){prod.id=products[editProdIdx].id;products[editProdIdx]=prod;}
+  else{prod.id='p_'+Date.now();products.push(prod);}
+  savePR();renderProds();closeOv('prodOverlay');
+  toast(editProdIdx>=0?'✅ Updated':'✅ Product added');
+});
+document.getElementById('prodDelBtn').addEventListener('click',function(){
+  if(!confirm('Delete this product?'))return;
+  products.splice(editProdIdx,1);savePR();renderProds();closeOv('prodOverlay');toast('🗑 Deleted');
+});
+
+// ── SETTINGS ──
+function applySettings(){
+  document.getElementById('cfgMarkup').value=cfg.markup;
+  document.getElementById('cfgTax').value=cfg.taxRate;
+  document.getElementById('cfgCompany').value=cfg.company;
+  document.getElementById('cfgContact').value=cfg.contact;
+  document.getElementById('cfgLicense').value=cfg.license||'';
+}
+function saveSettings(){
+  cfg.markup=parseFloat(document.getElementById('cfgMarkup').value)||0;
+  cfg.taxRate=parseFloat(document.getElementById('cfgTax').value)||0;
+  cfg.company=document.getElementById('cfgCompany').value;
+  cfg.contact=document.getElementById('cfgContact').value;
+  cfg.license=document.getElementById('cfgLicense').value;
+  saveCfg();renderEst();
+}
+document.getElementById('cfgMarkup').addEventListener('change',saveSettings);
+document.getElementById('cfgTax').addEventListener('change',saveSettings);
+document.getElementById('cfgCompany').addEventListener('change',saveSettings);
+document.getElementById('cfgContact').addEventListener('change',saveSettings);
+document.getElementById('cfgLicense').addEventListener('change',saveSettings);
+
+// ── EXPORT ──
+function buildQuoteText(){
+  var totals=calcTotals();
+  var lines=[cfg.company,cfg.contact,'','INSULATION ESTIMATE','Quote #'+quoteNum,new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),'','Client: '+(quoteInfo.client||'N/A'),'Address: '+(quoteInfo.address||'N/A'),'','─────────────────────────'];
+  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);lines.push('  '+fmtN(it.sf)+' SF × $'+it.price.toFixed(2)+'/SF = '+fmt(c));if(it.notes)lines.push('  Note: '+it.notes);}
+  lines.push('─────────────────────────','Subtotal: '+fmt(totals.sub));
+  if(cfg.taxRate>0)lines.push('Tax ('+cfg.taxRate+'%): '+fmt(totals.tax));
+  lines.push('TOTAL: '+fmt(totals.total),'','Thank you for your business!');
+  return lines.join('\n');
+}
+document.getElementById('copyQuoteBtn').addEventListener('click',function(){
+  var t=buildQuoteText();
+  if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast('📋 Copied!');});
+  else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 Copied!');}
+});
+document.getElementById('shareQuoteBtn').addEventListener('click',function(){
+  if(navigator.share)navigator.share({title:'Quote #'+quoteNum,text:buildQuoteText()}).catch(function(){});
+  else document.getElementById('copyQuoteBtn').click();
+});
+document.getElementById('copyCtBtn').addEventListener('click',function(){
+  var el=document.getElementById('ctDoc');var t=el?el.innerText:'';
+  if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast('📋 Copied!');});
+});
+document.getElementById('shareCtBtn').addEventListener('click',function(){
+  var el=document.getElementById('ctDoc');var t=el?el.innerText:'';
+  if(navigator.share)navigator.share({title:'Contract #'+quoteNum,text:t}).catch(function(){});
+  else document.getElementById('copyCtBtn').click();
+});
+
+// ── OVERLAYS CLOSE ON BACKDROP ──
+var ovs=['faOverlay','eiOverlay','prodOverlay','feOverlay','importOverlay'];
+for(var oi=0;oi<ovs.length;oi++){
+  (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(ovs[oi]);
+}
+
+// ── BOOT ──
+load();
+</script>
+</body>
+</html>
