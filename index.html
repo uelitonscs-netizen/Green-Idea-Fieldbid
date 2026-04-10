@@ -9,20 +9,17 @@
 <meta name="apple-mobile-web-app-title" content="FieldBid">
 <link rel="manifest" href="manifest.json">
 <title>FieldBid</title>
-<meta name="app-version" content="v9">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0d1117;color:#e6edf3;font-family:'Syne',sans-serif;min-height:100vh;overscroll-behavior:none;}
 button{font-family:'Syne',sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 
-/* SCREENS */
-.screen{display:none;}
-#home{display:flex;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;gap:14px;}
+#home{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;gap:14px;}
+#field-app,#est-app{display:none;}
 
-/* HOME */
 .brand{text-align:center;margin-bottom:32px;}
-.brand-logo{width:90px;height:90px;margin:0 auto 16px;border-radius:22px;overflow:hidden;background:#f0faf0;}
+.brand-logo{width:90px;height:90px;margin:0 auto 16px;border-radius:22px;overflow:hidden;}
 .brand-logo svg{width:90px;height:90px;}
 .brand-name{font-size:34px;font-weight:800;letter-spacing:-1.5px;color:#e6edf3;line-height:1;}
 .brand-sub{font-size:12px;color:#7d8590;text-transform:uppercase;letter-spacing:1.2px;margin-top:6px;}
@@ -41,39 +38,35 @@ button{font-family:'Syne',sans-serif;cursor:pointer;-webkit-tap-highlight-color:
 .mode-sub{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#7d8590;margin-top:2px;}
 .mode-desc{font-size:13px;color:#7d8590;line-height:1.6;}
 
-/* APP HEADER */
 .app-hd{background:#161b22;border-bottom:1px solid #2a3340;padding:12px 16px;position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;}
 .back-btn{background:#1e2530;border:1px solid #2a3340;border-radius:10px;padding:8px 14px;color:#e6edf3;font-size:13px;font-weight:700;}
 .back-btn:active{background:#2a3340;}
 .hd-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .hd-icon.field{background:rgba(240,160,44,.12);}
 .hd-icon.est{background:rgba(63,185,80,.1);}
-.hd-info{flex:1;}
-.hd-title{font-size:15px;font-weight:800;color:#e6edf3;}
+.hd-info{flex:1;min-width:0;}
+.hd-title{font-size:15px;font-weight:800;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hd-sub{font-size:11px;color:#7d8590;margin-top:1px;}
 .hd-action{padding:8px 14px;background:#1e2530;border:1px solid #2a3340;border-radius:8px;font-size:12px;font-weight:700;color:#7d8590;}
 .hd-action:active{background:#2a3340;}
 
-/* TABS */
 .tabs{display:flex;background:#161b22;border-bottom:1px solid #2a3340;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
 .tabs::-webkit-scrollbar{display:none;}
 .tab{flex:none;padding:0 16px;height:44px;font-size:12px;font-weight:700;color:#7d8590;background:none;border:none;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:5px;}
 .tab.on{color:#3fb950;border-bottom-color:#3fb950;}
 .tab.on.f{color:#f0a02c;border-bottom-color:#f0a02c;}
 
-/* PAGES */
 .page{display:none;padding:16px;padding-bottom:90px;}
 .page.on{display:block;}
 
-/* STATS */
 .stat-row{display:flex;gap:10px;margin-bottom:14px;}
 .stat{flex:1;background:#161b22;border:1px solid #2a3340;border-radius:12px;padding:12px 14px;}
-.stat.g{background:rgba(63,185,80,.1);border-color:#238636;}
 .stat.a{background:rgba(240,160,44,.08);border-color:rgba(240,160,44,.3);}
+.stat.g{background:rgba(63,185,80,.1);border-color:#238636;}
 .stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#7d8590;margin-bottom:4px;}
 .stat-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:#e6edf3;}
-.stat.g .stat-val{color:#3fb950;}
 .stat.a .stat-val{color:#f0a02c;}
+.stat.g .stat-val{color:#3fb950;}
 .stat-note{font-size:10px;color:#7d8590;margin-top:3px;font-family:'DM Mono',monospace;}
 
 .total-bar{background:rgba(63,185,80,.1);border:1px solid #238636;border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
@@ -81,12 +74,10 @@ button{font-family:'Syne',sans-serif;cursor:pointer;-webkit-tap-highlight-color:
 .total-val{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:#3fb950;}
 .total-note{font-size:10px;color:#7d8590;margin-top:2px;text-align:right;}
 
-/* SECTION */
 .sec{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .sec-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7d8590;}
 .sec-ct{font-size:11px;color:#4d5560;font-family:'DM Mono',monospace;}
 
-/* CARDS */
 .cards{display:flex;flex-direction:column;gap:8px;}
 .card{background:#161b22;border:1px solid #2a3340;border-radius:12px;overflow:hidden;}
 .card-photos{display:flex;gap:6px;padding:10px 12px 0;overflow-x:auto;scrollbar-width:none;}
@@ -110,15 +101,13 @@ button{font-family:'Syne',sans-serif;cursor:pointer;-webkit-tap-highlight-color:
 .ca.del{color:#f85149;}
 .ca.ph{color:#58a6ff;}
 
-/* IMPORT */
 .import-bar{background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.2);border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
-.import-bar-icon{font-size:20px;flex-shrink:0;}
-.import-bar-text{flex:1;}
-.import-bar-title{font-size:13px;font-weight:700;color:#58a6ff;}
-.import-bar-sub{font-size:11px;color:#7d8590;margin-top:2px;}
-.import-bar-btn{padding:9px 14px;background:#58a6ff;color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;}
+.import-icon{font-size:20px;flex-shrink:0;}
+.import-text{flex:1;}
+.import-title{font-size:13px;font-weight:700;color:#58a6ff;}
+.import-sub{font-size:11px;color:#7d8590;margin-top:2px;}
+.import-btn{padding:9px 14px;background:#58a6ff;color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;}
 
-/* QUOTE */
 .q-info{background:#161b22;border:1px solid #2a3340;border-radius:12px;margin-bottom:14px;overflow:hidden;}
 .q-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #2a3340;}
 .q-row:last-child{border-bottom:none;}
@@ -143,7 +132,6 @@ button{font-family:'Syne',sans-serif;cursor:pointer;-webkit-tap-highlight-color:
 .act-btn{flex:1;height:44px;background:#161b22;border:1px solid #2a3340;border-radius:10px;font-size:12px;font-weight:700;color:#7d8590;display:flex;align-items:center;justify-content:center;gap:5px;}
 .act-btn:active{background:#1e2530;color:#e6edf3;}
 
-/* WORK ORDER */
 .wo-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .lang-grp{display:flex;background:#1e2530;border:1px solid #2a3340;border-radius:8px;overflow:hidden;}
 .lang-btn{padding:8px 18px;font-size:12px;font-weight:700;background:none;border:none;color:#7d8590;}
@@ -170,12 +158,11 @@ button{font-family:'Syne',sans-serif;cursor:pointer;-webkit-tap-highlight-color:
 .wo-photos::-webkit-scrollbar{display:none;}
 .wo-photo{flex-shrink:0;width:96px;height:96px;border-radius:10px;object-fit:cover;border:1px solid #2a3340;cursor:pointer;}
 .wo-note{margin:0 14px 14px;background:rgba(240,160,44,.06);border:1px solid rgba(240,160,44,.2);border-radius:8px;padding:10px 12px;font-size:13px;color:#f0a02c;line-height:1.5;}
-.wo-ck{display:flex;align-items:center;padding:11px 14px;border-top:1px solid #2a3340;gap:10px;cursor:pointer;width:100%;background:none;border-left:none;border-right:none;border-bottom:none;font-family:'Syne',sans-serif;}
+.wo-ck{display:flex;align-items:center;padding:11px 14px;border-top:1px solid #2a3340;gap:10px;width:100%;background:none;border-left:none;border-right:none;border-bottom:none;}
 .wo-cb{width:22px;height:22px;border:2px solid #2a3340;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;}
 .wo-cb.done{background:#3fb950;border-color:#3fb950;color:#000;}
 .wo-cl{font-size:12px;color:#7d8590;font-weight:600;}
 
-/* CONTRACT */
 .ct-tabs{display:flex;background:#161b22;border:1px solid #2a3340;border-radius:10px;overflow:hidden;margin-bottom:16px;}
 .ct-tab{flex:1;height:40px;font-size:12px;font-weight:700;background:none;border:none;color:#7d8590;text-transform:uppercase;letter-spacing:.4px;}
 .ct-tab.on{background:#58a6ff;color:#fff;}
@@ -209,7 +196,6 @@ button{font-family:'Syne',sans-serif;cursor:pointer;-webkit-tap-highlight-color:
 .sig-wrap{background:#fff;border-radius:10px 10px 0 0;border-bottom:2px solid #1a1a2e;}
 canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-action:none;}
 
-/* PRODUCTS */
 .cat-g{margin-bottom:18px;}
 .cat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#4d5560;display:flex;align-items:center;gap:8px;margin-bottom:8px;}
 .cat-lbl::after{content:'';flex:1;height:1px;background:#2a3340;}
@@ -225,7 +211,6 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .prod-eb:active{background:#2a3340;}
 .prod-note{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.15);border-radius:12px;padding:11px 14px;font-size:12px;color:#7d8590;line-height:1.6;margin-bottom:14px;}
 
-/* SETTINGS */
 .st-g{margin-bottom:22px;}
 .st-t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#4d5560;padding-bottom:8px;border-bottom:1px solid #2a3340;margin-bottom:10px;}
 .st-row{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:#161b22;border:1px solid #2a3340;border-radius:12px;margin-bottom:8px;}
@@ -235,19 +220,35 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .st-inp{background:#0d1117;border:1px solid #2a3340;border-radius:6px;padding:8px 10px;font-family:'DM Mono',monospace;font-size:14px;color:#e6edf3;width:72px;text-align:right;outline:none;}
 .st-inp:focus{border-color:#3fb950;}
 
-/* EMPTY */
+/* Project list */
+.proj-item{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;margin-bottom:6px;}
+.proj-item.active{background:rgba(240,160,44,.12);border:1px solid rgba(240,160,44,.4);}
+.proj-item.inactive{background:#1e2530;border:1px solid #2a3340;}
+.proj-btn{flex:1;text-align:left;background:none;border:none;padding:0;}
+.proj-name{font-size:13px;font-weight:700;}
+.proj-item.active .proj-name{color:#f0a02c;}
+.proj-item.inactive .proj-name{color:#e6edf3;}
+.proj-meta{font-size:11px;color:#7d8590;font-family:'DM Mono',monospace;margin-top:2px;}
+.proj-del{width:30px;height:30px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.2);border-radius:6px;color:#f85149;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.proj-del:active{background:rgba(248,81,73,.2);}
+
+/* Measurement modes */
+.mmode-row{display:flex;gap:6px;margin-bottom:14px;}
+.mmode{flex:1;padding:10px 6px;background:#1e2530;border:1px solid #2a3340;border-radius:10px;font-size:12px;font-weight:700;color:#7d8590;line-height:1.4;text-align:center;}
+.mmode.on{background:rgba(240,160,44,.15);border-color:rgba(240,160,44,.5);color:#f0a02c;}
+.mmode:active{opacity:.8;}
+.mmode span{font-size:9px;font-weight:400;display:block;}
+
 .empty{text-align:center;padding:48px 20px;}
 .empty-icon{font-size:36px;margin-bottom:10px;opacity:.6;}
 .empty-title{font-size:14px;font-weight:700;color:#7d8590;}
 .empty-body{font-size:12px;color:#4d5560;margin-top:4px;}
 
-/* FAB */
 .fab{position:fixed;bottom:24px;right:20px;width:56px;height:56px;border:none;border-radius:50%;font-size:26px;display:flex;align-items:center;justify-content:center;z-index:40;transition:transform .1s;}
 .fab:active{transform:scale(.92);}
 .fab.f{background:#f0a02c;color:#000;box-shadow:0 4px 18px rgba(240,160,44,.4);}
 .fab.e{background:#3fb950;color:#000;box-shadow:0 4px 18px rgba(63,185,80,.4);}
 
-/* MODALS */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end;}
 .overlay.on{display:flex;}
 .modal{width:100%;background:#161b22;border-radius:20px 20px 0 0;border-top:1px solid #2a3340;padding:20px 20px 48px;max-height:93vh;overflow-y:auto;animation:slideUp .22s ease-out;}
@@ -263,7 +264,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .fta{width:100%;background:#0d1117;border:1px solid #2a3340;border-radius:10px;padding:12px 14px;font-family:'Syne',sans-serif;font-size:13px;color:#e6edf3;outline:none;resize:vertical;min-height:80px;}
 .fta:focus{border-color:#3fb950;}
 .prod-picker{border:1px solid #2a3340;border-radius:10px;background:#0d1117;max-height:200px;overflow-y:auto;}
-.popt{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #2a3340;cursor:pointer;width:100%;background:none;border-left:none;border-right:none;border-top:none;font-family:'Syne',sans-serif;text-align:left;}
+.popt{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #2a3340;width:100%;background:none;border-left:none;border-right:none;border-top:none;text-align:left;}
 .popt:last-child{border-bottom:none;}
 .popt.on{background:rgba(63,185,80,.1);}
 .po-l{display:flex;align-items:center;gap:10px;}
@@ -283,6 +284,9 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .pp-del{position:absolute;top:-5px;right:-5px;width:18px;height:18px;background:#f85149;border:none;border-radius:50%;font-size:11px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;}
 .hint{font-size:11px;color:#7d8590;margin-top:4px;font-family:'DM Mono',monospace;}
 .hint strong{color:#3fb950;}
+.calc-result{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.2);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.calc-sf{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:#3fb950;}
+.calc-bd{font-size:11px;color:#7d8590;text-align:right;font-family:'DM Mono',monospace;line-height:1.6;}
 .btn-row{display:flex;gap:10px;margin-top:20px;}
 .btn{flex:1;height:50px;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;transition:opacity .15s;}
 .btn:active{opacity:.8;}
@@ -290,39 +294,24 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .ba{background:#f0a02c;color:#000;}
 .bs{background:#1e2530;color:#7d8590;}
 .bd{background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.2);}
-
-/* IMPORT REVIEW */
 .imp-row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid #2a3340;gap:12px;}
 .imp-row:last-child{border-bottom:none;}
-.imp-chk{width:22px;height:22px;border:2px solid #2a3340;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;background:none;padding:0;cursor:pointer;}
+.imp-chk{width:22px;height:22px;border:2px solid #2a3340;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;background:none;padding:0;}
 .imp-chk.on{background:#58a6ff;border-color:#58a6ff;color:#fff;}
 .imp-name{font-size:13px;font-weight:700;color:#e6edf3;}
 .imp-meta{font-size:11px;color:#7d8590;font-family:'DM Mono',monospace;margin-top:2px;}
-
-/* LIGHTBOX */
 .lb{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;}
 .lb.on{display:flex;}
 .lb img{max-width:96vw;max-height:80vh;border-radius:10px;object-fit:contain;}
 .lb-x{position:absolute;top:16px;right:16px;width:36px;height:36px;background:rgba(255,255,255,.1);border:none;border-radius:50%;font-size:18px;color:#fff;display:flex;align-items:center;justify-content:center;}
 .lb-cap{margin-top:12px;font-size:12px;color:#7d8590;}
-
-.mmode{flex:1;padding:10px 6px;background:#1e2530;border:1px solid #2a3340;border-radius:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#7d8590;line-height:1.4;text-align:center;cursor:pointer;}
-.mmode.on{background:rgba(240,160,44,.15);border-color:rgba(240,160,44,.5);color:#f0a02c;}
-.mmode:active{opacity:.8;}
 .toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-10px);background:#3fb950;color:#000;font-size:13px;font-weight:700;padding:10px 22px;border-radius:20px;opacity:0;pointer-events:none;transition:all .2s;white-space:nowrap;z-index:300;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
-
-@media print{
-  #home,.app-hd,.tabs,.fab,.act-row,.wo-bar,.card-acts,button{display:none!important;}
-  body{background:#fff;color:#000;}
-  .page{display:block!important;padding:0;}
-  .card{background:#fff;border:1px solid #ccc;}
-}
+@media print{#home,.app-hd,.tabs,.fab,.act-row,.wo-bar,.card-acts,button{display:none!important;}body{background:#fff;color:#000;}.page{display:block!important;padding:0;}.card{background:#fff;border:1px solid #ccc;}}
 </style>
 </head>
 <body>
 
-<!-- HOME -->
 <div id="home">
   <div class="brand">
     <div class="brand-logo">
@@ -340,40 +329,25 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div class="brand-name">FieldBid</div>
     <div class="brand-sub">by Green Idea Insulation</div>
   </div>
-
   <button class="mode-btn field" id="btnField">
-    <div class="mode-top">
-      <div class="mode-icon">📐</div>
-      <div>
-        <div class="mode-title">Field Takeoff</div>
-        <div class="mode-sub">On-site measuring</div>
-      </div>
-    </div>
+    <div class="mode-top"><div class="mode-icon">📐</div><div><div class="mode-title">Field Takeoff</div><div class="mode-sub">On-site measuring</div></div></div>
     <div class="mode-desc">Measure areas, record square footage, take photos and field notes. No pricing involved.</div>
   </button>
-
   <button class="mode-btn est" id="btnEst">
-    <div class="mode-top">
-      <div class="mode-icon">💼</div>
-      <div>
-        <div class="mode-title">Estimator</div>
-        <div class="mode-sub">Quotes &amp; contracts</div>
-      </div>
-    </div>
+    <div class="mode-top"><div class="mode-icon">💼</div><div><div class="mode-title">Estimator</div><div class="mode-sub">Quotes &amp; contracts</div></div></div>
     <div class="mode-desc">Build estimates, generate quotes and contracts with client signature.</div>
   </button>
 </div>
 
-<!-- FIELD APP -->
-<div id="field-app" class="screen">
+<div id="field-app">
   <div class="app-hd">
     <button class="back-btn" id="backField">← Back</button>
     <div class="hd-icon field">📐</div>
-    <div class="hd-info" id="fieldJobInfo" style="cursor:pointer">
-      <div class="hd-title" id="fieldJobName" style="color:#f0a02c">Tap to set project</div>
-      <div class="hd-sub" id="fieldJobSub">tap to name or switch</div>
+    <div class="hd-info">
+      <div class="hd-title" id="fieldProjName">Tap to set project</div>
+      <div class="hd-sub" id="fieldProjSub">tap to name or switch</div>
     </div>
-    <button class="hd-action" id="newJobBtn">+ New</button>
+    <button class="hd-action" id="btnOpenProj">+ Project</button>
   </div>
   <div class="tabs">
     <button class="tab on f" id="ft1">📐 Areas</button>
@@ -389,26 +363,19 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
   </div>
   <div id="fp-wo" class="page">
     <div class="wo-bar">
-      <div class="lang-grp">
-        <button class="lang-btn on" id="fLangEN">EN</button>
-        <button class="lang-btn" id="fLangPT">PT</button>
-      </div>
-      <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+      <div class="lang-grp"><button class="lang-btn on" id="fLangEN">EN</button><button class="lang-btn" id="fLangPT">PT</button></div>
+      <button class="print-btn" id="fPrintBtn">🖨️ Print</button>
     </div>
     <div id="fieldWO"></div>
   </div>
 </div>
 <button class="fab f" id="fieldFab" style="display:none">+</button>
 
-<!-- EST APP -->
-<div id="est-app" class="screen">
+<div id="est-app">
   <div class="app-hd">
     <button class="back-btn" id="backEst">← Back</button>
     <div class="hd-icon est">💼</div>
-    <div class="hd-info">
-      <div class="hd-title">Estimator</div>
-      <div class="hd-sub">Quote #<span id="estQNum">1001</span></div>
-    </div>
+    <div class="hd-info"><div class="hd-title">Estimator</div><div class="hd-sub">Quote #<span id="estQNum">1001</span></div></div>
     <button class="hd-action" id="newEstBtn">New</button>
   </div>
   <div class="tabs">
@@ -419,28 +386,20 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <button class="tab" id="et5">🗄️ Products</button>
     <button class="tab" id="et6">⚙️ Settings</button>
   </div>
-
   <div id="ep-items" class="page on">
     <div class="import-bar" id="importBar" style="display:none">
-      <div class="import-bar-icon">📐</div>
-      <div class="import-bar-text">
-        <div class="import-bar-title">Field Takeoff Available</div>
-        <div class="import-bar-sub" id="importBarSub"></div>
-      </div>
-      <button class="import-bar-btn" id="importBarBtn">Review &amp; Import</button>
+      <div class="import-icon">📐</div>
+      <div class="import-text"><div class="import-title">Field Takeoff Available</div><div class="import-sub" id="importBarSub"></div></div>
+      <button class="import-btn" id="importBarBtn">Review &amp; Import</button>
     </div>
     <div class="stat-row">
       <div class="stat"><div class="stat-lbl">Total SF</div><div class="stat-val" id="eTotalSF">0</div><div class="stat-note">sq ft</div></div>
       <div class="stat"><div class="stat-lbl">Items</div><div class="stat-val" id="eItemCount">0</div><div class="stat-note">line items</div></div>
     </div>
-    <div class="total-bar">
-      <div><div class="total-lbl">Estimated Total</div><div class="total-note" id="eTotalNote">with markup</div></div>
-      <div class="total-val" id="eTotalCost">$0.00</div>
-    </div>
+    <div class="total-bar"><div><div class="total-lbl">Estimated Total</div><div class="total-note" id="eTotalNote">with markup</div></div><div class="total-val" id="eTotalCost">$0.00</div></div>
     <div class="sec"><span class="sec-lbl">Line Items</span><span class="sec-ct" id="eItemSub"></span></div>
     <div id="estItemList" class="cards"></div>
   </div>
-
   <div id="ep-quote" class="page">
     <div class="q-info">
       <div class="q-row"><span class="q-lbl">Client</span><span class="q-val tap" id="qClient">Tap to add</span></div>
@@ -460,33 +419,27 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div class="act-row">
       <button class="act-btn" id="copyQuoteBtn">📋 Copy</button>
       <button class="act-btn" id="shareQuoteBtn">📤 Share</button>
-      <button class="act-btn" onclick="window.print()">🖨️ Print</button>
+      <button class="act-btn" id="printQuoteBtn">🖨️ Print</button>
     </div>
   </div>
-
   <div id="ep-wo" class="page">
     <div class="wo-bar">
-      <div class="lang-grp">
-        <button class="lang-btn on" id="eLangEN">EN</button>
-        <button class="lang-btn" id="eLangPT">PT</button>
-      </div>
-      <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+      <div class="lang-grp"><button class="lang-btn on" id="eLangEN">EN</button><button class="lang-btn" id="eLangPT">PT</button></div>
+      <button class="print-btn" id="ePrintBtn">🖨️ Print</button>
     </div>
     <div id="estWO"></div>
   </div>
-
   <div id="ep-contract" class="page">
     <div class="ct-tabs">
       <button class="ct-tab on" id="ctTab1">📄 Preview</button>
       <button class="ct-tab" id="ctTab2">✏️ Terms</button>
       <button class="ct-tab" id="ctTab3">✍️ Sign</button>
     </div>
-    <div id="ct-preview" class="ct-sec on">
-      <div class="ct-doc" id="ctDoc"></div>
+    <div id="ct-preview" class="ct-sec on"><div class="ct-doc" id="ctDoc"></div>
       <div class="act-row" style="margin-top:14px">
         <button class="act-btn" id="copyCtBtn">📋 Copy</button>
         <button class="act-btn" id="shareCtBtn">📤 Share</button>
-        <button class="act-btn" onclick="window.print()">🖨️ Print</button>
+        <button class="act-btn" id="printCtBtn">🖨️ Print</button>
       </div>
     </div>
     <div id="ct-edit" class="ct-sec">
@@ -498,8 +451,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     </div>
     <div id="ct-sign" class="ct-sec">
       <div class="fg"><label class="fl">Client Full Name</label><input class="fi" id="sigName" type="text" placeholder="Client name"></div>
-      <div class="fg">
-        <label class="fl">Signature</label>
+      <div class="fg"><label class="fl">Signature</label>
         <div class="sig-wrap"><canvas id="sigCanvas" width="800" height="160"></canvas></div>
         <div class="btn-row" style="margin-top:8px">
           <button class="btn bs" id="clearSigBtn" style="flex:none;padding:0 18px">🗑 Clear</button>
@@ -513,21 +465,17 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       </div>
     </div>
   </div>
-
   <div id="ep-products" class="page">
     <div class="sec"><span class="sec-lbl">Product Database</span><button class="btn bg" id="addProdBtn" style="flex:none;height:36px;padding:0 16px;font-size:12px">+ Add</button></div>
     <div class="prod-note">Tap <strong style="color:#3fb950">+ Add</strong> for custom products. Prices only visible in Estimator.</div>
     <div id="productList"></div>
   </div>
-
   <div id="ep-settings" class="page">
-    <div class="st-g">
-      <div class="st-t">Markup &amp; Tax</div>
+    <div class="st-g"><div class="st-t">Markup &amp; Tax</div>
       <div class="st-row"><div><div class="st-lbl">Markup</div><div class="st-sub">On top of material cost</div></div><div style="display:flex;align-items:center;gap:4px"><input class="st-inp" type="number" id="cfgMarkup" value="30"><span style="color:#7d8590">%</span></div></div>
       <div class="st-row"><div><div class="st-lbl">Tax Rate</div><div class="st-sub">Applied to final total</div></div><div style="display:flex;align-items:center;gap:4px"><input class="st-inp" type="number" id="cfgTax" value="0"><span style="color:#7d8590">%</span></div></div>
     </div>
-    <div class="st-g">
-      <div class="st-t">Company Info</div>
+    <div class="st-g"><div class="st-t">Company Info</div>
       <div class="st-row stacked"><div class="st-lbl">Company Name</div><input class="fi" type="text" id="cfgCompany" value="Green Idea Insulation" style="background:#0d1117"></div>
       <div class="st-row stacked" style="margin-top:8px"><div class="st-lbl">Phone / Email</div><input class="fi" type="text" id="cfgContact" placeholder="(617) 000-0000" style="background:#0d1117"></div>
       <div class="st-row stacked" style="margin-top:8px"><div class="st-lbl">License #</div><input class="fi" type="text" id="cfgLicense" placeholder="MA Lic. #000000" style="background:#0d1117"></div>
@@ -536,31 +484,20 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 </div>
 <button class="fab e" id="estFab" style="display:none">+</button>
 
-
 <!-- PROJECT MODAL -->
 <div class="overlay" id="projOverlay">
   <div class="modal">
     <div class="mhandle"></div>
     <div class="mtitle">Projects</div>
-
-    <!-- Create new project -->
     <div class="fg">
       <label class="fl">New Project Name</label>
       <div style="display:flex;gap:8px">
-        <input class="fi" id="newProjName" type="text" placeholder="e.g. 8 Farm St Dover MA" style="flex:1">
-        <button class="btn bg" id="createProjBtn" style="flex:none;width:80px;height:50px;font-size:13px">Create</button>
+        <input class="fi af" id="newProjName" type="text" placeholder="e.g. 8 Farm St Dover MA" style="flex:1">
+        <button class="btn ba" id="createProjBtn" style="flex:none;width:80px;height:50px;font-size:13px">Create</button>
       </div>
     </div>
-
-    <!-- Project list -->
-    <div class="fg">
-      <label class="fl">Saved Projects</label>
-      <div id="projectList2" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto"></div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn bs" id="projCancelBtn">Close</button>
-    </div>
+    <div class="fg"><label class="fl">Saved Projects</label><div id="projList" style="max-height:300px;overflow-y:auto"></div></div>
+    <div class="btn-row"><button class="btn bs" id="projCloseBtn">Close</button></div>
   </div>
 </div>
 
@@ -574,77 +511,42 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <!-- MEASUREMENT CALCULATOR -->
     <div class="fg">
       <label class="fl">Measurement Mode</label>
-      <div style="display:flex;gap:6px;">
-        <button class="mmode on" id="mm1" data-mode="walls" onclick="setMMode(this)">📐 Walls<br><span style="font-size:9px;font-weight:400">L × H</span></button>
-        <button class="mmode" id="mm2" data-mode="floor" onclick="setMMode(this)">⬜ Floor/Ceiling<br><span style="font-size:9px;font-weight:400">L × W</span></button>
-        <button class="mmode" id="mm3" data-mode="manual" onclick="setMMode(this)">✏️ Manual<br><span style="font-size:9px;font-weight:400">Enter SF</span></button>
+      <div class="mmode-row">
+        <button class="mmode on" id="mm1">📐 Walls<span>Length × Height</span></button>
+        <button class="mmode" id="mm2">⬜ Floor/Ceiling<span>Length × Width</span></button>
+        <button class="mmode" id="mm3">✏️ Manual<span>Enter SF</span></button>
       </div>
     </div>
-
-    <!-- MODE: WALLS (L × H) -->
     <div id="mWalls">
-      <div class="fg">
-        <label class="fl">Length — use + to add measurements</label>
-        <input class="fi" id="mw_len" type="text" inputmode="text" placeholder="17+20+19+5+8" oninput="recalcSF()" style="font-size:16px;letter-spacing:.5px">
-        <div style="font-size:11px;color:#7d8590;margin-top:4px">e.g. <span style="color:#f0a02c">17+20+19+5</span> → adds all lengths</div>
-      </div>
-      <div class="fg">
-        <label class="fl">Height (ft)</label>
-        <input class="fi" id="mw_h" type="text" inputmode="text" placeholder="9" oninput="recalcSF()" style="font-size:16px;width:120px">
-      </div>
+      <div class="fg"><label class="fl">Length (ft) — use + to add</label><input class="fi" id="mw_len" type="text" placeholder="17+20+19+5+8" style="font-size:16px;letter-spacing:.5px"><div style="font-size:11px;color:#7d8590;margin-top:4px">e.g. 17+20+5 adds all lengths</div></div>
+      <div class="fg"><label class="fl">Height (ft)</label><input class="fi" id="mw_h" type="text" placeholder="9" style="font-size:16px;width:120px"></div>
     </div>
-
-    <!-- MODE: FLOOR/CEILING (L × W) -->
     <div id="mFloor" style="display:none">
       <div class="frow">
-        <div class="fg">
-          <label class="fl">Length (ft)</label>
-          <input class="fi" id="mf_l" type="text" inputmode="text" placeholder="20+15" oninput="recalcSF()" style="font-size:16px">
-        </div>
-        <div class="fg">
-          <label class="fl">Width (ft)</label>
-          <input class="fi" id="mf_w" type="text" inputmode="text" placeholder="12" oninput="recalcSF()" style="font-size:16px">
-        </div>
+        <div class="fg"><label class="fl">Length (ft)</label><input class="fi" id="mf_l" type="text" placeholder="20+15" style="font-size:16px"></div>
+        <div class="fg"><label class="fl">Width (ft)</label><input class="fi" id="mf_w" type="text" placeholder="12" style="font-size:16px"></div>
       </div>
     </div>
-
-    <!-- MODE: MANUAL -->
     <div id="mManual" style="display:none">
-      <div class="fg">
-        <label class="fl">Square Feet</label>
-        <input class="fi" id="fa_sf_m" type="number" inputmode="numeric" placeholder="0" min="0" oninput="recalcSF()" style="font-size:18px">
-      </div>
+      <div class="fg"><label class="fl">Square Feet</label><input class="fi" id="fa_sf_m" type="number" placeholder="0" min="0" style="font-size:18px"></div>
     </div>
-
-    <!-- RESULT -->
-    <div style="background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.2);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#7d8590;margin-bottom:3px">Total SF</div>
-        <div id="calcSF" style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:#3fb950">0</div>
-      </div>
-      <div id="calcBreakdown" style="font-size:11px;color:#7d8590;text-align:right;font-family:'DM Mono',monospace;line-height:1.6"></div>
+    <div class="calc-result">
+      <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#7d8590;margin-bottom:3px">Total SF</div><div class="calc-sf" id="calcSF">0</div></div>
+      <div class="calc-bd" id="calcBD"></div>
     </div>
     <input type="hidden" id="fa_sf" value="0">
-
     <div class="frow">
       <div class="fg"><label class="fl">R-Value / Spec</label><input class="fi" id="fa_spec" type="text" placeholder="R-13..."></div>
       <div class="fg"><label class="fl">Field Notes</label><input class="fi" id="fa_notes" type="text" placeholder="Access, instructions..."></div>
     </div>
-    <div class="fg">
-      <label class="fl">Photos</label>
-      <div class="ph-row">
-        <button class="ph-btn" id="faCamBtn">📷 Camera</button>
-        <button class="ph-btn" id="faGalBtn">🖼️ Gallery</button>
-      </div>
+    <div class="fg"><label class="fl">Photos</label>
+      <div class="ph-row"><button class="ph-btn" id="faCamBtn">📷 Camera</button><button class="ph-btn" id="faGalBtn">🖼️ Gallery</button></div>
       <input type="file" id="faCam" accept="image/*" capture="environment" style="display:none">
       <input type="file" id="faGal" accept="image/*" multiple style="display:none">
       <div class="pp-grid" id="faPhotoGrid"></div>
       <div class="hint" id="faPhotoHint" style="display:none">📷 <span id="faPhotoCount">0</span> photo(s)</div>
     </div>
-    <div class="btn-row">
-      <button class="btn bs" id="faCancelBtn">Cancel</button>
-      <button class="btn ba" id="faSaveBtn">Add Area</button>
-    </div>
+    <div class="btn-row"><button class="btn bs" id="faCancelBtn">Cancel</button><button class="btn ba" id="faSaveBtn">Add Area</button></div>
   </div>
 </div>
 
@@ -661,21 +563,14 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     </div>
     <div class="hint" id="eiHint">Line total: <strong>$0.00</strong></div>
     <div class="fg" style="margin-top:10px"><label class="fl">Notes</label><input class="fi" id="ei_notes" type="text" placeholder="R-value, fire-rated..."></div>
-    <div class="fg">
-      <label class="fl">Photos</label>
-      <div class="ph-row">
-        <button class="ph-btn" id="eiCamBtn">📷 Camera</button>
-        <button class="ph-btn" id="eiGalBtn">🖼️ Gallery</button>
-      </div>
+    <div class="fg"><label class="fl">Photos</label>
+      <div class="ph-row"><button class="ph-btn" id="eiCamBtn">📷 Camera</button><button class="ph-btn" id="eiGalBtn">🖼️ Gallery</button></div>
       <input type="file" id="eiCam" accept="image/*" capture="environment" style="display:none">
       <input type="file" id="eiGal" accept="image/*" multiple style="display:none">
       <div class="pp-grid" id="eiPhotoGrid"></div>
       <div class="hint" id="eiPhotoHint" style="display:none">📷 <span id="eiPhotoCount">0</span> photo(s)</div>
     </div>
-    <div class="btn-row">
-      <button class="btn bs" id="eiCancelBtn">Cancel</button>
-      <button class="btn bg" id="eiSaveBtn">Add Item</button>
-    </div>
+    <div class="btn-row"><button class="btn bs" id="eiCancelBtn">Cancel</button><button class="btn bg" id="eiSaveBtn">Add Item</button></div>
   </div>
 </div>
 
@@ -690,20 +585,11 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       <div class="fg"><label class="fl">Default $/SF</label><input class="fi" id="p_price" type="number" placeholder="0.00" step="0.01"></div>
     </div>
     <div class="fg"><label class="fl">Category</label>
-      <select class="fs" id="p_cat">
-        <option>Spray Foam</option><option>Hybrid</option><option>Blown-In</option>
-        <option>Batt</option><option>Mineral Wool</option><option>Board / Rigid</option>
-        <option>Air Barrier</option><option>Other</option>
-      </select>
+      <select class="fs" id="p_cat"><option>Spray Foam</option><option>Hybrid</option><option>Blown-In</option><option>Batt</option><option>Mineral Wool</option><option>Board / Rigid</option><option>Air Barrier</option><option>Other</option></select>
     </div>
     <div class="fg"><label class="fl">Description</label><input class="fi" id="p_desc" type="text" placeholder="R-value, specs..."></div>
-    <div class="btn-row">
-      <button class="btn bs" id="prodCancelBtn">Cancel</button>
-      <button class="btn bg" id="prodSaveBtn">Save</button>
-    </div>
-    <div id="prodDelRow" style="display:none;margin-top:10px">
-      <button class="btn bd" id="prodDelBtn" style="width:100%">🗑 Delete Product</button>
-    </div>
+    <div class="btn-row"><button class="btn bs" id="prodCancelBtn">Cancel</button><button class="btn bg" id="prodSaveBtn">Save</button></div>
+    <div id="prodDelRow" style="display:none;margin-top:10px"><button class="btn bd" id="prodDelBtn" style="width:100%">🗑 Delete Product</button></div>
   </div>
 </div>
 
@@ -713,10 +599,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div class="mhandle"></div>
     <div class="mtitle" id="feTitle">Edit</div>
     <div class="fg"><input class="fi" id="feInput" type="text"></div>
-    <div class="btn-row">
-      <button class="btn bs" id="feCancelBtn">Cancel</button>
-      <button class="btn bg" id="feSaveBtn">Save</button>
-    </div>
+    <div class="btn-row"><button class="btn bs" id="feCancelBtn">Cancel</button><button class="btn bg" id="feSaveBtn">Save</button></div>
   </div>
 </div>
 
@@ -725,42 +608,23 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
   <div class="modal">
     <div class="mhandle"></div>
     <div class="mtitle">Import from Field Takeoff</div>
-    <p style="font-size:13px;color:#7d8590;margin-bottom:14px">Select areas to import. Price from product database will be applied.</p>
+    <p style="font-size:13px;color:#7d8590;margin-bottom:14px">Select areas to import.</p>
     <div id="importList"></div>
-    <div class="btn-row">
-      <button class="btn bs" id="importCancelBtn">Cancel</button>
-      <button class="btn bg" id="importConfirmBtn">Import Selected</button>
-    </div>
+    <div class="btn-row"><button class="btn bs" id="importCancelBtn">Cancel</button><button class="btn bg" id="importConfirmBtn">Import Selected</button></div>
   </div>
 </div>
 
-<!-- LIGHTBOX -->
-<div class="lb" id="lb">
-  <button class="lb-x" id="lbClose">✕</button>
-  <img id="lbImg" src="" alt="">
-  <div class="lb-cap" id="lbCap"></div>
-</div>
-
+<div class="lb" id="lb"><button class="lb-x" id="lbClose">✕</button><img id="lbImg" src="" alt=""><div class="lb-cap" id="lbCap"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// All code runs after DOM is ready
+window.addEventListener('load', function() {
 
-// ── ERROR DISPLAY ──
-window.onerror = function(msg, src, line, col, err) {
-  var d = document.createElement('div');
-  d.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f85149;color:#fff;padding:16px;font-family:monospace;font-size:13px;z-index:9999;word-break:break-all;';
-  d.textContent = 'JS ERROR line ' + line + ': ' + msg;
-  document.body.appendChild(d);
-  return false;
-};
-
-// ── STATE ──
 var fieldAreas=[], estItems=[], products=[];
 var cfg={markup:30,taxRate:0,company:'Green Idea Insulation',contact:'',license:''};
 var quoteInfo={client:'',address:''};
 var quoteNum=1001;
-var fieldJob={name:'',address:''};
 var editFAIdx=-1, editEIIdx=-1, editProdIdx=-1;
 var faProd=null, eiProd=null;
 var faPendPh=[], eiPendPh=[];
@@ -769,7 +633,8 @@ var ctData={title:'',intro:'',payment:'',warranty:'',extra:''};
 var sigData={img:'',name:'',date:''};
 var importSel={};
 var curFieldEdit='';
-var quickPhTarget={mode:'',idx:-1};
+var calcMode='walls';
+var currentProj=null;
 
 var DEFAULTS=[
   {id:'p1',name:'Open-Cell Spray Foam',emoji:'💧',cat:'Spray Foam',price:1.80,desc:'R-3.7/in'},
@@ -785,7 +650,6 @@ var DEFAULTS=[
   {id:'p11',name:'Air Barrier Membrane',emoji:'🌊',cat:'Air Barrier',price:0.60,desc:'WRB layer'}
 ];
 
-// ── HELPERS ──
 function fmt(n){return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
 function fmtN(n){return (''+Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -793,29 +657,50 @@ function getProd(id){for(var i=0;i<products.length;i++)if(products[i].id===id)re
 function calcItem(it){return it.sf*it.price*(1+cfg.markup/100);}
 function calcTotals(){var s=0;for(var i=0;i<estItems.length;i++)s+=calcItem(estItems[i]);var t=s*cfg.taxRate/100;return{sub:s,tax:t,total:s+t};}
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast on';setTimeout(function(){t.className='toast';},2200);}
-function closeOv(id){document.getElementById(id).className='overlay';}
 function openOv(id){document.getElementById(id).className='overlay on';}
+function closeOv(id){document.getElementById(id).className='overlay';}
 
-// ── PERSIST ──
-function saveFA(){localStorage.setItem('fb5_fa',JSON.stringify(fieldAreas));}
-function saveEI(){localStorage.setItem('fb5_ei',JSON.stringify(estItems));localStorage.setItem('fb5_qi',JSON.stringify(quoteInfo));}
-function savePR(){localStorage.setItem('fb5_pr',JSON.stringify(products));}
-function saveCfg(){localStorage.setItem('fb5_cfg',JSON.stringify(cfg));}
+function parseSum(str){
+  if(!str||!str.trim())return 0;
+  var parts=str.replace(/ /g,'').split('+');
+  var total=0;
+  for(var i=0;i<parts.length;i++){var n=parseFloat(parts[i]);if(!isNaN(n))total+=n;}
+  return total;
+}
+
+function saveFA(){localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));if(currentProj)saveProjAreas();}
+function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo));}
+function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products));}
+function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg));}
+
+function loadProjs(){var p=localStorage.getItem('fb6_projs');return p?JSON.parse(p):[];}
+function saveProjs(p){localStorage.setItem('fb6_projs',JSON.stringify(p));}
+function saveProjAreas(){
+  var projs=loadProjs();
+  for(var i=0;i<projs.length;i++){
+    if(projs[i].id===currentProj.id){projs[i].areas=JSON.parse(JSON.stringify(fieldAreas));break;}
+  }
+  saveProjs(projs);
+}
+function updateProjHeader(){
+  var nm=document.getElementById('fieldProjName');
+  var sb=document.getElementById('fieldProjSub');
+  if(currentProj){nm.textContent=currentProj.name;sb.textContent=fieldAreas.length+' area'+(fieldAreas.length!==1?'s':'')+' · tap to switch';}
+  else{nm.textContent='Tap to set project';sb.textContent='tap to name or switch';}
+}
 
 function load(){
-  var fa=localStorage.getItem('fb5_fa');if(fa)fieldAreas=JSON.parse(fa);
-  var ei=localStorage.getItem('fb5_ei');if(ei)estItems=JSON.parse(ei);
-  var c=localStorage.getItem('fb5_cfg');if(c){var cp=JSON.parse(c);for(var k in cp)cfg[k]=cp[k];}
-  var pr=localStorage.getItem('fb5_pr');products=pr?JSON.parse(pr):JSON.parse(JSON.stringify(DEFAULTS));
+  var fa=localStorage.getItem('fb6_fa');if(fa)fieldAreas=JSON.parse(fa);
+  var ei=localStorage.getItem('fb6_ei');if(ei)estItems=JSON.parse(ei);
+  var c=localStorage.getItem('fb6_cfg');if(c){var cp=JSON.parse(c);for(var k in cp)cfg[k]=cp[k];}
+  var pr=localStorage.getItem('fb6_pr');products=pr?JSON.parse(pr):JSON.parse(JSON.stringify(DEFAULTS));
   if(!pr)savePR();
-  var q=localStorage.getItem('fb5_qi');if(q)quoteInfo=JSON.parse(q);
-  var n=localStorage.getItem('fb5_qn');if(n)quoteNum=parseInt(n);
-  var fj=localStorage.getItem('fb5_fj');if(fj)fieldJob=JSON.parse(fj);
-  var ct=localStorage.getItem('fb5_ct');if(ct)ctData=JSON.parse(ct);
-  var sg=localStorage.getItem('fb5_sg');if(sg)sigData=JSON.parse(sg);
-  var wc=localStorage.getItem('fb5_wc');if(wc)woChecked=JSON.parse(wc);
-  applySettings();
-  applyCtFields();
+  var q=localStorage.getItem('fb6_qi');if(q)quoteInfo=JSON.parse(q);
+  var n=localStorage.getItem('fb6_qn');if(n)quoteNum=parseInt(n);
+  var ct=localStorage.getItem('fb6_ct');if(ct)ctData=JSON.parse(ct);
+  var sg=localStorage.getItem('fb6_sg');if(sg)sigData=JSON.parse(sg);
+  var wc=localStorage.getItem('fb6_wc');if(wc)woChecked=JSON.parse(wc);
+  applySettings();applyCtFields();
   if(sigData&&sigData.img){
     document.getElementById('sigSaved').style.display='block';
     document.getElementById('sigImg').src=sigData.img;
@@ -823,62 +708,55 @@ function load(){
   }
   var today=new Date();
   var ds=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  var qd=document.getElementById('qDate');if(qd)qd.textContent=ds;
-  var qn=document.getElementById('qNumber');if(qn)qn.textContent='#'+quoteNum;
-  var eq=document.getElementById('estQNum');if(eq)eq.textContent=quoteNum;
+  document.getElementById('qDate').textContent=ds;
+  document.getElementById('qNumber').textContent='#'+quoteNum;
+  document.getElementById('estQNum').textContent=quoteNum;
 }
 
-// ── NAVIGATION ──
+// NAVIGATION
 document.getElementById('btnField').addEventListener('click',function(){
   document.getElementById('home').style.display='none';
   document.getElementById('field-app').style.display='block';
   document.getElementById('fieldFab').style.display='flex';
-  updateFieldSub();
-  renderFA();
-  renderFWO();
+  updateProjHeader();renderFA();renderFWO();
 });
-
 document.getElementById('btnEst').addEventListener('click',function(){
   document.getElementById('home').style.display='none';
   document.getElementById('est-app').style.display='block';
   document.getElementById('estFab').style.display='flex';
-  renderEst();
-  renderProds();
+  renderEst();renderProds();
 });
-
 document.getElementById('backField').addEventListener('click',function(){
   document.getElementById('field-app').style.display='none';
   document.getElementById('fieldFab').style.display='none';
   document.getElementById('home').style.display='flex';
 });
-
 document.getElementById('backEst').addEventListener('click',function(){
   document.getElementById('est-app').style.display='none';
   document.getElementById('estFab').style.display='none';
   document.getElementById('home').style.display='flex';
 });
 
-// ── FIELD TABS ──
-document.getElementById('ft1').addEventListener('click',function(){showFPage('areas',this);});
-document.getElementById('ft2').addEventListener('click',function(){showFPage('wo',this);});
-function showFPage(id,tab){
+// FIELD TABS
+document.getElementById('ft1').addEventListener('click',function(){showFP('areas',this);});
+document.getElementById('ft2').addEventListener('click',function(){showFP('wo',this);renderFWO();});
+function showFP(id,tab){
   var pages=['areas','wo'];
   for(var i=0;i<pages.length;i++)document.getElementById('fp-'+pages[i]).className='page';
   document.getElementById('fp-'+id).className='page on';
   var tabs=document.querySelectorAll('#field-app .tab');
   for(var i=0;i<tabs.length;i++)tabs[i].className='tab f';
   tab.className='tab on f';
-  if(id==='wo')renderFWO();
 }
 
-// ── EST TABS ──
-document.getElementById('et1').addEventListener('click',function(){showEPage('items',this);});
-document.getElementById('et2').addEventListener('click',function(){showEPage('quote',this);});
-document.getElementById('et3').addEventListener('click',function(){showEPage('wo',this);});
-document.getElementById('et4').addEventListener('click',function(){showEPage('contract',this);renderCtDoc();});
-document.getElementById('et5').addEventListener('click',function(){showEPage('products',this);renderProds();});
-document.getElementById('et6').addEventListener('click',function(){showEPage('settings',this);});
-function showEPage(id,tab){
+// EST TABS
+document.getElementById('et1').addEventListener('click',function(){showEP('items',this);});
+document.getElementById('et2').addEventListener('click',function(){showEP('quote',this);});
+document.getElementById('et3').addEventListener('click',function(){showEP('wo',this);renderEWO();});
+document.getElementById('et4').addEventListener('click',function(){showEP('contract',this);renderCtDoc();});
+document.getElementById('et5').addEventListener('click',function(){showEP('products',this);renderProds();});
+document.getElementById('et6').addEventListener('click',function(){showEP('settings',this);});
+function showEP(id,tab){
   var pages=['items','quote','wo','contract','products','settings'];
   for(var i=0;i<pages.length;i++)document.getElementById('ep-'+pages[i]).className='page';
   document.getElementById('ep-'+id).className='page on';
@@ -886,32 +764,77 @@ function showEPage(id,tab){
   for(var i=0;i<tabs.length;i++)tabs[i].className='tab';
   tab.className='tab on';
   document.getElementById('estFab').style.display=(id==='items')?'flex':'none';
-  if(id==='wo')renderEWO();
-  if(id==='contract')renderCtDoc();
-  if(id==='products')renderProds();
 }
 
-// ── NEW JOB / ESTIMATE ──
-// newJobBtn now handled in boot via openProjectModal
+// PROJECT
+document.getElementById('btnOpenProj').addEventListener('click',function(){openProjModal();});
+document.getElementById('fieldProjName').addEventListener('click',function(){openProjModal();});
+document.getElementById('projCloseBtn').addEventListener('click',function(){closeOv('projOverlay');});
+document.getElementById('createProjBtn').addEventListener('click',function(){createProj();});
+function openProjModal(){renderProjList();openOv('projOverlay');}
+function renderProjList(){
+  var projs=loadProjs();
+  var list=document.getElementById('projList');
+  if(!projs.length){list.innerHTML='<div style="padding:14px;text-align:center;color:#4d5560;font-size:13px">No projects yet</div>';return;}
+  var h='';
+  for(var i=0;i<projs.length;i++){
+    var p=projs[i];var active=currentProj&&currentProj.id===p.id;
+    h+='<div class="proj-item '+(active?'active':'inactive')+'">';
+    h+='<button class="proj-btn" data-pid="'+p.id+'" onclick="switchProj(this)">';
+    h+='<div class="proj-name">'+esc(p.name)+(active?' ✓':'')+'</div>';
+    h+='<div class="proj-meta">'+(p.areas?p.areas.length:0)+' areas · '+p.created+'</div>';
+    h+='</button>';
+    h+='<button class="proj-del" data-pid="'+p.id+'" onclick="deleteProj(this)">🗑</button>';
+    h+='</div>';
+  }
+  list.innerHTML=h;
+}
+function createProj(){
+  var name=document.getElementById('newProjName').value.trim();
+  if(!name){toast('Enter a project name');return;}
+  if(currentProj)saveProjAreas();
+  var projs=loadProjs();
+  var proj={id:'p_'+Date.now(),name:name,areas:[],created:new Date().toLocaleDateString('en-US')};
+  projs.unshift(proj);saveProjs(projs);
+  currentProj=proj;fieldAreas=[];
+  saveFA();updateProjHeader();renderFA();renderFWO();
+  closeOv('projOverlay');toast('✅ Project created');
+}
+function switchProj(btn){
+  var pid=btn.getAttribute('data-pid');
+  if(currentProj)saveProjAreas();
+  var projs=loadProjs();
+  for(var i=0;i<projs.length;i++){
+    if(projs[i].id===pid){currentProj=projs[i];fieldAreas=projs[i].areas?JSON.parse(JSON.stringify(projs[i].areas)):[];break;}
+  }
+  updateProjHeader();renderFA();renderFWO();closeOv('projOverlay');toast('📂 Switched to "'+currentProj.name+'"');
+}
+function deleteProj(btn){
+  var pid=btn.getAttribute('data-pid');
+  if(!confirm('Delete this project?'))return;
+  var projs=loadProjs();
+  for(var i=0;i<projs.length;i++){if(projs[i].id===pid){projs.splice(i,1);break;}}
+  saveProjs(projs);
+  if(currentProj&&currentProj.id===pid){currentProj=null;fieldAreas=[];saveFA();updateProjHeader();renderFA();}
+  renderProjList();toast('🗑 Project deleted');
+}
+
+// NEW EST
 document.getElementById('newEstBtn').addEventListener('click',function(){
-  if(estItems.length&&!confirm('Start a new estimate? Items will be cleared.'))return;
+  if(estItems.length&&!confirm('Clear current estimate?'))return;
   estItems=[];quoteInfo={client:'',address:''};
-  quoteNum++;localStorage.setItem('fb5_qn',quoteNum);
+  quoteNum++;localStorage.setItem('fb6_qn',quoteNum);
   document.getElementById('estQNum').textContent=quoteNum;
   document.getElementById('qNumber').textContent='#'+quoteNum;
-  var today=new Date();
-  document.getElementById('qDate').textContent=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  saveEI();renderEst();toast('✨ New estimate started');
+  document.getElementById('qDate').textContent=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  saveEI();renderEst();toast('✨ New estimate');
 });
 
-// ── FABs ──
-document.getElementById('fieldFab').addEventListener('click',function(){openFAModal();});
-document.getElementById('estFab').addEventListener('click',function(){openEIModal();});
+// FABs
+document.getElementById('fieldFab').addEventListener('click',function(){openFAModal(-1);});
+document.getElementById('estFab').addEventListener('click',function(){openEIModal(-1);});
 
-// ── RENDER FIELD AREAS ──
-function updateFieldSub(){
-  document.getElementById('fieldJobSub').textContent=fieldJob.name||'No job set';
-}
+// RENDER FIELD AREAS
 function renderFA(){
   var list=document.getElementById('fieldAreaList');
   var sf=0;for(var i=0;i<fieldAreas.length;i++)sf+=fieldAreas[i].sf||0;
@@ -927,12 +850,12 @@ function renderFA(){
     h+='<div class="card">';
     if(a.photos&&a.photos.length){h+='<div class="card-photos">';for(var p=0;p<a.photos.length;p++)h+='<img class="card-photo" src="'+a.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
     h+='<div class="card-body"><div class="card-em f">'+em+'</div><div class="card-info"><div class="card-name">'+esc(a.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(a.sf)+' SF'+(a.spec?' · '+esc(a.spec):'')+'</div>'+(a.notes?'<div class="card-note">📋 '+esc(a.notes)+'</div>':'')+(a.photos&&a.photos.length?'<div class="card-ph">📷 '+a.photos.length+' photo'+(a.photos.length>1?'s':'')+'</div>':'')+'</div></div>';
-    h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" onclick="qkPhoto(\'field\',this)">📷 Photo</button><button class="ca" data-idx="'+i+'" onclick="openFAModal(this)">✏️ Edit</button><button class="ca del" data-idx="'+i+'" onclick="delFA(this)">🗑 Del</button></div></div>';
+    h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" onclick="qkPH(\'field\',this)">📷 Photo</button><button class="ca" data-idx="'+i+'" onclick="openFAModal(parseInt(this.getAttribute(\'data-idx\')))">✏️ Edit</button><button class="ca del" data-idx="'+i+'" onclick="delFA(parseInt(this.getAttribute(\'data-idx\')))">🗑 Del</button></div></div>';
   }
   list.innerHTML=h;
 }
 
-// ── RENDER EST ──
+// RENDER EST
 function renderEst(){
   var list=document.getElementById('estItemList');
   var totals=calcTotals();
@@ -951,125 +874,172 @@ function renderEst(){
     h+='<div class="card">';
     if(it.photos&&it.photos.length){h+='<div class="card-photos">';for(var p=0;p<it.photos.length;p++)h+='<img class="card-photo" src="'+it.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
     h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+it.price.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
-    h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" onclick="qkPhoto(\'est\',this)">📷 Photo</button><button class="ca" data-idx="'+i+'" onclick="openEIModal(this)">✏️ Edit</button><button class="ca del" data-idx="'+i+'" onclick="delEI(this)">🗑 Del</button></div></div>';
+    h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" onclick="qkPH(\'est\',this)">📷 Photo</button><button class="ca" data-idx="'+i+'" onclick="openEIModal(parseInt(this.getAttribute(\'data-idx\')))">✏️ Edit</button><button class="ca del" data-idx="'+i+'" onclick="delEI(parseInt(this.getAttribute(\'data-idx\')))">🗑 Del</button></div></div>';
   }
-  list.innerHTML=h;
-  renderQuote();
+  list.innerHTML=h;renderQuote();
 }
 
 function renderQuote(){
   var totals=calcTotals();
-  var qc=document.getElementById('qClient');if(qc)qc.textContent=quoteInfo.client||'Tap to add';
-  var qa=document.getElementById('qAddress');if(qa)qa.textContent=quoteInfo.address||'Tap to add';
-  var qs=document.getElementById('qSub');if(qs)qs.textContent=fmt(totals.sub);
-  var qt=document.getElementById('qTax');if(qt)qt.textContent=fmt(totals.tax);
-  var qtt=document.getElementById('qTotal');if(qtt)qtt.textContent=fmt(totals.total);
-  var tp=document.getElementById('qTaxPct');if(tp)tp.textContent=cfg.taxRate;
-  var tr=document.getElementById('qTaxRow');if(tr)tr.style.display=cfg.taxRate>0?'flex':'none';
+  document.getElementById('qClient').textContent=quoteInfo.client||'Tap to add';
+  document.getElementById('qAddress').textContent=quoteInfo.address||'Tap to add';
+  document.getElementById('qSub').textContent=fmt(totals.sub);
+  document.getElementById('qTax').textContent=fmt(totals.tax);
+  document.getElementById('qTotal').textContent=fmt(totals.total);
+  document.getElementById('qTaxPct').textContent=cfg.taxRate;
+  document.getElementById('qTaxRow').style.display=cfg.taxRate>0?'flex':'none';
   var lines='';
   for(var j=0;j<estItems.length;j++){
     var it=estItems[j];var c=calcItem(it);var pr=getProd(it.productId);
     lines+='<div class="q-trow"><div class="q-tn">'+(pr?pr.emoji:'📦')+' '+esc(it.name)+(it.notes?'<div class="q-tnote">'+esc(it.notes)+'</div>':'')+'</div><div class="q-tv">'+fmtN(it.sf)+'</div><div class="q-tv">$'+it.price.toFixed(2)+'</div><div class="q-tt">'+fmt(c)+'</div></div>';
   }
   if(!estItems.length)lines='<div style="padding:20px;text-align:center;color:#4d5560;font-size:13px">No items yet</div>';
-  var ql=document.getElementById('quoteLines');if(ql)ql.innerHTML=lines;
+  document.getElementById('quoteLines').innerHTML=lines;
 }
 
 function checkImportBar(){
   var bar=document.getElementById('importBar');if(!bar)return;
-  if(fieldAreas.length>0){
-    bar.style.display='flex';
-    document.getElementById('importBarSub').textContent=fieldAreas.length+' area'+(fieldAreas.length>1?'s':'')+' measured';
-  }else{bar.style.display='none';}
+  if(fieldAreas.length>0){bar.style.display='flex';document.getElementById('importBarSub').textContent=fieldAreas.length+' area'+(fieldAreas.length>1?'s':'')+' measured';}
+  else bar.style.display='none';
 }
 
-// ── WORK ORDERS ──
+// WORK ORDERS
 var WO={
   en:{title:'WORK ORDER',sub:'Field Instructions — No Pricing',wo:'W.O.',date:'Date',client:'Job',addr:'Address',done:'Mark as completed',none:'No areas yet.'},
   pt:{title:'ORDEM DE SERVIÇO',sub:'Instruções de Campo — Sem Preços',wo:'O.S.',date:'Data',client:'Serviço',addr:'Endereço',done:'Marcar como concluído',none:'Nenhuma área ainda.'}
 };
-document.getElementById('fLangEN').addEventListener('click',function(){fwLang='en';document.getElementById('fLangEN').className='lang-btn on';document.getElementById('fLangPT').className='lang-btn';renderFWO();});
-document.getElementById('fLangPT').addEventListener('click',function(){fwLang='pt';document.getElementById('fLangPT').className='lang-btn on';document.getElementById('fLangEN').className='lang-btn';renderFWO();});
-document.getElementById('eLangEN').addEventListener('click',function(){ewLang='en';document.getElementById('eLangEN').className='lang-btn on';document.getElementById('eLangPT').className='lang-btn';renderEWO();});
-document.getElementById('eLangPT').addEventListener('click',function(){ewLang='pt';document.getElementById('eLangPT').className='lang-btn on';document.getElementById('eLangEN').className='lang-btn';renderEWO();});
+document.getElementById('fLangEN').addEventListener('click',function(){fwLang='en';this.className='lang-btn on';document.getElementById('fLangPT').className='lang-btn';renderFWO();});
+document.getElementById('fLangPT').addEventListener('click',function(){fwLang='pt';this.className='lang-btn on';document.getElementById('fLangEN').className='lang-btn';renderFWO();});
+document.getElementById('eLangEN').addEventListener('click',function(){ewLang='en';this.className='lang-btn on';document.getElementById('eLangPT').className='lang-btn';renderEWO();});
+document.getElementById('eLangPT').addEventListener('click',function(){ewLang='pt';this.className='lang-btn on';document.getElementById('eLangEN').className='lang-btn';renderEWO();});
+document.getElementById('fPrintBtn').addEventListener('click',function(){window.print();});
+document.getElementById('ePrintBtn').addEventListener('click',function(){window.print();});
 
-function buildWOHeader(t,lang,job1,job2,num){
+function buildWOHd(t,lang,j1,j2,num){
   var today=new Date().toLocaleDateString(lang==='pt'?'pt-BR':'en-US',{year:'numeric',month:'long',day:'numeric'});
-  return '<div class="wo-hd"><div class="wo-co">'+esc(cfg.company)+'</div><div class="wo-badge">'+t.title+' — '+t.sub+'</div><div class="wo-meta"><div class="wo-mc"><div class="wo-ml">'+t.wo+' #</div><div class="wo-mv">'+num+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.date+'</div><div class="wo-mv">'+today+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.client+'</div><div class="wo-mv">'+(job1||'—')+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.addr+'</div><div class="wo-mv">'+(job2||'—')+'</div></div></div></div>';
+  return '<div class="wo-hd"><div class="wo-co">'+esc(cfg.company)+'</div><div class="wo-badge">'+t.title+' — '+t.sub+'</div><div class="wo-meta"><div class="wo-mc"><div class="wo-ml">'+t.wo+' #</div><div class="wo-mv">'+num+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.date+'</div><div class="wo-mv">'+today+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.client+'</div><div class="wo-mv">'+(j1||'—')+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.addr+'</div><div class="wo-mv">'+(j2||'—')+'</div></div></div></div>';
 }
-function buildWOTask(idx,name,product,sf,spec,notes,photos,checked,mode,t){
+function buildWOTask(idx,name,prod,sf,spec,notes,photos,checked,mode,t){
   var ck=checked?'done':'';
-  var h='<div class="wo-task"><div class="wo-th"><div class="wo-num '+mode+'">'+(idx+1)+'</div><div class="wo-ti"><div class="wo-tn">'+name+'</div><div class="wo-tp">'+product+'</div><div class="wo-ts">'+sf+' SF'+(spec?' · '+spec:'')+'</div></div></div>';
-  if(photos&&photos.length){h+='<div class="wo-photos">';for(var p=0;p<photos.length;p++)h+='<img class="wo-photo" src="'+photos[p]+'" onclick="this.style.display=\'none\'" alt="">';h+='</div>';}
+  var h='<div class="wo-task"><div class="wo-th"><div class="wo-num '+mode+'">'+(idx+1)+'</div><div class="wo-ti"><div class="wo-tn">'+name+'</div><div class="wo-tp">'+prod+'</div><div class="wo-ts">'+sf+' SF'+(spec?' · '+spec:'')+'</div></div></div>';
+  if(photos&&photos.length){h+='<div class="wo-photos">';for(var p=0;p<photos.length;p++)h+='<img class="wo-photo" src="'+photos[p]+'" alt="">';h+='</div>';}
   if(notes)h+='<div class="wo-note">📋 '+esc(notes)+'</div>';
-  h+='<button class="wo-ck" data-key="'+mode+idx+'" onclick="ckWO(this)"><div class="wo-cb '+ck+'" id="wocb_'+mode+idx+'">'+(checked?'✓':'')+'</div><span class="wo-cl">'+t.done+'</span></button>';
+  h+='<button class="wo-ck" data-key="'+mode+idx+'" onclick="ckWO(this)"><div class="wo-cb '+ck+'" id="wcb_'+mode+idx+'">'+(checked?'✓':'')+'</div><span class="wo-cl">'+t.done+'</span></button>';
   return h+'</div>';
 }
 function renderFWO(){
-  var t=WO[fwLang];var h=buildWOHeader(t,fwLang,fieldJob.name,fieldJob.address,quoteNum);
-  if(!fieldAreas.length){h+='<div class="empty"><div class="empty-body">'+t.none+'</div></div>';}
+  var t=WO[fwLang];var h=buildWOHd(t,fwLang,currentProj?currentProj.name:'',currentProj?currentProj.address||'':'',quoteNum);
+  if(!fieldAreas.length)h+='<div class="empty"><div class="empty-body">'+t.none+'</div></div>';
   else{h+='<div class="wo-tasks">';for(var i=0;i<fieldAreas.length;i++){var a=fieldAreas[i];var pr=getProd(a.productId);h+=buildWOTask(i,(pr?pr.emoji:'📦')+' '+esc(a.name),pr?esc(pr.name):'—',fmtN(a.sf),a.spec,a.notes,a.photos,woChecked['f'+i],'f',t);}h+='</div>';}
   document.getElementById('fieldWO').innerHTML=h;
 }
 function renderEWO(){
-  var t=WO[ewLang];var h=buildWOHeader(t,ewLang,quoteInfo.client,quoteInfo.address,quoteNum);
-  if(!estItems.length){h+='<div class="empty"><div class="empty-body">'+t.none+'</div></div>';}
+  var t=WO[ewLang];var h=buildWOHd(t,ewLang,quoteInfo.client,quoteInfo.address,quoteNum);
+  if(!estItems.length)h+='<div class="empty"><div class="empty-body">'+t.none+'</div></div>';
   else{h+='<div class="wo-tasks">';for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);h+=buildWOTask(i,(pr?pr.emoji:'📦')+' '+esc(it.name),pr?esc(pr.name):'—',fmtN(it.sf),'',it.notes,it.photos,woChecked['e'+i],'e',t);}h+='</div>';}
   document.getElementById('estWO').innerHTML=h;
 }
-function ckWO(el){
-  var key=el.getAttribute('data-key');
-  woChecked[key]=!woChecked[key];
-  localStorage.setItem('fb5_wc',JSON.stringify(woChecked));
-  var cb=document.getElementById('wocb_'+key);
+function ckWO(btn){
+  var key=btn.getAttribute('data-key');woChecked[key]=!woChecked[key];
+  localStorage.setItem('fb6_wc',JSON.stringify(woChecked));
+  var cb=document.getElementById('wcb_'+key);
   if(cb){cb.className='wo-cb'+(woChecked[key]?' done':'');cb.textContent=woChecked[key]?'✓':'';}
 }
 
-// ── FIELD AREA MODAL ──
-function openFAModal(btn){
-  editFAIdx=btn?parseInt(btn.getAttribute('data-idx')):-1;
-  document.getElementById('faTitle').textContent=editFAIdx>=0?'Edit Area':'Add Area';
-  document.getElementById('faSaveBtn').textContent=editFAIdx>=0?'Update':'Add Area';
+// MEASUREMENT CALCULATOR
+document.getElementById('mm1').addEventListener('click',function(){setMMode('walls',this);});
+document.getElementById('mm2').addEventListener('click',function(){setMMode('floor',this);});
+document.getElementById('mm3').addEventListener('click',function(){setMMode('manual',this);});
+function setMMode(mode,btn){
+  calcMode=mode;
+  var btns=[document.getElementById('mm1'),document.getElementById('mm2'),document.getElementById('mm3')];
+  for(var i=0;i<btns.length;i++)btns[i].className='mmode';
+  btn.className='mmode on';
+  document.getElementById('mWalls').style.display=mode==='walls'?'block':'none';
+  document.getElementById('mFloor').style.display=mode==='floor'?'block':'none';
+  document.getElementById('mManual').style.display=mode==='manual'?'block':'none';
+  recalcSF();
+}
+function initCalc(){
+  calcMode='walls';
+  document.getElementById('mm1').className='mmode on';
+  document.getElementById('mm2').className='mmode';
+  document.getElementById('mm3').className='mmode';
+  document.getElementById('mWalls').style.display='block';
+  document.getElementById('mFloor').style.display='none';
+  document.getElementById('mManual').style.display='none';
+  var ids=['mw_len','mw_h','mf_l','mf_w','fa_sf_m'];
+  for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el)el.value='';}
+  document.getElementById('calcSF').textContent='0';
+  document.getElementById('calcBD').textContent='';
+  document.getElementById('fa_sf').value='0';
+}
+function recalcSF(){
+  var total=0,bd='';
+  if(calcMode==='walls'){
+    var len=parseSum(document.getElementById('mw_len').value);
+    var h=parseSum(document.getElementById('mw_h').value);
+    if(len>0&&h>0){total=len*h;bd=len+' ft × '+h+' ft';}
+  }else if(calcMode==='floor'){
+    var l=parseSum(document.getElementById('mf_l').value);
+    var w=parseSum(document.getElementById('mf_w').value);
+    if(l>0&&w>0){total=l*w;bd=l+' × '+w+' ft';}
+  }else{
+    total=parseFloat(document.getElementById('fa_sf_m').value)||0;
+  }
+  total=Math.round(total*10)/10;
+  document.getElementById('calcSF').textContent=total>0?total.toLocaleString():'0';
+  document.getElementById('calcBD').textContent=bd;
+  document.getElementById('fa_sf').value=total;
+}
+document.getElementById('mw_len').addEventListener('input',recalcSF);
+document.getElementById('mw_h').addEventListener('input',recalcSF);
+document.getElementById('mf_l').addEventListener('input',recalcSF);
+document.getElementById('mf_w').addEventListener('input',recalcSF);
+document.getElementById('fa_sf_m').addEventListener('input',recalcSF);
+
+// FIELD AREA MODAL
+function openFAModal(idx){
+  editFAIdx=idx;
+  document.getElementById('faTitle').textContent=idx>=0?'Edit Area':'Add Area';
+  document.getElementById('faSaveBtn').textContent=idx>=0?'Update':'Add Area';
   faPendPh=[];
-  if(editFAIdx>=0){var a=fieldAreas[editFAIdx];document.getElementById('fa_name').value=a.name;document.getElementById('fa_sf').value=a.sf;document.getElementById('fa_spec').value=a.spec||'';document.getElementById('fa_notes').value=a.notes||'';faProd=a.productId||null;faPendPh=a.photos?a.photos.slice():[];}
-  else{document.getElementById('fa_name').value='';document.getElementById('fa_sf').value='';document.getElementById('fa_spec').value='';document.getElementById('fa_notes').value='';faProd=products.length?products[0].id:null;}
-  renderPicker('fa');renderPPGrid('fa');
-  initMeasCalc();
-  openOv('faOverlay');
+  if(idx>=0){var a=fieldAreas[idx];document.getElementById('fa_name').value=a.name;document.getElementById('fa_spec').value=a.spec||'';document.getElementById('fa_notes').value=a.notes||'';faProd=a.productId||null;faPendPh=a.photos?a.photos.slice():[];}
+  else{document.getElementById('fa_name').value='';document.getElementById('fa_spec').value='';document.getElementById('fa_notes').value='';faProd=products.length?products[0].id:null;}
+  initCalc();renderPicker('fa');renderPPGrid('fa');openOv('faOverlay');
 }
 document.getElementById('faCancelBtn').addEventListener('click',function(){closeOv('faOverlay');});
 document.getElementById('faSaveBtn').addEventListener('click',function(){
   var name=document.getElementById('fa_name').value.trim();
-  var sf=parseFloat(document.getElementById('fa_sf').value);
+  var sf=parseFloat(document.getElementById('fa_sf').value)||0;
   var spec=document.getElementById('fa_spec').value.trim();
   var notes=document.getElementById('fa_notes').value.trim();
   if(!name){toast('Add an area name');return;}
-  if(!sf||sf<=0){toast('Enter square feet');return;}
+  if(!sf||sf<=0){toast('Enter measurements or SF');return;}
   var area={name:name,productId:faProd,sf:sf,spec:spec,notes:notes,photos:faPendPh.slice()};
   if(editFAIdx>=0)fieldAreas[editFAIdx]=area;else fieldAreas.push(area);
   saveFA();renderFA();renderFWO();closeOv('faOverlay');
   toast(editFAIdx>=0?'✅ Area updated':'✅ Area added');
 });
-function delFA(btn){if(!confirm('Delete?'))return;fieldAreas.splice(parseInt(btn.getAttribute('data-idx')),1);saveFA();renderFA();renderFWO();toast('🗑 Deleted');}
+function delFA(idx){if(!confirm('Delete?'))return;fieldAreas.splice(idx,1);saveFA();renderFA();renderFWO();toast('🗑 Deleted');}
 
-// ── EST ITEM MODAL ──
-function openEIModal(btn){
-  editEIIdx=btn?parseInt(btn.getAttribute('data-idx')):-1;
-  document.getElementById('eiTitle').textContent=editEIIdx>=0?'Edit Item':'Add Item';
-  document.getElementById('eiSaveBtn').textContent=editEIIdx>=0?'Update':'Add Item';
+// EST ITEM MODAL
+function openEIModal(idx){
+  editEIIdx=idx;
+  document.getElementById('eiTitle').textContent=idx>=0?'Edit Item':'Add Item';
+  document.getElementById('eiSaveBtn').textContent=idx>=0?'Update':'Add Item';
   eiPendPh=[];
-  if(editEIIdx>=0){var it=estItems[editEIIdx];document.getElementById('ei_name').value=it.name;document.getElementById('ei_sf').value=it.sf;document.getElementById('ei_price').value=it.price;document.getElementById('ei_notes').value=it.notes||'';eiProd=it.productId||null;eiPendPh=it.photos?it.photos.slice():[];}
+  if(idx>=0){var it=estItems[idx];document.getElementById('ei_name').value=it.name;document.getElementById('ei_sf').value=it.sf;document.getElementById('ei_price').value=it.price;document.getElementById('ei_notes').value=it.notes||'';eiProd=it.productId||null;eiPendPh=it.photos?it.photos.slice():[];}
   else{document.getElementById('ei_name').value='';document.getElementById('ei_sf').value='';document.getElementById('ei_price').value=products.length?products[0].price:'';document.getElementById('ei_notes').value='';eiProd=products.length?products[0].id:null;}
-  renderPicker('ei');renderPPGrid('ei');updateEIHint();
-  openOv('eiOverlay');
+  renderPicker('ei');renderPPGrid('ei');updateEIHint();openOv('eiOverlay');
 }
-document.getElementById('ei_sf').addEventListener('input',updateEIHint);
-document.getElementById('ei_price').addEventListener('input',updateEIHint);
 function updateEIHint(){
   var sf=parseFloat(document.getElementById('ei_sf').value)||0;
   var price=parseFloat(document.getElementById('ei_price').value)||0;
   document.getElementById('eiHint').innerHTML='Line total (w/ markup): <strong>'+fmt(sf*price*(1+cfg.markup/100))+'</strong>';
 }
+document.getElementById('ei_sf').addEventListener('input',updateEIHint);
+document.getElementById('ei_price').addEventListener('input',updateEIHint);
 document.getElementById('eiCancelBtn').addEventListener('click',function(){closeOv('eiOverlay');});
 document.getElementById('eiSaveBtn').addEventListener('click',function(){
   var name=document.getElementById('ei_name').value.trim();
@@ -1081,12 +1051,11 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
   if(!price||price<=0){toast('Enter price/SF');return;}
   var item={name:name,productId:eiProd,sf:sf,price:price,notes:notes,photos:eiPendPh.slice()};
   if(editEIIdx>=0)estItems[editEIIdx]=item;else estItems.push(item);
-  saveEI();renderEst();closeOv('eiOverlay');
-  toast(editEIIdx>=0?'✅ Updated':'✅ Item added');
+  saveEI();renderEst();closeOv('eiOverlay');toast(editEIIdx>=0?'✅ Updated':'✅ Item added');
 });
-function delEI(btn){if(!confirm('Delete?'))return;estItems.splice(parseInt(btn.getAttribute('data-idx')),1);saveEI();renderEst();toast('🗑 Deleted');}
+function delEI(idx){if(!confirm('Delete?'))return;estItems.splice(idx,1);saveEI();renderEst();toast('🗑 Deleted');}
 
-// ── PRODUCT PICKER ──
+// PRODUCT PICKER
 function renderPicker(mode){
   var id=mode==='fa'?'faPicker':'eiPicker';
   var sel=mode==='fa'?faProd:eiProd;
@@ -1097,7 +1066,7 @@ function renderPicker(mode){
     h+='<div class="po-l"><div class="po-em">'+pr.emoji+'</div><div><div class="po-nm">'+esc(pr.name)+'</div><div class="po-ct">'+esc(pr.cat)+'</div></div></div>';
     h+='<div style="display:flex;align-items:center">';
     if(mode==='ei')h+='<div class="po-pr">$'+parseFloat(pr.price).toFixed(2)+'/SF</div>';
-    h+='<div class="po-ck">✓</div></div></div>';
+    h+='<div class="po-ck">✓</div></div></button>';
   }
   if(!h)h='<div style="padding:14px;color:#4d5560;font-size:12px;text-align:center">No products — add in 🗄️ Products</div>';
   document.getElementById(id).innerHTML=h;
@@ -1112,7 +1081,7 @@ function selProd(el){
   if(mode==='ei'){var pr=getProd(pid);if(pr){document.getElementById('ei_price').value=pr.price;updateEIHint();}}
 }
 
-// ── PHOTOS ──
+// PHOTOS
 document.getElementById('faCamBtn').addEventListener('click',function(){document.getElementById('faCam').click();});
 document.getElementById('faGalBtn').addEventListener('click',function(){document.getElementById('faGal').click();});
 document.getElementById('eiCamBtn').addEventListener('click',function(){document.getElementById('eiCam').click();});
@@ -1121,7 +1090,6 @@ document.getElementById('faCam').addEventListener('change',function(){handlePH(t
 document.getElementById('faGal').addEventListener('change',function(){handlePH(this,'fa');});
 document.getElementById('eiCam').addEventListener('change',function(){handlePH(this,'ei');});
 document.getElementById('eiGal').addEventListener('change',function(){handlePH(this,'ei');});
-
 function handlePH(input,mode){
   var arr=mode==='fa'?faPendPh:eiPendPh;
   var files=input.files;if(!files||!files.length)return;
@@ -1140,62 +1108,42 @@ function renderPPGrid(mode){
   document.getElementById(mode+'PhotoCount').textContent=arr.length;
   hint.style.display='block';
 }
-function rmPH(btn){
-  var mode=btn.getAttribute('data-mode');var idx=parseInt(btn.getAttribute('data-i'));
-  var arr=mode==='fa'?faPendPh:eiPendPh;arr.splice(idx,1);renderPPGrid(mode);
-}
-function qkPhoto(mode,btn){
-  quickPhTarget={mode:mode,idx:parseInt(btn.getAttribute('data-idx'))};
+function rmPH(btn){var mode=btn.getAttribute('data-mode');var idx=parseInt(btn.getAttribute('data-i'));var arr=mode==='fa'?faPendPh:eiPendPh;arr.splice(idx,1);renderPPGrid(mode);}
+function qkPH(mode,btn){
+  var idx=parseInt(btn.getAttribute('data-idx'));
   var gal=mode==='field'?document.getElementById('faGal'):document.getElementById('eiGal');
   gal.onchange=function(){
     var arr=mode==='field'?fieldAreas:estItems;
-    var it=arr[quickPhTarget.idx];if(!it)return;
+    var it=arr[idx];if(!it)return;
     if(!it.photos)it.photos=[];
     var space=6-it.photos.length;if(space<=0){toast('Max 6 photos');return;}
     var files=gal.files;if(!files||!files.length)return;
     var count=Math.min(files.length,space);var done=0;
-    for(var i=0;i<count;i++){(function(f){var r=new FileReader();r.onload=function(e){it.photos.push(e.target.result);done++;if(done===count){
-      if(mode==='field'){saveFA();renderFA();}else{saveEI();renderEst();}
-      toast('📷 '+done+' added');gal.onchange=null;gal.value='';
-    }};r.readAsDataURL(f);})(files[i]);}
+    for(var i=0;i<count;i++){(function(f){var r=new FileReader();r.onload=function(e){it.photos.push(e.target.result);done++;if(done===count){if(mode==='field'){saveFA();renderFA();}else{saveEI();renderEst();}toast('📷 '+done+' added');gal.onchange=null;gal.value='';}};r.readAsDataURL(f);})(files[i]);}
   };
   gal.click();
 }
 
-// ── LIGHTBOX ──
-function openLB(img){
-  document.getElementById('lbImg').src=img.src;
-  document.getElementById('lbCap').textContent=img.alt||'';
-  document.getElementById('lb').className='lb on';
-}
+// LIGHTBOX
+function openLB(img){document.getElementById('lbImg').src=img.src;document.getElementById('lb').className='lb on';}
 document.getElementById('lbClose').addEventListener('click',function(){document.getElementById('lb').className='lb';});
 document.getElementById('lb').addEventListener('click',function(e){if(e.target===this)this.className='lb';});
 
-// ── QUOTE FIELDS ──
+// QUOTE FIELDS
 document.getElementById('qClient').addEventListener('click',function(){openFE('client','Client Name',quoteInfo.client);});
 document.getElementById('qAddress').addEventListener('click',function(){openFE('address','Job Address',quoteInfo.address);});
-function openFE(field,title,val){
-  curFieldEdit=field;
-  document.getElementById('feTitle').textContent=title;
-  document.getElementById('feInput').value=val||'';
-  openOv('feOverlay');
-}
+function openFE(field,title,val){curFieldEdit=field;document.getElementById('feTitle').textContent=title;document.getElementById('feInput').value=val||'';openOv('feOverlay');}
 document.getElementById('feCancelBtn').addEventListener('click',function(){closeOv('feOverlay');});
-document.getElementById('feSaveBtn').addEventListener('click',function(){
-  quoteInfo[curFieldEdit]=document.getElementById('feInput').value.trim();
-  saveEI();renderEst();closeOv('feOverlay');
-});
+document.getElementById('feSaveBtn').addEventListener('click',function(){quoteInfo[curFieldEdit]=document.getElementById('feInput').value.trim();saveEI();renderEst();closeOv('feOverlay');});
 
-// ── IMPORT ──
+// IMPORT
 document.getElementById('importBarBtn').addEventListener('click',function(){
-  importSel={};
-  var h='';
+  importSel={};var h='';
   for(var i=0;i<fieldAreas.length;i++){
-    importSel[i]=true;var a=fieldAreas[i];var pr=getProd(a.productId);var pn=pr?pr.name:'Unknown';
-    h+='<div class="imp-row"><button class="imp-chk on" data-idx="'+i+'" id="ichk'+i+'" onclick="togImp(this)">✓</button><div><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+esc(pn)+'</div></div></div>';
+    importSel[i]=true;var a=fieldAreas[i];var pr=getProd(a.productId);
+    h+='<div class="imp-row"><button class="imp-chk on" data-idx="'+i+'" id="ic'+i+'" onclick="togImp(this)">✓</button><div><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+(pr?esc(pr.name):'Unknown')+'</div></div></div>';
   }
-  document.getElementById('importList').innerHTML=h;
-  openOv('importOverlay');
+  document.getElementById('importList').innerHTML=h;openOv('importOverlay');
 });
 function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':'';}
 document.getElementById('importCancelBtn').addEventListener('click',function(){closeOv('importOverlay');});
@@ -1204,14 +1152,12 @@ document.getElementById('importConfirmBtn').addEventListener('click',function(){
   for(var i=0;i<fieldAreas.length;i++){
     if(!importSel[i])continue;
     var a=fieldAreas[i];var pr=getProd(a.productId);
-    estItems.push({name:a.name,productId:a.productId,sf:a.sf,price:pr?pr.price:0,notes:a.notes||'',photos:a.photos?a.photos.slice():[]});
-    added++;
+    estItems.push({name:a.name,productId:a.productId,sf:a.sf,price:pr?pr.price:0,notes:a.notes||'',photos:a.photos?a.photos.slice():[]});added++;
   }
-  saveEI();renderEst();closeOv('importOverlay');
-  toast('✅ '+added+' area'+(added>1?'s':'')+' imported');
+  saveEI();renderEst();closeOv('importOverlay');toast('✅ '+added+' area'+(added>1?'s':'')+' imported');
 });
 
-// ── CONTRACT TABS ──
+// CONTRACT TABS
 document.getElementById('ctTab1').addEventListener('click',function(){showCtSec('preview',0);renderCtDoc();});
 document.getElementById('ctTab2').addEventListener('click',function(){showCtSec('edit',1);});
 document.getElementById('ctTab3').addEventListener('click',function(){showCtSec('sign',2);initSig();});
@@ -1220,8 +1166,6 @@ function showCtSec(id,idx){
   for(var i=0;i<secs.length;i++){document.getElementById('ct-'+secs[i]).className='ct-sec';document.getElementById(tabs[i]).className='ct-tab';}
   document.getElementById('ct-'+id).className='ct-sec on';document.getElementById(tabs[idx]).className='ct-tab on';
 }
-
-// ── CONTRACT TERMS ──
 function applyCtFields(){
   document.getElementById('ctTitle').value=ctData.title||'INSULATION SERVICES AGREEMENT';
   document.getElementById('ctIntro').value=ctData.intro||'This agreement is entered into between Green Idea Insulation ("Contractor") and the Client identified below. The Contractor agrees to perform insulation services as described in the Scope of Work, in a professional manner using quality materials appropriate for the application.';
@@ -1229,31 +1173,22 @@ function applyCtFields(){
   document.getElementById('ctWarranty').value=ctData.warranty||'Contractor warrants all labor for 1 year from completion. Material warranties are provided by the manufacturer. Warranty is void if materials are altered or damaged by others after installation.';
   document.getElementById('ctExtra').value=ctData.extra||'Client is responsible for clearing the work area before start date. Any unforeseen conditions requiring additional work will be discussed before proceeding.';
 }
-function saveCt(){
-  ctData.title=document.getElementById('ctTitle').value;
-  ctData.intro=document.getElementById('ctIntro').value;
-  ctData.payment=document.getElementById('ctPayment').value;
-  ctData.warranty=document.getElementById('ctWarranty').value;
-  ctData.extra=document.getElementById('ctExtra').value;
-  localStorage.setItem('fb5_ct',JSON.stringify(ctData));
-}
+function saveCt(){ctData.title=document.getElementById('ctTitle').value;ctData.intro=document.getElementById('ctIntro').value;ctData.payment=document.getElementById('ctPayment').value;ctData.warranty=document.getElementById('ctWarranty').value;ctData.extra=document.getElementById('ctExtra').value;localStorage.setItem('fb6_ct',JSON.stringify(ctData));}
 document.getElementById('ctTitle').addEventListener('input',saveCt);
 document.getElementById('ctIntro').addEventListener('input',saveCt);
 document.getElementById('ctPayment').addEventListener('input',saveCt);
 document.getElementById('ctWarranty').addEventListener('input',saveCt);
 document.getElementById('ctExtra').addEventListener('input',saveCt);
-
 function renderCtDoc(){
   var totals=calcTotals();
-  var today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  var title=document.getElementById('ctTitle').value||ctData.title||'INSULATION SERVICES AGREEMENT';
-  var intro=document.getElementById('ctIntro').value||ctData.intro||'';
-  var payment=document.getElementById('ctPayment').value||ctData.payment||'';
-  var warranty=document.getElementById('ctWarranty').value||ctData.warranty||'';
-  var extra=document.getElementById('ctExtra').value||ctData.extra||'';
+  var title=document.getElementById('ctTitle').value;
+  var intro=document.getElementById('ctIntro').value;
+  var payment=document.getElementById('ctPayment').value;
+  var warranty=document.getElementById('ctWarranty').value;
+  var extra=document.getElementById('ctExtra').value;
   var h='<div class="ct-dh"><div class="ct-dlogo">🌿</div><div class="ct-dco">'+esc(cfg.company)+'</div></div>';
   if(cfg.contact||cfg.license)h+='<div class="ct-dcontact">'+esc(cfg.contact)+(cfg.license?' · Lic. '+esc(cfg.license):'')+'</div>';
-  h+='<hr class="ct-rule"><div class="ct-dtitle">'+esc(title)+'</div><div class="ct-dmeta">Quote #'+quoteNum+' · '+today+'</div>';
+  h+='<hr class="ct-rule"><div class="ct-dtitle">'+esc(title)+'</div><div class="ct-dmeta">Quote #'+quoteNum+' · '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})+'</div>';
   h+='<div class="ct-ig"><div class="ct-ic"><div class="ct-il">Client</div><div class="ct-iv">'+(quoteInfo.client||'—')+'</div></div><div class="ct-ic"><div class="ct-il">Address</div><div class="ct-iv">'+(quoteInfo.address||'—')+'</div></div></div>';
   h+='<p style="font-size:13px;color:#444;line-height:1.7;margin-bottom:12px">'+esc(intro).replace(/\n/g,'<br>')+'</p>';
   h+='<div class="ct-sh">Scope of Work</div>';
@@ -1269,7 +1204,7 @@ function renderCtDoc(){
   document.getElementById('ctDoc').innerHTML=h;
 }
 
-// ── SIGNATURE ──
+// SIGNATURE
 var sigC,sigCtx,sigDraw=false,sigMark=false;
 function initSig(){
   sigC=document.getElementById('sigCanvas');if(!sigC)return;
@@ -1289,14 +1224,14 @@ document.getElementById('saveSigBtn').addEventListener('click',function(){
   if(!name){toast('Enter client name first');return;}
   var today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   sigData={img:sigC.toDataURL('image/png'),name:name,date:today};
-  localStorage.setItem('fb5_sg',JSON.stringify(sigData));
+  localStorage.setItem('fb6_sg',JSON.stringify(sigData));
   document.getElementById('sigSaved').style.display='block';
   document.getElementById('sigImg').src=sigData.img;
   document.getElementById('sigMeta').textContent='Signed: '+name+' · '+today;
   toast('✅ Signature saved!');
 });
 
-// ── PRODUCTS ──
+// PRODUCTS
 function renderProds(){
   var list=document.getElementById('productList');
   if(!products.length){list.innerHTML='<div class="empty"><div class="empty-icon">🗄️</div><div class="empty-title">No products</div></div>';return;}
@@ -1307,19 +1242,19 @@ function renderProds(){
     var cat=catOrder[ci];h+='<div class="cat-g"><div class="cat-lbl">'+esc(cat)+'</div>';
     var grp=cats[cat];
     for(var j=0;j<grp.length;j++){var pr=grp[j].p;var idx=grp[j].idx;
-      h+='<div class="prod-card"><div class="prod-em">'+pr.emoji+'</div><div class="prod-info"><div class="prod-name">'+esc(pr.name)+'</div>'+(pr.desc?'<div class="prod-desc">'+esc(pr.desc)+'</div>':'')+'</div><div class="prod-r"><div><div class="prod-price">$'+parseFloat(pr.price).toFixed(2)+'</div><div class="prod-unit">/SF</div></div><button class="prod-eb" data-idx="'+idx+'" onclick="openProdModal(this)">✏️</button></div></div>';
+      h+='<div class="prod-card"><div class="prod-em">'+pr.emoji+'</div><div class="prod-info"><div class="prod-name">'+esc(pr.name)+'</div>'+(pr.desc?'<div class="prod-desc">'+esc(pr.desc)+'</div>':'')+'</div><div class="prod-r"><div><div class="prod-price">$'+parseFloat(pr.price).toFixed(2)+'</div><div class="prod-unit">/SF</div></div><button class="prod-eb" data-idx="'+idx+'" onclick="openProdModal(parseInt(this.getAttribute(\'data-idx\')))">✏️</button></div></div>';
     }
     h+='</div>';
   }
   list.innerHTML=h;
 }
-document.getElementById('addProdBtn').addEventListener('click',function(){openProdModal(null);});
-function openProdModal(btn){
-  editProdIdx=btn?parseInt(btn.getAttribute('data-idx')):-1;
-  document.getElementById('prodTitle').textContent=editProdIdx>=0?'Edit Product':'Add Product';
-  document.getElementById('prodSaveBtn').textContent=editProdIdx>=0?'Update':'Save';
-  document.getElementById('prodDelRow').style.display=editProdIdx>=0?'block':'none';
-  if(editProdIdx>=0){var pr=products[editProdIdx];document.getElementById('p_name').value=pr.name;document.getElementById('p_emoji').value=pr.emoji;document.getElementById('p_price').value=pr.price;document.getElementById('p_cat').value=pr.cat;document.getElementById('p_desc').value=pr.desc||'';}
+document.getElementById('addProdBtn').addEventListener('click',function(){openProdModal(-1);});
+function openProdModal(idx){
+  editProdIdx=idx;
+  document.getElementById('prodTitle').textContent=idx>=0?'Edit Product':'Add Product';
+  document.getElementById('prodSaveBtn').textContent=idx>=0?'Update':'Save';
+  document.getElementById('prodDelRow').style.display=idx>=0?'block':'none';
+  if(idx>=0){var pr=products[idx];document.getElementById('p_name').value=pr.name;document.getElementById('p_emoji').value=pr.emoji;document.getElementById('p_price').value=pr.price;document.getElementById('p_cat').value=pr.cat;document.getElementById('p_desc').value=pr.desc||'';}
   else{document.getElementById('p_name').value='';document.getElementById('p_emoji').value='📦';document.getElementById('p_price').value='';document.getElementById('p_cat').value='Other';document.getElementById('p_desc').value='';}
   openOv('prodOverlay');
 }
@@ -1335,15 +1270,13 @@ document.getElementById('prodSaveBtn').addEventListener('click',function(){
   var prod={name:name,emoji:emoji,price:price,cat:cat,desc:desc};
   if(editProdIdx>=0){prod.id=products[editProdIdx].id;products[editProdIdx]=prod;}
   else{prod.id='p_'+Date.now();products.push(prod);}
-  savePR();renderProds();closeOv('prodOverlay');
-  toast(editProdIdx>=0?'✅ Updated':'✅ Product added');
+  savePR();renderProds();closeOv('prodOverlay');toast(editProdIdx>=0?'✅ Updated':'✅ Product added');
 });
 document.getElementById('prodDelBtn').addEventListener('click',function(){
-  if(!confirm('Delete this product?'))return;
-  products.splice(editProdIdx,1);savePR();renderProds();closeOv('prodOverlay');toast('🗑 Deleted');
+  if(!confirm('Delete?'))return;products.splice(editProdIdx,1);savePR();renderProds();closeOv('prodOverlay');toast('🗑 Deleted');
 });
 
-// ── SETTINGS ──
+// SETTINGS
 function applySettings(){
   document.getElementById('cfgMarkup').value=cfg.markup;
   document.getElementById('cfgTax').value=cfg.taxRate;
@@ -1365,8 +1298,8 @@ document.getElementById('cfgCompany').addEventListener('change',saveSettings);
 document.getElementById('cfgContact').addEventListener('change',saveSettings);
 document.getElementById('cfgLicense').addEventListener('change',saveSettings);
 
-// ── EXPORT ──
-function buildQuoteText(){
+// EXPORT
+function buildQT(){
   var totals=calcTotals();
   var lines=[cfg.company,cfg.contact,'','INSULATION ESTIMATE','Quote #'+quoteNum,new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),'','Client: '+(quoteInfo.client||'N/A'),'Address: '+(quoteInfo.address||'N/A'),'','─────────────────────────'];
   for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);lines.push('  '+fmtN(it.sf)+' SF × $'+it.price.toFixed(2)+'/SF = '+fmt(c));if(it.notes)lines.push('  Note: '+it.notes);}
@@ -1376,14 +1309,15 @@ function buildQuoteText(){
   return lines.join('\n');
 }
 document.getElementById('copyQuoteBtn').addEventListener('click',function(){
-  var t=buildQuoteText();
+  var t=buildQT();
   if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast('📋 Copied!');});
   else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 Copied!');}
 });
 document.getElementById('shareQuoteBtn').addEventListener('click',function(){
-  if(navigator.share)navigator.share({title:'Quote #'+quoteNum,text:buildQuoteText()}).catch(function(){});
+  if(navigator.share)navigator.share({title:'Quote #'+quoteNum,text:buildQT()}).catch(function(){});
   else document.getElementById('copyQuoteBtn').click();
 });
+document.getElementById('printQuoteBtn').addEventListener('click',function(){window.print();});
 document.getElementById('copyCtBtn').addEventListener('click',function(){
   var el=document.getElementById('ctDoc');var t=el?el.innerText:'';
   if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast('📋 Copied!');});
@@ -1393,233 +1327,16 @@ document.getElementById('shareCtBtn').addEventListener('click',function(){
   if(navigator.share)navigator.share({title:'Contract #'+quoteNum,text:t}).catch(function(){});
   else document.getElementById('copyCtBtn').click();
 });
+document.getElementById('printCtBtn').addEventListener('click',function(){window.print();});
 
-// ── OVERLAYS CLOSE ON BACKDROP ──
-var ovs=['faOverlay','eiOverlay','prodOverlay','feOverlay','importOverlay'];
+// OVERLAY CLOSE ON BACKDROP
+var ovs=['faOverlay','eiOverlay','prodOverlay','feOverlay','importOverlay','projOverlay'];
 for(var oi=0;oi<ovs.length;oi++){
   (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(ovs[oi]);
 }
 
-
-// ── MEASUREMENT CALCULATOR ──
-var calcMode = 'walls';
-
-function setMMode(btn) {
-  calcMode = btn.getAttribute('data-mode');
-  var btns = document.querySelectorAll('.mmode');
-  for (var i = 0; i < btns.length; i++) btns[i].className = 'mmode';
-  btn.className = 'mmode on';
-  document.getElementById('mWalls').style.display  = calcMode === 'walls'  ? 'block' : 'none';
-  document.getElementById('mFloor').style.display  = calcMode === 'floor'  ? 'block' : 'none';
-  document.getElementById('mManual').style.display = calcMode === 'manual' ? 'block' : 'none';
-  recalcSF();
-}
-
-function initMeasCalc() {
-  calcMode = 'walls';
-  var btns = document.querySelectorAll('.mmode');
-  for (var i = 0; i < btns.length; i++) btns[i].className = 'mmode';
-  document.getElementById('mm1').className = 'mmode on';
-  document.getElementById('mWalls').style.display  = 'block';
-  document.getElementById('mFloor').style.display  = 'none';
-  document.getElementById('mManual').style.display = 'none';
-  var ids = ['mw_len','mw_h','mf_l','mf_w','fa_sf_m'];
-  for (var i = 0; i < ids.length; i++) {
-    var el = document.getElementById(ids[i]);
-    if (el) el.value = '';
-  }
-  document.getElementById('calcSF').textContent = '0';
-  document.getElementById('calcBreakdown').textContent = '';
-  document.getElementById('fa_sf').value = '0';
-}
-
-function parseSum(str) {
-  if (!str || !str.trim()) return 0;
-  var parts = str.replace(/\s/g,'').split('+');
-  var total = 0;
-  for (var i = 0; i < parts.length; i++) {
-    var n = parseFloat(parts[i]);
-    if (!isNaN(n)) total += n;
-  }
-  return total;
-}
-
-function recalcSF() {
-  var total = 0;
-  var breakdown = '';
-  if (calcMode === 'walls') {
-    var len = parseSum(document.getElementById('mw_len').value);
-    var h   = parseSum(document.getElementById('mw_h').value);
-    if (len > 0 && h > 0) {
-      total = len * h;
-      breakdown = len + ' ft × ' + h + ' ft';
-    }
-  } else if (calcMode === 'floor') {
-    var l = parseSum(document.getElementById('mf_l').value);
-    var w = parseSum(document.getElementById('mf_w').value);
-    if (l > 0 && w > 0) {
-      total = l * w;
-      breakdown = l + ' × ' + w + ' ft';
-    }
-  } else {
-    var m = parseFloat(document.getElementById('fa_sf_m').value) || 0;
-    total = m;
-  }
-  total = Math.round(total * 10) / 10;
-  var sfEl = document.getElementById('calcSF');
-  if (sfEl) sfEl.textContent = total > 0 ? total.toLocaleString() : '0';
-  var bd = document.getElementById('calcBreakdown');
-  if (bd) bd.textContent = breakdown;
-  document.getElementById('fa_sf').value = total;
-}
-
-
-// ── PROJECT MANAGEMENT ──
-var currentProject = null;  // {id, name, areas:[]}
-
-function loadProjects() {
-  var p = localStorage.getItem('fb5_projects');
-  return p ? JSON.parse(p) : [];
-}
-function saveProjects(projects) {
-  localStorage.setItem('fb5_projects', JSON.stringify(projects));
-}
-
-function openProjectModal() {
-  renderProjectList();
-  openOv('projOverlay');
-  document.getElementById('newProjName').value = '';
-}
-
-function renderProjectList() {
-  var projects = loadProjects();
-  var list = document.getElementById('projectList2');
-  if (!projects.length) {
-    list.innerHTML = '<div style="padding:14px;text-align:center;color:#4d5560;font-size:13px">No saved projects yet</div>';
-    return;
-  }
-  var h = '';
-  for (var i = 0; i < projects.length; i++) {
-    var p = projects[i];
-    var active = currentProject && currentProject.id === p.id;
-    h += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:' + (active ? 'rgba(240,160,44,.12)' : '#1e2530') + ';border:1px solid ' + (active ? 'rgba(240,160,44,.4)' : '#2a3340') + ';border-radius:10px;">';
-    h += '<button style="flex:1;text-align:left;background:none;border:none;padding:0" data-pid="' + p.id + '" onclick="switchProject(this)">';
-    h += '<div style="font-size:13px;font-weight:700;color:' + (active ? '#f0a02c' : '#e6edf3') + '">' + esc(p.name) + (active ? ' ✓' : '') + '</div>';
-    h += '<div style="font-size:11px;color:#7d8590;font-family:'DM Mono',monospace">' + (p.areas ? p.areas.length : 0) + ' area' + ((p.areas && p.areas.length !== 1) ? 's' : '') + '</div>';
-    h += '</button>';
-    h += '<button style="width:30px;height:30px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.2);border-radius:6px;color:#f85149;font-size:14px" data-pid="' + p.id + '" onclick="deleteProject(this)">🗑</button>';
-    h += '</div>';
-  }
-  list.innerHTML = h;
-}
-
-function createProject() {
-  var name = document.getElementById('newProjName').value.trim();
-  if (!name) { toast('Enter a project name'); return; }
-  var projects = loadProjects();
-  var proj = { id: 'proj_' + Date.now(), name: name, areas: [], created: new Date().toLocaleDateString('en-US') };
-  projects.unshift(proj);
-  saveProjects(projects);
-  // Save current areas to old project if exists
-  if (currentProject) {
-    saveCurrentProjectAreas();
-  }
-  // Switch to new project
-  currentProject = proj;
-  fieldAreas = [];
-  saveFA();
-  updateFieldHeader();
-  renderFA();
-  renderFWO();
-  closeOv('projOverlay');
-  toast('✅ Project "' + name + '" created');
-}
-
-function switchProject(el) {
-  var pid = el.getAttribute('data-pid');
-  var projects = loadProjects();
-  // Save current areas first
-  if (currentProject) saveCurrentProjectAreas();
-  // Load selected project
-  for (var i = 0; i < projects.length; i++) {
-    if (projects[i].id === pid) {
-      currentProject = projects[i];
-      fieldAreas = projects[i].areas ? JSON.parse(JSON.stringify(projects[i].areas)) : [];
-      break;
-    }
-  }
-  updateFieldHeader();
-  renderFA();
-  renderFWO();
-  closeOv('projOverlay');
-  toast('📂 Switched to "' + currentProject.name + '"');
-}
-
-function deleteProject(btn) {
-  var pid = btn.getAttribute('data-pid');
-  if (!confirm('Delete this project and all its areas?')) return;
-  var projects = loadProjects();
-  for (var i = 0; i < projects.length; i++) {
-    if (projects[i].id === pid) { projects.splice(i, 1); break; }
-  }
-  saveProjects(projects);
-  if (currentProject && currentProject.id === pid) {
-    currentProject = null;
-    fieldAreas = [];
-    saveFA();
-    updateFieldHeader();
-    renderFA();
-  }
-  renderProjectList();
-  toast('🗑 Project deleted');
-}
-
-function saveCurrentProjectAreas() {
-  if (!currentProject) return;
-  var projects = loadProjects();
-  for (var i = 0; i < projects.length; i++) {
-    if (projects[i].id === currentProject.id) {
-      projects[i].areas = JSON.parse(JSON.stringify(fieldAreas));
-      currentProject = projects[i];
-      break;
-    }
-  }
-  saveProjects(projects);
-}
-
-function updateFieldHeader() {
-  var nameEl = document.getElementById('fieldJobName');
-  var subEl  = document.getElementById('fieldJobSub');
-  if (currentProject) {
-    nameEl.textContent = currentProject.name;
-    subEl.textContent  = (fieldAreas.length || 0) + ' area' + (fieldAreas.length !== 1 ? 's' : '') + ' · tap to switch';
-  } else {
-    nameEl.textContent = 'Tap to set project';
-    subEl.textContent  = 'tap to name or switch';
-  }
-}
-
-// Override saveFA to also save to current project
-var _origSaveFA = saveFA;
-saveFA = function() {
-  _origSaveFA();
-  if (currentProject) saveCurrentProjectAreas();
-  updateFieldHeader();
-};
-
-// ── BOOT ──
-document.getElementById('createProjBtn').addEventListener('click', createProject);
-document.getElementById('fieldJobInfo').addEventListener('click', function() { openProjectModal(); });
-document.getElementById('projCancelBtn').addEventListener('click', function() { closeOv('projOverlay'); });
-document.getElementById('newProjName').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') createProject();
-});
-// Also wire newJobBtn to open project modal
-document.getElementById('newJobBtn').removeEventListener('click', function(){});
-document.getElementById('newJobBtn').addEventListener('click', function() { openProjectModal(); });
 load();
-
-});
+}); // end window.load
 </script>
 </body>
 </html>
