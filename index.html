@@ -315,16 +315,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 <div id="home">
   <div class="brand">
     <div class="brand-logo">
-      <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
-        <rect width="90" height="90" rx="20" fill="#f0faf0"/>
-        <ellipse cx="45" cy="34" rx="20" ry="22" fill="none" stroke="#2d8a3e" stroke-width="3"/>
-        <path d="M45 56 Q45 64 45 68" stroke="#2d8a3e" stroke-width="3" fill="none"/>
-        <path d="M37 68 Q45 66 53 68" stroke="#2d8a3e" stroke-width="2.5" fill="none"/>
-        <path d="M37 73 Q45 71 53 73" stroke="#2d8a3e" stroke-width="2" fill="none"/>
-        <path d="M37 78 Q45 76 53 78" stroke="#2d8a3e" stroke-width="1.5" fill="none"/>
-        <path d="M45 54 Q52 42 45 30 Q38 42 45 54Z" fill="#3fb950"/>
-        <path d="M45 30 Q56 26 58 36 Q51 44 45 40Z" fill="#5cd46c" opacity=".9"/>
-      </svg>
+      <img src="icon-192.png" alt="FieldBid" style="width:90px;height:90px;object-fit:cover;border-radius:22px;">
     </div>
     <div class="brand-name">FieldBid</div>
     <div class="brand-sub">by Green Idea Insulation</div>
@@ -478,7 +469,18 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div class="st-g"><div class="st-t">Company Info</div>
       <div class="st-row stacked"><div class="st-lbl">Company Name</div><input class="fi" type="text" id="cfgCompany" value="Green Idea Insulation" style="background:#0d1117"></div>
       <div class="st-row stacked" style="margin-top:8px"><div class="st-lbl">Phone / Email</div><input class="fi" type="text" id="cfgContact" placeholder="(617) 000-0000" style="background:#0d1117"></div>
-      <div class="st-row stacked" style="margin-top:8px"><div class="st-lbl">License #</div><input class="fi" type="text" id="cfgLicense" placeholder="MA Lic. #000000" style="background:#0d1117"></div>
+      <div class="st-row stacked" style="margin-top:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+          <div class="st-lbl">License #</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:#7d8590">Show on docs</span>
+            <button id="licToggle" style="width:44px;height:24px;border-radius:12px;border:none;background:#2a3340;position:relative;transition:background .2s;">
+              <span id="licThumb" style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#7d8590;transition:all .2s;display:block;"></span>
+            </button>
+          </div>
+        </div>
+        <input class="fi" type="text" id="cfgLicense" placeholder="MA Lic. #000000" style="background:#0d1117">
+      </div>
     </div>
   </div>
 </div>
@@ -622,7 +624,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 window.addEventListener('load', function() {
 
 var fieldAreas=[], estItems=[], products=[];
-var cfg={markup:30,taxRate:0,company:'Green Idea Insulation',contact:'',license:''};
+var cfg={markup:30,taxRate:0,company:'Green Idea Insulation',contact:'',license:'',showLicense:false};
 var quoteInfo={client:'',address:''};
 var quoteNum=1001;
 var editFAIdx=-1, editEIIdx=-1, editProdIdx=-1;
@@ -780,14 +782,24 @@ function renderProjList(){
   for(var i=0;i<projs.length;i++){
     var p=projs[i];var active=currentProj&&currentProj.id===p.id;
     h+='<div class="proj-item '+(active?'active':'inactive')+'">';
-    h+='<button class="proj-btn" data-pid="'+p.id+'" onclick="switchProj(this)">';
+    h+='<button class="proj-btn" data-pid="'+p.id+'">';
     h+='<div class="proj-name">'+esc(p.name)+(active?' ✓':'')+'</div>';
     h+='<div class="proj-meta">'+(p.areas?p.areas.length:0)+' areas · '+p.created+'</div>';
     h+='</button>';
-    h+='<button class="proj-del" data-pid="'+p.id+'" onclick="deleteProj(this)">🗑</button>';
+    h+='<button class="proj-del" data-pid="'+p.id+'">🗑</button>';
     h+='</div>';
   }
   list.innerHTML=h;
+  list.addEventListener('click',function(e){
+    var btn=e.target;
+    while(btn&&btn!==list){
+      if(btn.classList&&(btn.classList.contains('proj-btn')||btn.classList.contains('proj-del')))break;
+      btn=btn.parentNode;
+    }
+    if(!btn||btn===list)return;
+    if(btn.classList.contains('proj-del'))deleteProj(btn);
+    else switchProj(btn);
+  });
 }
 function createProj(){
   var name=document.getElementById('newProjName').value.trim();
@@ -853,6 +865,16 @@ function renderFA(){
     h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" onclick="qkPH(\'field\',this)">📷 Photo</button><button class="ca" data-idx="'+i+'" onclick="openFAModal(parseInt(this.getAttribute(\'data-idx\')))">✏️ Edit</button><button class="ca del" data-idx="'+i+'" onclick="delFA(parseInt(this.getAttribute(\'data-idx\')))">🗑 Del</button></div></div>';
   }
   list.innerHTML=h;
+  list.addEventListener('click',function(e){
+    var btn=e.target;
+    while(btn&&btn!==list){if(btn.classList&&btn.classList.contains('ca'))break;btn=btn.parentNode;}
+    if(!btn||btn===list)return;
+    var idx=parseInt(btn.getAttribute('data-idx'));
+    var act=btn.getAttribute('data-act');
+    if(act==='ph')qkPH('field',btn);
+    else if(act==='edit')openFAModal(idx);
+    else if(act==='del')delFA(idx);
+  });
 }
 
 // RENDER EST
@@ -876,7 +898,18 @@ function renderEst(){
     h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+it.price.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
     h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" onclick="qkPH(\'est\',this)">📷 Photo</button><button class="ca" data-idx="'+i+'" onclick="openEIModal(parseInt(this.getAttribute(\'data-idx\')))">✏️ Edit</button><button class="ca del" data-idx="'+i+'" onclick="delEI(parseInt(this.getAttribute(\'data-idx\')))">🗑 Del</button></div></div>';
   }
-  list.innerHTML=h;renderQuote();
+  list.innerHTML=h;
+  list.addEventListener('click',function(e){
+    var btn=e.target;
+    while(btn&&btn!==list){if(btn.classList&&btn.classList.contains('ca'))break;btn=btn.parentNode;}
+    if(!btn||btn===list)return;
+    var idx=parseInt(btn.getAttribute('data-idx'));
+    var act=btn.getAttribute('data-act');
+    if(act==='ph')qkPH('est',btn);
+    else if(act==='edit')openEIModal(idx);
+    else if(act==='del')delEI(idx);
+  });
+  renderQuote();
 }
 
 function renderQuote(){
@@ -924,20 +957,34 @@ function buildWOTask(idx,name,prod,sf,spec,notes,photos,checked,mode,t){
   var h='<div class="wo-task"><div class="wo-th"><div class="wo-num '+mode+'">'+(idx+1)+'</div><div class="wo-ti"><div class="wo-tn">'+name+'</div><div class="wo-tp">'+prod+'</div><div class="wo-ts">'+sf+' SF'+(spec?' · '+spec:'')+'</div></div></div>';
   if(photos&&photos.length){h+='<div class="wo-photos">';for(var p=0;p<photos.length;p++)h+='<img class="wo-photo" src="'+photos[p]+'" alt="">';h+='</div>';}
   if(notes)h+='<div class="wo-note">📋 '+esc(notes)+'</div>';
-  h+='<button class="wo-ck" data-key="'+mode+idx+'" onclick="ckWO(this)"><div class="wo-cb '+ck+'" id="wcb_'+mode+idx+'">'+(checked?'✓':'')+'</div><span class="wo-cl">'+t.done+'</span></button>';
+  h+='<button class="wo-ck" data-key="'+mode+idx+'"><div class="wo-cb '+ck+'" id="wcb_'+mode+idx+'">'+(checked?'✓':'')+'</div><span class="wo-cl">'+t.done+'</span></button>';
   return h+'</div>';
 }
 function renderFWO(){
   var t=WO[fwLang];var h=buildWOHd(t,fwLang,currentProj?currentProj.name:'',currentProj?currentProj.address||'':'',quoteNum);
   if(!fieldAreas.length)h+='<div class="empty"><div class="empty-body">'+t.none+'</div></div>';
   else{h+='<div class="wo-tasks">';for(var i=0;i<fieldAreas.length;i++){var a=fieldAreas[i];var pr=getProd(a.productId);h+=buildWOTask(i,(pr?pr.emoji:'📦')+' '+esc(a.name),pr?esc(pr.name):'—',fmtN(a.sf),a.spec,a.notes,a.photos,woChecked['f'+i],'f',t);}h+='</div>';}
-  document.getElementById('fieldWO').innerHTML=h;
+  var fwo=document.getElementById('fieldWO');
+  fwo.innerHTML=h;
+  fwo.addEventListener('click',function(e){
+    var btn=e.target;
+    while(btn&&btn!==fwo){if(btn.classList&&btn.classList.contains('wo-ck'))break;btn=btn.parentNode;}
+    if(!btn||btn===fwo)return;
+    ckWO(btn);
+  });
 }
 function renderEWO(){
   var t=WO[ewLang];var h=buildWOHd(t,ewLang,quoteInfo.client,quoteInfo.address,quoteNum);
   if(!estItems.length)h+='<div class="empty"><div class="empty-body">'+t.none+'</div></div>';
   else{h+='<div class="wo-tasks">';for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);h+=buildWOTask(i,(pr?pr.emoji:'📦')+' '+esc(it.name),pr?esc(pr.name):'—',fmtN(it.sf),'',it.notes,it.photos,woChecked['e'+i],'e',t);}h+='</div>';}
-  document.getElementById('estWO').innerHTML=h;
+  var ewo=document.getElementById('estWO');
+  ewo.innerHTML=h;
+  ewo.addEventListener('click',function(e){
+    var btn=e.target;
+    while(btn&&btn!==ewo){if(btn.classList&&btn.classList.contains('wo-ck'))break;btn=btn.parentNode;}
+    if(!btn||btn===ewo)return;
+    ckWO(btn);
+  });
 }
 function ckWO(btn){
   var key=btn.getAttribute('data-key');woChecked[key]=!woChecked[key];
@@ -1062,14 +1109,24 @@ function renderPicker(mode){
   var h='';
   for(var i=0;i<products.length;i++){
     var pr=products[i];var on=pr.id===sel?' on':'';
-    h+='<button class="popt'+on+'" data-pid="'+pr.id+'" data-mode="'+mode+'" onclick="selProd(this)">';
+    h+='<button class="popt'+on+'" data-pid="'+pr.id+'" data-mode="'+mode+'">';
     h+='<div class="po-l"><div class="po-em">'+pr.emoji+'</div><div><div class="po-nm">'+esc(pr.name)+'</div><div class="po-ct">'+esc(pr.cat)+'</div></div></div>';
     h+='<div style="display:flex;align-items:center">';
     if(mode==='ei')h+='<div class="po-pr">$'+parseFloat(pr.price).toFixed(2)+'/SF</div>';
     h+='<div class="po-ck">✓</div></div></button>';
   }
-  if(!h)h='<div style="padding:14px;color:#4d5560;font-size:12px;text-align:center">No products — add in 🗄️ Products</div>';
-  document.getElementById(id).innerHTML=h;
+  if(!h)h='<div style="padding:14px;color:#4d5560;font-size:12px;text-align:center">No products — add in Products tab</div>';
+  var container=document.getElementById(id);
+  container.innerHTML=h;
+  container.addEventListener('click',function(e){
+    var btn=e.target;
+    while(btn&&btn!==container){
+      if(btn.classList&&btn.classList.contains('popt'))break;
+      btn=btn.parentNode;
+    }
+    if(!btn||btn===container)return;
+    selProd(btn);
+  });
 }
 function selProd(el){
   var mode=el.getAttribute('data-mode');var pid=el.getAttribute('data-pid');
@@ -1103,8 +1160,14 @@ function renderPPGrid(mode){
   var hint=document.getElementById(mode+'PhotoHint');
   if(!arr.length){grid.innerHTML='';hint.style.display='none';return;}
   var h='';
-  for(var i=0;i<arr.length;i++)h+='<div class="ppw"><img src="'+arr[i]+'"><button class="pp-del" data-mode="'+mode+'" data-i="'+i+'" onclick="rmPH(this)">×</button></div>';
+  for(var i=0;i<arr.length;i++)h+='<div class="ppw"><img src="'+arr[i]+'"><button class="pp-del" data-mode="'+mode+'" data-i="'+i+'" data-act="rmph">×</button></div>';
   grid.innerHTML=h;
+  grid.addEventListener('click',function(e){
+    var btn=e.target;
+    while(btn&&btn!==grid){if(btn.getAttribute&&btn.getAttribute('data-act')==='rmph')break;btn=btn.parentNode;}
+    if(!btn||btn===grid)return;
+    rmPH(btn);
+  });
   document.getElementById(mode+'PhotoCount').textContent=arr.length;
   hint.style.display='block';
 }
@@ -1141,9 +1204,17 @@ document.getElementById('importBarBtn').addEventListener('click',function(){
   importSel={};var h='';
   for(var i=0;i<fieldAreas.length;i++){
     importSel[i]=true;var a=fieldAreas[i];var pr=getProd(a.productId);
-    h+='<div class="imp-row"><button class="imp-chk on" data-idx="'+i+'" id="ic'+i+'" onclick="togImp(this)">✓</button><div><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+(pr?esc(pr.name):'Unknown')+'</div></div></div>';
+    h+='<div class="imp-row"><button class="imp-chk on" data-idx="'+i+'" id="ic'+i+'" data-act="imp">✓</button><div><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+(pr?esc(pr.name):'Unknown')+'</div></div></div>';
   }
-  document.getElementById('importList').innerHTML=h;openOv('importOverlay');
+  var ilist=document.getElementById('importList');
+  ilist.innerHTML=h;
+  ilist.addEventListener('click',function(e){
+    var btn=e.target;
+    while(btn&&btn!==ilist){if(btn.getAttribute&&btn.getAttribute('data-act')==='imp')break;btn=btn.parentNode;}
+    if(!btn||btn===ilist)return;
+    togImp(btn);
+  });
+  openOv('importOverlay');
 });
 function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':'';}
 document.getElementById('importCancelBtn').addEventListener('click',function(){closeOv('importOverlay');});
@@ -1187,7 +1258,7 @@ function renderCtDoc(){
   var warranty=document.getElementById('ctWarranty').value;
   var extra=document.getElementById('ctExtra').value;
   var h='<div class="ct-dh"><div class="ct-dlogo">🌿</div><div class="ct-dco">'+esc(cfg.company)+'</div></div>';
-  if(cfg.contact||cfg.license)h+='<div class="ct-dcontact">'+esc(cfg.contact)+(cfg.license?' · Lic. '+esc(cfg.license):'')+'</div>';
+  if(cfg.contact||(cfg.license&&cfg.showLicense))h+='<div class="ct-dcontact">'+esc(cfg.contact)+((cfg.license&&cfg.showLicense)?' · Lic. '+esc(cfg.license):'')+'</div>';
   h+='<hr class="ct-rule"><div class="ct-dtitle">'+esc(title)+'</div><div class="ct-dmeta">Quote #'+quoteNum+' · '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})+'</div>';
   h+='<div class="ct-ig"><div class="ct-ic"><div class="ct-il">Client</div><div class="ct-iv">'+(quoteInfo.client||'—')+'</div></div><div class="ct-ic"><div class="ct-il">Address</div><div class="ct-iv">'+(quoteInfo.address||'—')+'</div></div></div>';
   h+='<p style="font-size:13px;color:#444;line-height:1.7;margin-bottom:12px">'+esc(intro).replace(/\n/g,'<br>')+'</p>';
@@ -1242,11 +1313,17 @@ function renderProds(){
     var cat=catOrder[ci];h+='<div class="cat-g"><div class="cat-lbl">'+esc(cat)+'</div>';
     var grp=cats[cat];
     for(var j=0;j<grp.length;j++){var pr=grp[j].p;var idx=grp[j].idx;
-      h+='<div class="prod-card"><div class="prod-em">'+pr.emoji+'</div><div class="prod-info"><div class="prod-name">'+esc(pr.name)+'</div>'+(pr.desc?'<div class="prod-desc">'+esc(pr.desc)+'</div>':'')+'</div><div class="prod-r"><div><div class="prod-price">$'+parseFloat(pr.price).toFixed(2)+'</div><div class="prod-unit">/SF</div></div><button class="prod-eb" data-idx="'+idx+'" onclick="openProdModal(parseInt(this.getAttribute(\'data-idx\')))">✏️</button></div></div>';
+      h+='<div class="prod-card"><div class="prod-em">'+pr.emoji+'</div><div class="prod-info"><div class="prod-name">'+esc(pr.name)+'</div>'+(pr.desc?'<div class="prod-desc">'+esc(pr.desc)+'</div>':'')+'</div><div class="prod-r"><div><div class="prod-price">$'+parseFloat(pr.price).toFixed(2)+'</div><div class="prod-unit">/SF</div></div><button class="prod-eb" data-idx="'+idx+'" data-act="editprod">✏️</button></div></div>';
     }
     h+='</div>';
   }
   list.innerHTML=h;
+  list.addEventListener('click',function(e){
+    var btn=e.target;
+    while(btn&&btn!==list){if(btn.getAttribute&&btn.getAttribute('data-act')==='editprod')break;btn=btn.parentNode;}
+    if(!btn||btn===list)return;
+    openProdModal(parseInt(btn.getAttribute('data-idx')));
+  });
 }
 document.getElementById('addProdBtn').addEventListener('click',function(){openProdModal(-1);});
 function openProdModal(idx){
@@ -1283,6 +1360,21 @@ function applySettings(){
   document.getElementById('cfgCompany').value=cfg.company;
   document.getElementById('cfgContact').value=cfg.contact;
   document.getElementById('cfgLicense').value=cfg.license||'';
+  updateLicToggle();
+}
+function updateLicToggle(){
+  var btn=document.getElementById('licToggle');
+  var thumb=document.getElementById('licThumb');
+  if(!btn)return;
+  if(cfg.showLicense){
+    btn.style.background='#3fb950';
+    thumb.style.left='22px';
+    thumb.style.background='#fff';
+  } else {
+    btn.style.background='#2a3340';
+    thumb.style.left='2px';
+    thumb.style.background='#7d8590';
+  }
 }
 function saveSettings(){
   cfg.markup=parseFloat(document.getElementById('cfgMarkup').value)||0;
@@ -1297,6 +1389,12 @@ document.getElementById('cfgTax').addEventListener('change',saveSettings);
 document.getElementById('cfgCompany').addEventListener('change',saveSettings);
 document.getElementById('cfgContact').addEventListener('change',saveSettings);
 document.getElementById('cfgLicense').addEventListener('change',saveSettings);
+document.getElementById('licToggle').addEventListener('click',function(){
+  cfg.showLicense=!cfg.showLicense;
+  saveCfg();
+  updateLicToggle();
+  toast(cfg.showLicense?'License # visible on docs':'License # hidden from docs');
+});
 
 // EXPORT
 function buildQT(){
