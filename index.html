@@ -1177,6 +1177,40 @@ document.getElementById('addFloorRowBtn').addEventListener('click',function(){
 });
 document.getElementById('fa_sf_m').addEventListener('input',recalcSF);
 
+// Row container listeners - set up ONCE on the static containers
+document.getElementById('mRowsContainer').addEventListener('input',function(e){
+  var el=e.target;var row=parseInt(el.getAttribute('data-row'));
+  var field=el.getAttribute('data-field');var m=el.getAttribute('data-mode');
+  if(isNaN(row)||!field||!m)return;
+  var arr=m==='wall'?wallRows:floorRows;
+  if(arr[row])arr[row][field]=el.value;
+  recalcSF();
+});
+document.getElementById('mRowsContainer').addEventListener('click',function(e){
+  var btn=e.target;
+  while(btn&&btn!==this){if(btn.tagName==='BUTTON'&&btn.getAttribute('data-row'))break;btn=btn.parentNode;}
+  if(!btn||btn===this)return;
+  var row=parseInt(btn.getAttribute('data-row'));
+  wallRows.splice(row,1);if(wallRows.length===0)wallRows.push({l:'',h:''});
+  renderRows('wall');recalcSF();
+});
+document.getElementById('mFloorRowsContainer').addEventListener('input',function(e){
+  var el=e.target;var row=parseInt(el.getAttribute('data-row'));
+  var field=el.getAttribute('data-field');var m=el.getAttribute('data-mode');
+  if(isNaN(row)||!field||!m)return;
+  var arr=m==='wall'?wallRows:floorRows;
+  if(arr[row])arr[row][field]=el.value;
+  recalcSF();
+});
+document.getElementById('mFloorRowsContainer').addEventListener('click',function(e){
+  var btn=e.target;
+  while(btn&&btn!==this){if(btn.tagName==='BUTTON'&&btn.getAttribute('data-row'))break;btn=btn.parentNode;}
+  if(!btn||btn===this)return;
+  var row=parseInt(btn.getAttribute('data-row'));
+  floorRows.splice(row,1);if(floorRows.length===0)floorRows.push({l:'',h:''});
+  renderRows('floor');recalcSF();
+});
+
 // FIELD AREA MODAL
 function openFAModal(idx){
   editFAIdx=idx;
