@@ -744,6 +744,8 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 <div class="toast" id="toast"></div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+
 // ── ERROR DISPLAY ──
 window.onerror = function(msg, src, line, col, err) {
   var d = document.createElement('div');
@@ -1616,6 +1618,8 @@ document.getElementById('newProjName').addEventListener('keydown', function(e) {
 document.getElementById('newJobBtn').removeEventListener('click', function(){});
 document.getElementById('newJobBtn').addEventListener('click', function() { openProjectModal(); });
 load();
+
+});
 </script>
 </body>
 </html>
