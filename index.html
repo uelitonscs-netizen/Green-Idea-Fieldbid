@@ -643,10 +643,27 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 </div>
 
 <div class="lb" id="lb"><button class="lb-x" id="lbClose">✕</button><img id="lbImg" src="" alt=""><div class="lb-cap" id="lbCap"></div></div>
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="padding-bottom:32px">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="confirmMsg">Delete?</div>
+    <div class="btn-row">
+      <button class="btn bs" id="confirmNo">Cancel</button>
+      <button class="btn bd" id="confirmYes">Delete</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
 // All code runs after DOM is ready
+function appConfirm(msg, onYes) {
+  document.getElementById('confirmMsg').textContent = msg;
+  window._confirmResolve = onYes;
+  window._confirmReject = null;
+  document.getElementById('confirmOverlay').className = 'overlay on';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
 
 var fieldAreas=[], estItems=[], products=[];
@@ -849,18 +866,27 @@ function switchProj(btn){
 }
 function deleteProj(btn){
   var pid=btn.getAttribute('data-pid');
-  if(!confirm('Delete this project?'))return;
+  appConfirm('Delete this project?',function(){
   var projs=loadProjs();
   for(var i=0;i<projs.length;i++){if(projs[i].id===pid){projs.splice(i,1);break;}}
   saveProjs(projs);
   if(currentProj&&currentProj.id===pid){currentProj=null;fieldAreas=[];saveFA();updateProjHeader();renderFA();}
   renderProjList();toast('🗑 Project deleted');
+  });
 }
 
 // NEW EST
-document.getElementById('newEstBtn').addEventListener('click',function(){
-  if(estItems.length&&!confirm('Clear current estimate?'))return;
+function doNewEst(){
   estItems=[];quoteInfo={client:'',address:''};
+  quoteNum++;localStorage.setItem('fb6_qn',quoteNum);
+  document.getElementById('estQNum').textContent=quoteNum;
+  document.getElementById('qNumber').textContent='#'+quoteNum;
+  document.getElementById('qDate').textContent=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  saveEI();renderEst();toast('New estimate');
+}
+document.getElementById('newEstBtn').addEventListener('click',function(){
+  if(estItems.length){appConfirm('Clear current estimate?',function(){doNewEst();});return;}doNewEst();
+  
   quoteNum++;localStorage.setItem('fb6_qn',quoteNum);
   document.getElementById('estQNum').textContent=quoteNum;
   document.getElementById('qNumber').textContent='#'+quoteNum;
@@ -1232,7 +1258,7 @@ document.getElementById('faSaveBtn').addEventListener('click',function(){
   saveFA();renderFA();renderFWO();closeOv('faOverlay');
   toast(editFAIdx>=0?'✅ Area updated':'✅ Area added');
 });
-function delFA(idx){if(!confirm('Delete?'))return;fieldAreas.splice(idx,1);saveFA();renderFA();renderFWO();toast('🗑 Deleted');}
+function delFA(idx){appConfirm('Delete this area?',function(){fieldAreas.splice(idx,1);saveFA();renderFA();renderFWO();toast('🗑 Deleted');});}
 
 // EST ITEM MODAL
 function openEIModal(idx){
@@ -1264,7 +1290,7 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
   if(editEIIdx>=0)estItems[editEIIdx]=item;else estItems.push(item);
   saveEI();renderEst();closeOv('eiOverlay');toast(editEIIdx>=0?'✅ Updated':'✅ Item added');
 });
-function delEI(idx){if(!confirm('Delete?'))return;estItems.splice(idx,1);saveEI();renderEst();toast('🗑 Deleted');}
+function delEI(idx){appConfirm('Delete this item?',function(){estItems.splice(idx,1);saveEI();renderEst();toast('🗑 Deleted');});}
 
 // PRODUCT PICKER
 function renderPicker(mode){
@@ -1514,8 +1540,8 @@ document.getElementById('prodSaveBtn').addEventListener('click',function(){
   savePR();renderProds();closeOv('prodOverlay');toast(editProdIdx>=0?'✅ Updated':'✅ Product added');
 });
 document.getElementById('prodDelBtn').addEventListener('click',function(){
-  if(!confirm('Delete?'))return;products.splice(editProdIdx,1);savePR();renderProds();closeOv('prodOverlay');toast('🗑 Deleted');
-});
+  appConfirm('Delete product?',function(){products.splice(editProdIdx,1);savePR();renderProds();closeOv('prodOverlay');toast('🗑 Deleted');
+});});
 
 // SETTINGS
 function applySettings(){
@@ -1598,6 +1624,21 @@ for(var oi=0;oi<ovs.length;oi++){
 }
 
 load();
+
+// Confirm modal
+document.getElementById('confirmNo').addEventListener('click', function() {
+  closeOv('confirmOverlay');
+  if(window._confirmReject) window._confirmReject();
+  window._confirmResolve = null;
+  window._confirmReject = null;
+});
+document.getElementById('confirmYes').addEventListener('click', function() {
+  closeOv('confirmOverlay');
+  if(window._confirmResolve) window._confirmResolve();
+  window._confirmResolve = null;
+  window._confirmReject = null;
+});
+
 }); // end DOMContentLoaded
 </script>
 </body>
