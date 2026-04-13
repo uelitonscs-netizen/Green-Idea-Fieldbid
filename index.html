@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260413151905 -->
+<!-- FieldBid v20260413152456 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1671,74 +1671,60 @@ var _wlAuth = firebase.auth(_wlApp);
 function sendToWorkLog(){
   var btn = document.getElementById('sendToWorklogBtn');
   var status = document.getElementById('worklog-send-status');
-  if(!btn) return;
   
   var client = quoteInfo.client || '';
   var address = quoteInfo.address || '';
   var totals = calcTotals();
   var budget = Math.round((totals.total||0)*100)/100;
-  var today = new Date().toISOString().slice(0,10);
-  
+
   if(!client && !address){
-    status.textContent = '⚠️ Add client name and address first.';
-    status.style.color = '#f59e0b';
-    status.style.display = 'block';
+    if(status){ status.textContent='Add client name first!'; status.style.color='#f59e0b'; status.style.display='block'; }
+    toast('Add client name first!');
     return;
   }
-  
-  btn.disabled = true;
-  btn.textContent = 'Sending...';
-  status.style.color = '#888';
-  status.textContent = 'Connecting...';
-  status.style.display = 'block';
+
+  toast('Sending to WorkLog...');
+  if(btn){ btn.textContent='Sending...'; btn.disabled=true; }
 
   var projData = {
-    name: client || address,
-    desc: address,
-    budget: budget,
-    overhead: 0,
-    ohDays: [],
-    start: today,
-    end: null,
-    status: 'active',
-    helpers: [],
-    createdAt: new Date().toISOString(),
-    source: 'fieldbid',
-    quoteNumber: quoteNum,
-    fieldbidSF: estItems.reduce(function(s,i){return s+(i.sf||0);},0),
-    fieldbidTotal: budget
+    fields: {
+      name: {stringValue: client || address},
+      desc: {stringValue: address},
+      budget: {doubleValue: budget},
+      overhead: {doubleValue: 0},
+      start: {stringValue: new Date().toISOString().slice(0,10)},
+      status: {stringValue: 'active'},
+      createdAt: {stringValue: new Date().toISOString()},
+      source: {stringValue: 'fieldbid'},
+      fieldbidTotal: {doubleValue: budget}
+    }
   };
 
-  function doSend(){
-    _wlDb.collection('projects').add(projData)
-    .then(function(){
-      btn.disabled = false;
-      btn.textContent = '✅ Sent!';
-      btn.style.background = '#16a34a';
-      status.textContent = '✅ Project created in WorkLog!';
-      status.style.color = '#16a34a';
-      setTimeout(function(){ btn.textContent = '🔗 Send to WorkLog'; btn.style.background = '#1a6b2a'; },4000);
-    })
-    .catch(function(err){
-      btn.disabled = false;
-      btn.textContent = '🔗 Send to WorkLog';
-      status.textContent = '❌ ' + err.message;
-      status.style.color = '#dc2626';
-    });
-  }
+  var url = 'https://firestore.googleapis.com/v1/projects/work-log-5aa9f/databases/(default)/documents/projects?key=AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA';
 
-  // Try with existing auth first, then anonymous
-  var user = _wlAuth.currentUser;
-  if(user){
-    doSend();
-  } else {
-    _wlAuth.signInAnonymously()
-    .then(function(){ doSend(); })
-    .catch(function(err){
-      // Try sending anyway - Firestore rules might allow it
-      doSend();
-    });
-  }
+  fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(projData)
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if(data.name){
+      toast('✅ Sent to WorkLog!');
+      if(btn){ btn.textContent='✅ Sent!'; btn.style.background='#16a34a'; }
+      if(status){ status.textContent='Project created in WorkLog!'; status.style.color='#16a34a'; status.style.display='block'; }
+      setTimeout(function(){ 
+        if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.style.background='#1a6b2a'; btn.disabled=false; }
+      }, 3000);
+    } else {
+      toast('Error: ' + (data.error&&data.error.message||'Unknown'));
+      if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.disabled=false; }
+    }
+  })
+  .catch(function(err){
+    toast('Error: ' + err.message);
+    if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.disabled=false; }
+  });
 }
 window.sendToWorkLog = sendToWorkLog;
 </script>
