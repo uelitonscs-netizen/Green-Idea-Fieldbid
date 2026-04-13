@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260413150317 -->
+<!-- FieldBid v20260413151007 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1606,6 +1606,7 @@ function buildQT(){
   lines.push('TOTAL: '+fmt(totals.total),'','Thank you for your business!');
   return lines.join('\n');
 }
+document.getElementById('sendToWorklogBtn').addEventListener('click', sendToWorkLog);
 document.getElementById('copyQuoteBtn').addEventListener('click',function(){
   var t=buildQT();
   if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast('📋 Copied!');});
@@ -1668,16 +1669,7 @@ try {
 var _wlDb = firebase.firestore(_wlApp);
 var _wlAuth = firebase.auth(_wlApp);
 
-// Use addEventListener for Samsung compatibility
-document.addEventListener('DOMContentLoaded', function(){
-  var sendBtn = document.getElementById('sendToWorklogBtn');
-  if(sendBtn) sendBtn.addEventListener('click', sendToWorkLog);
-});
-// Also attach immediately in case DOM already loaded
-setTimeout(function(){
-  var sendBtn = document.getElementById('sendToWorklogBtn');
-  if(sendBtn) sendBtn.addEventListener('click', sendToWorkLog);
-}, 500);
+
 
 function sendToWorkLog(){
   var btn = document.getElementById('sendToWorklogBtn');
