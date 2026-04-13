@@ -1646,9 +1646,7 @@ document.getElementById('confirmYes').addEventListener('click', function() {
   window._confirmReject = null;
 });
 
-}); // end DOMContentLoaded
-
-// ── WORKLOG INTEGRATION ────────────────────────────────
+}); // ── WORKLOG INTEGRATION ────────────────────────────────
 var _wlDb = null;
 var _wlAuth = null;
 try {
@@ -1730,6 +1728,9 @@ function sendToWorkLog(){
 }
 window.sendToWorkLog = sendToWorkLog;
 document.getElementById('sendToWorklogBtn').addEventListener('click', sendToWorkLog);
+
+// end DOMContentLoaded
+
 </script>
 </body>
 </html>
