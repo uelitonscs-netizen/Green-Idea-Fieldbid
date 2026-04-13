@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260413180252 -->
+<!-- FieldBid v20260413180834 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1669,66 +1669,40 @@ var _wlAuth = firebase.auth(_wlApp);
 
 
 function sendToWorkLog(){
-  var btn = document.getElementById('sendToWorklogBtn');
-  var status = document.getElementById('worklog-send-status');
+  var client = quoteInfo.client || 'Test';
+  var budget = calcTotals().total || 0;
+  var today = new Date().toISOString().slice(0,10);
   
-  var client = quoteInfo.client || '';
-  var address = quoteInfo.address || '';
-  var totals = calcTotals();
-  var budget = Math.round((totals.total||0)*100)/100;
-
-  if(!client && !address){
-    if(status){ status.textContent='Add client name first!'; status.style.color='#f59e0b'; status.style.display='block'; }
-    toast('Add client name first!');
-    return;
-  }
-
-  toast('Sending to WorkLog...');
-  if(btn){ btn.textContent='Sending...'; btn.disabled=true; }
-
-  var projData = {
+  var url = 'https://firestore.googleapis.com/v1/projects/work-log-5aa9f/databases/(default)/documents/projects?key=AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA';
+  
+  var body = JSON.stringify({
     fields: {
-      name: {stringValue: client || address},
-      desc: {stringValue: address},
+      name: {stringValue: client},
       budget: {doubleValue: budget},
-      overhead: {doubleValue: 0},
-      start: {stringValue: new Date().toISOString().slice(0,10)},
+      start: {stringValue: today},
       status: {stringValue: 'active'},
+      helpers: {arrayValue: {values: []}},
       createdAt: {stringValue: new Date().toISOString()},
-      source: {stringValue: 'fieldbid'},
-      fieldbidTotal: {doubleValue: budget}
+      source: {stringValue: 'fieldbid'}
+    }
+  });
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', url, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.onload = function(){
+    var data = JSON.parse(xhr.responseText);
+    if(data.name){
+      alert('✅ Project sent! Check WorkLog.');
+      toast('✅ Sent to WorkLog!');
+    } else {
+      alert('Error: ' + xhr.responseText.slice(0,200));
     }
   };
-
-  var url = 'https://firestore.googleapis.com/v1/projects/work-log-5aa9f/databases/(default)/documents/projects?key=AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA';
-
-  fetch(url, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(projData)
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(data){
-    if(data.name){
-      toast('✅ Sent to WorkLog!');
-      alert('✅ Project sent to WorkLog!');
-      if(btn){ btn.textContent='✅ Sent!'; btn.style.background='#16a34a'; }
-      if(status){ status.textContent='Project created in WorkLog!'; status.style.color='#16a34a'; status.style.display='block'; }
-      setTimeout(function(){ 
-        if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.style.background='#1a6b2a'; btn.disabled=false; }
-      }, 3000);
-    } else {
-      var errMsg = data.error&&data.error.message ? data.error.message : JSON.stringify(data);
-      toast('Error: ' + errMsg);
-      alert('Firebase Error: ' + errMsg);
-      if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.disabled=false; }
-    }
-  })
-  .catch(function(err){
-    toast('Error: ' + err.message);
-    alert('Error: ' + err.message);
-    if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.disabled=false; }
-  });
+  xhr.onerror = function(){
+    alert('Network error - check connection');
+  };
+  xhr.send(body);
 }
 window.sendToWorkLog = sendToWorkLog;
 </script>
