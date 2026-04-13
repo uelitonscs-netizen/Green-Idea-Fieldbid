@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260413183015 -->
+<!-- FieldBid v20260413191133 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1675,64 +1675,28 @@ try {
 
 
 
-function sendToWorkLog(){
-  // Step 1: Check Firebase SDK loaded
-  if(typeof firebase === 'undefined'){
-    alert('Firebase SDK not loaded!');
-    return;
-  }
-  
-  // Step 2: Check _wlDb
-  if(!_wlDb){
-    // Try to init again
-    try {
-      var apps = firebase.apps;
-      alert('Firebase apps: ' + apps.length + ' | _wlDb is null - trying reinit');
-      var app2 = firebase.initializeApp({
-        apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
-        authDomain: "work-log-5aa9f.firebaseapp.com",
-        projectId: "work-log-5aa9f"
-      }, 'worklog2_' + Date.now());
-      _wlDb = firebase.firestore(app2);
-    } catch(e2) {
-      alert('Reinit failed: ' + e2.message);
-      return;
-    }
-  }
-
-  var client = quoteInfo.client || 'Test Client';
-  var budget = Math.round((calcTotals().total||0)*100)/100;
-  var today = new Date().toISOString().slice(0,10);
-
-  var btn = document.getElementById('sendToWorklogBtn');
-  if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
-  toast('Sending to WorkLog...');
-
-  _wlDb.collection('projects').add({
-    name: client,
-    desc: quoteInfo.address||'',
-    budget: budget,
-    overhead: 0,
-    ohDays: [],
-    start: today,
-    end: null,
-    status: 'active',
-    helpers: [],
-    createdAt: new Date().toISOString(),
-    source: 'fieldbid',
-    fieldbidTotal: budget
-  }).then(function(ref){
-    alert('✅ Sent! Project ID: ' + ref.id);
-    toast('✅ Sent to WorkLog!');
-    if(btn){ btn.textContent='✅ Sent!'; btn.style.background='#16a34a'; }
-    setTimeout(function(){ if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.style.background=''; btn.disabled=false; }},3000);
-  }).catch(function(err){
-    alert('Firestore error: ' + err.code + ' - ' + err.message);
-    if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.disabled=false; }
+function sendToWorkLog() {
+  var cEl=document.getElementById("qClient"),aEl=document.getElementById("qAddress"),tEl=document.getElementById("qTotal");
+  var client=cEl?cEl.textContent.trim():"";
+  var address=aEl?aEl.textContent.trim():"";
+  var budget=tEl?parseFloat(tEl.textContent.replace(/[^0-9.]/g,""))||0:0;
+  if(client==="Tap to add") client="";
+  if(address==="Tap to add") address="";
+  if(!client&&!address){toast("Add client name and address first!"); return;}
+  if(!_wlDb){toast("Firebase not ready — please refresh"); return;}
+  var btn=document.getElementById("sendWLBtn");
+  if(btn){btn.textContent="Sending..."; btn.disabled=true;}
+  _wlDb.collection("projects").add({name:client||address,desc:address,budget:budget,overhead:0,ohDays:[],start:new Date().toISOString().slice(0,10),end:null,status:"active",helpers:[],createdAt:new Date().toISOString(),source:"fieldbid",fieldbidTotal:budget})
+  .then(function(){
+    if(btn){btn.textContent="✅ Sent!"; btn.style.background="#16a34a";}
+    toast("✅ Project sent to WorkLog!");
+    setTimeout(function(){if(btn){btn.textContent="?? Send to WorkLog";btn.style.background="#1a6b2a";btn.disabled=false;}},3000);
+  })
+  .catch(function(err){
+    toast("Error: "+err.message);
+    if(btn){btn.textContent="?? Send to WorkLog";btn.disabled=false;}
   });
 }
-window.sendToWorkLog = sendToWorkLog;
-document.getElementById('sendToWorklogBtn').addEventListener('click', sendToWorkLog);
 </script>
 
 <script>
@@ -1749,13 +1713,20 @@ function sendToWorkLog(){
   var budget=tEl?parseFloat(tEl.textContent.replace(/[^0-9.]/g,""))||0:0;
   if(client==="Tap to add") client="";
   if(address==="Tap to add") address="";
-  if(!client&&!address){alert("Add client name and address first!"); return;}
-  if(!_wlDb){alert("Firebase not ready!"); return;}
+  if(!client&&!address){toast("Add client name and address first!"); return;}
+  if(!_wlDb){toast("Firebase not ready - please refresh"); return;}
   var btn=document.getElementById("sendWLBtn");
   if(btn){btn.textContent="Sending..."; btn.disabled=true;}
   _wlDb.collection("projects").add({name:client||address,desc:address,budget:budget,overhead:0,ohDays:[],start:new Date().toISOString().slice(0,10),end:null,status:"active",helpers:[],createdAt:new Date().toISOString(),source:"fieldbid",fieldbidTotal:budget})
-  .then(function(){if(btn){btn.textContent="Sent!"; btn.style.background="#16a34a";} alert("Project sent to WorkLog!"); setTimeout(function(){if(btn){btn.textContent="Link Send to WorkLog";btn.style.background="";btn.disabled=false;}},3000);})
-  .catch(function(err){alert("Error: "+err.message); if(btn){btn.textContent="Link Send to WorkLog";btn.disabled=false;}});
+  .then(function(){
+    if(btn){btn.textContent="Sent! Check WorkLog"; btn.style.background="#16a34a";}
+    toast("Project sent to WorkLog!");
+    setTimeout(function(){if(btn){btn.textContent="Send to WorkLog";btn.style.background="#1a6b2a";btn.disabled=false;}},3000);
+  })
+  .catch(function(err){
+    toast("Error: "+err.message);
+    if(btn){btn.textContent="Send to WorkLog";btn.disabled=false;}
+  });
 }
 
 document.addEventListener("DOMContentLoaded",function(){
