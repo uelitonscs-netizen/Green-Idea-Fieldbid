@@ -319,6 +319,8 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -426,7 +428,8 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div class="act-row" style="flex-wrap:wrap">
       <button class="act-btn" id="copyQuoteBtn">📋 Copy</button>
       <button class="act-btn" id="shareQuoteBtn">📤 Share</button>
-      <button class="act-btn" id="printQuoteBtn">🖨️ Print</button>
+      <button class="act-btn" id="printQuoteBtn">
+      <button class="act-btn" id="sendWLBtn" style="background:#1a6b2a;color:#fff;width:100%;margin-top:6px">Link Send to WorkLog</button>🖨️ Print</button>
       <button class="act-btn" id="sendToWorklogBtn" style="background:#1a6b2a;color:#fff;width:100%;margin-top:6px">🔗 Send to WorkLog</button>
     </div>
     <div id="worklog-send-status" style="text-align:center;font-size:12px;margin:4px 16px;display:none"></div>
@@ -1646,7 +1649,9 @@ document.getElementById('confirmYes').addEventListener('click', function() {
   window._confirmReject = null;
 });
 
-}); // ── WORKLOG INTEGRATION ────────────────────────────────
+}); // end DOMContentLoaded
+
+// ── WORKLOG INTEGRATION ────────────────────────────────
 var _wlDb = null;
 var _wlAuth = null;
 try {
@@ -1728,9 +1733,35 @@ function sendToWorkLog(){
 }
 window.sendToWorkLog = sendToWorkLog;
 document.getElementById('sendToWorklogBtn').addEventListener('click', sendToWorkLog);
+</script>
 
-// end DOMContentLoaded
+<script>
+var _wlDb=null;
+try{
+  var _wlApp=firebase.initializeApp({apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"},"wl");
+  _wlDb=firebase.firestore(_wlApp);
+}catch(e){console.log("WL:",e.message);}
 
+function sendToWorkLog(){
+  var cEl=document.getElementById("qClient"),aEl=document.getElementById("qAddress"),tEl=document.getElementById("qTotal");
+  var client=cEl?cEl.textContent.trim():"";
+  var address=aEl?aEl.textContent.trim():"";
+  var budget=tEl?parseFloat(tEl.textContent.replace(/[^0-9.]/g,""))||0:0;
+  if(client==="Tap to add") client="";
+  if(address==="Tap to add") address="";
+  if(!client&&!address){alert("Add client name and address first!"); return;}
+  if(!_wlDb){alert("Firebase not ready!"); return;}
+  var btn=document.getElementById("sendWLBtn");
+  if(btn){btn.textContent="Sending..."; btn.disabled=true;}
+  _wlDb.collection("projects").add({name:client||address,desc:address,budget:budget,overhead:0,ohDays:[],start:new Date().toISOString().slice(0,10),end:null,status:"active",helpers:[],createdAt:new Date().toISOString(),source:"fieldbid",fieldbidTotal:budget})
+  .then(function(){if(btn){btn.textContent="Sent!"; btn.style.background="#16a34a";} alert("Project sent to WorkLog!"); setTimeout(function(){if(btn){btn.textContent="Link Send to WorkLog";btn.style.background="";btn.disabled=false;}},3000);})
+  .catch(function(err){alert("Error: "+err.message); if(btn){btn.textContent="Link Send to WorkLog";btn.disabled=false;}});
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+  var b=document.getElementById("sendWLBtn");
+  if(b) b.addEventListener("click",sendToWorkLog);
+});
 </script>
 </body>
 </html>
