@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260413181610 -->
+<!-- FieldBid v20260413182417 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1674,27 +1674,41 @@ try {
 
 
 function sendToWorkLog(){
-  if(!_wlDb){
-    alert('Firebase not ready. Please refresh and try again.');
+  // Step 1: Check Firebase SDK loaded
+  if(typeof firebase === 'undefined'){
+    alert('Firebase SDK not loaded!');
     return;
   }
-  var client = quoteInfo.client || '';
-  var address = quoteInfo.address || '';
+  
+  // Step 2: Check _wlDb
+  if(!_wlDb){
+    // Try to init again
+    try {
+      var apps = firebase.apps;
+      alert('Firebase apps: ' + apps.length + ' | _wlDb is null - trying reinit');
+      var app2 = firebase.initializeApp({
+        apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
+        authDomain: "work-log-5aa9f.firebaseapp.com",
+        projectId: "work-log-5aa9f"
+      }, 'worklog2_' + Date.now());
+      _wlDb = firebase.firestore(app2);
+    } catch(e2) {
+      alert('Reinit failed: ' + e2.message);
+      return;
+    }
+  }
+
+  var client = quoteInfo.client || 'Test Client';
   var budget = Math.round((calcTotals().total||0)*100)/100;
   var today = new Date().toISOString().slice(0,10);
 
-  if(!client && !address){
-    toast('Add client name first!');
-    return;
-  }
-
-  toast('Sending...');
   var btn = document.getElementById('sendToWorklogBtn');
   if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
+  toast('Sending to WorkLog...');
 
   _wlDb.collection('projects').add({
-    name: client || address,
-    desc: address,
+    name: client,
+    desc: quoteInfo.address||'',
     budget: budget,
     overhead: 0,
     ohDays: [],
@@ -1705,16 +1719,13 @@ function sendToWorkLog(){
     createdAt: new Date().toISOString(),
     source: 'fieldbid',
     fieldbidTotal: budget
-  }).then(function(){
+  }).then(function(ref){
+    alert('✅ Sent! Project ID: ' + ref.id);
     toast('✅ Sent to WorkLog!');
-    alert('✅ Project created in WorkLog!');
     if(btn){ btn.textContent='✅ Sent!'; btn.style.background='#16a34a'; }
-    setTimeout(function(){
-      if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.style.background=''; btn.disabled=false; }
-    },3000);
+    setTimeout(function(){ if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.style.background=''; btn.disabled=false; }},3000);
   }).catch(function(err){
-    toast('Error: ' + err.message);
-    alert('Error: ' + err.message);
+    alert('Firestore error: ' + err.code + ' - ' + err.message);
     if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.disabled=false; }
   });
 }
