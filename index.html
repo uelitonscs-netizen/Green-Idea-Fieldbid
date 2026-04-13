@@ -425,14 +425,14 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
         <div class="q-frow grand"><span class="q-fl">TOTAL</span><span class="q-fv" id="qTotal">$0.00</span></div>
       </div>
     </div>
-    <div class="act-row" style="flex-wrap:wrap">
+    <div class="act-row">
       <button class="act-btn" id="copyQuoteBtn">📋 Copy</button>
       <button class="act-btn" id="shareQuoteBtn">📤 Share</button>
-      <button class="act-btn" id="printQuoteBtn">
-      <button class="act-btn" id="sendWLBtn" style="background:#1a6b2a;color:#fff;width:100%;margin-top:6px">Link Send to WorkLog</button>🖨️ Print</button>
-      <button class="act-btn" id="sendToWorklogBtn" style="background:#1a6b2a;color:#fff;width:100%;margin-top:6px">🔗 Send to WorkLog</button>
+      <button class="act-btn" id="printQuoteBtn">🖨️ Print</button>
     </div>
-    <div id="worklog-send-status" style="text-align:center;font-size:12px;margin:4px 16px;display:none"></div>
+    <div style="padding:10px 0 4px">
+      <button id="sendWLBtn" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">🔗 Send to WorkLog</button>
+    </div>
 
   </div>
   <div id="ep-wo" class="page">
