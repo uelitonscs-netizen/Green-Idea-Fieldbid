@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260413180834 -->
+<!-- FieldBid v20260413181610 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1650,59 +1650,73 @@ document.getElementById('confirmYes').addEventListener('click', function() {
 }); // end DOMContentLoaded
 
 // ── WORKLOG INTEGRATION ────────────────────────────────
-var _wlApp;
+var _wlDb = null;
+var _wlAuth = null;
 try {
-  _wlApp = firebase.app('worklog');
-} catch(e) {
-  _wlApp = firebase.initializeApp({
-    apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
-    authDomain: "work-log-5aa9f.firebaseapp.com",
-    projectId: "work-log-5aa9f",
-    storageBucket: "work-log-5aa9f.firebasestorage.app",
-    messagingSenderId: "919924820811",
-    appId: "1:919924820811:web:00460b91d51023d718b6ce"
-  }, 'worklog');
+  var _wlApp;
+  try { _wlApp = firebase.app('worklog'); } 
+  catch(e) {
+    _wlApp = firebase.initializeApp({
+      apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
+      authDomain: "work-log-5aa9f.firebaseapp.com",
+      projectId: "work-log-5aa9f",
+      storageBucket: "work-log-5aa9f.firebasestorage.app",
+      messagingSenderId: "919924820811",
+      appId: "1:919924820811:web:00460b91d51023d718b6ce"
+    }, 'worklog');
+  }
+  _wlDb = firebase.firestore(_wlApp);
+  _wlAuth = firebase.auth(_wlApp);
+} catch(initErr) {
+  console.error('WL Firebase init error:', initErr);
 }
-var _wlDb = firebase.firestore(_wlApp);
-var _wlAuth = firebase.auth(_wlApp);
 
 
 
 function sendToWorkLog(){
-  var client = quoteInfo.client || 'Test';
-  var budget = calcTotals().total || 0;
+  if(!_wlDb){
+    alert('Firebase not ready. Please refresh and try again.');
+    return;
+  }
+  var client = quoteInfo.client || '';
+  var address = quoteInfo.address || '';
+  var budget = Math.round((calcTotals().total||0)*100)/100;
   var today = new Date().toISOString().slice(0,10);
-  
-  var url = 'https://firestore.googleapis.com/v1/projects/work-log-5aa9f/databases/(default)/documents/projects?key=AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA';
-  
-  var body = JSON.stringify({
-    fields: {
-      name: {stringValue: client},
-      budget: {doubleValue: budget},
-      start: {stringValue: today},
-      status: {stringValue: 'active'},
-      helpers: {arrayValue: {values: []}},
-      createdAt: {stringValue: new Date().toISOString()},
-      source: {stringValue: 'fieldbid'}
-    }
-  });
 
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', url, true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.onload = function(){
-    var data = JSON.parse(xhr.responseText);
-    if(data.name){
-      alert('✅ Project sent! Check WorkLog.');
-      toast('✅ Sent to WorkLog!');
-    } else {
-      alert('Error: ' + xhr.responseText.slice(0,200));
-    }
-  };
-  xhr.onerror = function(){
-    alert('Network error - check connection');
-  };
-  xhr.send(body);
+  if(!client && !address){
+    toast('Add client name first!');
+    return;
+  }
+
+  toast('Sending...');
+  var btn = document.getElementById('sendToWorklogBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
+
+  _wlDb.collection('projects').add({
+    name: client || address,
+    desc: address,
+    budget: budget,
+    overhead: 0,
+    ohDays: [],
+    start: today,
+    end: null,
+    status: 'active',
+    helpers: [],
+    createdAt: new Date().toISOString(),
+    source: 'fieldbid',
+    fieldbidTotal: budget
+  }).then(function(){
+    toast('✅ Sent to WorkLog!');
+    alert('✅ Project created in WorkLog!');
+    if(btn){ btn.textContent='✅ Sent!'; btn.style.background='#16a34a'; }
+    setTimeout(function(){
+      if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.style.background=''; btn.disabled=false; }
+    },3000);
+  }).catch(function(err){
+    toast('Error: ' + err.message);
+    alert('Error: ' + err.message);
+    if(btn){ btn.textContent='🔗 Send to WorkLog'; btn.disabled=false; }
+  });
 }
 window.sendToWorkLog = sendToWorkLog;
 </script>
