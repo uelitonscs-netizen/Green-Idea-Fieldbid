@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260413182417 -->
+<!-- FieldBid v20260413183015 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1603,7 +1603,6 @@ function buildQT(){
   lines.push('TOTAL: '+fmt(totals.total),'','Thank you for your business!');
   return lines.join('\n');
 }
-document.getElementById('sendToWorklogBtn').addEventListener('click', sendToWorkLog);
 document.getElementById('copyQuoteBtn').addEventListener('click',function(){
   var t=buildQT();
   if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast('📋 Copied!');});
@@ -1730,6 +1729,7 @@ function sendToWorkLog(){
   });
 }
 window.sendToWorkLog = sendToWorkLog;
+document.getElementById('sendToWorklogBtn').addEventListener('click', sendToWorkLog);
 </script>
 </body>
 </html>
