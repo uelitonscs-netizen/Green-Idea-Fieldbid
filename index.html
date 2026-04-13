@@ -1706,6 +1706,8 @@ try{
   _wlDb=firebase.firestore(_wlApp);
 }catch(e){console.log("WL:",e.message);}
 
+var _wlSentProjects = {};
+
 function sendToWorkLog(){
   var cEl=document.getElementById("qClient"),aEl=document.getElementById("qAddress"),tEl=document.getElementById("qTotal");
   var client=cEl?cEl.textContent.trim():"";
@@ -1715,17 +1717,71 @@ function sendToWorkLog(){
   if(address==="Tap to add") address="";
   if(!client&&!address){toast("Add client name and address first!"); return;}
   if(!_wlDb){toast("Firebase not ready - please refresh"); return;}
+
+  var projName = client || address;
+
+  // Check if already sent this session
+  if(_wlSentProjects[projName]){
+    showWLConfirm(projName, budget, address);
+    return;
+  }
+
+  // Check if project already exists in WorkLog
+  var btn=document.getElementById("sendWLBtn");
+  if(btn){btn.textContent="Checking..."; btn.disabled=true;}
+
+  _wlDb.collection("projects").where("name","==",projName).get()
+  .then(function(snap){
+    if(!snap.empty){
+      if(btn){btn.textContent="Send to WorkLog"; btn.disabled=false;}
+      showWLConfirm(projName, budget, address);
+    } else {
+      doSendToWL(projName, address, budget);
+    }
+  })
+  .catch(function(){
+    // If check fails just send
+    doSendToWL(projName, address, budget);
+  });
+}
+
+function showWLConfirm(name, budget, address){
+  var btn=document.getElementById("sendWLBtn");
+  // Show confirm banner instead of popup
+  var existing=document.getElementById("wl-confirm-bar");
+  if(existing) existing.remove();
+  var bar=document.createElement("div");
+  bar.id="wl-confirm-bar";
+  bar.style.cssText="background:#fff3cd;border:1px solid #f59e0b;border-radius:10px;padding:12px 14px;margin-top:8px;font-size:12px;";
+  bar.innerHTML='<div style="font-weight:700;color:#92400e;margin-bottom:8px">Already sent to WorkLog!</div>'
+    +'<div style="color:#92400e;margin-bottom:10px">A project named <strong>'+name+'</strong> already exists. Send again?</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button id="wl-yes" style="flex:1;background:#1a6b2a;color:#fff;border:none;border-radius:8px;padding:8px;font-weight:700;font-size:12px;cursor:pointer">Yes, send again</button>'
+    +'<button id="wl-no" style="flex:1;background:#e0e0e0;color:#333;border:none;border-radius:8px;padding:8px;font-weight:700;font-size:12px;cursor:pointer">Cancel</button>'
+    +'</div>';
+  var actRow=document.querySelector("#ep-quote .act-row");
+  if(actRow) actRow.parentNode.insertBefore(bar, actRow.nextSibling);
+  document.getElementById("wl-yes").addEventListener("click", function(){
+    bar.remove();
+    doSendToWL(name, address, budget);
+  });
+  document.getElementById("wl-no").addEventListener("click", function(){
+    bar.remove();
+  });
+}
+
+function doSendToWL(projName, address, budget){
   var btn=document.getElementById("sendWLBtn");
   if(btn){btn.textContent="Sending..."; btn.disabled=true;}
-  _wlDb.collection("projects").add({name:client||address,desc:address,budget:budget,overhead:0,ohDays:[],start:new Date().toISOString().slice(0,10),end:null,status:"active",helpers:[],createdAt:new Date().toISOString(),source:"fieldbid",fieldbidTotal:budget})
+  _wlDb.collection("projects").add({name:projName,desc:address,budget:budget,overhead:0,ohDays:[],start:new Date().toISOString().slice(0,10),end:null,status:"active",helpers:[],createdAt:new Date().toISOString(),source:"fieldbid",fieldbidTotal:budget})
   .then(function(){
-    if(btn){btn.textContent="Sent! Check WorkLog"; btn.style.background="#16a34a";}
+    _wlSentProjects[projName] = true;
+    if(btn){btn.textContent="Sent to WorkLog"; btn.style.background="#16a34a"; btn.disabled=true;}
     toast("Project sent to WorkLog!");
-    setTimeout(function(){if(btn){btn.textContent="Send to WorkLog";btn.style.background="#1a6b2a";btn.disabled=false;}},3000);
   })
   .catch(function(err){
     toast("Error: "+err.message);
-    if(btn){btn.textContent="Send to WorkLog";btn.disabled=false;}
+    if(btn){btn.textContent="Send to WorkLog";btn.style.background="#1a6b2a";btn.disabled=false;}
   });
 }
 
