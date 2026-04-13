@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- FieldBid v20260413150317 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -428,7 +429,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       <button class="act-btn" id="printQuoteBtn">🖨️ Print</button>
     </div>
     <div style="padding:12px 16px">
-      <button id="sendToWorklogBtn" onclick="sendToWorkLog()" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+      <button id="sendToWorklogBtn" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
         🔗 Send to WorkLog
       </button>
       <div id="worklog-send-status" style="text-align:center;font-size:12px;margin-top:8px;display:none"></div>
@@ -1667,15 +1668,26 @@ try {
 var _wlDb = firebase.firestore(_wlApp);
 var _wlAuth = firebase.auth(_wlApp);
 
+// Use addEventListener for Samsung compatibility
+document.addEventListener('DOMContentLoaded', function(){
+  var sendBtn = document.getElementById('sendToWorklogBtn');
+  if(sendBtn) sendBtn.addEventListener('click', sendToWorkLog);
+});
+// Also attach immediately in case DOM already loaded
+setTimeout(function(){
+  var sendBtn = document.getElementById('sendToWorklogBtn');
+  if(sendBtn) sendBtn.addEventListener('click', sendToWorkLog);
+}, 500);
+
 function sendToWorkLog(){
   var btn = document.getElementById('sendToWorklogBtn');
   var status = document.getElementById('worklog-send-status');
+  if(!btn) return;
   
-  // Get quote data
   var client = quoteInfo.client || '';
   var address = quoteInfo.address || '';
   var totals = calcTotals();
-  var budget = totals.total || 0;
+  var budget = Math.round((totals.total||0)*100)/100;
   var today = new Date().toISOString().slice(0,10);
   
   if(!client && !address){
@@ -1687,50 +1699,59 @@ function sendToWorkLog(){
   
   btn.disabled = true;
   btn.textContent = 'Sending...';
-  status.style.display = 'none';
+  status.style.color = '#888';
+  status.textContent = 'Connecting...';
+  status.style.display = 'block';
 
-  // Sign in anonymously to WorkLog Firebase
-  _wlAuth.signInAnonymously().then(function(){
-    var projData = {
-      name: client || address,
-      desc: address,
-      budget: Math.round(budget * 100) / 100,
-      overhead: 0,
-      ohDays: [],
-      start: today,
-      end: null,
-      status: 'active',
-      helpers: [],
-      createdAt: new Date().toISOString(),
-      source: 'fieldbid',
-      quoteNumber: quoteNum,
-      fieldbidItems: estItems.length,
-      fieldbidTotal: budget
-    };
+  var projData = {
+    name: client || address,
+    desc: address,
+    budget: budget,
+    overhead: 0,
+    ohDays: [],
+    start: today,
+    end: null,
+    status: 'active',
+    helpers: [],
+    createdAt: new Date().toISOString(),
+    source: 'fieldbid',
+    quoteNumber: quoteNum,
+    fieldbidSF: estItems.reduce(function(s,i){return s+(i.sf||0);},0),
+    fieldbidTotal: budget
+  };
 
-    return _wlDb.collection('projects').add(projData);
-  })
-  .then(function(ref){
-    btn.disabled = false;
-    btn.textContent = '✅ Sent to WorkLog!';
-    btn.style.background = '#16a34a';
-    status.textContent = 'Project "' + (client||address) + '" created in WorkLog!';
-    status.style.color = '#16a34a';
-    status.style.display = 'block';
-    // Reset after 4 seconds
-    setTimeout(function(){
+  function doSend(){
+    _wlDb.collection('projects').add(projData)
+    .then(function(){
+      btn.disabled = false;
+      btn.textContent = '✅ Sent!';
+      btn.style.background = '#16a34a';
+      status.textContent = '✅ Project created in WorkLog!';
+      status.style.color = '#16a34a';
+      setTimeout(function(){ btn.textContent = '🔗 Send to WorkLog'; btn.style.background = '#1a6b2a'; },4000);
+    })
+    .catch(function(err){
+      btn.disabled = false;
       btn.textContent = '🔗 Send to WorkLog';
-      btn.style.background = '#1a6b2a';
-    }, 4000);
-  })
-  .catch(function(err){
-    btn.disabled = false;
-    btn.textContent = '🔗 Send to WorkLog';
-    status.textContent = '❌ Error: ' + err.message;
-    status.style.color = '#dc2626';
-    status.style.display = 'block';
-  });
+      status.textContent = '❌ ' + err.message;
+      status.style.color = '#dc2626';
+    });
+  }
+
+  // Try with existing auth first, then anonymous
+  var user = _wlAuth.currentUser;
+  if(user){
+    doSend();
+  } else {
+    _wlAuth.signInAnonymously()
+    .then(function(){ doSend(); })
+    .catch(function(err){
+      // Try sending anyway - Firestore rules might allow it
+      doSend();
+    });
+  }
 }
+window.sendToWorkLog = sendToWorkLog;
 </script>
 </body>
 </html>
