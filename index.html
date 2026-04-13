@@ -315,6 +315,9 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 @media print{#home,.app-hd,.tabs,.fab,.act-row,.wo-bar,.card-acts,button{display:none!important;}body{background:#fff;color:#000;}.page{display:block!important;padding:0;}.card{background:#fff;border:1px solid #ccc;}}
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -423,6 +426,12 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       <button class="act-btn" id="copyQuoteBtn">📋 Copy</button>
       <button class="act-btn" id="shareQuoteBtn">📤 Share</button>
       <button class="act-btn" id="printQuoteBtn">🖨️ Print</button>
+    </div>
+    <div style="padding:12px 16px">
+      <button id="sendToWorklogBtn" onclick="sendToWorkLog()" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        🔗 Send to WorkLog
+      </button>
+      <div id="worklog-send-status" style="text-align:center;font-size:12px;margin-top:8px;display:none"></div>
     </div>
   </div>
   <div id="ep-wo" class="page">
@@ -1640,6 +1649,88 @@ document.getElementById('confirmYes').addEventListener('click', function() {
 });
 
 }); // end DOMContentLoaded
+
+// ── WORKLOG INTEGRATION ────────────────────────────────
+var _wlApp;
+try {
+  _wlApp = firebase.app('worklog');
+} catch(e) {
+  _wlApp = firebase.initializeApp({
+    apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
+    authDomain: "work-log-5aa9f.firebaseapp.com",
+    projectId: "work-log-5aa9f",
+    storageBucket: "work-log-5aa9f.firebasestorage.app",
+    messagingSenderId: "919924820811",
+    appId: "1:919924820811:web:00460b91d51023d718b6ce"
+  }, 'worklog');
+}
+var _wlDb = firebase.firestore(_wlApp);
+var _wlAuth = firebase.auth(_wlApp);
+
+function sendToWorkLog(){
+  var btn = document.getElementById('sendToWorklogBtn');
+  var status = document.getElementById('worklog-send-status');
+  
+  // Get quote data
+  var client = quoteInfo.client || '';
+  var address = quoteInfo.address || '';
+  var totals = calcTotals();
+  var budget = totals.total || 0;
+  var today = new Date().toISOString().slice(0,10);
+  
+  if(!client && !address){
+    status.textContent = '⚠️ Add client name and address first.';
+    status.style.color = '#f59e0b';
+    status.style.display = 'block';
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  status.style.display = 'none';
+
+  // Sign in anonymously to WorkLog Firebase
+  _wlAuth.signInAnonymously().then(function(){
+    var projData = {
+      name: client || address,
+      desc: address,
+      budget: Math.round(budget * 100) / 100,
+      overhead: 0,
+      ohDays: [],
+      start: today,
+      end: null,
+      status: 'active',
+      helpers: [],
+      createdAt: new Date().toISOString(),
+      source: 'fieldbid',
+      quoteNumber: quoteNum,
+      fieldbidItems: estItems.length,
+      fieldbidTotal: budget
+    };
+
+    return _wlDb.collection('projects').add(projData);
+  })
+  .then(function(ref){
+    btn.disabled = false;
+    btn.textContent = '✅ Sent to WorkLog!';
+    btn.style.background = '#16a34a';
+    status.textContent = 'Project "' + (client||address) + '" created in WorkLog!';
+    status.style.color = '#16a34a';
+    status.style.display = 'block';
+    // Reset after 4 seconds
+    setTimeout(function(){
+      btn.textContent = '🔗 Send to WorkLog';
+      btn.style.background = '#1a6b2a';
+    }, 4000);
+  })
+  .catch(function(err){
+    btn.disabled = false;
+    btn.textContent = '🔗 Send to WorkLog';
+    status.textContent = '❌ Error: ' + err.message;
+    status.style.color = '#dc2626';
+    status.style.display = 'block';
+  });
+}
 </script>
 </body>
 </html>
