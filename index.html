@@ -723,13 +723,13 @@ function parseSum(str){
   return total;
 }
 
-function saveFA(){localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));if(currentProj)saveProjAreas();}
-function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo));}
-function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products));}
-function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg));}
+function saveFA(){localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));if(currentProj)saveProjAreas(); fbScheduleSave();}
+function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
+function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products)); fbScheduleSave();}
+function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg)); fbScheduleSave();}
 
 function loadProjs(){var p=localStorage.getItem('fb6_projs');return p?JSON.parse(p):[];}
-function saveProjs(p){localStorage.setItem('fb6_projs',JSON.stringify(p));}
+function saveProjs(p){localStorage.setItem('fb6_projs',JSON.stringify(p)); fbScheduleSave();}
 function saveProjAreas(){
   var projs=loadProjs();
   for(var i=0;i<projs.length;i++){
@@ -1701,10 +1701,77 @@ function sendToWorkLog() {
 
 <script>
 var _wlDb=null;
+var _fbDb=null;
+var _fbUserId='fb6_user';
+
 try{
   var _wlApp=firebase.initializeApp({apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"},"wl");
   _wlDb=firebase.firestore(_wlApp);
+  _fbDb=_wlDb; // FieldBid uses same Firebase project
 }catch(e){console.log("WL:",e.message);}
+
+// ── FIELDBID FIREBASE SYNC ─────────────────────────
+function fbSave(key, data){
+  if(!_fbDb) return;
+  try{
+    _fbDb.collection('fieldbid_data').doc(key).set({
+      data: JSON.stringify(data),
+      updatedAt: new Date().toISOString()
+    });
+  }catch(e){ console.log('fbSave error:', e.message); }
+}
+
+function fbLoad(key, callback){
+  if(!_fbDb){ callback(null); return; }
+  _fbDb.collection('fieldbid_data').doc(key).get()
+  .then(function(doc){
+    if(doc.exists && doc.data().data){
+      callback(JSON.parse(doc.data().data));
+    } else {
+      callback(null);
+    }
+  })
+  .catch(function(){ callback(null); });
+}
+
+// Save all current state to Firebase
+function fbSaveAll(){
+  fbSave('fa', fieldAreas);
+  fbSave('ei', estItems);
+  fbSave('qi', quoteInfo);
+  fbSave('qn', quoteNum);
+  fbSave('cfg', cfg);
+  fbSave('pr', products);
+  fbSave('ct', ctData);
+  fbSave('sg', sigData);
+  fbSave('projs', loadProjs());
+}
+
+// Load from Firebase if localStorage is empty
+function fbLoadIfEmpty(){
+  var hasLocal = localStorage.getItem('fb6_fa') || localStorage.getItem('fb6_projs');
+  if(hasLocal) return; // localStorage has data, no need to restore
+  
+  // localStorage is empty - restore from Firebase
+  toast('Restoring data from cloud...');
+  var loaded = 0;
+  var total = 5;
+  
+  function checkDone(){ loaded++; if(loaded>=total){ load(); toast('Data restored!'); } }
+  
+  fbLoad('fa', function(d){ if(d){ localStorage.setItem('fb6_fa',JSON.stringify(d)); } checkDone(); });
+  fbLoad('ei', function(d){ if(d){ localStorage.setItem('fb6_ei',JSON.stringify(d)); localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); } checkDone(); });
+  fbLoad('cfg', function(d){ if(d) localStorage.setItem('fb6_cfg',JSON.stringify(d)); checkDone(); });
+  fbLoad('projs', function(d){ if(d) localStorage.setItem('fb6_projs',JSON.stringify(d)); checkDone(); });
+  fbLoad('qn', function(d){ if(d) localStorage.setItem('fb6_qn',String(d)); checkDone(); });
+}
+
+// Auto-save to Firebase every time something changes
+var _fbSaveTimer = null;
+function fbScheduleSave(){
+  clearTimeout(_fbSaveTimer);
+  _fbSaveTimer = setTimeout(fbSaveAll, 2000);
+}
 
 var _wlSentProjects = {};
 
@@ -1788,6 +1855,8 @@ function doSendToWL(projName, address, budget){
 document.addEventListener("DOMContentLoaded",function(){
   var b=document.getElementById("sendWLBtn");
   if(b) b.addEventListener("click",sendToWorkLog);
+  // Restore from Firebase if localStorage was cleared
+  setTimeout(fbLoadIfEmpty, 1500);
 });
 </script>
 </body>
