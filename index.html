@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260414150000 -->
+<!-- FieldBid v20260414160000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -732,6 +732,7 @@ function parseSum(str){
 
 function saveFA(){localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));if(currentProj)saveProjAreas(); fbScheduleSave();}
 function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
+function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
 function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products)); fbScheduleSave();}
 function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg)); fbScheduleSave();}
 
@@ -1776,23 +1777,41 @@ function fbSaveAll(){
 }
 window.fbSaveAll = fbSaveAll;
 
-// Load from Firebase if localStorage is empty
+// Load from Firebase - always tries on startup, merges with localStorage
 function fbLoadIfEmpty(){
+  if(!_fbDb || !_fbReady){ 
+    // Firebase not ready yet - retry in 2 seconds
+    setTimeout(fbLoadIfEmpty, 2000);
+    return;
+  }
   var hasLocal = localStorage.getItem('fb6_fa') || localStorage.getItem('fb6_projs');
-  if(hasLocal) return; // localStorage has data, no need to restore
+  if(hasLocal) return; // localStorage has data, skip restore
   
   // localStorage is empty - restore from Firebase
+  console.log('fbLoadIfEmpty: localStorage empty, restoring from Firebase...');
   toast('Restoring data from cloud...'); setFbStatus('saving');
   var loaded = 0;
   var total = 5;
+  var restored = 0;
   
-  function checkDone(){ loaded++; if(loaded>=total){ load(); toast('Data restored! ✅'); setFbStatus('connected'); } }
+  function checkDone(){ 
+    loaded++; 
+    if(loaded>=total){ 
+      if(restored > 0){
+        load(); 
+        toast('Data restored! ✅ ('+restored+' items)'); 
+      } else {
+        toast('No cloud data found');
+      }
+      setFbStatus('connected'); 
+    } 
+  }
   
-  fbLoad('fa', function(d){ if(d){ localStorage.setItem('fb6_fa',JSON.stringify(d)); } checkDone(); });
-  fbLoad('ei', function(d){ if(d){ localStorage.setItem('fb6_ei',JSON.stringify(d)); localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); } checkDone(); });
-  fbLoad('cfg', function(d){ if(d) localStorage.setItem('fb6_cfg',JSON.stringify(d)); checkDone(); });
-  fbLoad('projs', function(d){ if(d) localStorage.setItem('fb6_projs',JSON.stringify(d)); checkDone(); });
-  fbLoad('qn', function(d){ if(d) localStorage.setItem('fb6_qn',String(d)); checkDone(); });
+  fbLoad('fa', function(d){ if(d&&d.length>0){ localStorage.setItem('fb6_fa',JSON.stringify(d)); restored++; console.log('Restored fa: '+d.length+' areas'); } checkDone(); });
+  fbLoad('ei', function(d){ if(d&&d.length>0){ localStorage.setItem('fb6_ei',JSON.stringify(d)); restored++; console.log('Restored ei: '+d.length+' items'); } checkDone(); });
+  fbLoad('cfg', function(d){ if(d){ localStorage.setItem('fb6_cfg',JSON.stringify(d)); restored++; console.log('Restored cfg'); } checkDone(); });
+  fbLoad('projs', function(d){ if(d&&d.length>0){ localStorage.setItem('fb6_projs',JSON.stringify(d)); restored++; console.log('Restored projs: '+d.length); } checkDone(); });
+  fbLoad('qn', function(d){ if(d){ localStorage.setItem('fb6_qn',String(d)); restored++; console.log('Restored qn: '+d); } checkDone(); });
 }
 
 // Auto-save to Firebase every time something changes
