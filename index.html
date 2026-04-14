@@ -733,6 +733,7 @@ function parseSum(str){
 function saveFA(){localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));if(currentProj)saveProjAreas(); fbScheduleSave();}
 function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
 function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
+function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
 function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products)); fbScheduleSave();}
 function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg)); fbScheduleSave();}
 
@@ -1908,7 +1909,8 @@ document.addEventListener("DOMContentLoaded",function(){
   var b=document.getElementById("sendWLBtn");
   if(b) b.addEventListener("click",sendToWorkLog);
   // Restore from Firebase if localStorage was cleared
-  setTimeout(fbLoadIfEmpty, 1500);
+  // Retry fbLoadIfEmpty with longer delay to ensure Firebase auth is ready
+setTimeout(fbLoadIfEmpty, 3000);
 });
 </script>
 </body>
