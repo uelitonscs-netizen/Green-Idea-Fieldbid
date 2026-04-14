@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260414200000 -->
+<!-- FieldBid v20260414210000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -683,16 +683,18 @@ function fbScheduleSave(){
 
 document.addEventListener('DOMContentLoaded', function() {
 
-var fieldAreas=[], estItems=[], products=[];
-var cfg={markup:30,taxRate:0,company:'Green Idea Insulation',contact:'',license:'',showLicense:false};
-var quoteInfo={client:'',address:''};
-var quoteNum=1001;
+window.fieldAreas=window.fieldAreas||[]; var fieldAreas=window.fieldAreas;
+window.estItems=window.estItems||[]; var estItems=window.estItems;
+window.products=window.products||[]; var products=window.products;
+window.cfg=window.cfg||{markup:30,taxRate:0,company:'Green Idea Insulation',contact:'',license:'',showLicense:false}; var cfg=window.cfg;
+window.quoteInfo=window.quoteInfo||{client:'',address:''}; var quoteInfo=window.quoteInfo;
+window.quoteNum=window.quoteNum||1001; var quoteNum=window.quoteNum;
 var editFAIdx=-1, editEIIdx=-1, editProdIdx=-1;
 var faProd=null, eiProd=null;
 var faPendPh=[], eiPendPh=[];
 var woChecked={}, fwLang='en', ewLang='en';
-var ctData={title:'',intro:'',payment:'',warranty:'',extra:''};
-var sigData={img:'',name:'',date:''};
+window.ctData=window.ctData||{title:'',intro:'',payment:'',warranty:'',extra:''}; var ctData=window.ctData;
+window.sigData=window.sigData||{img:'',name:'',date:''}; var sigData=window.sigData;
 var importSel={};
 var curFieldEdit='';
 var calcMode='walls';
@@ -1778,14 +1780,14 @@ function fbLoad(key, callback){
 
 // Save all current state to Firebase
 function fbSaveAll(){
-  fbSave('fa', fieldAreas);
-  fbSave('ei', estItems);
-  fbSave('qi', quoteInfo);
-  fbSave('qn', quoteNum);
-  fbSave('cfg', cfg);
-  fbSave('pr', products);
-  fbSave('ct', ctData);
-  fbSave('sg', sigData);
+  fbSave('fa', window.fieldAreas||[]);
+  fbSave('ei', window.estItems||[]);
+  fbSave('qi', window.quoteInfo||{});
+  fbSave('qn', window.quoteNum||1001);
+  fbSave('cfg', window.cfg||{});
+  fbSave('pr', window.products||[]);
+  fbSave('ct', window.ctData||{});
+  fbSave('sg', window.sigData||{});
   fbSave('projs', loadProjs());
 }
 window.fbSaveAll = fbSaveAll;
