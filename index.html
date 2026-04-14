@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260414160000 -->
+<!-- FieldBid v20260414180000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1719,14 +1719,21 @@ try{
   _wlDb=firebase.firestore(_wlApp);
   _fbDb=_wlDb;
   _wlAuth=firebase.auth(_wlApp);
+  // fieldbid_data rules are open (if true) - no auth needed
+  // Try anonymous auth for WorkLog integration, but proceed either way
   _wlAuth.signInAnonymously()
-    .then(function(){ 
+    .then(function(){
       _fbReady=true;
       setFbStatus('connected');
-      console.log("FB auth ready - syncing...");
       fbSaveAll();
     })
-    .catch(function(e){ console.log("Auth fallback: "+e.code); _fbReady=true; setFbStatus("connected"); fbSaveAll(); });
+    .catch(function(e){
+      // Auth failed but fieldbid_data is open - proceed without auth
+      console.log('Auth skipped:',e.code);
+      _fbReady=true;
+      setFbStatus('connected');
+      fbSaveAll();
+    });
 }catch(e){console.log("WL init error:",e.message);}
 
 // ── FIELDBID FIREBASE SYNC ─────────────────────────
@@ -1910,7 +1917,7 @@ document.addEventListener("DOMContentLoaded",function(){
   if(b) b.addEventListener("click",sendToWorkLog);
   // Restore from Firebase if localStorage was cleared
   // Retry fbLoadIfEmpty with longer delay to ensure Firebase auth is ready
-setTimeout(fbLoadIfEmpty, 3000);
+setTimeout(fbLoadIfEmpty, 3500);
 });
 </script>
 </body>
