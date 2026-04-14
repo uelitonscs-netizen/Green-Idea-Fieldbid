@@ -1710,11 +1710,18 @@ try{
   _wlDb=firebase.firestore(_wlApp);
   _fbDb=_wlDb;
   _wlAuth=firebase.auth(_wlApp);
-  // Sign in anonymously so Firestore rules allow access
   _wlAuth.signInAnonymously()
-    .then(function(){ _fbReady=true; fbSaveAll(); })
-    .catch(function(e){ console.log("Auth error:",e.message); });
-}catch(e){console.log("WL:",e.message);}
+    .then(function(){ 
+      _fbReady=true;
+      console.log("FB auth ready - syncing...");
+      fbSaveAll();
+    })
+    .catch(function(e){ 
+      // Try without auth - projects collection allows public write
+      _fbReady=true;
+      console.log("Auth failed, trying anyway:", e.message);
+    });
+}catch(e){console.log("WL init error:",e.message);}
 
 // ── FIELDBID FIREBASE SYNC ─────────────────────────
 function fbSave(key, data){
@@ -1741,7 +1748,7 @@ function fbLoad(key, callback){
 }
 
 // Save all current state to Firebase
-function fbSaveAll(){
+window.fbSaveAll = function fbSaveAll(){
   fbSave('fa', fieldAreas);
   fbSave('ei', estItems);
   fbSave('qi', quoteInfo);
@@ -1754,7 +1761,7 @@ function fbSaveAll(){
 }
 
 // Load from Firebase if localStorage is empty
-function fbLoadIfEmpty(){
+window.fbLoadIfEmpty = function fbLoadIfEmpty(){
   var hasLocal = localStorage.getItem('fb6_fa') || localStorage.getItem('fb6_projs');
   if(hasLocal) return; // localStorage has data, no need to restore
   
@@ -1775,9 +1782,11 @@ function fbLoadIfEmpty(){
 // Auto-save to Firebase every time something changes
 var _fbSaveTimer = null;
 function fbScheduleSave(){
+  if(typeof fbSaveAll !== 'function') return;
   clearTimeout(_fbSaveTimer);
   _fbSaveTimer = setTimeout(fbSaveAll, 2000);
 }
+window.fbScheduleSave = fbScheduleSave;
 
 var _wlSentProjects = {};
 
