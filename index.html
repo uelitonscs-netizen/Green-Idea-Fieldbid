@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260414210000 -->
+<!-- FieldBid v20260414220000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1646,10 +1646,11 @@ for(var oi=0;oi<ovs.length;oi++){
 
 load();
 
-// Save to Firebase after localStorage is loaded - delay to ensure Firebase auth is ready
+// Save to Firebase only if we have real data (not after cache clear)
 setTimeout(function(){
-  if(window.fbSaveAll && window._fbReady) window.fbSaveAll();
-}, 4000);
+  var hasData = (window.fieldAreas&&window.fieldAreas.length>0)||(window.estItems&&window.estItems.length>0)||(window.products&&window.products.length>0);
+  if(window.fbSaveAll && window._fbReady && hasData) window.fbSaveAll();
+}, 5000);
 
 // Confirm modal
 document.getElementById('confirmNo').addEventListener('click', function() {
@@ -1813,8 +1814,9 @@ function fbLoadIfEmpty(){
     loaded++; 
     if(loaded>=total){ 
       if(restored > 0){
-        load(); 
-        toast('Data restored! ✅ ('+restored+' items)'); 
+        load();
+        renderFA(); renderEst();
+        toast('Data restored! ✅ ('+restored+' collections)');
       } else {
         toast('No cloud data found');
       }
@@ -1924,7 +1926,7 @@ document.addEventListener("DOMContentLoaded",function(){
   if(b) b.addEventListener("click",sendToWorkLog);
   // Restore from Firebase if localStorage was cleared
   // Retry fbLoadIfEmpty with longer delay to ensure Firebase auth is ready
-setTimeout(fbLoadIfEmpty, 3500);
+setTimeout(fbLoadIfEmpty, 2000);
 });
 </script>
 </body>
