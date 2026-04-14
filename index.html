@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260414240000 -->
+<!-- FieldBid v20260414250000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1411,6 +1411,18 @@ document.getElementById('feCancelBtn').addEventListener('click',function(){close
 document.getElementById('feSaveBtn').addEventListener('click',function(){quoteInfo[curFieldEdit]=document.getElementById('feInput').value.trim();saveEI();renderEst();closeOv('feOverlay');});
 
 // IMPORT
+function doImport(){
+  var added=0;
+  for(var i=0;i<fieldAreas.length;i++){
+    if(!importSel[i])continue;
+    var a=fieldAreas[i];var pr=getProd(a.productId);
+    estItems.push({name:a.name,productId:a.productId,sf:a.sf,price:pr?pr.price:0,notes:a.notes||'',photos:a.photos?a.photos.slice():[]});added++;
+  }
+  if(added>0){saveEI();renderEst();}
+  closeOv('importOverlay');
+  toast('✅ '+added+' area'+(added>1?'s':'')+' imported');
+}
+function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':';';}
 document.getElementById('importBarBtn').addEventListener('click',function(){
   importSel={};var h='';
   for(var i=0;i<fieldAreas.length;i++){
@@ -1419,25 +1431,19 @@ document.getElementById('importBarBtn').addEventListener('click',function(){
   }
   var ilist=document.getElementById('importList');
   ilist.innerHTML=h;
-  ilist.addEventListener('click',function(e){
-    var btn=e.target;
-    while(btn&&btn!==ilist){if(btn.getAttribute&&btn.getAttribute('data-act')==='imp')break;btn=btn.parentNode;}
-    if(!btn||btn===ilist)return;
-    togImp(btn);
+  // Replace ilist to remove old listeners
+  var newList=ilist.cloneNode(true);
+  ilist.parentNode.replaceChild(newList,ilist);
+  newList.addEventListener('click',function(e){
+    var b=e.target;
+    while(b&&b!==newList){if(b.getAttribute&&b.getAttribute('data-act')==='imp')break;b=b.parentNode;}
+    if(!b||b===newList)return;
+    togImp(b);
   });
   openOv('importOverlay');
 });
-function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':'';}
 document.getElementById('importCancelBtn').addEventListener('click',function(){closeOv('importOverlay');});
-document.getElementById('importConfirmBtn').addEventListener('click',function(){
-  var added=0;
-  for(var i=0;i<fieldAreas.length;i++){
-    if(!importSel[i])continue;
-    var a=fieldAreas[i];var pr=getProd(a.productId);
-    estItems.push({name:a.name,productId:a.productId,sf:a.sf,price:pr?pr.price:0,notes:a.notes||'',photos:a.photos?a.photos.slice():[]});added++;
-  }
-  saveEI();renderEst();closeOv('importOverlay');toast('✅ '+added+' area'+(added>1?'s':'')+' imported');
-});
+document.getElementById('importConfirmBtn').addEventListener('click',function(e){e.stopPropagation();doImport();});
 
 // CONTRACT TABS
 document.getElementById('ctTab1').addEventListener('click',function(){showCtSec('preview',0);renderCtDoc();});
