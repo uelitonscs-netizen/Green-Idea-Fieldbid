@@ -343,7 +343,11 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 </div>
 
 <div id="field-app">
-  <div class="app-hd">
+  <div class="app-hd" style="position:relative">
+  <div id="fb-sync-indicator" style="position:absolute;top:6px;right:6px;display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:#1e2530;border:1px solid #2a3340">
+    <span id="fb-sync-dot" style="width:7px;height:7px;border-radius:50%;background:#888;display:inline-block"></span>
+    <span id="fb-sync-lbl" style="color:#888">connecting...</span>
+  </div>
     <button class="back-btn" id="backField">← Back</button>
     <div class="hd-icon field">📐</div>
     <div class="hd-info">
@@ -672,6 +676,11 @@ function appConfirm(msg, onYes) {
   window._confirmResolve = onYes;
   window._confirmReject = null;
   document.getElementById('confirmOverlay').className = 'overlay on';
+}
+
+// Stub - will be replaced by WL script after load
+function fbScheduleSave(){ 
+  if(window._fbScheduleSaveReal) window._fbScheduleSaveReal();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1713,25 +1722,37 @@ try{
   _wlAuth.signInAnonymously()
     .then(function(){ 
       _fbReady=true;
+      setFbStatus('connected');
       console.log("FB auth ready - syncing...");
       fbSaveAll();
     })
     .catch(function(e){ 
-      // Try without auth - projects collection allows public write
       _fbReady=true;
-      console.log("Auth failed, trying anyway:", e.message);
+      setFbStatus('error');
+      console.log("Auth failed:", e.message);
     });
 }catch(e){console.log("WL init error:",e.message);}
 
 // ── FIELDBID FIREBASE SYNC ─────────────────────────
+function setFbStatus(status){
+  var dot=document.getElementById('fb-sync-dot');
+  var lbl=document.getElementById('fb-sync-lbl');
+  if(!dot||!lbl) return;
+  if(status==='connected'){dot.style.background='#16a34a';lbl.style.color='#16a34a';lbl.textContent='cloud saved';}
+  else if(status==='saving'){dot.style.background='#f59e0b';lbl.style.color='#f59e0b';lbl.textContent='saving...';}
+  else if(status==='error'){dot.style.background='#dc2626';lbl.style.color='#dc2626';lbl.textContent='offline';}
+  else{dot.style.background='#888';lbl.style.color='#888';lbl.textContent='connecting...';}
+}
+
 function fbSave(key, data){
-  if(!_fbDb || !_fbReady) return;
-  try{
-    _fbDb.collection('fieldbid_data').doc(key).set({
-      data: JSON.stringify(data),
-      updatedAt: new Date().toISOString()
-    });
-  }catch(e){ console.log('fbSave error:', e.message); }
+  if(!_fbDb || !_fbReady){ setFbStatus('error'); return; }
+  setFbStatus('saving');
+  _fbDb.collection('fieldbid_data').doc(key).set({
+    data: JSON.stringify(data),
+    updatedAt: new Date().toISOString()
+  })
+  .then(function(){ setFbStatus('connected'); })
+  .catch(function(e){ setFbStatus('error'); console.log('fbSave error:', e.message); });
 }
 
 function fbLoad(key, callback){
@@ -1748,7 +1769,7 @@ function fbLoad(key, callback){
 }
 
 // Save all current state to Firebase
-window.fbSaveAll = function fbSaveAll(){
+function fbSaveAll(){
   fbSave('fa', fieldAreas);
   fbSave('ei', estItems);
   fbSave('qi', quoteInfo);
@@ -1759,18 +1780,19 @@ window.fbSaveAll = function fbSaveAll(){
   fbSave('sg', sigData);
   fbSave('projs', loadProjs());
 }
+window.fbSaveAll = fbSaveAll;
 
 // Load from Firebase if localStorage is empty
-window.fbLoadIfEmpty = function fbLoadIfEmpty(){
+function fbLoadIfEmpty(){
   var hasLocal = localStorage.getItem('fb6_fa') || localStorage.getItem('fb6_projs');
   if(hasLocal) return; // localStorage has data, no need to restore
   
   // localStorage is empty - restore from Firebase
-  toast('Restoring data from cloud...');
+  toast('Restoring data from cloud...'); setFbStatus('saving');
   var loaded = 0;
   var total = 5;
   
-  function checkDone(){ loaded++; if(loaded>=total){ load(); toast('Data restored!'); } }
+  function checkDone(){ loaded++; if(loaded>=total){ load(); toast('Data restored! ✅'); setFbStatus('connected'); } }
   
   fbLoad('fa', function(d){ if(d){ localStorage.setItem('fb6_fa',JSON.stringify(d)); } checkDone(); });
   fbLoad('ei', function(d){ if(d){ localStorage.setItem('fb6_ei',JSON.stringify(d)); localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); } checkDone(); });
@@ -1782,11 +1804,13 @@ window.fbLoadIfEmpty = function fbLoadIfEmpty(){
 // Auto-save to Firebase every time something changes
 var _fbSaveTimer = null;
 function fbScheduleSave(){
-  if(typeof fbSaveAll !== 'function') return;
   clearTimeout(_fbSaveTimer);
-  _fbSaveTimer = setTimeout(fbSaveAll, 2000);
+  _fbSaveTimer = setTimeout(function(){
+    if(window.fbSaveAll) window.fbSaveAll();
+  }, 2000);
 }
 window.fbScheduleSave = fbScheduleSave;
+window._fbScheduleSaveReal = fbScheduleSave;
 
 var _wlSentProjects = {};
 
