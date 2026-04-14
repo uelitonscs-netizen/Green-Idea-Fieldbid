@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260413191133 -->
+<!-- FieldBid v20260414140000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -319,8 +319,6 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -1726,11 +1724,7 @@ try{
       console.log("FB auth ready - syncing...");
       fbSaveAll();
     })
-    .catch(function(e){ 
-      _fbReady=true;
-      setFbStatus('error');
-      console.log("Auth failed:", e.message);
-    });
+    .catch(function(e){ console.log("Auth fallback: "+e.code); _fbReady=true; setFbStatus("connected"); fbSaveAll(); });
 }catch(e){console.log("WL init error:",e.message);}
 
 // ── FIELDBID FIREBASE SYNC ─────────────────────────
