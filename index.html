@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260414180000 -->
+<!-- FieldBid v20260414190000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1644,6 +1644,11 @@ for(var oi=0;oi<ovs.length;oi++){
 
 load();
 
+// Save to Firebase after localStorage is loaded - delay to ensure Firebase auth is ready
+setTimeout(function(){
+  if(window.fbSaveAll && window._fbReady) window.fbSaveAll();
+}, 4000);
+
 // Confirm modal
 document.getElementById('confirmNo').addEventListener('click', function() {
   closeOv('confirmOverlay');
@@ -1725,14 +1730,14 @@ try{
     .then(function(){
       _fbReady=true;
       setFbStatus('connected');
-      fbSaveAll();
+      // Don't call fbSaveAll here - localStorage not loaded yet
     })
     .catch(function(e){
       // Auth failed but fieldbid_data is open - proceed without auth
       console.log('Auth skipped:',e.code);
       _fbReady=true;
       setFbStatus('connected');
-      fbSaveAll();
+      // Don't call fbSaveAll here - localStorage not loaded yet
     });
 }catch(e){console.log("WL init error:",e.message);}
 
