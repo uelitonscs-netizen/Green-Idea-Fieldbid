@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260414220000 -->
+<!-- FieldBid v20260414230000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1800,8 +1800,10 @@ function fbLoadIfEmpty(){
     setTimeout(fbLoadIfEmpty, 2000);
     return;
   }
-  var hasLocal = localStorage.getItem('fb6_fa') || localStorage.getItem('fb6_projs');
-  if(hasLocal) return; // localStorage has data, skip restore
+  var _fa = localStorage.getItem('fb6_fa');
+  var _projs = localStorage.getItem('fb6_projs');
+  var hasRealData = (_fa && _fa !== '[]' && _fa !== 'null') || (_projs && _projs !== '[]' && _projs !== 'null');
+  if(hasRealData) return; // localStorage has real data, skip restore
   
   // localStorage is empty - restore from Firebase
   console.log('fbLoadIfEmpty: localStorage empty, restoring from Firebase...');
