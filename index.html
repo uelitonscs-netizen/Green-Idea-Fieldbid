@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260414230000 -->
+<!-- FieldBid v20260414240000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1717,218 +1717,126 @@ function sendToWorkLog() {
 </script>
 
 <script>
-var _wlDb=null;
-var _fbDb=null;
-var _wlAuth=null;
-var _fbReady=false;
+// ── FIELDBID FIREBASE ──────────────────────────────
+var _wlDb=null, _fbDb=null, _wlAuth=null, _fbReady=false;
 
 try{
   var _wlApp=firebase.initializeApp({apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"},"wl");
   _wlDb=firebase.firestore(_wlApp);
   _fbDb=_wlDb;
   _wlAuth=firebase.auth(_wlApp);
-  // fieldbid_data rules are open (if true) - no auth needed
-  // Try anonymous auth for WorkLog integration, but proceed either way
   _wlAuth.signInAnonymously()
-    .then(function(){
-      _fbReady=true;
-      setFbStatus('connected');
-      // Don't call fbSaveAll here - localStorage not loaded yet
-    })
-    .catch(function(e){
-      // Auth failed but fieldbid_data is open - proceed without auth
-      console.log('Auth skipped:',e.code);
-      _fbReady=true;
-      setFbStatus('connected');
-      // Don't call fbSaveAll here - localStorage not loaded yet
-    });
-}catch(e){console.log("WL init error:",e.message);}
+    .then(function(){ _fbReady=true; setFbStatus('connected'); })
+    .catch(function(e){ console.log('Anon auth skipped:',e.code); _fbReady=true; setFbStatus('connected'); });
+}catch(e){ console.log('FB init:',e.message); }
 
-// ── FIELDBID FIREBASE SYNC ─────────────────────────
-function setFbStatus(status){
+function setFbStatus(s){
   var dot=document.getElementById('fb-sync-dot');
   var lbl=document.getElementById('fb-sync-lbl');
   if(!dot||!lbl) return;
-  if(status==='connected'){dot.style.background='#16a34a';lbl.style.color='#16a34a';lbl.textContent='cloud saved';}
-  else if(status==='saving'){dot.style.background='#f59e0b';lbl.style.color='#f59e0b';lbl.textContent='saving...';}
-  else if(status==='error'){dot.style.background='#dc2626';lbl.style.color='#dc2626';lbl.textContent='offline';}
+  if(s==='connected'){dot.style.background='#16a34a';lbl.style.color='#16a34a';lbl.textContent='cloud saved';}
+  else if(s==='saving'){dot.style.background='#f59e0b';lbl.style.color='#f59e0b';lbl.textContent='saving...';}
+  else if(s==='error'){dot.style.background='#dc2626';lbl.style.color='#dc2626';lbl.textContent='offline';}
   else{dot.style.background='#888';lbl.style.color='#888';lbl.textContent='connecting...';}
 }
 
-function fbSave(key, data){
-  if(!_fbDb || !_fbReady){ setFbStatus('error'); return; }
+function fbSave(key,data){
+  if(!_fbDb||!_fbReady) return;
   setFbStatus('saving');
-  _fbDb.collection('fieldbid_data').doc(key).set({
-    data: JSON.stringify(data),
-    updatedAt: new Date().toISOString()
-  })
-  .then(function(){ setFbStatus('connected'); })
-  .catch(function(e){ setFbStatus('error'); console.log('fbSave error:', e.message); });
+  _fbDb.collection('fieldbid_data').doc(key).set({data:JSON.stringify(data),updatedAt:new Date().toISOString()})
+    .then(function(){ setFbStatus('connected'); })
+    .catch(function(e){ console.log('fbSave error',key,e.message); setFbStatus('error'); });
 }
 
-function fbLoad(key, callback){
-  if(!_fbDb || !_fbReady){ callback(null); return; }
-  _fbDb.collection('fieldbid_data').doc(key).get()
-  .then(function(doc){
-    if(doc.exists && doc.data().data){
-      callback(JSON.parse(doc.data().data));
-    } else {
-      callback(null);
-    }
-  })
-  .catch(function(){ callback(null); });
-}
-
-// Save all current state to Firebase
 function fbSaveAll(){
-  fbSave('fa', window.fieldAreas||[]);
-  fbSave('ei', window.estItems||[]);
-  fbSave('qi', window.quoteInfo||{});
-  fbSave('qn', window.quoteNum||1001);
-  fbSave('cfg', window.cfg||{});
-  fbSave('pr', window.products||[]);
-  fbSave('ct', window.ctData||{});
-  fbSave('sg', window.sigData||{});
-  fbSave('projs', loadProjs());
+  if(!_fbDb||!_fbReady) return;
+  var fa=window.fieldAreas||[];
+  var ei=window.estItems||[];
+  var projs=loadProjs();
+  // Only save if we have real data
+  if(fa.length===0&&ei.length===0&&projs.length===0) return;
+  fbSave('fa',fa);
+  fbSave('ei',ei);
+  fbSave('qi',window.quoteInfo||{});
+  fbSave('qn',window.quoteNum||1001);
+  fbSave('cfg',window.cfg||{});
+  fbSave('pr',window.products||[]);
+  fbSave('ct',window.ctData||{});
+  fbSave('sg',window.sigData||{});
+  fbSave('projs',projs);
 }
-window.fbSaveAll = fbSaveAll;
+window.fbSaveAll=fbSaveAll;
 
-// Load from Firebase - always tries on startup, merges with localStorage
-function fbLoadIfEmpty(){
-  if(!_fbDb || !_fbReady){ 
-    // Firebase not ready yet - retry in 2 seconds
-    setTimeout(fbLoadIfEmpty, 2000);
-    return;
-  }
-  var _fa = localStorage.getItem('fb6_fa');
-  var _projs = localStorage.getItem('fb6_projs');
-  var hasRealData = (_fa && _fa !== '[]' && _fa !== 'null') || (_projs && _projs !== '[]' && _projs !== 'null');
-  if(hasRealData) return; // localStorage has real data, skip restore
-  
-  // localStorage is empty - restore from Firebase
-  console.log('fbLoadIfEmpty: localStorage empty, restoring from Firebase...');
-  toast('Restoring data from cloud...'); setFbStatus('saving');
-  var loaded = 0;
-  var total = 5;
-  var restored = 0;
-  
-  function checkDone(){ 
-    loaded++; 
-    if(loaded>=total){ 
-      if(restored > 0){
-        load();
-        renderFA(); renderEst();
-        toast('Data restored! ✅ ('+restored+' collections)');
-      } else {
-        toast('No cloud data found');
-      }
-      setFbStatus('connected'); 
-    } 
-  }
-  
-  fbLoad('fa', function(d){ if(d&&d.length>0){ localStorage.setItem('fb6_fa',JSON.stringify(d)); restored++; console.log('Restored fa: '+d.length+' areas'); } checkDone(); });
-  fbLoad('ei', function(d){ if(d&&d.length>0){ localStorage.setItem('fb6_ei',JSON.stringify(d)); restored++; console.log('Restored ei: '+d.length+' items'); } checkDone(); });
-  fbLoad('cfg', function(d){ if(d){ localStorage.setItem('fb6_cfg',JSON.stringify(d)); restored++; console.log('Restored cfg'); } checkDone(); });
-  fbLoad('projs', function(d){ if(d&&d.length>0){ localStorage.setItem('fb6_projs',JSON.stringify(d)); restored++; console.log('Restored projs: '+d.length); } checkDone(); });
-  fbLoad('qn', function(d){ if(d){ localStorage.setItem('fb6_qn',String(d)); restored++; console.log('Restored qn: '+d); } checkDone(); });
-}
-
-// Auto-save to Firebase every time something changes
-var _fbSaveTimer = null;
+var _fbSaveTimer=null;
 function fbScheduleSave(){
   clearTimeout(_fbSaveTimer);
-  _fbSaveTimer = setTimeout(function(){
-    if(window.fbSaveAll) window.fbSaveAll();
-  }, 2000);
+  _fbSaveTimer=setTimeout(function(){ if(window.fbSaveAll) window.fbSaveAll(); },2000);
 }
-window.fbScheduleSave = fbScheduleSave;
-window._fbScheduleSaveReal = fbScheduleSave;
+window.fbScheduleSave=fbScheduleSave;
+window._fbScheduleSaveReal=fbScheduleSave;
 
-var _wlSentProjects = {};
+function fbRestore(){
+  // Only restore if localStorage is truly empty
+  var fa=localStorage.getItem('fb6_fa');
+  var projs=localStorage.getItem('fb6_projs');
+  var hasReal=(fa&&fa.length>2&&fa!=='null')||(projs&&projs.length>2&&projs!=='null');
+  if(hasReal){ console.log('fbRestore: has local data, skip'); return; }
+  if(!_fbDb||!_fbReady){ setTimeout(fbRestore,1500); return; }
 
-function sendToWorkLog(){
-  var cEl=document.getElementById("qClient"),aEl=document.getElementById("qAddress"),tEl=document.getElementById("qTotal");
-  var client=cEl?cEl.textContent.trim():"";
-  var address=aEl?aEl.textContent.trim():"";
-  var budget=tEl?parseFloat(tEl.textContent.replace(/[^0-9.]/g,""))||0:0;
-  if(client==="Tap to add") client="";
-  if(address==="Tap to add") address="";
-  if(!client&&!address){toast("Add client name and address first!"); return;}
-  if(!_wlDb){toast("Firebase not ready - please refresh"); return;}
+  console.log('fbRestore: starting...');
+  setFbStatus('saving');
+  var done=0, total=3, got=0;
 
-  var projName = client || address;
-
-  // Check if already sent this session
-  if(_wlSentProjects[projName]){
-    showWLConfirm(projName, budget, address);
-    return;
+  function fin(){
+    done++;
+    if(done<total) return;
+    if(got>0){
+      load();
+      if(window.renderFA) renderFA();
+      if(window.renderEst) renderEst();
+      toast('Restored from cloud!');
+      console.log('fbRestore: done, got='+got);
+    } else {
+      toast('No cloud backup found');
+      console.log('fbRestore: nothing found');
+    }
+    setFbStatus('connected');
   }
 
-  // Check if project already exists in WorkLog
-  var btn=document.getElementById("sendWLBtn");
-  if(btn){btn.textContent="Checking..."; btn.disabled=true;}
+  _fbDb.collection('fieldbid_data').doc('fa').get()
+    .then(function(d){
+      if(d.exists&&d.data().data){
+        var arr=JSON.parse(d.data().data);
+        if(arr&&arr.length>0){ localStorage.setItem('fb6_fa',JSON.stringify(arr)); got++; console.log('Restored fa:',arr.length); }
+      }
+      fin();
+    }).catch(function(e){ console.log('restore fa err:',e.message); fin(); });
 
-  _wlDb.collection("projects").where("name","==",projName).get()
-  .then(function(snap){
-    if(!snap.empty){
-      if(btn){btn.textContent="Send to WorkLog"; btn.disabled=false;}
-      showWLConfirm(projName, budget, address);
-    } else {
-      doSendToWL(projName, address, budget);
-    }
-  })
-  .catch(function(){
-    // If check fails just send
-    doSendToWL(projName, address, budget);
-  });
-}
+  _fbDb.collection('fieldbid_data').doc('projs').get()
+    .then(function(d){
+      if(d.exists&&d.data().data){
+        var arr=JSON.parse(d.data().data);
+        if(arr&&arr.length>0){ localStorage.setItem('fb6_projs',JSON.stringify(arr)); got++; console.log('Restored projs:',arr.length); }
+      }
+      fin();
+    }).catch(function(e){ console.log('restore projs err:',e.message); fin(); });
 
-function showWLConfirm(name, budget, address){
-  var btn=document.getElementById("sendWLBtn");
-  // Show confirm banner instead of popup
-  var existing=document.getElementById("wl-confirm-bar");
-  if(existing) existing.remove();
-  var bar=document.createElement("div");
-  bar.id="wl-confirm-bar";
-  bar.style.cssText="background:#fff3cd;border:1px solid #f59e0b;border-radius:10px;padding:12px 14px;margin-top:8px;font-size:12px;";
-  bar.innerHTML='<div style="font-weight:700;color:#92400e;margin-bottom:8px">Already sent to WorkLog!</div>'
-    +'<div style="color:#92400e;margin-bottom:10px">A project named <strong>'+name+'</strong> already exists. Send again?</div>'
-    +'<div style="display:flex;gap:8px">'
-    +'<button id="wl-yes" style="flex:1;background:#1a6b2a;color:#fff;border:none;border-radius:8px;padding:8px;font-weight:700;font-size:12px;cursor:pointer">Yes, send again</button>'
-    +'<button id="wl-no" style="flex:1;background:#e0e0e0;color:#333;border:none;border-radius:8px;padding:8px;font-weight:700;font-size:12px;cursor:pointer">Cancel</button>'
-    +'</div>';
-  var actRow=document.querySelector("#ep-quote .act-row");
-  if(actRow) actRow.parentNode.insertBefore(bar, actRow.nextSibling);
-  document.getElementById("wl-yes").addEventListener("click", function(){
-    bar.remove();
-    doSendToWL(name, address, budget);
-  });
-  document.getElementById("wl-no").addEventListener("click", function(){
-    bar.remove();
-  });
+  _fbDb.collection('fieldbid_data').doc('ei').get()
+    .then(function(d){
+      if(d.exists&&d.data().data){
+        var arr=JSON.parse(d.data().data);
+        if(arr&&arr.length>0){ localStorage.setItem('fb6_ei',JSON.stringify(arr)); got++; console.log('Restored ei:',arr.length); }
+      }
+      fin();
+    }).catch(function(e){ console.log('restore ei err:',e.message); fin(); });
 }
+window.fbRestore=fbRestore;
 
-function doSendToWL(projName, address, budget){
-  var btn=document.getElementById("sendWLBtn");
-  if(btn){btn.textContent="Sending..."; btn.disabled=true;}
-  _wlDb.collection("projects").add({name:projName,desc:address,budget:budget,overhead:0,ohDays:[],start:new Date().toISOString().slice(0,10),end:null,status:"active",helpers:[],createdAt:new Date().toISOString(),source:"fieldbid",fieldbidTotal:budget})
-  .then(function(){
-    _wlSentProjects[projName] = true;
-    if(btn){btn.textContent="Sent to WorkLog"; btn.style.background="#16a34a"; btn.disabled=true;}
-    toast("Project sent to WorkLog!");
-  })
-  .catch(function(err){
-    toast("Error: "+err.message);
-    if(btn){btn.textContent="Send to WorkLog";btn.style.background="#1a6b2a";btn.disabled=false;}
-  });
-}
 
 document.addEventListener("DOMContentLoaded",function(){
   var b=document.getElementById("sendWLBtn");
   if(b) b.addEventListener("click",sendToWorkLog);
-  // Restore from Firebase if localStorage was cleared
-  // Retry fbLoadIfEmpty with longer delay to ensure Firebase auth is ready
-setTimeout(fbLoadIfEmpty, 2000);
+  setTimeout(fbRestore, 1500);
 });
 </script>
 </body>
