@@ -1702,17 +1702,23 @@ function sendToWorkLog() {
 <script>
 var _wlDb=null;
 var _fbDb=null;
-var _fbUserId='fb6_user';
+var _wlAuth=null;
+var _fbReady=false;
 
 try{
   var _wlApp=firebase.initializeApp({apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"},"wl");
   _wlDb=firebase.firestore(_wlApp);
-  _fbDb=_wlDb; // FieldBid uses same Firebase project
+  _fbDb=_wlDb;
+  _wlAuth=firebase.auth(_wlApp);
+  // Sign in anonymously so Firestore rules allow access
+  _wlAuth.signInAnonymously()
+    .then(function(){ _fbReady=true; fbSaveAll(); })
+    .catch(function(e){ console.log("Auth error:",e.message); });
 }catch(e){console.log("WL:",e.message);}
 
 // ── FIELDBID FIREBASE SYNC ─────────────────────────
 function fbSave(key, data){
-  if(!_fbDb) return;
+  if(!_fbDb || !_fbReady) return;
   try{
     _fbDb.collection('fieldbid_data').doc(key).set({
       data: JSON.stringify(data),
@@ -1722,7 +1728,7 @@ function fbSave(key, data){
 }
 
 function fbLoad(key, callback){
-  if(!_fbDb){ callback(null); return; }
+  if(!_fbDb || !_fbReady){ callback(null); return; }
   _fbDb.collection('fieldbid_data').doc(key).get()
   .then(function(doc){
     if(doc.exists && doc.data().data){
