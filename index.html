@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260414250000 -->
+<!-- FieldBid v20260421110000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -732,7 +732,12 @@ function parseSum(str){
   return total;
 }
 
-function saveFA(){localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));if(currentProj)saveProjAreas(); fbScheduleSave();}
+function saveFA(){
+  // Areas belong to projects - always save to project if active
+  if(currentProj){ saveProjAreas(); fbScheduleSave(); }
+  // Also keep global in sync for Estimator import
+  localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
+}
 function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
 function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
 function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
@@ -756,7 +761,7 @@ function updateProjHeader(){
 }
 
 function load(){
-  var fa=localStorage.getItem('fb6_fa');if(fa)fieldAreas=JSON.parse(fa);
+  // fieldAreas start blank - they load when a project is selected
   var ei=localStorage.getItem('fb6_ei');if(ei)estItems=JSON.parse(ei);
   var c=localStorage.getItem('fb6_cfg');if(c){var cp=JSON.parse(c);for(var k in cp)cfg[k]=cp[k];}
   var pr=localStorage.getItem('fb6_pr');products=pr?JSON.parse(pr):JSON.parse(JSON.stringify(DEFAULTS));
@@ -784,7 +789,10 @@ document.getElementById('btnField').addEventListener('click',function(){
   document.getElementById('home').style.display='none';
   document.getElementById('field-app').style.display='block';
   document.getElementById('fieldFab').style.display='flex';
+  if(!currentProj){ fieldAreas=[]; window.fieldAreas=fieldAreas; }
   updateProjHeader();renderFA();renderFWO();
+  // Auto-open project list if projects exist and none selected
+  if(!currentProj && loadProjs().length>0){ setTimeout(function(){openProjModal();},300); }
 });
 document.getElementById('btnEst').addEventListener('click',function(){
   document.getElementById('home').style.display='none';
@@ -872,9 +880,12 @@ function createProj(){
   var projs=loadProjs();
   var proj={id:'p_'+Date.now(),name:name,areas:[],created:new Date().toLocaleDateString('en-US')};
   projs.unshift(proj);saveProjs(projs);
-  currentProj=proj;fieldAreas=[];
-  saveFA();updateProjHeader();renderFA();renderFWO();
-  closeOv('projOverlay');toast('✅ Project created');
+  currentProj=proj;
+  // New project always starts blank
+  fieldAreas=[];window.fieldAreas=fieldAreas;
+  document.getElementById('newProjName').value='';
+  updateProjHeader();renderFA();renderFWO();
+  closeOv('projOverlay');toast('✅ Project "'+name+'" created');
 }
 function switchProj(btn){
   var pid=btn.getAttribute('data-pid');
