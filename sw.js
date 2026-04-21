@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greenidea-v3';
+var CACHE_NAME = 'greenidea-v4';
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
