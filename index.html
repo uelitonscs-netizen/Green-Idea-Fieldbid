@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260421110000 -->
+<!-- FieldBid v20260421120000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -341,16 +341,16 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 </div>
 
 <div id="field-app">
-  <div class="app-hd" style="position:relative">
-  <div id="fb-sync-indicator" style="position:absolute;top:6px;right:6px;display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:#1e2530;border:1px solid #2a3340">
-    <span id="fb-sync-dot" style="width:7px;height:7px;border-radius:50%;background:#888;display:inline-block"></span>
-    <span id="fb-sync-lbl" style="color:#888">connecting...</span>
-  </div>
+  <div class="app-hd">
     <button class="back-btn" id="backField">← Back</button>
     <div class="hd-icon field">📐</div>
     <div class="hd-info">
       <div class="hd-title" id="fieldProjName">Tap to set project</div>
       <div class="hd-sub" id="fieldProjSub">tap to name or switch</div>
+      <div id="fb-sync-indicator" style="display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;margin-top:2px">
+        <span id="fb-sync-dot" style="width:7px;height:7px;border-radius:50%;background:#888;display:inline-block"></span>
+        <span id="fb-sync-lbl" style="color:#888">connecting...</span>
+      </div>
     </div>
     <button class="hd-action" id="btnOpenProj">+ Project</button>
   </div>
