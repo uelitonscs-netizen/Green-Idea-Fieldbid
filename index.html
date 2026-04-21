@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260421160000 -->
+<!-- FieldBid v20260421170000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1808,6 +1808,7 @@ function fbSaveAll(){
   if(fa.length===0&&ei.length===0&&projs.length===0) return;
   fbSave('fa',fa);
   fbSave('ei',ei);
+  fbSave('projs',projs);
   fbSave('qi',window.quoteInfo||{});
   fbSave('qn',window.quoteNum||1001);
   fbSave('cfg',window.cfg||{});
@@ -1827,59 +1828,40 @@ window.fbScheduleSave=fbScheduleSave;
 window._fbScheduleSaveReal=fbScheduleSave;
 
 function fbRestore(){
-  // Only restore if localStorage is truly empty
   var fa=localStorage.getItem('fb6_fa');
   var projs=localStorage.getItem('fb6_projs');
   var hasReal=(fa&&fa.length>2&&fa!=='null')||(projs&&projs.length>2&&projs!=='null');
-  if(hasReal){ console.log('fbRestore: has local data, skip'); return; }
+  if(hasReal){ return; }
   if(!_fbDb||!_fbReady){ setTimeout(fbRestore,1500); return; }
-
-  console.log('fbRestore: starting...');
   setFbStatus('saving');
-  var done=0, total=3, got=0;
-
+  var fbFa=null, fbProjs=null, fbEi=null;
+  var done=0, total=3;
   function fin(){
     done++;
     if(done<total) return;
-    if(got>0){
-      load();
-      if(window.renderFA) renderFA();
-      if(window.renderEst) renderEst();
-      toast('Restored from cloud!');
-      console.log('fbRestore: done, got='+got);
-    } else {
-      toast('No cloud backup found');
-      console.log('fbRestore: nothing found');
+    var got=0;
+    if(fbProjs&&fbProjs.length>0){ localStorage.setItem('fb6_projs',JSON.stringify(fbProjs)); got++; }
+    if(fbFa&&fbFa.length>0){
+      localStorage.setItem('fb6_fa',JSON.stringify(fbFa)); got++;
+      if(!fbProjs||fbProjs.length===0){
+        var rp={id:'p_recovered',name:'Recovered Areas',areas:fbFa,created:new Date().toLocaleDateString('en-US')};
+        localStorage.setItem('fb6_projs',JSON.stringify([rp]));
+      }
     }
+    if(fbEi&&fbEi.length>0){ localStorage.setItem('fb6_ei',JSON.stringify(fbEi)); got++; }
+    if(got>0){ load(); if(window.renderFA)renderFA(); if(window.renderEst)renderEst(); toast('Restored from cloud!'); }
+    else{ toast('No cloud backup found'); }
     setFbStatus('connected');
   }
-
   _fbDb.collection('fieldbid_data').doc('fa').get()
-    .then(function(d){
-      if(d.exists&&d.data().data){
-        var arr=JSON.parse(d.data().data);
-        if(arr&&arr.length>0){ localStorage.setItem('fb6_fa',JSON.stringify(arr)); got++; console.log('Restored fa:',arr.length); }
-      }
-      fin();
-    }).catch(function(e){ console.log('restore fa err:',e.message); fin(); });
-
+    .then(function(d){ if(d.exists&&d.data().data){var arr=JSON.parse(d.data().data);if(arr&&arr.length>0)fbFa=arr;} fin(); })
+    .catch(function(e){ fin(); });
   _fbDb.collection('fieldbid_data').doc('projs').get()
-    .then(function(d){
-      if(d.exists&&d.data().data){
-        var arr=JSON.parse(d.data().data);
-        if(arr&&arr.length>0){ localStorage.setItem('fb6_projs',JSON.stringify(arr)); got++; console.log('Restored projs:',arr.length); }
-      }
-      fin();
-    }).catch(function(e){ console.log('restore projs err:',e.message); fin(); });
-
+    .then(function(d){ if(d.exists&&d.data().data){var arr=JSON.parse(d.data().data);if(arr&&arr.length>0)fbProjs=arr;} fin(); })
+    .catch(function(e){ fin(); });
   _fbDb.collection('fieldbid_data').doc('ei').get()
-    .then(function(d){
-      if(d.exists&&d.data().data){
-        var arr=JSON.parse(d.data().data);
-        if(arr&&arr.length>0){ localStorage.setItem('fb6_ei',JSON.stringify(arr)); got++; console.log('Restored ei:',arr.length); }
-      }
-      fin();
-    }).catch(function(e){ console.log('restore ei err:',e.message); fin(); });
+    .then(function(d){ if(d.exists&&d.data().data){var arr=JSON.parse(d.data().data);if(arr&&arr.length>0)fbEi=arr;} fin(); })
+    .catch(function(e){ fin(); });
 }
 window.fbRestore=fbRestore;
 
