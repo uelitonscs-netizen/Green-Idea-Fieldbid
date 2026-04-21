@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260421120000 -->
+<!-- FieldBid v20260421130000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1273,9 +1273,26 @@ function openFAModal(idx){
   document.getElementById('faTitle').textContent=idx>=0?'Edit Area':'Add Area';
   document.getElementById('faSaveBtn').textContent=idx>=0?'Update':'Add Area';
   faPendPh=[];
-  if(idx>=0){var a=fieldAreas[idx];document.getElementById('fa_name').value=a.name;document.getElementById('fa_spec').value=a.spec||'';document.getElementById('fa_notes').value=a.notes||'';faProd=a.productId||null;faPendPh=a.photos?a.photos.slice():[];}
-  else{document.getElementById('fa_name').value='';document.getElementById('fa_spec').value='';document.getElementById('fa_notes').value='';faProd=products.length?products[0].id:null;}
-  initCalc();renderPicker('fa');renderPPGrid('fa');openOv('faOverlay');
+  initCalc();
+  if(idx>=0){
+    var a=fieldAreas[idx];
+    document.getElementById('fa_name').value=a.name;
+    document.getElementById('fa_spec').value=a.spec||'';
+    document.getElementById('fa_notes').value=a.notes||'';
+    faProd=a.productId||null;
+    faPendPh=a.photos?a.photos.slice():[];
+    // Load saved SF into manual mode so it shows correctly
+    setMMode('manual',document.getElementById('mm3'));
+    document.getElementById('fa_sf_m').value=a.sf||0;
+    document.getElementById('fa_sf').value=a.sf||0;
+    document.getElementById('calcSF').textContent=a.sf?(+a.sf).toLocaleString():'0';
+  } else {
+    document.getElementById('fa_name').value='';
+    document.getElementById('fa_spec').value='';
+    document.getElementById('fa_notes').value='';
+    faProd=products.length?products[0].id:null;
+  }
+  renderPicker('fa');renderPPGrid('fa');openOv('faOverlay');
 }
 document.getElementById('faCancelBtn').addEventListener('click',function(){closeOv('faOverlay');});
 document.getElementById('faSaveBtn').addEventListener('click',function(){
