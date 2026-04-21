@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260421170000 -->
+<!-- FieldBid v20260421180000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -733,13 +733,13 @@ function parseSum(str){
 }
 
 function saveFA(){
-  // Areas belong to projects - always save to project if active
-  if(currentProj){ saveProjAreas(); fbScheduleSave(); }
-  // Also keep global in sync for Estimator import
+  // Save to project if active
+  if(currentProj){ saveProjAreas(); }
+  // Always save global fa and schedule Firebase sync
   localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
+  fbScheduleSave();
 }
 function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
-function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
 function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
 function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products)); fbScheduleSave();}
 function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg)); fbScheduleSave();}
@@ -1815,7 +1815,6 @@ function fbSaveAll(){
   fbSave('pr',window.products||[]);
   fbSave('ct',window.ctData||{});
   fbSave('sg',window.sigData||{});
-  fbSave('projs',projs);
 }
 window.fbSaveAll=fbSaveAll;
 
