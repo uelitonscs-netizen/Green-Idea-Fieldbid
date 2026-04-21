@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260421140000 -->
+<!-- FieldBid v20260421150000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1283,7 +1283,7 @@ function openFAModal(idx){
     faPendPh=a.photos?a.photos.slice():[];
     // Restore measurement mode and rows
     var savedMode=a.calcMode||'manual';
-    if(savedMode==='walls'&&a.wallRows&&a.wallRows.length>0){
+    if(savedMode==='walls'&&a.wallRows&&a.wallRows.length>0&&window.wallRows!==undefined){
       wallRows=JSON.parse(JSON.stringify(a.wallRows));
       floorRows=a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):[{l:'',h:''}];
       setMMode('walls',document.getElementById('mm1'));
@@ -1323,9 +1323,9 @@ document.getElementById('faSaveBtn').addEventListener('click',function(){
   if(!name){toast('Add an area name');return;}
   if(!sf||sf<=0){toast('Enter measurements or SF');return;}
   var area={name:name,productId:faProd,sf:sf,spec:spec,notes:notes,photos:faPendPh.slice(),
-    calcMode:calcMode,
-    wallRows:JSON.parse(JSON.stringify(wallRows)),
-    floorRows:JSON.parse(JSON.stringify(floorRows))};
+    calcMode:calcMode||'manual',
+    wallRows:(wallRows&&wallRows.length)?JSON.parse(JSON.stringify(wallRows)):[],
+    floorRows:(floorRows&&floorRows.length)?JSON.parse(JSON.stringify(floorRows)):[]};
   if(editFAIdx>=0)fieldAreas[editFAIdx]=area;else fieldAreas.push(area);
   saveFA();renderFA();renderFWO();closeOv('faOverlay');
   toast(editFAIdx>=0?'✅ Area updated':'✅ Area added');
