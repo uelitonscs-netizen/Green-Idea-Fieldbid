@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260421130000 -->
+<!-- FieldBid v20260421140000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1281,12 +1281,32 @@ function openFAModal(idx){
     document.getElementById('fa_notes').value=a.notes||'';
     faProd=a.productId||null;
     faPendPh=a.photos?a.photos.slice():[];
-    // Load saved SF into manual mode so it shows correctly
-    setMMode('manual',document.getElementById('mm3'));
-    document.getElementById('fa_sf_m').value=a.sf||0;
-    document.getElementById('fa_sf').value=a.sf||0;
-    document.getElementById('calcSF').textContent=a.sf?(+a.sf).toLocaleString():'0';
+    // Restore measurement mode and rows
+    var savedMode=a.calcMode||'manual';
+    if(savedMode==='walls'&&a.wallRows&&a.wallRows.length>0){
+      wallRows=JSON.parse(JSON.stringify(a.wallRows));
+      floorRows=a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):[{l:'',h:''}];
+      setMMode('walls',document.getElementById('mm1'));
+      renderRows('wall');renderRows('floor');recalcSF();
+    } else if(savedMode==='floor'&&a.floorRows&&a.floorRows.length>0){
+      floorRows=JSON.parse(JSON.stringify(a.floorRows));
+      wallRows=a.wallRows?JSON.parse(JSON.stringify(a.wallRows)):[{l:'',h:''}];
+      setMMode('floor',document.getElementById('mm2'));
+      renderRows('wall');renderRows('floor');recalcSF();
+    } else {
+      // Manual mode or no rows saved - show SF directly
+      setMMode('manual',document.getElementById('mm3'));
+      document.getElementById('fa_sf_m').value=a.sf||0;
+      document.getElementById('fa_sf').value=a.sf||0;
+      document.getElementById('calcSF').textContent=a.sf?(+a.sf).toLocaleString():'0';
+    }
   } else {
+    document.getElementById('fa_name').value='';
+    document.getElementById('fa_spec').value='';
+    document.getElementById('fa_notes').value='';
+    faProd=products.length?products[0].id:null;
+  }
+
     document.getElementById('fa_name').value='';
     document.getElementById('fa_spec').value='';
     document.getElementById('fa_notes').value='';
@@ -1302,7 +1322,10 @@ document.getElementById('faSaveBtn').addEventListener('click',function(){
   var notes=document.getElementById('fa_notes').value.trim();
   if(!name){toast('Add an area name');return;}
   if(!sf||sf<=0){toast('Enter measurements or SF');return;}
-  var area={name:name,productId:faProd,sf:sf,spec:spec,notes:notes,photos:faPendPh.slice()};
+  var area={name:name,productId:faProd,sf:sf,spec:spec,notes:notes,photos:faPendPh.slice(),
+    calcMode:calcMode,
+    wallRows:JSON.parse(JSON.stringify(wallRows)),
+    floorRows:JSON.parse(JSON.stringify(floorRows))};
   if(editFAIdx>=0)fieldAreas[editFAIdx]=area;else fieldAreas.push(area);
   saveFA();renderFA();renderFWO();closeOv('faOverlay');
   toast(editFAIdx>=0?'✅ Area updated':'✅ Area added');
