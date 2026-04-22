@@ -1,17 +1,20 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260421190000 -->
+<!-- FieldBid v20260421_NEW -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#3fb950">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="FieldBid">
 <link rel="manifest" href="manifest.json">
 <title>FieldBid</title>
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
+
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0d1117;color:#e6edf3;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;overscroll-behavior:none;}
 button{font-family:system-ui,-apple-system,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -315,13 +318,46 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-10px);background:#3fb950;color:#000;font-size:13px;font-weight:700;padding:10px 22px;border-radius:20px;opacity:0;pointer-events:none;transition:all .2s;white-space:nowrap;z-index:300;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 @media print{#home,.app-hd,.tabs,.fab,.act-row,.wo-bar,.card-acts,button{display:none!important;}body{background:#fff;color:#000;}.page{display:block!important;padding:0;}.card{background:#fff;border:1px solid #ccc;}}
+
+.mmode-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.mmode{padding:10px 8px;background:#1e2530;border:1px solid #2a3340;border-radius:10px;font-size:12px;font-weight:700;color:#7d8590;text-align:center;display:flex;flex-direction:column;gap:3px;line-height:1.3;}
+.mmode span{font-size:10px;font-weight:400;color:#4d5560;}
+.mmode.on{background:rgba(240,160,44,.12);border-color:rgba(240,160,44,.4);color:#f0a02c;}
+.mrow{display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;}
+.mrow-l{flex:1;}
+.mrow-h{width:80px;flex-shrink:0;}
+.mrow-del{width:40px;height:50px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.2);border-radius:8px;color:#f85149;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.mrow-del:active{background:rgba(248,81,73,.2);}
+.mrow-lbl{font-size:10px;color:#7d8590;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.st-g{background:#161b22;border:1px solid #2a3340;border-radius:12px;overflow:hidden;margin-bottom:12px;}
+.st-t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#7d8590;padding:12px 16px;background:#1e2530;border-bottom:1px solid #2a3340;}
+.st-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #2a3340;}
+.st-row:last-child{border-bottom:none;}
+.st-row.stacked{flex-direction:column;align-items:flex-start;gap:8px;}
+.st-lbl{font-size:13px;font-weight:600;color:#e6edf3;}
+.st-sub{font-size:11px;color:#7d8590;margin-top:2px;}
+.st-inp{width:70px;background:#0d1117;border:1px solid #2a3340;border-radius:8px;padding:8px 10px;color:#e6edf3;font-size:14px;text-align:center;font-family:ui-monospace,monospace;}
+.prod-note{font-size:12px;color:#7d8590;margin-bottom:12px;padding:0 2px;}
+.prod-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#161b22;border:1px solid #2a3340;border-radius:10px;margin-bottom:8px;}
+.prod-item-l{display:flex;align-items:center;gap:10px;}
+.proj-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #2a3340;}
+.proj-item:last-child{border-bottom:none;}
+.proj-item.active{background:rgba(63,185,80,.06);}
+.proj-btn{flex:1;background:none;border:none;text-align:left;padding:0;}
+.proj-name{font-size:14px;font-weight:700;color:#e6edf3;}
+.proj-item.active .proj-name{color:#3fb950;}
+.proj-meta{font-size:11px;color:#7d8590;margin-top:2px;font-family:ui-monospace,monospace;}
+.proj-del{width:36px;height:36px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.2);border-radius:8px;color:#f85149;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.sig-wrap{border:1px solid #2a3340;border-radius:10px;overflow:hidden;background:#fff;touch-action:none;}
+#sigCanvas{display:block;width:100%;height:160px;cursor:crosshair;}
+.empty{text-align:center;padding:48px 20px;}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.5;}
+.empty-title{font-size:14px;font-weight:700;color:#7d8590;}
+.empty-body{font-size:12px;color:#4d5560;margin-top:4px;}
+
 </style>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body>
-
 <div id="home">
   <div class="brand">
     <div class="brand-logo">
@@ -666,7 +702,6 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
   </div>
 </div>
 <div class="toast" id="toast"></div>
-
 <script>
 // All code runs after DOM is ready
 function appConfirm(msg, onYes) {
@@ -676,9 +711,13 @@ function appConfirm(msg, onYes) {
   document.getElementById('confirmOverlay').className = 'overlay on';
 }
 
-// Stub - will be replaced by WL script after load
-function fbScheduleSave(){ 
-  if(window._fbScheduleSaveReal) window._fbScheduleSaveReal();
+
+// All code runs after DOM is ready
+function appConfirm(msg, onYes) {
+  document.getElementById('confirmMsg').textContent = msg;
+  window._confirmResolve = onYes;
+  window._confirmReject = null;
+  document.getElementById('confirmOverlay').className = 'overlay on';
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -733,9 +772,7 @@ function parseSum(str){
 }
 
 function saveFA(){
-  // Save to project if active
   if(currentProj){ saveProjAreas(); }
-  // Always save global fa and schedule Firebase sync
   localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
   fbScheduleSave();
 }
@@ -761,7 +798,7 @@ function updateProjHeader(){
 }
 
 function load(){
-  // fieldAreas start blank - they load when a project is selected
+  var fa=localStorage.getItem('fb6_fa');if(fa){fieldAreas=JSON.parse(fa);window.fieldAreas=fieldAreas;}
   var ei=localStorage.getItem('fb6_ei');if(ei)estItems=JSON.parse(ei);
   var c=localStorage.getItem('fb6_cfg');if(c){var cp=JSON.parse(c);for(var k in cp)cfg[k]=cp[k];}
   var pr=localStorage.getItem('fb6_pr');products=pr?JSON.parse(pr):JSON.parse(JSON.stringify(DEFAULTS));
@@ -1765,65 +1802,120 @@ function sendToWorkLog() {
     if(btn){btn.textContent="?? Send to WorkLog";btn.disabled=false;}
   });
 }
+
 </script>
 
 <script>
+function sendToWorkLog() {
+  var cEl=document.getElementById("qClient"),aEl=document.getElementById("qAddress"),tEl=document.getElementById("qTotal");
+  var client=cEl?cEl.textContent.trim():"";
+  var address=aEl?aEl.textContent.trim():"";
+  var budget=tEl?parseFloat(tEl.textContent.replace(/[^0-9.]/g,""))||0:0;
+  if(client==="Tap to add") client="";
+  if(address==="Tap to add") address="";
+  if(!client&&!address){toast("Add client name and address first!"); return;}
+  if(!_wlDb){toast("Firebase not ready — please refresh"); return;}
+  var btn=document.getElementById("sendWLBtn");
+  if(btn){btn.textContent="Sending..."; btn.disabled=true;}
+  _wlDb.collection("projects").add({name:client||address,desc:address,budget:budget,overhead:0,ohDays:[],start:new Date().toISOString().slice(0,10),end:null,status:"active",helpers:[],createdAt:new Date().toISOString(),source:"fieldbid",fieldbidTotal:budget})
+  .then(function(){
+    if(btn){btn.textContent="✅ Sent!"; btn.style.background="#16a34a";}
+    toast("✅ Project sent to WorkLog!");
+    setTimeout(function(){if(btn){btn.textContent="?? Send to WorkLog";btn.style.background="#1a6b2a";btn.disabled=false;}},3000);
+  })
+  .catch(function(err){
+    toast("Error: "+err.message);
+    if(btn){btn.textContent="?? Send to WorkLog";btn.disabled=false;}
+  });
+}
+
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+  var b=document.getElementById("sendWLBtn");
+  if(b){b.addEventListener("click",sendToWorkLog);}
+  // Restore from cloud if localStorage empty
+  setTimeout(fbRestore, 1500);
+  // Save to cloud 5s after load (only if data exists)
+  setTimeout(function(){
+    var hasData=(window.fieldAreas&&window.fieldAreas.length>0)||(window.estItems&&window.estItems.length>0)||loadProjs().length>0;
+    if(hasData&&window.fbSaveAll)window.fbSaveAll();
+  },5000);
+  // Force SW update if present
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(function(regs){
+      regs.forEach(function(reg){reg.update();if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});}});
+    });
+    navigator.serviceWorker.addEventListener('controllerchange',function(){window.location.reload();});
+  }
+});
+</script>
+
+<script>
+
 // ── FIELDBID FIREBASE ──────────────────────────────
-var _wlDb=null, _fbDb=null, _wlAuth=null, _fbReady=false;
+var _fbApp=null, _fbDb=null, _fbAuth=null, _fbReady=false, _fbSaveTimer=null;
 
 try{
-  var _wlApp=firebase.initializeApp({apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"},"wl");
-  _wlDb=firebase.firestore(_wlApp);
-  _fbDb=_wlDb;
-  _wlAuth=firebase.auth(_wlApp);
-  _wlAuth.signInAnonymously()
+  _fbApp=firebase.initializeApp({
+    apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
+    authDomain:"work-log-5aa9f.firebaseapp.com",
+    projectId:"work-log-5aa9f",
+    storageBucket:"work-log-5aa9f.firebasestorage.app",
+    messagingSenderId:"919924820811",
+    appId:"1:919924820811:web:00460b91d51023d718b6ce"
+  },"fb");
+  _fbDb=firebase.firestore(_fbApp);
+  _fbAuth=firebase.auth(_fbApp);
+  _fbAuth.signInAnonymously()
     .then(function(){ _fbReady=true; setFbStatus('connected'); })
-    .catch(function(e){ console.log('Anon auth skipped:',e.code); _fbReady=true; setFbStatus('connected'); });
+    .catch(function(e){ console.log('Anon auth:',e.code); _fbReady=true; setFbStatus('connected'); });
 }catch(e){ console.log('FB init:',e.message); }
 
 function setFbStatus(s){
   var dot=document.getElementById('fb-sync-dot');
   var lbl=document.getElementById('fb-sync-lbl');
-  if(!dot||!lbl) return;
+  if(!dot||!lbl)return;
   if(s==='connected'){dot.style.background='#16a34a';lbl.style.color='#16a34a';lbl.textContent='cloud saved';}
   else if(s==='saving'){dot.style.background='#f59e0b';lbl.style.color='#f59e0b';lbl.textContent='saving...';}
   else if(s==='error'){dot.style.background='#dc2626';lbl.style.color='#dc2626';lbl.textContent='offline';}
   else{dot.style.background='#888';lbl.style.color='#888';lbl.textContent='connecting...';}
 }
 
-function fbSave(key,data){
-  if(!_fbDb||!_fbReady) return;
+function _fbSave(key,data){
+  if(!_fbDb||!_fbReady)return;
   setFbStatus('saving');
-  var timer=setTimeout(function(){ setFbStatus('error'); console.log('fbSave timeout:',key); },10000);
-  _fbDb.collection('fieldbid_data').doc(key).set({data:JSON.stringify(data),updatedAt:new Date().toISOString()})
-    .then(function(){ clearTimeout(timer); setFbStatus('connected'); })
-    .catch(function(e){ clearTimeout(timer); console.log('fbSave error',key,e.message); setFbStatus('error'); });
+  var timer=setTimeout(function(){setFbStatus('error');},12000);
+  _fbDb.collection('fieldbid_data').doc(key).set({
+    data:JSON.stringify(data),
+    updatedAt:new Date().toISOString()
+  }).then(function(){clearTimeout(timer);setFbStatus('connected');})
+  .catch(function(e){clearTimeout(timer);console.log('fbSave err',key,e.message);setFbStatus('error');});
 }
 
 function fbSaveAll(){
-  if(!_fbDb||!_fbReady) return;
+  if(!_fbDb||!_fbReady)return;
   var fa=window.fieldAreas||[];
   var ei=window.estItems||[];
   var projs=loadProjs();
-  // Only save if we have real data
-  if(fa.length===0&&ei.length===0&&projs.length===0) return;
-  fbSave('fa',fa);
-  fbSave('ei',ei);
-  fbSave('projs',projs);
-  fbSave('qi',window.quoteInfo||{});
-  fbSave('qn',window.quoteNum||1001);
-  fbSave('cfg',window.cfg||{});
-  fbSave('pr',window.products||[]);
-  fbSave('ct',window.ctData||{});
-  fbSave('sg',window.sigData||{});
+  if(fa.length===0&&ei.length===0&&projs.length===0)return;
+  _fbSave('fa',fa);
+  _fbSave('ei',ei);
+  _fbSave('projs',projs);
+  _fbSave('qi',window.quoteInfo||{});
+  _fbSave('qn',window.quoteNum||1001);
+  _fbSave('cfg',window.cfg||{});
+  _fbSave('pr',window.products||[]);
+  _fbSave('ct',window.ctData||{});
+  _fbSave('sg',window.sigData||{});
 }
-window.fbSaveAll=fbSaveAll;
 
-var _fbSaveTimer=null;
 function fbScheduleSave(){
   clearTimeout(_fbSaveTimer);
-  _fbSaveTimer=setTimeout(function(){ if(window.fbSaveAll) window.fbSaveAll(); },2000);
+  _fbSaveTimer=setTimeout(function(){fbSaveAll();},2000);
 }
+window.fbSaveAll=fbSaveAll;
 window.fbScheduleSave=fbScheduleSave;
 window._fbScheduleSaveReal=fbScheduleSave;
 
@@ -1831,46 +1923,50 @@ function fbRestore(){
   var fa=localStorage.getItem('fb6_fa');
   var projs=localStorage.getItem('fb6_projs');
   var hasReal=(fa&&fa.length>2&&fa!=='null')||(projs&&projs.length>2&&projs!=='null');
-  if(hasReal){ return; }
-  if(!_fbDb||!_fbReady){ setTimeout(fbRestore,1500); return; }
+  if(hasReal)return;
+  if(!_fbDb||!_fbReady){setTimeout(fbRestore,1500);return;}
   setFbStatus('saving');
-  var fbFa=null, fbProjs=null, fbEi=null;
-  var done=0, total=3;
+  var fbFa=null,fbProjs=null,fbEi=null,done=0,total=3;
   function fin(){
-    done++;
-    if(done<total) return;
+    done++;if(done<total)return;
     var got=0;
-    if(fbProjs&&fbProjs.length>0){ localStorage.setItem('fb6_projs',JSON.stringify(fbProjs)); got++; }
+    if(fbProjs&&fbProjs.length>0){localStorage.setItem('fb6_projs',JSON.stringify(fbProjs));got++;}
     if(fbFa&&fbFa.length>0){
-      localStorage.setItem('fb6_fa',JSON.stringify(fbFa)); got++;
+      localStorage.setItem('fb6_fa',JSON.stringify(fbFa));got++;
       if(!fbProjs||fbProjs.length===0){
         var rp={id:'p_recovered',name:'Recovered Areas',areas:fbFa,created:new Date().toLocaleDateString('en-US')};
         localStorage.setItem('fb6_projs',JSON.stringify([rp]));
       }
     }
-    if(fbEi&&fbEi.length>0){ localStorage.setItem('fb6_ei',JSON.stringify(fbEi)); got++; }
-    if(got>0){ load(); if(window.renderFA)renderFA(); if(window.renderEst)renderEst(); toast('Restored from cloud!'); }
-    else{ toast('No cloud backup found'); }
+    if(fbEi&&fbEi.length>0){localStorage.setItem('fb6_ei',JSON.stringify(fbEi));got++;}
+    if(got>0){load();if(window.renderFA)renderFA();if(window.renderEst)renderEst();toast('Restored from cloud!');}
+    else{toast('No cloud backup found');}
     setFbStatus('connected');
   }
   _fbDb.collection('fieldbid_data').doc('fa').get()
-    .then(function(d){ if(d.exists&&d.data().data){var arr=JSON.parse(d.data().data);if(arr&&arr.length>0)fbFa=arr;} fin(); })
-    .catch(function(e){ fin(); });
+    .then(function(d){if(d.exists&&d.data().data){var a=JSON.parse(d.data().data);if(a&&a.length>0)fbFa=a;}fin();}).catch(function(){fin();});
   _fbDb.collection('fieldbid_data').doc('projs').get()
-    .then(function(d){ if(d.exists&&d.data().data){var arr=JSON.parse(d.data().data);if(arr&&arr.length>0)fbProjs=arr;} fin(); })
-    .catch(function(e){ fin(); });
+    .then(function(d){if(d.exists&&d.data().data){var a=JSON.parse(d.data().data);if(a&&a.length>0)fbProjs=a;}fin();}).catch(function(){fin();});
   _fbDb.collection('fieldbid_data').doc('ei').get()
-    .then(function(d){ if(d.exists&&d.data().data){var arr=JSON.parse(d.data().data);if(arr&&arr.length>0)fbEi=arr;} fin(); })
-    .catch(function(e){ fin(); });
+    .then(function(d){if(d.exists&&d.data().data){var a=JSON.parse(d.data().data);if(a&&a.length>0)fbEi=a;}fin();}).catch(function(){fin();});
 }
-window.fbRestore=fbRestore;
+
+// WorkLog Firebase (separate app for sending projects)
+var _wlDb=null;
+try{
+  var _wlApp=firebase.initializeApp({
+    apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
+    authDomain:"work-log-5aa9f.firebaseapp.com",
+    projectId:"work-log-5aa9f",
+    storageBucket:"work-log-5aa9f.firebasestorage.app",
+    messagingSenderId:"919924820811",
+    appId:"1:919924820811:web:00460b91d51023d718b6ce"
+  },"wl");
+  _wlDb=firebase.firestore(_wlApp);
+  firebase.auth(_wlApp).signInAnonymously().catch(function(){});
+}catch(e){ console.log('WL init:',e.message); }
 
 
-document.addEventListener("DOMContentLoaded",function(){
-  var b=document.getElementById("sendWLBtn");
-  if(b) b.addEventListener("click",sendToWorkLog);
-  setTimeout(fbRestore, 1500);
-});
 </script>
 </body>
 </html>
