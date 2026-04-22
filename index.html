@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260422e -->
+<!-- FieldBid v20260422_RTDB -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -11,9 +11,11 @@
 <link rel="manifest" href="manifest.json">
 <title>FieldBid</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
+
 
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0d1117;color:#e6edf3;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;overscroll-behavior:none;}
@@ -354,6 +356,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .empty-icon{font-size:36px;margin-bottom:10px;opacity:.5;}
 .empty-title{font-size:14px;font-weight:700;color:#7d8590;}
 .empty-body{font-size:12px;color:#4d5560;margin-top:4px;}
+
 
 </style>
 </head>
@@ -703,6 +706,15 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 </div>
 <div class="toast" id="toast"></div>
 <script>
+// All code runs after DOM is ready
+function appConfirm(msg, onYes) {
+  document.getElementById('confirmMsg').textContent = msg;
+  window._confirmResolve = onYes;
+  window._confirmReject = null;
+  document.getElementById('confirmOverlay').className = 'overlay on';
+}
+
+
 // All code runs after DOM is ready
 function appConfirm(msg, onYes) {
   document.getElementById('confirmMsg').textContent = msg;
@@ -1783,9 +1795,11 @@ function sendToWorkLog() {
   });
 }
 
+
 </script>
 
 <script>
+
 function sendToWorkLog() {
   var cEl=document.getElementById("qClient"),aEl=document.getElementById("qAddress"),tEl=document.getElementById("qTotal");
   var client=cEl?cEl.textContent.trim():"";
@@ -1808,101 +1822,142 @@ function sendToWorkLog() {
     if(btn){btn.textContent="?? Send to WorkLog";btn.disabled=false;}
   });
 }
-
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded",function(){
-  var b=document.getElementById("sendWLBtn");
-  if(b){b.addEventListener("click",sendToWorkLog);}
-  // Restore from cloud if localStorage empty
-  setTimeout(fbRestore, 1500);
-  // Save to cloud 5s after load (only if data exists)
-  setTimeout(function(){
-    var hasData=(window.fieldAreas&&window.fieldAreas.length>0)||(window.estItems&&window.estItems.length>0)||loadProjs().length>0;
-    if(hasData&&window.fbSaveAll)window.fbSaveAll();
-  },5000);
-  // Force SW update if present
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.getRegistrations().then(function(regs){
-      regs.forEach(function(reg){reg.update();if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});}});
+
+document.addEventListener("DOMContentLoaded", function() {
+  var b = document.getElementById("sendWLBtn");
+  if (b) b.addEventListener("click", sendToWorkLog);
+  // Restore from Firebase if localStorage is empty
+  setTimeout(fbRestore, 500);
+  // Save to Firebase 5s after load if data exists
+  setTimeout(function() {
+    var hasData = (window.fieldAreas && window.fieldAreas.length > 0) ||
+                  (window.estItems && window.estItems.length > 0) ||
+                  loadProjs().length > 0;
+    if (hasData) fbSaveAll();
+  }, 5000);
+  // Unregister old service workers
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      regs.forEach(function(reg) { reg.unregister(); });
     });
-    navigator.serviceWorker.addEventListener('controllerchange',function(){window.location.reload();});
   }
 });
+
 </script>
 
 <script>
-// FIREBASE unified
-var _fbApp=null,_fbDb=null,_fbAuth=null,_fbReady=false,_fbSaveTimer=null,_wlDb=null;
-(function(){
-  var c={apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"};
-  try{
-    try{_fbApp=firebase.app('fb2');}catch(e){_fbApp=firebase.initializeApp(c,'fb2');}
-    _fbDb=firebase.firestore(_fbApp);
-    _wlDb=_fbDb;
-    _fbAuth=firebase.auth(_fbApp);
-    _fbAuth.signInAnonymously()
-      .then(function(){_fbReady=true;setFbStatus('connected');console.log('FB ready');})
-      .catch(function(e){console.log('auth:',e.code);_fbReady=true;setFbStatus('connected');});
-  }catch(e){console.log('FB err:',e.message);}
-})();
 
-function setFbStatus(s){
-  var dot=document.getElementById('fb-sync-dot');
-  var lbl=document.getElementById('fb-sync-lbl');
-  if(!dot||!lbl)return;
-  if(s==='connected'){dot.style.background='#16a34a';lbl.style.color='#16a34a';lbl.textContent='cloud saved';}
-  else if(s==='saving'){dot.style.background='#f59e0b';lbl.style.color='#f59e0b';lbl.textContent='saving...';}
-  else if(s==='error'){dot.style.background='#dc2626';lbl.style.color='#dc2626';lbl.textContent='offline';}
-  else{dot.style.background='#888';lbl.style.color='#888';lbl.textContent='connecting...';}
+// ── FIREBASE (Realtime Database) ─────────────────────────────
+var db = null;
+var _fbSaveTimer = null;
+var _fbReady = false;
+
+try {
+  firebase.initializeApp({
+    apiKey: "AIzaSyBQRxWiOYyu16eYJIPURjIfC5r7iZv1WVI",
+    authDomain: "fieldbid.firebaseapp.com",
+    databaseURL: "https://fieldbid-default-rtdb.firebaseio.com",
+    projectId: "fieldbid",
+    storageBucket: "fieldbid.firebasestorage.app",
+    messagingSenderId: "747085511153",
+    appId: "1:747085511153:web:f2c987df9d1f9af63dac50"
+  });
+  db = firebase.database();
+  _fbReady = true;
+  console.log('Firebase ready');
+} catch(e) {
+  console.log('Firebase init error:', e.message);
 }
 
-function _fbSave(key,data){
-  if(!_fbDb||!_fbReady){console.log('skip:',key);return;}
+function setFbStatus(s) {
+  var dot = document.getElementById('fb-sync-dot');
+  var lbl = document.getElementById('fb-sync-lbl');
+  if (!dot || !lbl) return;
+  if (s === 'connected') { dot.style.background='#16a34a'; lbl.style.color='#16a34a'; lbl.textContent='cloud saved'; }
+  else if (s === 'saving') { dot.style.background='#f59e0b'; lbl.style.color='#f59e0b'; lbl.textContent='saving...'; }
+  else if (s === 'error') { dot.style.background='#dc2626'; lbl.style.color='#dc2626'; lbl.textContent='offline'; }
+  else { dot.style.background='#888'; lbl.style.color='#888'; lbl.textContent='connecting...'; }
+}
+
+function fbSaveAll() {
+  if (!db || !_fbReady) return;
+  var state = {
+    fa: window.fieldAreas || [],
+    ei: window.estItems || [],
+    projs: loadProjs(),
+    qi: window.quoteInfo || {},
+    qn: window.quoteNum || 1001,
+    cfg: window.cfg || {},
+    pr: window.products || [],
+    ct: window.ctData || {},
+    sg: window.sigData || {},
+    updatedAt: new Date().toISOString()
+  };
+  if (state.fa.length === 0 && state.ei.length === 0 && state.projs.length === 0) return;
   setFbStatus('saving');
-  var t=setTimeout(function(){setFbStatus('error');},12000);
-  _fbDb.collection('fieldbid_data').doc(key).set({data:JSON.stringify(data),updatedAt:new Date().toISOString()})
-    .then(function(){clearTimeout(t);setFbStatus('connected');console.log('saved:',key);})
-    .catch(function(e){clearTimeout(t);console.log('err:',key,e.message);setFbStatus('error');});
+  db.ref('fieldbid').set(state)
+    .then(function() { setFbStatus('connected'); console.log('Saved to Firebase'); })
+    .catch(function(e) { setFbStatus('error'); console.log('Save error:', e.message); });
 }
 
-function fbSaveAll(){
-  if(!_fbDb||!_fbReady)return;
-  var fa=window.fieldAreas||[],ei=window.estItems||[],projs=loadProjs();
-  if(fa.length===0&&ei.length===0&&projs.length===0)return;
-  _fbSave('fa',fa);_fbSave('ei',ei);_fbSave('projs',projs);
-  _fbSave('qi',window.quoteInfo||{});_fbSave('qn',window.quoteNum||1001);
-  _fbSave('cfg',window.cfg||{});_fbSave('pr',window.products||[]);
-  _fbSave('ct',window.ctData||{});_fbSave('sg',window.sigData||{});
+function fbScheduleSave() {
+  clearTimeout(_fbSaveTimer);
+  _fbSaveTimer = setTimeout(fbSaveAll, 2000);
 }
+window.fbSaveAll = fbSaveAll;
+window.fbScheduleSave = fbScheduleSave;
+window._fbScheduleSaveReal = fbScheduleSave;
 
-function fbScheduleSave(){clearTimeout(_fbSaveTimer);_fbSaveTimer=setTimeout(fbSaveAll,2000);}
-window.fbSaveAll=fbSaveAll;window.fbScheduleSave=fbScheduleSave;window._fbScheduleSaveReal=fbScheduleSave;
-
-function fbRestore(){
-  var fa=localStorage.getItem('fb6_fa'),projs=localStorage.getItem('fb6_projs');
-  var hasReal=(fa&&fa.length>2&&fa!=='null')||(projs&&projs.length>2&&projs!=='null');
-  if(hasReal)return;
-  if(!_fbDb||!_fbReady){setTimeout(fbRestore,1500);return;}
+function fbRestore() {
+  var fa = localStorage.getItem('fb6_fa');
+  var projs = localStorage.getItem('fb6_projs');
+  var hasReal = (fa && fa.length > 2 && fa !== 'null') || (projs && projs.length > 2 && projs !== 'null');
+  if (hasReal) return;
+  if (!db || !_fbReady) { setTimeout(fbRestore, 500); return; }
+  console.log('Restoring from Firebase...');
   setFbStatus('saving');
-  var fbFa=null,fbProjs=null,fbEi=null,done=0,total=3;
-  function fin(){
-    done++;if(done<total)return;
-    var got=0;
-    if(fbProjs&&fbProjs.length>0){localStorage.setItem('fb6_projs',JSON.stringify(fbProjs));got++;}
-    if(fbFa&&fbFa.length>0){
-      localStorage.setItem('fb6_fa',JSON.stringify(fbFa));got++;
-      if(!fbProjs||fbProjs.length===0){localStorage.setItem('fb6_projs',JSON.stringify([{id:'p_recovered',name:'Recovered Areas',areas:fbFa,created:new Date().toLocaleDateString('en-US')}]));}
-    }
-    if(fbEi&&fbEi.length>0){localStorage.setItem('fb6_ei',JSON.stringify(fbEi));got++;}
-    if(got>0){load();if(window.renderFA)renderFA();if(window.renderEst)renderEst();toast('Restored from cloud!');}
-    setFbStatus('connected');
-  }
-  _fbDb.collection('fieldbid_data').doc('fa').get().then(function(d){if(d.exists&&d.data().data){var a=JSON.parse(d.data().data);if(a&&a.length>0)fbFa=a;}fin();}).catch(function(){fin();});
-  _fbDb.collection('fieldbid_data').doc('projs').get().then(function(d){if(d.exists&&d.data().data){var a=JSON.parse(d.data().data);if(a&&a.length>0)fbProjs=a;}fin();}).catch(function(){fin();});
-  _fbDb.collection('fieldbid_data').doc('ei').get().then(function(d){if(d.exists&&d.data().data){var a=JSON.parse(d.data().data);if(a&&a.length>0)fbEi=a;}fin();}).catch(function(){fin();});
+  db.ref('fieldbid').once('value')
+    .then(function(snap) {
+      var data = snap.val();
+      if (!data) { toast('No cloud backup found'); setFbStatus('connected'); return; }
+      var got = 0;
+      if (data.projs && data.projs.length > 0) { localStorage.setItem('fb6_projs', JSON.stringify(data.projs)); got++; }
+      if (data.fa && data.fa.length > 0) {
+        localStorage.setItem('fb6_fa', JSON.stringify(data.fa)); got++;
+        if (!data.projs || data.projs.length === 0) {
+          var rp = {id:'p_recovered', name:'Recovered Areas', areas:data.fa, created:new Date().toLocaleDateString('en-US')};
+          localStorage.setItem('fb6_projs', JSON.stringify([rp]));
+        }
+      }
+      if (data.ei && data.ei.length > 0) { localStorage.setItem('fb6_ei', JSON.stringify(data.ei)); got++; }
+      if (data.qi) { localStorage.setItem('fb6_qi', JSON.stringify(data.qi)); }
+      if (data.qn) { localStorage.setItem('fb6_qn', String(data.qn)); }
+      if (data.cfg) { localStorage.setItem('fb6_cfg', JSON.stringify(data.cfg)); }
+      if (data.pr && data.pr.length > 0) { localStorage.setItem('fb6_pr', JSON.stringify(data.pr)); }
+      if (got > 0) { load(); if(window.renderFA) renderFA(); if(window.renderEst) renderEst(); toast('Restored from cloud!'); }
+      setFbStatus('connected');
+    })
+    .catch(function(e) { console.log('Restore error:', e.message); setFbStatus('error'); });
 }
+
+// WorkLog Firebase (separate - for Send to WorkLog feature)
+var _wlDb = null;
+try {
+  var _wlApp = firebase.initializeApp({
+    apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
+    authDomain: "work-log-5aa9f.firebaseapp.com",
+    projectId: "work-log-5aa9f",
+    storageBucket: "work-log-5aa9f.firebasestorage.app",
+    messagingSenderId: "919924820811",
+    appId: "1:919924820811:web:00460b91d51023d718b6ce"
+  }, 'worklog');
+  _wlDb = firebase.firestore(_wlApp);
+  firebase.auth(_wlApp).signInAnonymously().catch(function(){});
+} catch(e) { console.log('WL Firebase:', e.message); }
+
 </script>
 </body>
 </html>
