@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260422_RTDB3 -->
+<!-- FieldBid v20260422_RTDB4 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1866,11 +1866,18 @@ try {
     appId: "1:747085511153:web:f2c987df9d1f9af63dac50"
   });
   db = firebase.database();
-  _fbReady = true;
-  // Test write immediately
-  db.ref('fieldbid_test').set({ts: new Date().toISOString()})
-    .then(function(){ setFbStatus('connected'); })
-    .catch(function(e){ setFbStatus('error'); toast('FB init test failed: ' + e.message); });
+  // Use .info/connected to detect real connection status
+  db.ref('.info/connected').on('value', function(snap) {
+    if (snap.val() === true) {
+      _fbReady = true;
+      setFbStatus('connected');
+      // Save any pending data
+      setTimeout(fbSaveAll, 500);
+    } else {
+      _fbReady = false;
+      setFbStatus('error');
+    }
+  });
 } catch(e) {
   toast('Firebase init error: ' + e.message);
 }
