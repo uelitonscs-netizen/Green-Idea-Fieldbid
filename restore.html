@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>FieldBid Restore</title>
+<head><meta charset="UTF-8"><title>FieldBid Tools</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 body{font-family:system-ui;background:#0d1117;color:#e6edf3;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;}
 .box{background:#161b22;border:1px solid #2a3340;border-radius:16px;padding:28px;max-width:440px;width:100%;text-align:center;}
 h2{color:#3fb950;margin:0 0 8px;font-size:20px;}
-p{color:#7d8590;font-size:12px;margin:0 0 20px;line-height:1.6;}
+p{color:#7d8590;font-size:12px;margin:0 0 16px;line-height:1.6;}
 button{background:#3fb950;color:#000;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-bottom:8px;}
+button.sec{background:#1a3a2a;color:#3fb950;border:1px solid #3fb950;}
 button:disabled{background:#2a3340;color:#4d5560;}
-#log{margin-top:12px;font-size:12px;color:#7d8590;text-align:left;line-height:2;}
+#log{margin-top:12px;font-size:12px;text-align:left;line-height:2;}
 .ok{color:#3fb950;}.err{color:#f85149;}.info{color:#58a6ff;}
-a.open-btn{display:block;background:#1a6b2a;color:#3fb950;border:1px solid #3fb950;border-radius:10px;padding:14px;font-size:15px;font-weight:700;text-decoration:none;margin-top:8px;}
+hr{border:none;border-top:1px solid #2a3340;margin:16px 0;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -19,113 +20,113 @@ a.open-btn{display:block;background:#1a6b2a;color:#3fb950;border:1px solid #3fb9
 </head>
 <body>
 <div class="box">
-  <h2>FieldBid Restore</h2>
-  <p>Recupera suas areas e projetos<br>do Firebase para este dispositivo.</p>
-  <button id="btn">Restaurar Dados</button>
+  <h2>FieldBid Tools</h2>
+  <p>Ferramentas de diagnostico e restauracao.</p>
+
+  <button id="btnTest">1. Testar Firebase Write</button>
+  <button id="btnRestore" class="sec">2. Restaurar Dados do Firebase</button>
+  <hr>
   <div id="log"></div>
 </div>
 <script>
-function log(m,c){document.getElementById("log").innerHTML+="<div class=\""+(c||"info")+"\">"+m+"</div>";}
+function log(m,c){document.getElementById("log").innerHTML+="<div class=\"" + (c||"info") + "\">" + m + "</div>";}
+function clearLog(){document.getElementById("log").innerHTML="";}
 
-document.getElementById("btn").addEventListener("click",function(){
-  var btn=document.getElementById("btn");
-  btn.disabled=true; btn.textContent="Conectando...";
-  document.getElementById("log").innerHTML="";
+var _app=null, _db=null, _auth=null;
 
-  // Clear FieldBid localStorage
-  var keys=['fb6_fa','fb6_ei','fb6_projs','fb6_cfg','fb6_pr','fb6_qi','fb6_qn','fb6_ct','fb6_sg','fb6_wc'];
-  keys.forEach(function(k){ localStorage.removeItem(k); });
-  log("LocalStorage limpo","ok");
-
+function initFB(cb){
+  if(_db){cb();return;}
   try{
-    var app=firebase.initializeApp({
+    _app=firebase.initializeApp({
       apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
       authDomain:"work-log-5aa9f.firebaseapp.com",
       projectId:"work-log-5aa9f"
-    },"restore");
-    var db=firebase.firestore(app);
-    var auth=firebase.auth(app);
+    },"tools_"+Date.now());
+    _db=firebase.firestore(_app);
+    _auth=firebase.auth(_app);
     log("Firebase iniciado","info");
+    _auth.signInAnonymously()
+      .then(function(u){ log("Auth OK: "+u.user.uid.slice(0,8),"ok"); cb(); })
+      .catch(function(e){ log("Auth skipped: "+e.code,"info"); cb(); });
+  }catch(e){ log("Firebase erro: "+e.message,"err"); }
+}
 
-    auth.signInAnonymously()
-      .then(function(){ log("Auth OK","info"); doRestore(db); })
-      .catch(function(e){ log("Auth skipped: "+e.code,"info"); doRestore(db); });
-  }catch(e){ log("Erro: "+e.message,"err"); btn.disabled=false; btn.textContent="Tentar novamente"; }
+// TEST WRITE
+document.getElementById("btnTest").addEventListener("click",function(){
+  var btn=document.getElementById("btnTest");
+  btn.disabled=true; clearLog();
+  log("Iniciando teste de escrita...");
+  initFB(function(){
+    var ts=new Date().toISOString();
+    log("Gravando test_write em fieldbid_data...");
+    _db.collection("fieldbid_data").doc("test_write").set({
+      data:JSON.stringify([{test:true,ts:ts}]),
+      updatedAt:ts
+    }).then(function(){
+      log("Gravacao OK! Verificando leitura...","ok");
+      return _db.collection("fieldbid_data").doc("test_write").get();
+    }).then(function(doc){
+      if(doc.exists){
+        log("Leitura OK! ts: "+doc.data().updatedAt.slice(11,19),"ok");
+        log("FIREBASE FUNCIONANDO! Verifique test_write no Console.","ok");
+      } else {
+        log("Documento nao encontrado apos gravar!","err");
+      }
+      btn.disabled=false;
+    }).catch(function(e){
+      log("ERRO: "+e.message,"err");
+      log("Code: "+(e.code||"?"),"err");
+      btn.disabled=false;
+    });
+  });
 });
 
-function doRestore(db){
-  log("Buscando dados...","info");
-  var fbFa=null, fbProjs=null, fbEi=null;
-  var done=0, total=3;
-
-  function fin(){
-    done++;
-    if(done<total) return;
-    var got=0;
-
-    if(fbProjs&&fbProjs.length>0){
-      localStorage.setItem('fb6_projs',JSON.stringify(fbProjs));
-      got++; log("Projetos: "+fbProjs.length+" restaurados","ok");
-    }
-    if(fbFa&&fbFa.length>0){
-      localStorage.setItem('fb6_fa',JSON.stringify(fbFa));
-      got++; log("Areas: "+fbFa.length+" restauradas","ok");
-      if(!fbProjs||fbProjs.length===0){
-        var rp={id:'p_recovered',name:'Recovered Areas',areas:fbFa,created:new Date().toLocaleDateString('en-US')};
-        localStorage.setItem('fb6_projs',JSON.stringify([rp]));
-        log("Projeto 'Recovered Areas' criado","ok");
+// RESTORE
+document.getElementById("btnRestore").addEventListener("click",function(){
+  var btn=document.getElementById("btnRestore");
+  btn.disabled=true; clearLog();
+  log("Limpando localStorage...");
+  var keys=["fb6_fa","fb6_ei","fb6_projs","fb6_cfg","fb6_pr","fb6_qi","fb6_qn","fb6_ct","fb6_sg","fb6_wc"];
+  keys.forEach(function(k){ localStorage.removeItem(k); });
+  log("localStorage limpo","ok");
+  initFB(function(){
+    log("Buscando dados...");
+    var fbFa=null,fbProjs=null,fbEi=null,done=0,total=3;
+    function fin(){
+      done++;
+      if(done<total)return;
+      var got=0;
+      if(fbProjs&&fbProjs.length>0){localStorage.setItem("fb6_projs",JSON.stringify(fbProjs));got++;log("Projetos: "+fbProjs.length,"ok");}
+      if(fbFa&&fbFa.length>0){
+        localStorage.setItem("fb6_fa",JSON.stringify(fbFa));got++;log("Areas: "+fbFa.length,"ok");
+        if(!fbProjs||fbProjs.length===0){
+          var rp={id:"p_recovered",name:"Recovered Areas",areas:fbFa,created:new Date().toLocaleDateString("en-US")};
+          localStorage.setItem("fb6_projs",JSON.stringify([rp]));
+          log("Projeto Recovered criado","ok");
+        }
       }
-    } else {
-      log("Nenhuma area encontrada no Firebase","err");
-    }
-    if(fbEi&&fbEi.length>0){
-      localStorage.setItem('fb6_ei',JSON.stringify(fbEi));
-      got++; log("Estimator: "+fbEi.length+" itens restaurados","ok");
-    }
-
-    if(got>0){
-      log("Restauracao completa!","ok");
-      var btn=document.getElementById("btn");
-      btn.textContent="Abrir FieldBid";
-      btn.disabled=false;
-      btn.style.background="#16a34a";
-      btn.addEventListener("click",function(){ window.location.href="https://uelitonscs-netizen.github.io/Green-Idea-Fieldbid/"; });
-    } else {
-      log("Nenhum dado encontrado","err");
-      document.getElementById("btn").disabled=false;
-      document.getElementById("btn").textContent="Tentar novamente";
-    }
-  }
-
-  db.collection('fieldbid_data').doc('fa').get()
-    .then(function(d){
-      if(d.exists&&d.data()&&d.data().data){
-        var arr=JSON.parse(d.data().data);
-        if(arr&&arr.length>0){ fbFa=arr; log("fa: "+arr.length+" areas","info"); }
-        else{ log("fa: vazio","info"); }
-      } else { log("fa: nao encontrado","info"); }
-      fin();
-    }).catch(function(e){ log("Erro fa: "+e.message,"err"); fin(); });
-
-  db.collection('fieldbid_data').doc('projs').get()
-    .then(function(d){
-      if(d.exists&&d.data()&&d.data().data){
-        var arr=JSON.parse(d.data().data);
-        if(arr&&arr.length>0){ fbProjs=arr; log("projs: "+arr.length,"info"); }
-        else{ log("projs: vazio","info"); }
-      } else { log("projs: nao encontrado","info"); }
-      fin();
-    }).catch(function(e){ log("Erro projs: "+e.message,"err"); fin(); });
-
-  db.collection('fieldbid_data').doc('ei').get()
-    .then(function(d){
-      if(d.exists&&d.data()&&d.data().data){
-        var arr=JSON.parse(d.data().data);
-        if(arr&&arr.length>0){ fbEi=arr; log("ei: "+arr.length,"info"); }
+      if(fbEi&&fbEi.length>0){localStorage.setItem("fb6_ei",JSON.stringify(fbEi));got++;log("Estimator: "+fbEi.length,"ok");}
+      if(got>0){
+        log("Restauracao completa!","ok");
+        btn.textContent="Abrir FieldBid";
+        btn.disabled=false;
+        btn.onclick=function(){ window.location.href="/Green-Idea-Fieldbid/"; };
+      } else {
+        log("Nenhum dado encontrado","err");
+        btn.disabled=false;
       }
-      fin();
-    }).catch(function(e){ log("Erro ei: "+e.message,"err"); fin(); });
-}
+    }
+    _db.collection("fieldbid_data").doc("fa").get()
+      .then(function(d){if(d.exists&&d.data().data){var a=JSON.parse(d.data().data);if(a&&a.length>0)fbFa=a;}fin();})
+      .catch(function(){fin();});
+    _db.collection("fieldbid_data").doc("projs").get()
+      .then(function(d){if(d.exists&&d.data().data){var a=JSON.parse(d.data().data);if(a&&a.length>0)fbProjs=a;}fin();})
+      .catch(function(){fin();});
+    _db.collection("fieldbid_data").doc("ei").get()
+      .then(function(d){if(d.exists&&d.data().data){var a=JSON.parse(d.data().data);if(a&&a.length>0)fbEi=a;}fin();})
+      .catch(function(){fin();});
+  });
+});
 </script>
 </body>
 </html>
