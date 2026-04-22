@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260421_NEW -->
+<!-- FieldBid v20260422_fix -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1756,27 +1756,30 @@ document.getElementById('confirmYes').addEventListener('click', function() {
 
 }); // end DOMContentLoaded
 
-// ── WORKLOG INTEGRATION ────────────────────────────────
-var _wlDb = null;
-var _wlAuth = null;
-try {
-  var _wlApp;
-  try { _wlApp = firebase.app('worklog'); } 
-  catch(e) {
-    _wlApp = firebase.initializeApp({
-      apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
-      authDomain: "work-log-5aa9f.firebaseapp.com",
-      projectId: "work-log-5aa9f",
-      storageBucket: "work-log-5aa9f.firebasestorage.app",
-      messagingSenderId: "919924820811",
-      appId: "1:919924820811:web:00460b91d51023d718b6ce"
-    }, 'worklog');
+// ── FIREBASE (single init for FieldBid + WorkLog) ────────────────
+var _fbApp=null, _fbDb=null, _fbAuth=null, _fbReady=false, _fbSaveTimer=null;
+var _wlDb=null;
+
+try{
+  // Use existing app if already initialized
+  try{ _fbApp=firebase.app('fieldbid'); }
+  catch(e){
+    _fbApp=firebase.initializeApp({
+      apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
+      authDomain:"work-log-5aa9f.firebaseapp.com",
+      projectId:"work-log-5aa9f",
+      storageBucket:"work-log-5aa9f.firebasestorage.app",
+      messagingSenderId:"919924820811",
+      appId:"1:919924820811:web:00460b91d51023d718b6ce"
+    },"fieldbid");
   }
-  _wlDb = firebase.firestore(_wlApp);
-  _wlAuth = firebase.auth(_wlApp);
-} catch(initErr) {
-  console.error('WL Firebase init error:', initErr);
-}
+  _fbDb=firebase.firestore(_fbApp);
+  _wlDb=_fbDb; // WorkLog uses same Firestore instance
+  _fbAuth=firebase.auth(_fbApp);
+  _fbAuth.signInAnonymously()
+    .then(function(){ _fbReady=true; setFbStatus('connected'); console.log('FB ready'); })
+    .catch(function(e){ console.log('Anon auth:',e.code); _fbReady=true; setFbStatus('connected'); });
+}catch(e){ console.log('FB init:',e.message); }
 
 
 
@@ -1854,24 +1857,7 @@ document.addEventListener("DOMContentLoaded",function(){
 
 <script>
 
-// ── FIELDBID FIREBASE ──────────────────────────────
-var _fbApp=null, _fbDb=null, _fbAuth=null, _fbReady=false, _fbSaveTimer=null;
-
-try{
-  _fbApp=firebase.initializeApp({
-    apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
-    authDomain:"work-log-5aa9f.firebaseapp.com",
-    projectId:"work-log-5aa9f",
-    storageBucket:"work-log-5aa9f.firebasestorage.app",
-    messagingSenderId:"919924820811",
-    appId:"1:919924820811:web:00460b91d51023d718b6ce"
-  },"fb");
-  _fbDb=firebase.firestore(_fbApp);
-  _fbAuth=firebase.auth(_fbApp);
-  _fbAuth.signInAnonymously()
-    .then(function(){ _fbReady=true; setFbStatus('connected'); })
-    .catch(function(e){ console.log('Anon auth:',e.code); _fbReady=true; setFbStatus('connected'); });
-}catch(e){ console.log('FB init:',e.message); }
+// Firebase initialized above
 
 function setFbStatus(s){
   var dot=document.getElementById('fb-sync-dot');
