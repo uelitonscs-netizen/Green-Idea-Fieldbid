@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260421180000 -->
+<!-- FieldBid v20260421190000 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1794,9 +1794,10 @@ function setFbStatus(s){
 function fbSave(key,data){
   if(!_fbDb||!_fbReady) return;
   setFbStatus('saving');
+  var timer=setTimeout(function(){ setFbStatus('error'); console.log('fbSave timeout:',key); },10000);
   _fbDb.collection('fieldbid_data').doc(key).set({data:JSON.stringify(data),updatedAt:new Date().toISOString()})
-    .then(function(){ setFbStatus('connected'); })
-    .catch(function(e){ console.log('fbSave error',key,e.message); setFbStatus('error'); });
+    .then(function(){ clearTimeout(timer); setFbStatus('connected'); })
+    .catch(function(e){ clearTimeout(timer); console.log('fbSave error',key,e.message); setFbStatus('error'); });
 }
 
 function fbSaveAll(){
