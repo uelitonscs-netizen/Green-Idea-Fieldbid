@@ -369,6 +369,12 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div class="brand-name">FieldBid</div>
     <div class="brand-sub">by Green Idea Insulation</div>
   </div>
+  <div id="fb-debug-banner" style="background:#1c2128;border:1px solid #30363d;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#7d8590;line-height:1.8;margin-left:16px;margin-right:16px;">
+    <strong style="color:#58a6ff">Firebase Status v3</strong><br>
+    <span id="dbg-ready">fbReady: checking...</span><br>
+    <span id="dbg-restore">restoreDone: checking...</span><br>
+    <span id="dbg-db">db: checking...</span>
+  </div>
   <button class="mode-btn field" id="btnField">
     <div class="mode-top"><div class="mode-icon">📐</div><div><div class="mode-title">Field Takeoff</div><div class="mode-sub">On-site measuring</div></div></div>
     <div class="mode-desc">Measure areas, record square footage, take photos and field notes. No pricing involved.</div>
@@ -1920,6 +1926,15 @@ function fbScheduleSave() {
   }, 2000);
 }
 window.fbSaveAll = fbSaveAll;
+setInterval(function(){
+  var r = document.getElementById('dbg-ready');
+  var d = document.getElementById('dbg-restore');
+  var db2 = document.getElementById('dbg-db');
+  if(!r) return;
+  r.textContent = 'fbReady: ' + (window._fbReady ? 'TRUE ✅' : 'false ❌');
+  d.textContent = 'restoreDone: ' + (window._fbRestoreDone ? 'TRUE ✅' : 'false ❌');
+  db2.textContent = 'db: ' + (window.db ? 'exists ✅' : 'null ❌');
+}, 1500);
 window.fbScheduleSave = fbScheduleSave;
 window._fbScheduleSaveReal = fbScheduleSave;
 
