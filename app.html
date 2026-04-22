@@ -1829,12 +1829,7 @@ document.addEventListener("DOMContentLoaded", function() {
   // Restore from Firebase if localStorage is empty
   setTimeout(fbRestore, 500);
   // Save to Firebase 5s after load if data exists
-  setTimeout(function() {
-    var hasData = (window.fieldAreas && window.fieldAreas.length > 0) ||
-                  (window.estItems && window.estItems.length > 0) ||
-                  loadProjs().length > 0;
-    if (hasData) fbSaveAll();
-  }, 5000);
+  // Boot save handled by fbScheduleSave after user actions or restore
   // Unregister old service workers
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function(regs) {
@@ -1897,6 +1892,8 @@ function fbSaveAll() {
   var ei = window.estItems || [];
   // Always save if projs has data (even if fa is empty)
   if (projs.length === 0 && fa.length === 0 && ei.length === 0) return;
+  // Reload projs fresh from localStorage to ensure we have all projects
+  projs = loadProjs();
   var state = {
     fa: fa,
     ei: ei,
@@ -1962,7 +1959,9 @@ function fbRestore() {
       if (data.cfg) { localStorage.setItem('fb6_cfg', JSON.stringify(data.cfg)); }
       if (data.pr && data.pr.length > 0) { localStorage.setItem('fb6_pr', JSON.stringify(data.pr)); }
       if (got > 0) { load(); if(window.renderFA) renderFA(); if(window.renderEst) renderEst(); toast('Restored from cloud!'); }
+      window._fbRestoreDone = true;
       setFbStatus('connected');
+      if (got > 0) { setTimeout(function(){ if(window.fbSaveAll) window.fbSaveAll(); }, 1000); }
     })
     .catch(function(e) { console.log('Restore error:', e.message); setFbStatus('error'); });
 }
