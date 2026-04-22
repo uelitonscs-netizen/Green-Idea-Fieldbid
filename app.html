@@ -392,6 +392,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       </div>
     </div>
     <button class="hd-action" id="btnOpenProj">+ Project</button>
+  <button class="hd-action" id="btnForceSave" style="background:#f59e0b;color:#000;font-weight:700">💾 Save</button>
   </div>
   <div class="tabs">
     <button class="tab on f" id="ft1">📐 Areas</button>
@@ -977,6 +978,16 @@ document.getElementById('newEstBtn').addEventListener('click',function(){
 
 // FABs
 document.getElementById('fieldFab').addEventListener('click',function(){openFAModal(-1);});
+document.getElementById('btnForceSave').addEventListener('click',function(){
+  if(!window.db){toast('❌ db null');return;}
+  if(!window._fbReady){toast('❌ fbReady=false');return;}
+  var projs=loadProjs();
+  var state={fa:window.fieldAreas||[],ei:window.estItems||[],projs:projs,updatedAt:new Date().toISOString()};
+  toast('Writing to Firebase...');
+  window.db.ref('fieldbid').set(state)
+    .then(function(){toast('✅ Firebase saved!');})
+    .catch(function(e){toast('❌ Error: '+e.message);});
+});
 document.getElementById('exportFieldBtn').addEventListener('click',function(){exportField();});
 document.getElementById('estFab').addEventListener('click',function(){openEIModal(-1);});
 
