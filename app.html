@@ -1828,13 +1828,7 @@ document.addEventListener("DOMContentLoaded", function() {
   if (b) b.addEventListener("click", sendToWorkLog);
   // Restore from Firebase if localStorage is empty
   setTimeout(fbRestore, 500);
-  // Save to Firebase 5s after load if data exists
-  setTimeout(function() {
-    var hasData = (window.fieldAreas && window.fieldAreas.length > 0) ||
-                  (window.estItems && window.estItems.length > 0) ||
-                  loadProjs().length > 0;
-    if (hasData) fbSaveAll();
-  }, 5000);
+  // Boot save removed - auto-save handled by fbScheduleSave
   // Unregister old service workers
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function(regs) {
@@ -1913,7 +1907,7 @@ function fbSaveAll() {
   };
   setFbStatus('saving');
   db.ref('fieldbid').set(state)
-    .then(function() { setFbStatus('connected'); toast('✅ Firebase saved!'); })
+    .then(function() { setFbStatus('connected'); toast('✅ Saved '+state.projs.length+' projs'); })
     .catch(function(e) { setFbStatus('error'); toast('❌ Save error: '+e.message); });
 }
 
