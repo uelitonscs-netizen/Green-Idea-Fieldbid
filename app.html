@@ -1857,6 +1857,7 @@ try {
     appId: "1:747085511153:web:f2c987df9d1f9af63dac50"
   });
   db = firebase.database();
+  window.db = db;
   // Use .info/connected to detect real connection status
   db.ref('.info/connected').on('value', function(snap) {
     if (snap.val() === true) {
@@ -1957,7 +1958,7 @@ function fbRestore() {
       if (data.qn) { localStorage.setItem('fb6_qn', String(data.qn)); }
       if (data.cfg) { localStorage.setItem('fb6_cfg', JSON.stringify(data.cfg)); }
       if (data.pr && data.pr.length > 0) { localStorage.setItem('fb6_pr', JSON.stringify(data.pr)); }
-      if (got > 0) { load(); if(window.renderFA) renderFA(); if(window.renderEst) renderEst(); toast('Restored from cloud!'); }
+      if (got > 0) { window._fbRestoreDone = true; load(); if(window.renderFA) renderFA(); if(window.renderEst) renderEst(); toast('Restored from cloud!'); }
       setFbStatus('connected');
     })
     .catch(function(e) { console.log('Restore error:', e.message); setFbStatus('error'); });
