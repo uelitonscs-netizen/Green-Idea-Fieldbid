@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fieldbid-v20260422b';
+const CACHE_NAME = 'fieldbid-v20260423c';
 const ASSETS = [
   '/Green-Idea-Fieldbid/',
   '/Green-Idea-Fieldbid/index.html',
@@ -30,14 +30,14 @@ self.addEventListener('activate', function(e) {
 
 self.addEventListener('fetch', function(e) {
   e.respondWith(
-    caches.match(e.request).then(function(cached) {
-      return fetch(e.request).then(function(response) {
-        if(response && response.status === 200) {
-          var clone = response.clone();
-          caches.open(CACHE_NAME).then(function(cache){ cache.put(e.request, clone); });
-        }
-        return response;
-      }).catch(function(){ return cached; });
+    fetch(e.request).then(function(response) {
+      if(response && response.status === 200) {
+        var clone = response.clone();
+        caches.open(CACHE_NAME).then(function(cache){ cache.put(e.request, clone); });
+      }
+      return response;
+    }).catch(function() {
+      return caches.match(e.request);
     })
   );
 });
