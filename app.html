@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <title>FieldBid</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
@@ -706,25 +706,18 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 </div>
 <div class="toast" id="toast"></div>
 <script>
-// ── FIREBASE ─────────────────────────────────────────────────
-var db = null;
-var _fbSaveTimer = null;
+// ── FIREBASE (Firestore - same as WorkLog) ───────────────────
+firebase.initializeApp({
+  apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
+  authDomain: "work-log-5aa9f.firebaseapp.com",
+  projectId: "work-log-5aa9f",
+  storageBucket: "work-log-5aa9f.firebasestorage.app",
+  messagingSenderId: "919924820811",
+  appId: "1:919924820811:web:00460b91d51023d718b6ce"
+});
 
-try {
-  firebase.initializeApp({
-    apiKey: "AIzaSyBoGQvo4SMbapQ_YeLOcWcQ31AVmSyOx7A",
-    authDomain: "fieldbid-b6103.firebaseapp.com",
-    databaseURL: "https://fieldbid-b6103-default-rtdb.firebaseio.com",
-    projectId: "fieldbid-b6103",
-    storageBucket: "fieldbid-b6103.firebasestorage.app",
-    messagingSenderId: "202057356898",
-    appId: "1:202057356898:web:e8d4651e7f662c317f233b"
-  });
-  db = firebase.database();
-  firebase.auth().signInAnonymously().catch(function(e){ console.log('Auth:', e.message); });
-} catch(e) {
-  console.log('Firebase init:', e.message);
-}
+var db = firebase.firestore();
+firebase.auth().signInAnonymously().catch(function(e){ console.log('Auth:', e.message); });
 
 function setFbStatus(s) {
   var dot = document.getElementById('fb-sync-dot');
@@ -736,10 +729,10 @@ function setFbStatus(s) {
   else { dot.style.background='#888'; lbl.style.color='#888'; lbl.textContent='connecting...'; }
 }
 
-function fbSave() {
-  clearTimeout(_fbSaveTimer);
-  _fbSaveTimer = setTimeout(function() {
-    if (!db) return;
+var _saveTimer = null;
+function save() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(function() {
     var state = {
       projs: loadProjs(),
       fa: window.fieldAreas || [],
@@ -748,55 +741,39 @@ function fbSave() {
       qn: window.quoteNum || 1001,
       cfg: window.cfg || {},
       pr: window.products || [],
-      ct: window.ctData || {},
-      sg: window.sigData || {},
       updatedAt: new Date().toISOString()
     };
     if (state.projs.length === 0 && state.fa.length === 0 && state.ei.length === 0) return;
     setFbStatus('saving');
-    db.ref('fieldbid').set(state)
+    db.collection('fieldbid').doc('data').set(state)
       .then(function() { setFbStatus('connected'); })
       .catch(function(e) { setFbStatus('error'); console.log('Save error:', e.message); });
   }, 1000);
 }
 
 function fbLoad() {
-  if (!db) { setTimeout(fbLoad, 500); return; }
-  db.ref('fieldbid').once('value').then(function(snap) {
-    var data = snap.val();
-    if (!data) { setFbStatus('connected'); return; }
-    if (data.projs && data.projs.length > 0) localStorage.setItem('fb6_projs', JSON.stringify(data.projs));
-    if (data.fa && data.fa.length > 0) localStorage.setItem('fb6_fa', JSON.stringify(data.fa));
-    if (data.ei && data.ei.length > 0) localStorage.setItem('fb6_ei', JSON.stringify(data.ei));
-    if (data.qi) localStorage.setItem('fb6_qi', JSON.stringify(data.qi));
-    if (data.qn) localStorage.setItem('fb6_qn', String(data.qn));
-    if (data.cfg) localStorage.setItem('fb6_cfg', JSON.stringify(data.cfg));
-    if (data.pr && data.pr.length > 0) localStorage.setItem('fb6_pr', JSON.stringify(data.pr));
-    load();
-    if (window.renderFA) renderFA();
-    if (window.renderEst) renderEst();
-    setFbStatus('connected');
-    toast('Restored from cloud!');
-  }).catch(function(e) {
-    console.log('Load error:', e.message);
-    setFbStatus('error');
-  });
+  db.collection('fieldbid').doc('data').get()
+    .then(function(doc) {
+      if (!doc.exists) { setFbStatus('connected'); return; }
+      var data = doc.data();
+      if (data.projs && data.projs.length > 0) localStorage.setItem('fb6_projs', JSON.stringify(data.projs));
+      if (data.fa && data.fa.length > 0) localStorage.setItem('fb6_fa', JSON.stringify(data.fa));
+      if (data.ei && data.ei.length > 0) localStorage.setItem('fb6_ei', JSON.stringify(data.ei));
+      if (data.qi) localStorage.setItem('fb6_qi', JSON.stringify(data.qi));
+      if (data.qn) localStorage.setItem('fb6_qn', String(data.qn));
+      if (data.cfg) localStorage.setItem('fb6_cfg', JSON.stringify(data.cfg));
+      if (data.pr && data.pr.length > 0) localStorage.setItem('fb6_pr', JSON.stringify(data.pr));
+      load();
+      if (window.renderFA) renderFA();
+      if (window.renderEst) renderEst();
+      setFbStatus('connected');
+      if (data.projs && data.projs.length > 0) toast('Restored from cloud!');
+    })
+    .catch(function(e) {
+      console.log('Load error:', e.message);
+      setFbStatus('error');
+    });
 }
-
-// WorkLog Firebase (separate)
-var _wlDb = null;
-try {
-  var _wlApp = firebase.initializeApp({
-    apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
-    authDomain: "work-log-5aa9f.firebaseapp.com",
-    projectId: "work-log-5aa9f",
-    storageBucket: "work-log-5aa9f.firebasestorage.app",
-    messagingSenderId: "919924820811",
-    appId: "1:919924820811:web:00460b91d51023d718b6ce"
-  }, 'worklog');
-  _wlDb = firebase.firestore(_wlApp);
-  firebase.auth(_wlApp).signInAnonymously().catch(function(){});
-} catch(e) { console.log('WL Firebase:', e.message); }
 
 
 
@@ -880,15 +857,15 @@ function parseSum(str){
 function saveFA(){
   if(currentProj){ saveProjAreas(); }
   localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
-  fbSave();
+  save();
 }
-function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbSave();}
-function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbSave();}
-function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products)); fbSave();}
-function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg)); fbSave();}
+function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); save();}
+function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); save();}
+function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products)); save();}
+function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg)); save();}
 
 function loadProjs(){var p=localStorage.getItem('fb6_projs');return p?JSON.parse(p):[];}
-function saveProjs(p){localStorage.setItem('fb6_projs',JSON.stringify(p)); fbSave();}
+function saveProjs(p){localStorage.setItem('fb6_projs',JSON.stringify(p)); save();}
 function saveProjAreas(){
   var projs=loadProjs();
   for(var i=0;i<projs.length;i++){
@@ -1841,7 +1818,7 @@ for(var oi=0;oi<ovs.length;oi++){
 
 load();
 
-// Boot save removed - fbSave handles saves after user actions
+// Boot save removed - save handles saves after user actions
 
 // Confirm modal
 document.getElementById('confirmNo').addEventListener('click', function() {
