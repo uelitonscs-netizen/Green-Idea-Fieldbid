@@ -752,7 +752,9 @@ function save() {
 }
 
 function fbLoad() {
-  db.collection('fieldbid').doc('data').get()
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (!user) return;
+    db.collection('fieldbid').doc('data').get()
     .then(function(doc) {
       if (!doc.exists) { setFbStatus('connected'); return; }
       var data = doc.data();
@@ -773,6 +775,7 @@ function fbLoad() {
       console.log('Load error:', e.message);
       setFbStatus('error');
     });
+  });
 }
 
 
