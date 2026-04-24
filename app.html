@@ -706,6 +706,136 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 </div>
 <div class="toast" id="toast"></div>
 <script>
+
+
+// ── FIREBASE (Realtime Database) ─────────────────────────────
+var db = null;
+var _fbSaveTimer = null;
+var _fbReady = false;
+
+try {
+  firebase.initializeApp({
+    apiKey: "AIzaSyBQRxWiOYyu16eYJIPURjIfC5r7iZv1WVI",
+    authDomain: "fieldbid.firebaseapp.com",
+    databaseURL: "https://fieldbid-default-rtdb.firebaseio.com",
+    projectId: "fieldbid",
+    storageBucket: "fieldbid.firebasestorage.app",
+    messagingSenderId: "747085511153",
+    appId: "1:747085511153:web:f2c987df9d1f9af63dac50"
+  });
+  db = firebase.database();
+  // Use .info/connected to detect real connection status
+  db.ref('.info/connected').on('value', function(snap) {
+    if (snap.val() === true) {
+      _fbReady = true;
+      window._fbReady = true;
+      setFbStatus('connected');
+      // Only save on connect if restore is done (user has data)
+      setTimeout(function(){
+        if(window._fbRestoreDone) fbSaveAll();
+      }, 2000);
+    } else {
+      if (_fbReady) { _fbReady = false; window._fbReady = false; setFbStatus('error'); }
+    }
+  });
+} catch(e) {
+  toast('Firebase init error: ' + e.message);
+}
+
+function setFbStatus(s) {
+  var dot = document.getElementById('fb-sync-dot');
+  var lbl = document.getElementById('fb-sync-lbl');
+  if (!dot || !lbl) return;
+  if (s === 'connected') { dot.style.background='#16a34a'; lbl.style.color='#16a34a'; lbl.textContent='cloud saved'; }
+  else if (s === 'saving') { dot.style.background='#f59e0b'; lbl.style.color='#f59e0b'; lbl.textContent='saving...'; }
+  else if (s === 'error') { dot.style.background='#dc2626'; lbl.style.color='#dc2626'; lbl.textContent='offline'; }
+  else { dot.style.background='#888'; lbl.style.color='#888'; lbl.textContent='connecting...'; }
+}
+
+function fbSaveAll() {
+  if (!db || !_fbReady) return;
+  window._fbReady = true;
+  var projs = loadProjs();
+  var fa = window.fieldAreas || [];
+  var ei = window.estItems || [];
+  // Always save if projs has data (even if fa is empty)
+  if (projs.length === 0 && fa.length === 0 && ei.length === 0) return;
+  var state = {
+    fa: fa,
+    ei: ei,
+    projs: projs,
+    qi: window.quoteInfo || {},
+    qn: window.quoteNum || 1001,
+    cfg: window.cfg || {},
+    pr: window.products || [],
+    ct: window.ctData || {},
+    sg: window.sigData || {},
+    updatedAt: new Date().toISOString()
+  };
+  setFbStatus('saving');
+  db.ref('fieldbid').set(state)
+    .then(function() { setFbStatus('connected'); toast('✅ Saved '+state.projs.length+' projs'); })
+    .catch(function(e) { setFbStatus('error'); toast('❌ Save error: '+e.message); });
+}
+
+function fbScheduleSave() {
+  clearTimeout(_fbSaveTimer);
+  _fbSaveTimer = setTimeout(function(){
+    if(window._fbReady && window.db){ window.fbSaveAll(); }
+    else{ setTimeout(function(){ if(window._fbReady && window.db) window.fbSaveAll(); }, 3000); }
+  }, 800);
+}
+window.fbSaveAll = fbSaveAll;
+// debug removed
+window.fbScheduleSave = fbScheduleSave;
+
+function fbRestore() {
+  var fa = localStorage.getItem('fb6_fa');
+  var projs = localStorage.getItem('fb6_projs');
+  var hasReal = (fa && fa.length > 2 && fa !== 'null') || (projs && projs.length > 2 && projs !== 'null');
+  if (hasReal) { window._fbRestoreDone = true; return; }
+  if (!db || !_fbReady) { setTimeout(fbRestore, 300); return; }
+  console.log('Restoring from Firebase...');
+  setFbStatus('saving');
+  db.ref('fieldbid').once('value')
+    .then(function(snap) {
+      var data = snap.val();
+      if (!data) { window._fbRestoreDone = true; setFbStatus('connected'); return; }
+      var got = 0;
+      if (data.projs && data.projs.length > 0) { localStorage.setItem('fb6_projs', JSON.stringify(data.projs)); got++; }
+      if (data.fa && data.fa.length > 0) {
+        localStorage.setItem('fb6_fa', JSON.stringify(data.fa)); got++;
+        if (!data.projs || data.projs.length === 0) {
+          var rp = {id:'p_recovered', name:'Recovered Areas', areas:data.fa, created:new Date().toLocaleDateString('en-US')};
+          localStorage.setItem('fb6_projs', JSON.stringify([rp]));
+        }
+      }
+      if (data.ei && data.ei.length > 0) { localStorage.setItem('fb6_ei', JSON.stringify(data.ei)); got++; }
+      if (data.qi) { localStorage.setItem('fb6_qi', JSON.stringify(data.qi)); }
+      if (data.qn) { localStorage.setItem('fb6_qn', String(data.qn)); }
+      if (data.cfg) { localStorage.setItem('fb6_cfg', JSON.stringify(data.cfg)); }
+      if (data.pr && data.pr.length > 0) { localStorage.setItem('fb6_pr', JSON.stringify(data.pr)); }
+      if (got > 0) { load(); if(window.renderFA) renderFA(); if(window.renderEst) renderEst(); toast('Restored from cloud!'); }
+      setFbStatus('connected');
+    })
+    .catch(function(e) { console.log('Restore error:', e.message); setFbStatus('error'); });
+}
+
+// WorkLog Firebase (separate - for Send to WorkLog feature)
+var _wlDb = null;
+try {
+  var _wlApp = firebase.initializeApp({
+    apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
+    authDomain: "work-log-5aa9f.firebaseapp.com",
+    projectId: "work-log-5aa9f",
+    storageBucket: "work-log-5aa9f.firebasestorage.app",
+    messagingSenderId: "919924820811",
+    appId: "1:919924820811:web:00460b91d51023d718b6ce"
+  }, 'worklog');
+  _wlDb = firebase.firestore(_wlApp);
+  firebase.auth(_wlApp).signInAnonymously().catch(function(){});
+} catch(e) { console.log('WL Firebase:', e.message); }
+
 // All code runs after DOM is ready
 function appConfirm(msg, onYes) {
   document.getElementById('confirmMsg').textContent = msg;
@@ -1793,6 +1923,7 @@ function sendToWorkLog() {
 }
 
 
+
 </script>
 
 <script>
@@ -1839,146 +1970,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 </script>
 
-<script>
-
-// ── FIREBASE (Realtime Database) ─────────────────────────────
-var db = null;
-var _fbSaveTimer = null;
-var _fbReady = false;
-
-try {
-  firebase.initializeApp({
-    apiKey: "AIzaSyBQRxWiOYyu16eYJIPURjIfC5r7iZv1WVI",
-    authDomain: "fieldbid.firebaseapp.com",
-    databaseURL: "https://fieldbid-default-rtdb.firebaseio.com",
-    projectId: "fieldbid",
-    storageBucket: "fieldbid.firebasestorage.app",
-    messagingSenderId: "747085511153",
-    appId: "1:747085511153:web:f2c987df9d1f9af63dac50"
-  });
-  db = firebase.database();
-  window.db = db;
-  // Use .info/connected to detect real connection status
-  db.ref('.info/connected').on('value', function(snap) {
-    if (snap.val() === true) {
-      _fbReady = true;
-      window._fbReady = true;
-      setFbStatus('connected');
-      // Only save on connect if restore is done (user has data)
-      setTimeout(function(){
-        if(window._fbRestoreDone) fbSaveAll();
-      }, 2000);
-    } else {
-      if (_fbReady) { _fbReady = false; window._fbReady = false; setFbStatus('error'); }
-    }
-  });
-} catch(e) {
-  toast('Firebase init error: ' + e.message);
-}
-
-function setFbStatus(s) {
-  var dot = document.getElementById('fb-sync-dot');
-  var lbl = document.getElementById('fb-sync-lbl');
-  if (!dot || !lbl) return;
-  if (s === 'connected') { dot.style.background='#16a34a'; lbl.style.color='#16a34a'; lbl.textContent='cloud saved'; }
-  else if (s === 'saving') { dot.style.background='#f59e0b'; lbl.style.color='#f59e0b'; lbl.textContent='saving...'; }
-  else if (s === 'error') { dot.style.background='#dc2626'; lbl.style.color='#dc2626'; lbl.textContent='offline'; }
-  else { dot.style.background='#888'; lbl.style.color='#888'; lbl.textContent='connecting...'; }
-}
-
-function fbSaveAll() {
-  if (!db || !_fbReady) return;
-  window._fbReady = true;
-  var projs = loadProjs();
-  var fa = window.fieldAreas || [];
-  var ei = window.estItems || [];
-  // Always save if projs has data (even if fa is empty)
-  if (projs.length === 0 && fa.length === 0 && ei.length === 0) return;
-  var state = {
-    fa: fa,
-    ei: ei,
-    projs: projs,
-    qi: window.quoteInfo || {},
-    qn: window.quoteNum || 1001,
-    cfg: window.cfg || {},
-    pr: window.products || [],
-    ct: window.ctData || {},
-    sg: window.sigData || {},
-    updatedAt: new Date().toISOString()
-  };
-  setFbStatus('saving');
-  db.ref('fieldbid').set(state)
-    .then(function() { setFbStatus('connected'); toast('✅ Saved '+state.projs.length+' projs'); })
-    .catch(function(e) { setFbStatus('error'); toast('❌ Save error: '+e.message); });
-}
-
-function fbScheduleSave() {
-  clearTimeout(_fbSaveTimer);
-  _fbSaveTimer = setTimeout(function(){
-    if(window._fbReady && window.db){ window.fbSaveAll(); }
-    else{ setTimeout(function(){ if(window._fbReady && window.db) window.fbSaveAll(); }, 3000); }
-  }, 800);
-}
-window.fbSaveAll = fbSaveAll;
-setInterval(function(){
-  var r = document.getElementById('dbg-ready');
-  var d = document.getElementById('dbg-restore');
-  var db2 = document.getElementById('dbg-db');
-  if(!r) return;
-  r.textContent = 'fbReady: ' + (window._fbReady ? 'TRUE ✅' : 'false ❌');
-  d.textContent = 'restoreDone: ' + (window._fbRestoreDone ? 'TRUE ✅' : 'false ❌');
-  db2.textContent = 'db: ' + (window.db ? 'exists ✅' : 'null ❌');
-}, 1500);
-window.fbScheduleSave = fbScheduleSave;
-window._fbScheduleSaveReal = fbScheduleSave;
-
-function fbRestore() {
-  var fa = localStorage.getItem('fb6_fa');
-  var projs = localStorage.getItem('fb6_projs');
-  var hasReal = (fa && fa.length > 2 && fa !== 'null') || (projs && projs.length > 2 && projs !== 'null');
-  if (hasReal) { window._fbRestoreDone = true; return; }
-  if (!db || !_fbReady) { setTimeout(fbRestore, 300); return; }
-  console.log('Restoring from Firebase...');
-  setFbStatus('saving');
-  db.ref('fieldbid').once('value')
-    .then(function(snap) {
-      var data = snap.val();
-      if (!data) { window._fbRestoreDone = true; setFbStatus('connected'); return; }
-      var got = 0;
-      if (data.projs && data.projs.length > 0) { localStorage.setItem('fb6_projs', JSON.stringify(data.projs)); got++; }
-      if (data.fa && data.fa.length > 0) {
-        localStorage.setItem('fb6_fa', JSON.stringify(data.fa)); got++;
-        if (!data.projs || data.projs.length === 0) {
-          var rp = {id:'p_recovered', name:'Recovered Areas', areas:data.fa, created:new Date().toLocaleDateString('en-US')};
-          localStorage.setItem('fb6_projs', JSON.stringify([rp]));
-        }
-      }
-      if (data.ei && data.ei.length > 0) { localStorage.setItem('fb6_ei', JSON.stringify(data.ei)); got++; }
-      if (data.qi) { localStorage.setItem('fb6_qi', JSON.stringify(data.qi)); }
-      if (data.qn) { localStorage.setItem('fb6_qn', String(data.qn)); }
-      if (data.cfg) { localStorage.setItem('fb6_cfg', JSON.stringify(data.cfg)); }
-      if (data.pr && data.pr.length > 0) { localStorage.setItem('fb6_pr', JSON.stringify(data.pr)); }
-      if (got > 0) { window._fbRestoreDone = true; load(); if(window.renderFA) renderFA(); if(window.renderEst) renderEst(); toast('Restored from cloud!'); }
-      setFbStatus('connected');
-    })
-    .catch(function(e) { console.log('Restore error:', e.message); setFbStatus('error'); });
-}
-
-// WorkLog Firebase (separate - for Send to WorkLog feature)
-var _wlDb = null;
-try {
-  var _wlApp = firebase.initializeApp({
-    apiKey: "AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
-    authDomain: "work-log-5aa9f.firebaseapp.com",
-    projectId: "work-log-5aa9f",
-    storageBucket: "work-log-5aa9f.firebasestorage.app",
-    messagingSenderId: "919924820811",
-    appId: "1:919924820811:web:00460b91d51023d718b6ce"
-  }, 'worklog');
-  _wlDb = firebase.firestore(_wlApp);
-  firebase.auth(_wlApp).signInAnonymously().catch(function(){});
-} catch(e) { console.log('WL Firebase:', e.message); }
-
-</script>
+<!-- Firebase moved to main script block -->
 </body>
 </html>
