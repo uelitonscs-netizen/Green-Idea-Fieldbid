@@ -754,7 +754,6 @@ function setFbStatus(s) {
 
 function fbSaveAll() {
   if (!db || !_fbReady) return;
-  window._fbReady = true;
   var projs = loadProjs();
   var fa = window.fieldAreas || [];
   var ei = window.estItems || [];
@@ -781,13 +780,11 @@ function fbSaveAll() {
 function fbScheduleSave() {
   clearTimeout(_fbSaveTimer);
   _fbSaveTimer = setTimeout(function(){
-    if(window._fbReady && window.db){ window.fbSaveAll(); }
-    else{ setTimeout(function(){ if(window._fbReady && window.db) window.fbSaveAll(); }, 3000); }
+    if(_fbReady && db){ fbSaveAll(); }
+    else{ setTimeout(function(){ if(_fbReady && db) fbSaveAll(); }, 3000); }
   }, 800);
 }
-window.fbSaveAll = fbSaveAll;
 // debug removed
-window.fbScheduleSave = fbScheduleSave;
 
 function fbRestore() {
   var fa = localStorage.getItem('fb6_fa');
@@ -916,15 +913,15 @@ function parseSum(str){
 function saveFA(){
   if(currentProj){ saveProjAreas(); }
   localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
-  if(window.fbScheduleSave) window.fbScheduleSave();
+  fbScheduleSave();
 }
-function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); if(window.fbScheduleSave) window.fbScheduleSave();}
-function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); if(window.fbScheduleSave) window.fbScheduleSave();}
-function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products)); if(window.fbScheduleSave) window.fbScheduleSave();}
-function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg)); if(window.fbScheduleSave) window.fbScheduleSave();}
+function saveEI(){localStorage.setItem('fb6_ei',JSON.stringify(estItems));localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
+function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); fbScheduleSave();}
+function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products)); fbScheduleSave();}
+function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg)); fbScheduleSave();}
 
 function loadProjs(){var p=localStorage.getItem('fb6_projs');return p?JSON.parse(p):[];}
-function saveProjs(p){localStorage.setItem('fb6_projs',JSON.stringify(p)); if(window.fbScheduleSave) window.fbScheduleSave();}
+function saveProjs(p){localStorage.setItem('fb6_projs',JSON.stringify(p)); fbScheduleSave();}
 function saveProjAreas(){
   var projs=loadProjs();
   for(var i=0;i<projs.length;i++){
