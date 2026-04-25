@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260424_RTDB7c_zfold -->
+<!-- FieldBid v20260424_RTDB7d_zfold -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -811,7 +811,14 @@ function save() {
         updatedAt: new Date().toISOString()
       };
     }catch(err){console.error('save() state build failed:',err);return;}
-    if (state.projs.length === 0 && state.fa.length === 0 && state.ei.length === 0) return;
+    // Skip ONLY on truly empty initial state (first-load before any user input)
+    var hasContent = (state.projs && state.projs.length > 0) ||
+                     (state.fa && state.fa.length > 0) ||
+                     (state.ei && state.ei.length > 0) ||
+                     (state.pr && state.pr.length > 0) ||
+                     (state.qi && Object.keys(state.qi).length > 0) ||
+                     (state.cfg && Object.keys(state.cfg).length > 0);
+    if (!hasContent) return;
     if (typeof db === 'undefined' || !db) return;
     // Wait for anonymous auth to complete before trying to write.
     // Prevents false "offline" flash while signing in.
