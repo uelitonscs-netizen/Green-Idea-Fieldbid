@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260425_RTDB8_per-doc-sync -->
+<!-- FieldBid v20260425_RTDB8b_status-fix -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -779,8 +779,10 @@ firebase.initializeApp({
 });
 
 var db = firebase.firestore();
-firebase.auth().signInAnonymously().catch(function(e){ console.log('Auth:', e.message); });
+firebase.auth().signInAnonymously().catch(function(e){ console.warn('Auth:', e && e.message); });
 firebase.auth().onAuthStateChanged(function(u){ if (u) { setFbStatus('connected'); } });
+// Belt-and-suspenders: if auth already done by the time setFbStatus exists, force update on next tick
+setTimeout(function(){ try { if (firebase.auth().currentUser) setFbStatus('connected'); } catch(e){} }, 100);
 
 function setFbStatus(s) {
   var dot = document.getElementById('fb-sync-dot');
@@ -856,8 +858,9 @@ function fbLoad() {
       setFbStatus('connected');
     })
     .catch(function(e) {
-      console.log('Load error:', e && e.message);
-      setFbStatus('error');
+      console.warn('FieldBid load error:', e && e.code, e && e.message, e);
+      // Don't flip to red on load — auth listener already set status to connected.
+      // Only real save failures should signal "offline".
     });
   });
 }
