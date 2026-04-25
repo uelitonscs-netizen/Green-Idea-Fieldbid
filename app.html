@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260425_RTDB8b_status-fix -->
+<!-- FieldBid v20260425_RTDB9_dim-display -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -100,6 +100,12 @@ button{font-family:system-ui,-apple-system,sans-serif;cursor:pointer;-webkit-tap
 .card-note{font-size:11px;color:#f0a02c;margin-top:3px;}
 .card-ph{font-size:10px;color:#58a6ff;margin-top:3px;}
 .card-cost{font-family:ui-monospace,monospace;font-size:16px;font-weight:500;color:#3fb950;flex-shrink:0;padding-top:2px;}
+.card-dims{margin-top:6px;padding:6px 8px;background:rgba(240,160,44,.06);border:1px solid rgba(240,160,44,.18);border-radius:6px;font-size:11px;color:#bfc7d1;font-family:ui-monospace,monospace;line-height:1.5;}
+.card-dims-hd{font-size:10px;font-weight:700;color:#f0a02c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;font-family:system-ui,-apple-system,sans-serif;}
+.card-dim-row{padding:1px 0;}
+.wo-dims{margin-top:6px;padding:6px 10px;background:#fff7e6;border:1px solid #f0a02c33;border-radius:6px;font-family:ui-monospace,monospace;font-size:11px;color:#3a3a3a;line-height:1.5;}
+.wo-dims-hd{font-size:10px;font-weight:700;color:#a8730d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;font-family:system-ui,-apple-system,sans-serif;}
+@media print{.card-dims,.wo-dims{background:#fafafa!important;color:#000!important;border:1px solid #ccc!important;}.card-dims-hd,.wo-dims-hd{color:#555!important;}}
 .card-acts{display:flex;border-top:1px solid #2a3340;}
 .ca{flex:1;height:40px;background:none;border:none;font-size:12px;font-weight:600;color:#7d8590;display:flex;align-items:center;justify-content:center;gap:4px;}
 .ca:not(:last-child){border-right:1px solid #2a3340;}
@@ -1179,6 +1185,32 @@ function copyText(t){
 }
 
 // RENDER FIELD AREAS
+// Format saved measurement rows for display on cards / work orders.
+// Returns HTML string or empty string if no rows.
+function formatDimRows(a, opts){
+  if(!a||!a.calcMode)return '';
+  var rows = a.calcMode==='walls' ? a.wallRows : (a.calcMode==='floor' ? a.floorRows : null);
+  if(!rows||!rows.length)return '';
+  var lbl = a.calcMode==='walls' ? 'Length × Height' : 'Length × Width';
+  var icon = a.calcMode==='walls' ? '📐' : '⬜';
+  var lines = [];
+  for(var i=0;i<rows.length;i++){
+    var lr = String(rows[i].l||'').trim();
+    var hr = String(rows[i].h||'').trim();
+    if(!lr||!hr)continue;
+    var l = (typeof parseSum==='function') ? parseSum(lr) : parseFloat(lr);
+    var hh = (typeof parseSum==='function') ? parseSum(hr) : parseFloat(hr);
+    if(l>0&&hh>0){
+      var sf = Math.round(l*hh*10)/10;
+      lines.push('<div class="card-dim-row">'+esc(lr)+' \u00d7 '+esc(hr)+' = <strong>'+sf+'</strong> SF</div>');
+    }
+  }
+  if(!lines.length)return '';
+  var cls = (opts && opts.print) ? 'wo-dims' : 'card-dims';
+  var hcls = (opts && opts.print) ? 'wo-dims-hd' : 'card-dims-hd';
+  return '<div class="'+cls+'"><div class="'+hcls+'">'+icon+' '+lbl+'</div>'+lines.join('')+'</div>';
+}
+
 function renderFA(){
   var list=document.getElementById('fieldAreaList');
   var sf=0;for(var i=0;i<fieldAreas.length;i++)sf+=fieldAreas[i].sf||0;
@@ -1195,7 +1227,7 @@ function renderFA(){
     var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Unknown';
     h+='<div class="card">';
     if(a.photos&&a.photos.length){h+='<div class="card-photos">';for(var p=0;p<a.photos.length;p++)h+='<img class="card-photo" src="'+a.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
-    h+='<div class="card-body"><div class="card-em f">'+em+'</div><div class="card-info"><div class="card-name">'+esc(a.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(a.sf)+' SF'+(a.spec?' · '+esc(a.spec):'')+'</div>'+(a.notes?'<div class="card-note">📋 '+esc(a.notes)+'</div>':'')+(a.photos&&a.photos.length?'<div class="card-ph">📷 '+a.photos.length+' photo'+(a.photos.length>1?'s':'')+'</div>':'')+'</div></div>';
+    h+='<div class="card-body"><div class="card-em f">'+em+'</div><div class="card-info"><div class="card-name">'+esc(a.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(a.sf)+' SF'+(a.spec?' · '+esc(a.spec):'')+'</div>'+formatDimRows(a)+(a.notes?'<div class="card-note">📋 '+esc(a.notes)+'</div>':'')+(a.photos&&a.photos.length?'<div class="card-ph">📷 '+a.photos.length+' photo'+(a.photos.length>1?'s':'')+'</div>':'')+'</div></div>';
     h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑 Del</button></div></div>';
   }
   list.innerHTML=h;
@@ -1292,9 +1324,10 @@ function buildWOHd(t,lang,j1,j2,num){
   var today=new Date().toLocaleDateString(lang==='pt'?'pt-BR':'en-US',{year:'numeric',month:'long',day:'numeric'});
   return '<div class="wo-hd"><div class="wo-co">'+esc(cfg.company)+'</div><div class="wo-badge">'+t.title+' — '+t.sub+'</div><div class="wo-meta"><div class="wo-mc"><div class="wo-ml">'+t.wo+' #</div><div class="wo-mv">'+num+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.date+'</div><div class="wo-mv">'+today+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.client+'</div><div class="wo-mv">'+(j1||'—')+'</div></div><div class="wo-mc"><div class="wo-ml">'+t.addr+'</div><div class="wo-mv">'+(j2||'—')+'</div></div></div></div>';
 }
-function buildWOTask(idx,name,prod,sf,spec,notes,photos,checked,mode,t){
+function buildWOTask(idx,name,prod,sf,spec,notes,photos,checked,mode,t,dimsHtml){
   var ck=checked?'done':'';
   var h='<div class="wo-task"><div class="wo-th"><div class="wo-num '+mode+'">'+(idx+1)+'</div><div class="wo-ti"><div class="wo-tn">'+name+'</div><div class="wo-tp">'+prod+'</div><div class="wo-ts">'+sf+' SF'+(spec?' · '+spec:'')+'</div></div></div>';
+  if(dimsHtml)h+=dimsHtml;
   if(photos&&photos.length){h+='<div class="wo-photos">';for(var p=0;p<photos.length;p++)h+='<img class="wo-photo" src="'+photos[p]+'" alt="">';h+='</div>';}
   if(notes)h+='<div class="wo-note">📋 '+esc(notes)+'</div>';
   h+='<button class="wo-ck" data-key="'+mode+idx+'"><div class="wo-cb '+ck+'" id="wcb_'+mode+idx+'">'+(checked?'✓':'')+'</div><span class="wo-cl">'+t.done+'</span></button>';
@@ -1303,7 +1336,7 @@ function buildWOTask(idx,name,prod,sf,spec,notes,photos,checked,mode,t){
 function renderFWO(){
   var t=WO[fwLang];var h=buildWOHd(t,fwLang,currentProj?currentProj.name:'',currentProj?currentProj.address||'':'',quoteNum);
   if(!fieldAreas.length)h+='<div class="empty"><div class="empty-body">'+t.none+'</div></div>';
-  else{h+='<div class="wo-tasks">';for(var i=0;i<fieldAreas.length;i++){var a=fieldAreas[i];var pr=getProd(a.productId);h+=buildWOTask(i,(pr?pr.emoji:'📦')+' '+esc(a.name),pr?esc(pr.name):'—',fmtN(a.sf),a.spec,a.notes,a.photos,woChecked['f'+i],'f',t);}h+='</div>';}
+  else{h+='<div class="wo-tasks">';for(var i=0;i<fieldAreas.length;i++){var a=fieldAreas[i];var pr=getProd(a.productId);h+=buildWOTask(i,(pr?pr.emoji:'📦')+' '+esc(a.name),pr?esc(pr.name):'—',fmtN(a.sf),a.spec,a.notes,a.photos,woChecked['f'+i],'f',t,formatDimRows(a,{print:true}));}h+='</div>';}
   var fwo=document.getElementById('fieldWO');
   fwo.innerHTML=h;
   fwo.addEventListener('click',function(e){
