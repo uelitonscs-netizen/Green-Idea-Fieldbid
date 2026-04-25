@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260425_RTDB9_dim-display -->
+<!-- FieldBid v20260425_RTDB10_proj-import -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -312,7 +312,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .ba{background:#f0a02c;color:#000;}
 .bs{background:#1e2530;color:#7d8590;}
 .bd{background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.2);}
-.imp-row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid #2a3340;gap:12px;}
+.imp-proj{display:block;width:100%;padding:14px;background:#1e2530;border:1px solid #2a3340;border-radius:10px;margin-bottom:8px;cursor:pointer;text-align:left;}.imp-proj:active{background:#2a3340;}.imp-proj-name{font-size:14px;font-weight:700;color:#e6edf3;margin-bottom:4px;display:flex;align-items:center;gap:6px;}.imp-proj-meta{font-size:12px;color:#7d8590;font-family:ui-monospace,monospace;}.imp-proj.cur{border-color:rgba(240,160,44,.45);background:rgba(240,160,44,.06);}.imp-proj-cur-tag{font-size:10px;font-weight:700;color:#f0a02c;background:rgba(240,160,44,.15);padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;}.imp-row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid #2a3340;gap:12px;}
 .imp-row:last-child{border-bottom:none;}
 .imp-chk{width:22px;height:22px;border:2px solid #2a3340;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;background:none;padding:0;}
 .imp-chk.on{background:#58a6ff;border-color:#58a6ff;color:#fff;}
@@ -754,10 +754,10 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 <div class="overlay" id="importOverlay">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="mhandle"></div>
-    <div class="mtitle">Import from Field Takeoff</div>
-    <p style="font-size:13px;color:#7d8590;margin-bottom:14px">Select areas to import.</p>
+    <div class="mtitle" id="importTitle">Import from Field Takeoff</div>
+    <p style="font-size:13px;color:#7d8590;margin-bottom:14px" id="importDesc">Choose a project to import.</p>
     <div id="importList"></div>
-    <div class="btn-row"><button class="btn bs" id="importCancelBtn">Cancel</button><button class="btn bg" id="importConfirmBtn">Import Selected</button></div>
+    <div class="btn-row"><button class="btn bs" id="importCancelBtn">Cancel</button><button class="btn bs" id="importBackBtn" style="display:none">← Back</button><button class="btn bg" id="importConfirmBtn" style="display:none">Import Selected</button></div>
   </div>
 </div>
 
@@ -1304,8 +1304,15 @@ function renderQuote(){
 
 function checkImportBar(){
   var bar=document.getElementById('importBar');if(!bar)return;
-  if(fieldAreas.length>0){bar.style.display='flex';document.getElementById('importBarSub').textContent=fieldAreas.length+' area'+(fieldAreas.length>1?'s':'')+' measured';}
-  else bar.style.display='none';
+  var projs=loadProjs();var totalAreas=0;var projsWithAreas=0;
+  for(var i=0;i<projs.length;i++){
+    if(projs[i].areas&&projs[i].areas.length){totalAreas+=projs[i].areas.length;projsWithAreas++;}
+  }
+  if(totalAreas>0){
+    bar.style.display='flex';
+    var sub=projsWithAreas+' project'+(projsWithAreas!==1?'s':'')+' · '+totalAreas+' area'+(totalAreas!==1?'s':'');
+    document.getElementById('importBarSub').textContent=sub;
+  } else bar.style.display='none';
 }
 
 // WORK ORDERS
@@ -1721,27 +1728,89 @@ document.getElementById('feCancelBtn').addEventListener('click',function(){close
 document.getElementById('feSaveBtn').addEventListener('click',function(){quoteInfo[curFieldEdit]=document.getElementById('feInput').value.trim();saveEI();renderEst();closeOv('feOverlay');});
 
 // IMPORT
+var _importProjId=null;var _importAreas=[];
 function doImport(){
   var added=0;
-  for(var i=0;i<fieldAreas.length;i++){
+  var src=(_importProjId&&_importAreas.length)?_importAreas:fieldAreas;
+  for(var i=0;i<src.length;i++){
     if(!importSel[i])continue;
-    var a=fieldAreas[i];var pr=getProd(a.productId);
+    var a=src[i];var pr=getProd(a.productId);
     estItems.push({name:a.name,productId:a.productId,sf:a.sf,price:pr?pr.price:0,notes:a.notes||'',photos:a.photos?a.photos.slice():[]});added++;
   }
   if(added>0){saveEI();renderEst();}
   closeOv('importOverlay');
   toast('✅ '+added+' area'+(added>1?'s':'')+' imported');
 }
-function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':';';}
-document.getElementById('importBarBtn').addEventListener('click',function(){
-  importSel={};var h='';
-  for(var i=0;i<fieldAreas.length;i++){
-    importSel[i]=true;var a=fieldAreas[i];var pr=getProd(a.productId);
-    h+='<div class="imp-row"><button class="imp-chk on" data-idx="'+i+'" id="ic'+i+'" data-act="imp">✓</button><div><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+(pr?esc(pr.name):'Unknown')+'</div></div></div>';
+function showImportProjects(){
+  _importProjId=null;_importAreas=[];
+  var titleEl=document.getElementById('importTitle');
+  var descEl=document.getElementById('importDesc');
+  var backBtn=document.getElementById('importBackBtn');
+  var confBtn=document.getElementById('importConfirmBtn');
+  if(titleEl)titleEl.textContent='Import from Field Takeoff';
+  if(descEl)descEl.textContent='Choose a project to import.';
+  if(backBtn)backBtn.style.display='none';
+  if(confBtn)confBtn.style.display='none';
+  var projs=loadProjs();
+  var h='';
+  if(!projs.length){
+    h='<div style="padding:20px;text-align:center;color:#7d8590;font-size:13px">No projects yet.<br>Create a project in Field Takeoff first.</div>';
+  } else {
+    for(var i=0;i<projs.length;i++){
+      var p=projs[i];
+      var areaCt=p.areas?p.areas.length:0;
+      var totalSF=0;
+      if(p.areas)for(var j=0;j<p.areas.length;j++)totalSF+=Number(p.areas[j].sf)||0;
+      var isCur=currentProj&&currentProj.id===p.id;
+      var curTag=isCur?'<span class="imp-proj-cur-tag">Current</span>':'';
+      h+='<button class="imp-proj'+(isCur?' cur':'')+'" data-pid="'+esc(p.id)+'">'+
+         '<div class="imp-proj-name">📁 '+esc(p.name||'Project')+curTag+'</div>'+
+         '<div class="imp-proj-meta">'+areaCt+' area'+(areaCt!==1?'s':'')+' · '+fmtN(totalSF)+' SF</div>'+
+         '</button>';
+    }
   }
   var ilist=document.getElementById('importList');
   ilist.innerHTML=h;
-  // Replace ilist to remove old listeners
+  var newList=ilist.cloneNode(true);
+  ilist.parentNode.replaceChild(newList,ilist);
+  newList.addEventListener('click',function(e){
+    var b=e.target;
+    while(b&&b!==newList){if(b.getAttribute&&b.getAttribute('data-pid'))break;b=b.parentNode;}
+    if(!b||b===newList)return;
+    showImportAreas(b.getAttribute('data-pid'));
+  });
+  openOv('importOverlay');
+}
+function showImportAreas(pid){
+  var projs=loadProjs();
+  var proj=null;
+  for(var i=0;i<projs.length;i++)if(projs[i].id===pid){proj=projs[i];break;}
+  if(!proj)return;
+  _importProjId=pid;
+  _importAreas=proj.areas?JSON.parse(JSON.stringify(proj.areas)):[];
+  var titleEl=document.getElementById('importTitle');
+  var descEl=document.getElementById('importDesc');
+  var backBtn=document.getElementById('importBackBtn');
+  var confBtn=document.getElementById('importConfirmBtn');
+  if(titleEl)titleEl.textContent='📁 '+(proj.name||'Project');
+  if(descEl)descEl.textContent='Select areas to import.';
+  if(backBtn)backBtn.style.display='inline-block';
+  if(confBtn)confBtn.style.display='inline-block';
+  importSel={};
+  var h='';
+  if(!_importAreas.length){
+    h='<div style="padding:20px;text-align:center;color:#7d8590;font-size:13px">This project has no areas.</div>';
+    if(confBtn)confBtn.style.display='none';
+  } else {
+    for(var i=0;i<_importAreas.length;i++){
+      importSel[i]=true;
+      var a=_importAreas[i];
+      var pr=getProd(a.productId);
+      h+='<div class="imp-row"><button class="imp-chk on" data-idx="'+i+'" id="ic'+i+'" data-act="imp">✓</button><div><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+(pr?esc(pr.name):'Unknown')+'</div></div></div>';
+    }
+  }
+  var ilist=document.getElementById('importList');
+  ilist.innerHTML=h;
   var newList=ilist.cloneNode(true);
   ilist.parentNode.replaceChild(newList,ilist);
   newList.addEventListener('click',function(e){
@@ -1750,7 +1819,13 @@ document.getElementById('importBarBtn').addEventListener('click',function(){
     if(!b||b===newList)return;
     togImp(b);
   });
-  openOv('importOverlay');
+}
+function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':';';}
+document.getElementById('importBarBtn').addEventListener('click',function(){
+  showImportProjects();
+});
+document.getElementById('importBackBtn').addEventListener('click',function(){
+  showImportProjects();
 });
 document.getElementById('importCancelBtn').addEventListener('click',function(){closeOv('importOverlay');});
 document.getElementById('importConfirmBtn').addEventListener('click',function(e){e.stopPropagation();doImport();});
