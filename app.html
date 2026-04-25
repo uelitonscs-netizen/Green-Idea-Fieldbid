@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260424_RTDB7_zfold -->
+<!-- FieldBid v20260424_RTDB7c_zfold -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -780,6 +780,7 @@ firebase.initializeApp({
 
 var db = firebase.firestore();
 firebase.auth().signInAnonymously().catch(function(e){ console.log('Auth:', e.message); });
+firebase.auth().onAuthStateChanged(function(u){ if (u) { setFbStatus('connected'); } });
 
 function setFbStatus(s) {
   var dot = document.getElementById('fb-sync-dot');
@@ -793,11 +794,13 @@ function setFbStatus(s) {
 
 var _saveTimer = null;
 function safeSetItem(key,val){try{localStorage.setItem(key,val);return true;}catch(e){if(typeof toast==='function')toast('Storage full — free space to save','err');console.error('localStorage quota:',e&&e.message);return false;}}
+var _saveRetry = 0;
 function save() {
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(function() {
+    var state;
     try{
-      var state = {
+      state = {
         projs: loadProjs(),
         fa: window.fieldAreas || [],
         ei: window.estItems || [],
@@ -807,13 +810,20 @@ function save() {
         pr: window.products || [],
         updatedAt: new Date().toISOString()
       };
-      if (state.projs.length === 0 && state.fa.length === 0 && state.ei.length === 0) return;
-      if(typeof db==='undefined'||!db){setFbStatus('offline');return;}
-      setFbStatus('saving');
-      db.collection('fieldbid').doc('data').set(state)
-        .then(function() { setFbStatus('connected'); })
-        .catch(function(e) { setFbStatus('error'); if(typeof toast==='function')toast('Sync error: '+(e&&e.message||'unknown'),'err'); console.error('Save error:', e&&e.message); });
-    }catch(err){setFbStatus('error');console.error('save() failed:',err);}
+    }catch(err){console.error('save() state build failed:',err);return;}
+    if (state.projs.length === 0 && state.fa.length === 0 && state.ei.length === 0) return;
+    if (typeof db === 'undefined' || !db) return;
+    // Wait for anonymous auth to complete before trying to write.
+    // Prevents false "offline" flash while signing in.
+    if (!firebase.auth().currentUser) {
+      if (_saveRetry < 20) { _saveRetry++; _saveTimer = setTimeout(save, 400); }
+      return;
+    }
+    _saveRetry = 0;
+    setFbStatus('saving');
+    db.collection('fieldbid').doc('data').set(state)
+      .then(function() { setFbStatus('connected'); })
+      .catch(function(e) { setFbStatus('error'); console.warn('Save error:', e && e.message); });
   }, 1000);
 }
 
