@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260424_RTDB7d_zfold -->
+<!-- FieldBid v20260425_RTDB8_per-doc-sync -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -795,40 +795,33 @@ function setFbStatus(s) {
 var _saveTimer = null;
 function safeSetItem(key,val){try{localStorage.setItem(key,val);return true;}catch(e){if(typeof toast==='function')toast('Storage full — free space to save','err');console.error('localStorage quota:',e&&e.message);return false;}}
 var _saveRetry = 0;
+// Keys mirrored to Firestore (one doc per key under collection "fieldbid")
+var _SYNC_KEYS = ['fa','ei','qi','qn','cfg','pr','ct','sg','projs'];
 function save() {
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(function() {
-    var state;
-    try{
-      state = {
-        projs: loadProjs(),
-        fa: window.fieldAreas || [],
-        ei: window.estItems || [],
-        qi: window.quoteInfo || {},
-        qn: window.quoteNum || 1001,
-        cfg: window.cfg || {},
-        pr: window.products || [],
-        updatedAt: new Date().toISOString()
-      };
-    }catch(err){console.error('save() state build failed:',err);return;}
-    // Skip ONLY on truly empty initial state (first-load before any user input)
-    var hasContent = (state.projs && state.projs.length > 0) ||
-                     (state.fa && state.fa.length > 0) ||
-                     (state.ei && state.ei.length > 0) ||
-                     (state.pr && state.pr.length > 0) ||
-                     (state.qi && Object.keys(state.qi).length > 0) ||
-                     (state.cfg && Object.keys(state.cfg).length > 0);
-    if (!hasContent) return;
     if (typeof db === 'undefined' || !db) return;
-    // Wait for anonymous auth to complete before trying to write.
-    // Prevents false "offline" flash while signing in.
     if (!firebase.auth().currentUser) {
       if (_saveRetry < 20) { _saveRetry++; _saveTimer = setTimeout(save, 400); }
       return;
     }
     _saveRetry = 0;
+    var ts = new Date().toISOString();
+    var col = db.collection('fieldbid');
+    var ls = window.localStorage;
+    var batch = db.batch();
+    var wrote = 0;
+    for (var i = 0; i < _SYNC_KEYS.length; i++) {
+      var k = _SYNC_KEYS[i];
+      var v = ls.getItem('fb6_' + k);
+      if (v !== null && v !== undefined && v !== '') {
+        batch.set(col.doc(k), { data: v, updatedAt: ts });
+        wrote++;
+      }
+    }
+    if (wrote === 0) { setFbStatus('connected'); return; }
     setFbStatus('saving');
-    db.collection('fieldbid').doc('data').set(state)
+    batch.commit()
       .then(function() { setFbStatus('connected'); })
       .catch(function(e) { setFbStatus('error'); console.warn('Save error:', e && e.message); });
   }, 1000);
@@ -837,25 +830,33 @@ function save() {
 function fbLoad() {
   firebase.auth().onAuthStateChanged(function(user) {
     if (!user) return;
-    db.collection('fieldbid').doc('data').get()
-    .then(function(doc) {
-      if (!doc.exists) { setFbStatus('connected'); return; }
-      var data = doc.data();
-      if (data.projs && data.projs.length > 0) localStorage.setItem('fb6_projs', JSON.stringify(data.projs));
-      if (data.fa && data.fa.length > 0) localStorage.setItem('fb6_fa', JSON.stringify(data.fa));
-      if (data.ei && data.ei.length > 0) localStorage.setItem('fb6_ei', JSON.stringify(data.ei));
-      if (data.qi) localStorage.setItem('fb6_qi', JSON.stringify(data.qi));
-      if (data.qn) localStorage.setItem('fb6_qn', String(data.qn));
-      if (data.cfg) localStorage.setItem('fb6_cfg', JSON.stringify(data.cfg));
-      if (data.pr && data.pr.length > 0) localStorage.setItem('fb6_pr', JSON.stringify(data.pr));
-      load();
-      if (window.renderFA) renderFA();
-      if (window.renderEst) renderEst();
+    db.collection('fieldbid').get()
+    .then(function(snap) {
+      var loaded = 0;
+      snap.forEach(function(doc) {
+        var id = doc.id;
+        if (_SYNC_KEYS.indexOf(id) === -1) return; // skip unknown docs (test_write, etc)
+        var d = doc.data();
+        if (!d) return;
+        var raw = d.data;
+        if (raw === null || raw === undefined) return;
+        // Firestore field is stored as a string (stringified JSON or scalar)
+        if (typeof raw !== 'string') {
+          try { raw = JSON.stringify(raw); } catch(e) { return; }
+        }
+        localStorage.setItem('fb6_' + id, raw);
+        loaded++;
+      });
+      if (loaded > 0) {
+        load();
+        if (window.renderFA) renderFA();
+        if (window.renderEst) renderEst();
+        toast('Restored from cloud!');
+      }
       setFbStatus('connected');
-      if (data.projs && data.projs.length > 0) toast('Restored from cloud!');
     })
     .catch(function(e) {
-      console.log('Load error:', e.message);
+      console.log('Load error:', e && e.message);
       setFbStatus('error');
     });
   });
@@ -1734,7 +1735,7 @@ function applyCtFields(){
   document.getElementById('ctWarranty').value=ctData.warranty||'Contractor warrants all labor for 1 year from completion. Material warranties are provided by the manufacturer. Warranty is void if materials are altered or damaged by others after installation.';
   document.getElementById('ctExtra').value=ctData.extra||'Client is responsible for clearing the work area before start date. Any unforeseen conditions requiring additional work will be discussed before proceeding.';
 }
-function saveCt(){ctData.title=document.getElementById('ctTitle').value;ctData.intro=document.getElementById('ctIntro').value;ctData.payment=document.getElementById('ctPayment').value;ctData.warranty=document.getElementById('ctWarranty').value;ctData.extra=document.getElementById('ctExtra').value;localStorage.setItem('fb6_ct',JSON.stringify(ctData));}
+function saveCt(){ctData.title=document.getElementById('ctTitle').value;ctData.intro=document.getElementById('ctIntro').value;ctData.payment=document.getElementById('ctPayment').value;ctData.warranty=document.getElementById('ctWarranty').value;ctData.extra=document.getElementById('ctExtra').value;localStorage.setItem('fb6_ct',JSON.stringify(ctData));if(typeof save==='function')save();}
 document.getElementById('ctTitle').addEventListener('input',saveCt);
 document.getElementById('ctIntro').addEventListener('input',saveCt);
 document.getElementById('ctPayment').addEventListener('input',saveCt);
@@ -1805,7 +1806,7 @@ document.getElementById('saveSigBtn').addEventListener('click',function(){
   if(!name){toast('Enter client name first');return;}
   var today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   sigData={img:sigC.toDataURL('image/png'),name:name,date:today};
-  localStorage.setItem('fb6_sg',JSON.stringify(sigData));
+  localStorage.setItem('fb6_sg',JSON.stringify(sigData));if(typeof save==='function')save();
   document.getElementById('sigSaved').style.display='block';
   document.getElementById('sigImg').src=sigData.img;
   document.getElementById('sigMeta').textContent='Signed: '+name+' · '+today;
