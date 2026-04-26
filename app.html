@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260425_RTDB13_export-dims -->
+<!-- FieldBid v20260425_RTDB14_replace-on-import -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -312,7 +312,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .ba{background:#f0a02c;color:#000;}
 .bs{background:#1e2530;color:#7d8590;}
 .bd{background:rgba(248,81,73,.1);color:#f85149;border:1px solid rgba(248,81,73,.2);}
-.imp-proj{display:block;width:100%;padding:14px;background:#1e2530;border:1px solid #2a3340;border-radius:10px;margin-bottom:8px;cursor:pointer;text-align:left;}.imp-proj:active{background:#2a3340;}.imp-proj-name{font-size:14px;font-weight:700;color:#e6edf3;margin-bottom:4px;display:flex;align-items:center;gap:6px;}.imp-proj-meta{font-size:12px;color:#7d8590;font-family:ui-monospace,monospace;}.imp-proj.cur{border-color:rgba(240,160,44,.45);background:rgba(240,160,44,.06);}.imp-proj-cur-tag{font-size:10px;font-weight:700;color:#f0a02c;background:rgba(240,160,44,.15);padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;}.imp-row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid #2a3340;gap:12px;}
+.imp-proj{display:block;width:100%;padding:14px;background:#1e2530;border:1px solid #2a3340;border-radius:10px;margin-bottom:8px;cursor:pointer;text-align:left;}.imp-proj:active{background:#2a3340;}.imp-proj-name{font-size:14px;font-weight:700;color:#e6edf3;margin-bottom:4px;display:flex;align-items:center;gap:6px;}.imp-proj-meta{font-size:12px;color:#7d8590;font-family:ui-monospace,monospace;}.imp-proj.cur{border-color:rgba(240,160,44,.45);background:rgba(240,160,44,.06);}.imp-proj-cur-tag{font-size:10px;font-weight:700;color:#f0a02c;background:rgba(240,160,44,.15);padding:2px 6px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;}.imp-replace{display:flex;align-items:center;gap:10px;padding:11px 12px;background:rgba(240,160,44,.08);border:1px solid rgba(240,160,44,.3);border-radius:10px;margin-bottom:12px;cursor:pointer;}.imp-replace .imp-chk{border-color:#f0a02c;}.imp-replace .imp-chk.on{background:#f0a02c;border-color:#f0a02c;}.imp-replace-txt{font-size:12px;color:#e6edf3;line-height:1.4;}.imp-replace-txt strong{color:#f0a02c;}.imp-row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid #2a3340;gap:12px;}
 .imp-row:last-child{border-bottom:none;}
 .imp-chk{width:22px;height:22px;border:2px solid #2a3340;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;background:none;padding:0;}
 .imp-chk.on{background:#58a6ff;border-color:#58a6ff;color:#fff;}
@@ -756,6 +756,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div class="mhandle"></div>
     <div class="mtitle" id="importTitle">Import from Field Takeoff</div>
     <p style="font-size:13px;color:#7d8590;margin-bottom:14px" id="importDesc">Choose a project to import.</p>
+    <div class="imp-replace" id="importReplaceWrap" style="display:none"><button class="imp-chk on" id="importReplaceChk" type="button">✓</button><div class="imp-replace-txt"><strong>Replace current items</strong> (<span id="importReplaceCount">0</span> in estimator)<br>Uncheck to add to existing items instead.</div></div>
     <div id="importList"></div>
     <div class="btn-row"><button class="btn bs" id="importCancelBtn">Cancel</button><button class="btn bs" id="importBackBtn" style="display:none">← Back</button><button class="btn bg" id="importConfirmBtn" style="display:none">Import Selected</button></div>
   </div>
@@ -1756,6 +1757,9 @@ var _importProjId=null;var _importProjName="";var _importAreas=[];
 function doImport(){
   var added=0;
   var src=(_importProjId&&_importAreas.length)?_importAreas:fieldAreas;
+  var replaceChk=document.getElementById('importReplaceChk');
+  var doReplace=replaceChk&&replaceChk.classList.contains('on')&&estItems.length>0;
+  if(doReplace){estItems=[];window.estItems=estItems;}
   for(var i=0;i<src.length;i++){
     if(!importSel[i])continue;
     var a=src[i];var pr=getProd(a.productId);
@@ -1778,6 +1782,7 @@ function showImportProjects(){
   if(descEl)descEl.textContent='Choose a project to import.';
   if(backBtn)backBtn.style.display='none';
   if(confBtn)confBtn.style.display='none';
+  var _rw=document.getElementById('importReplaceWrap');if(_rw)_rw.style.display='none';
   var projs=loadProjs();
   var h='';
   if(!projs.length){
@@ -1824,6 +1829,18 @@ function showImportAreas(pid){
   if(descEl)descEl.textContent='Select areas to import.';
   if(backBtn)backBtn.style.display='inline-block';
   if(confBtn)confBtn.style.display='inline-block';
+  var rw=document.getElementById('importReplaceWrap');
+  var rc=document.getElementById('importReplaceCount');
+  var rchk=document.getElementById('importReplaceChk');
+  if(rw){
+    if(estItems.length>0){
+      rw.style.display='flex';
+      if(rc)rc.textContent=estItems.length;
+      if(rchk){rchk.classList.add('on');rchk.textContent='✓';}
+    } else {
+      rw.style.display='none';
+    }
+  }
   importSel={};
   var h='';
   if(!_importAreas.length){
@@ -1854,6 +1871,19 @@ document.getElementById('importBarBtn').addEventListener('click',function(){
 });
 document.getElementById('importBackBtn').addEventListener('click',function(){
   showImportProjects();
+});
+document.getElementById('importReplaceChk').addEventListener('click',function(e){
+  e.stopPropagation();
+  var on=this.classList.contains('on');
+  this.classList.toggle('on',!on);
+  this.textContent=!on?'✓':'';
+});
+document.getElementById('importReplaceWrap').addEventListener('click',function(e){
+  if(e.target.id==='importReplaceChk')return;
+  var c=document.getElementById('importReplaceChk');
+  var on=c.classList.contains('on');
+  c.classList.toggle('on',!on);
+  c.textContent=!on?'✓':'';
 });
 document.getElementById('importCancelBtn').addEventListener('click',function(){closeOv('importOverlay');});
 document.getElementById('importConfirmBtn').addEventListener('click',function(e){e.stopPropagation();doImport();});
