@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260425_RTDB11_client-from-proj -->
+<!-- FieldBid v20260425_RTDB12_wldb-fix -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -785,6 +785,7 @@ firebase.initializeApp({
 });
 
 var db = firebase.firestore();
+var _wlDb = db;
 firebase.auth().signInAnonymously().catch(function(e){ console.warn('Auth:', e && e.message); });
 firebase.auth().onAuthStateChanged(function(u){ if (u) { setFbStatus('connected'); } });
 // Belt-and-suspenders: if auth already done by the time setFbStatus exists, force update on next tick
@@ -2084,9 +2085,9 @@ document.getElementById('confirmYes').addEventListener('click', function() {
 
 
 function sendToWorkLog() {
-  var cEl=document.getElementById("qClient"),aEl=document.getElementById("qAddress"),tEl=document.getElementById("qTotal");
-  var client=cEl?cEl.textContent.trim():"";
-  var address=aEl?aEl.textContent.trim():"";
+  var cEl=document.getElementById("qClient"),aEl=document.getElementById("qAddress"),tEl=document.getElementById("eTotalCost");
+  var client=(typeof quoteInfo!=='undefined'&&quoteInfo.client)?quoteInfo.client:(cEl?cEl.textContent.trim():"");
+  var address=(typeof quoteInfo!=='undefined'&&quoteInfo.address)?quoteInfo.address:(aEl?aEl.textContent.trim():"");
   var budget=tEl?parseFloat(tEl.textContent.replace(/[^0-9.]/g,""))||0:0;
   if(client==="Tap to add") client="";
   if(address==="Tap to add") address="";
