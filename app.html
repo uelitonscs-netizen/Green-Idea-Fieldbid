@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260425_RTDB10_proj-import -->
+<!-- FieldBid v20260425_RTDB11_client-from-proj -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1728,7 +1728,7 @@ document.getElementById('feCancelBtn').addEventListener('click',function(){close
 document.getElementById('feSaveBtn').addEventListener('click',function(){quoteInfo[curFieldEdit]=document.getElementById('feInput').value.trim();saveEI();renderEst();closeOv('feOverlay');});
 
 // IMPORT
-var _importProjId=null;var _importAreas=[];
+var _importProjId=null;var _importProjName="";var _importAreas=[];
 function doImport(){
   var added=0;
   var src=(_importProjId&&_importAreas.length)?_importAreas:fieldAreas;
@@ -1737,7 +1737,10 @@ function doImport(){
     var a=src[i];var pr=getProd(a.productId);
     estItems.push({name:a.name,productId:a.productId,sf:a.sf,price:pr?pr.price:0,notes:a.notes||'',photos:a.photos?a.photos.slice():[]});added++;
   }
-  if(added>0){saveEI();renderEst();}
+  if(added>0){
+    if(_importProjName){quoteInfo.client=_importProjName;}
+    saveEI();renderEst();
+  }
   closeOv('importOverlay');
   toast('✅ '+added+' area'+(added>1?'s':'')+' imported');
 }
@@ -1787,6 +1790,7 @@ function showImportAreas(pid){
   for(var i=0;i<projs.length;i++)if(projs[i].id===pid){proj=projs[i];break;}
   if(!proj)return;
   _importProjId=pid;
+  _importProjName=proj.name||'';
   _importAreas=proj.areas?JSON.parse(JSON.stringify(proj.areas)):[];
   var titleEl=document.getElementById('importTitle');
   var descEl=document.getElementById('importDesc');
