@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FieldBid v20260425_RTDB12_wldb-fix -->
+<!-- FieldBid v20260425_RTDB13_export-dims -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1163,6 +1163,8 @@ function exportField(){
     lines.push((i+1)+'. '+a.name);
     lines.push('   Product: '+(pr?pr.name:'Unknown'));
     lines.push('   SF: '+fmtN(a.sf)+(a.spec?' | '+a.spec:''));
+    var dims=formatDimText(a,'   ');
+    for(var di=0;di<dims.length;di++)lines.push(dims[di]);
     if(a.notes)lines.push('   Note: '+a.notes);
     totalSF+=a.sf||0;
   }
@@ -1186,6 +1188,27 @@ function copyText(t){
 }
 
 // RENDER FIELD AREAS
+// Plain-text version of dim rows for export/copy (no HTML).
+function formatDimText(a, indent){
+  if(!a||!a.calcMode)return [];
+  var rows = a.calcMode==='walls' ? a.wallRows : (a.calcMode==='floor' ? a.floorRows : null);
+  if(!rows||!rows.length)return [];
+  var lbl = a.calcMode==='walls' ? 'L x H' : 'L x W';
+  var pad = indent || '   ';
+  var out = [];
+  for(var i=0;i<rows.length;i++){
+    var lr = String(rows[i].l||'').trim();
+    var hr = String(rows[i].h||'').trim();
+    if(!lr||!hr)continue;
+    var l = (typeof parseSum==='function') ? parseSum(lr) : parseFloat(lr);
+    var hh = (typeof parseSum==='function') ? parseSum(hr) : parseFloat(hr);
+    if(l>0&&hh>0){
+      var sf = Math.round(l*hh*10)/10;
+      out.push(pad + '- ' + lbl + ': ' + lr + ' x ' + hr + ' = ' + sf + ' SF');
+    }
+  }
+  return out;
+}
 // Format saved measurement rows for display on cards / work orders.
 // Returns HTML string or empty string if no rows.
 function formatDimRows(a, opts){
@@ -1736,7 +1759,7 @@ function doImport(){
   for(var i=0;i<src.length;i++){
     if(!importSel[i])continue;
     var a=src[i];var pr=getProd(a.productId);
-    estItems.push({name:a.name,productId:a.productId,sf:a.sf,price:pr?pr.price:0,notes:a.notes||'',photos:a.photos?a.photos.slice():[]});added++;
+    estItems.push({name:a.name,productId:a.productId,sf:a.sf,price:pr?pr.price:0,notes:a.notes||'',photos:a.photos?a.photos.slice():[],calcMode:a.calcMode||'',wallRows:a.wallRows?JSON.parse(JSON.stringify(a.wallRows)):null,floorRows:a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):null});added++;
   }
   if(added>0){
     if(_importProjName){quoteInfo.client=_importProjName;}
@@ -2027,7 +2050,7 @@ document.getElementById('licToggle').addEventListener('click',function(){
 function buildQT(){
   var totals=calcTotals();
   var lines=[cfg.company,cfg.contact,'','INSULATION ESTIMATE','Quote #'+quoteNum,new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),'','Client: '+(quoteInfo.client||'N/A'),'Address: '+(quoteInfo.address||'N/A'),'','─────────────────────────'];
-  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);lines.push('  '+fmtN(it.sf)+' SF × $'+it.price.toFixed(2)+'/SF = '+fmt(c));if(it.notes)lines.push('  Note: '+it.notes);}
+  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);lines.push('  '+fmtN(it.sf)+' SF × $'+it.price.toFixed(2)+'/SF = '+fmt(c));var dims=formatDimText(it,'  ');for(var di=0;di<dims.length;di++)lines.push(dims[di]);if(it.notes)lines.push('  Note: '+it.notes);}
   lines.push('─────────────────────────','Subtotal: '+fmt(totals.sub));
   if(cfg.taxRate>0)lines.push('Tax ('+cfg.taxRate+'%): '+fmt(totals.tax));
   lines.push('TOTAL: '+fmt(totals.total),'','Thank you for your business!');
