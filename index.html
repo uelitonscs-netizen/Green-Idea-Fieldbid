@@ -1898,7 +1898,8 @@ function generateProofPDF(pid){
     // Build a map of estItems by name to pick up manual edits (inches, price)
     var estMap={};
     for(var ei=0;ei<projEstItems.length;ei++){
-      estMap[projEstItems[ei].name]=projEstItems[ei];
+      var _eiName=(projEstItems[ei].name||'').trim().toLowerCase();
+      estMap[_eiName]=projEstItems[ei];
     }
     // Strategy:
     // 1. Use takeoff AREAS as base (they have ccInch, ocInch, matCat, etc.)
@@ -1909,7 +1910,7 @@ function generateProofPDF(pid){
     // First add all takeoff areas (merged with estItem overrides)
     for(var ai=0;ai<areas.length;ai++){
       var _a=JSON.parse(JSON.stringify(areas[ai]));
-      var _ei=estMap[_a.name]||null;
+      var _ei=estMap[(_a.name||'').trim().toLowerCase()]||null;
       if(_ei){
         // User edited this item: override inches/productId if set
         if(_ei.inches&&parseFloat(_ei.inches)>0) _a._editedInches=parseFloat(_ei.inches);
@@ -1927,13 +1928,13 @@ function generateProofPDF(pid){
         var _det2=detectMatCatFromText((_a.name||'')+' '+(_a.notes||''));
         if(_det2) _a.matCat=_det2;
       }
-      areaNames[_a.name]=1;
+      areaNames[(_a.name||'').trim().toLowerCase()]=1;
       srcItems.push(_a);
     }
     // Then add estItems that have no matching area (manually created in estimator)
     for(var mi=0;mi<projEstItems.length;mi++){
       var _m=projEstItems[mi];
-      if(!areaNames[_m.name]&&_m.sf>0){
+      if(!areaNames[(_m.name||'').trim().toLowerCase()]&&_m.sf>0){
         var _mc=JSON.parse(JSON.stringify(_m));
         // Enrich with product matCat if missing
         if(!_mc.matCat&&!_mc.matType&&_mc.productId){
@@ -1982,10 +1983,18 @@ function generateProofPDF(pid){
       } else if(a.fgR>0){
         // 4. Fiberglass R-value from takeoff
         rNum=a.fgR;
-        if(a.fgInch>0) thick=a.fgInch+'"';
+        if(a.fgInch>0){ thick=a.fgInch+'"'; }
+        else{
+          // FG standard thickness: R11=3.5", R13=3.5", R15=3.5", R19=6.25", R21=5.5", R30=9.5", R38=12", R49=15.5"
+          var fgThickMap={11:'3.5"',13:'3.5"',15:'3.5"',19:'6.25"',21:'5.5"',25:'8"',30:'9.5"',38:'12"',49:'15.5"'};
+          if(fgThickMap[rNum]) thick=fgThickMap[rNum];
+        }
       } else if(a.mwR>0){
         // 5. Mineral wool R-value from takeoff
         rNum=a.mwR;
+        // MW standard thickness: R13=3.5", R15=3.5", R21=5.5", R23=5.5", R30=7.5"
+        var mwThickMap={13:'3.5"',15:'3.5"',21:'5.5"',23:'5.5"',30:'7.5"',38:'10"'};
+        if(mwThickMap[rNum]) thick=mwThickMap[rNum];
       } else if(a.celR>0||(a.matCat==='cel'||a.matCat==='cel_blown')){
         // 6. Cellulose - depth from GreenFiber table
         var _celR=a.celR||rFromName;
