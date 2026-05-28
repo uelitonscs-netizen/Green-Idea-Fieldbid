@@ -440,22 +440,60 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-<div id="home">
-  <div class="brand">
-    <div class="brand-logo">
-      <img src="icon-192.png" alt="FieldBid" style="width:90px;height:90px;object-fit:cover;border-radius:22px;">
+<div id="home" style="background:#f2f4f7;min-height:100vh;display:flex;flex-direction:column;font-family:-apple-system,sans-serif">
+
+  <!-- HEADER -->
+  <div style="background:#fff;padding:52px 24px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb">
+    <div>
+      <div style="font-size:28px;font-weight:800;color:#111827;letter-spacing:-.5px;line-height:1">FieldBid</div>
+      <div style="font-size:11px;color:#9ca3af;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-top:3px">Green Idea Insulation</div>
     </div>
-    <div class="brand-name">FieldBid</div>
-    <div class="brand-sub">by Green Idea Insulation</div>
+    <img src="icon-192.png" alt="FieldBid" style="width:52px;height:52px;border-radius:12px;object-fit:cover">
   </div>
-  <button class="mode-btn field" id="btnField">
-    <div class="mode-top"><div class="mode-icon">📐</div><div><div class="mode-title">Field Takeoff</div><div class="mode-sub">On-site measuring</div></div></div>
-    <div class="mode-desc">Measure areas, record square footage, take photos and field notes. No pricing involved.</div>
-  </button>
-  <button class="mode-btn est" id="btnEst">
-    <div class="mode-top"><div class="mode-icon">💼</div><div><div class="mode-title">Estimator</div><div class="mode-sub">Quotes &amp; contracts</div></div></div>
-    <div class="mode-desc">Build estimates, generate quotes and contracts with client signature.</div>
-  </button>
+
+  <!-- STATS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px 20px 0">
+    <button id="homeStatField" style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px 18px;text-align:left;cursor:pointer">
+      <div style="font-size:24px;font-weight:800;color:#111827;line-height:1;margin-bottom:3px" id="homeStatFieldVal">— <span style="color:#16a34a;font-size:16px">proj</span></div>
+      <div style="font-size:11.5px;color:#9ca3af;font-weight:500" id="homeStatFieldSub">Loading...</div>
+      <div style="font-size:11px;font-weight:600;color:#16a34a;margin-top:8px">Open Takeoff →</div>
+    </button>
+    <button id="homeStatJobs" style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px 18px;text-align:left;cursor:pointer">
+      <div style="font-size:24px;font-weight:800;color:#111827;line-height:1;margin-bottom:3px" id="homeStatJobsVal">— <span style="color:#16a34a;font-size:16px">jobs</span></div>
+      <div style="font-size:11.5px;color:#9ca3af;font-weight:500" id="homeStatJobsSub">Loading...</div>
+      <div style="font-size:11px;font-weight:600;color:#16a34a;margin-top:8px">Open Jobs →</div>
+    </button>
+  </div>
+
+  <!-- SECTION LABEL -->
+  <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;padding:20px 20px 10px">Choose Mode</div>
+
+  <!-- MODE CARDS -->
+  <div style="padding:0 20px 24px;display:flex;flex-direction:column;gap:12px">
+
+    <button class="mode-btn field" id="btnField" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);text-align:left">
+      <div style="width:50px;height:50px;border-radius:14px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📐</div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">Field Takeoff</div>
+        <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#d97706;margin-bottom:6px">On-site measuring</div>
+        <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Measure areas, record SF, take photos and field notes.</div>
+      </div>
+      <div style="font-size:20px;color:#d1d5db;flex-shrink:0">›</div>
+    </button>
+
+    <button class="mode-btn est" id="btnEst" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);text-align:left">
+      <div style="width:50px;height:50px;border-radius:14px;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">💼</div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">Estimator</div>
+        <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#16a34a;margin-bottom:6px">Quotes &amp; Contracts</div>
+        <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Build estimates, generate quotes and contracts.</div>
+      </div>
+      <div style="font-size:20px;color:#d1d5db;flex-shrink:0">›</div>
+    </button>
+
+  </div>
+
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation</div>
 </div>
 
 <div id="field-app">
@@ -1194,6 +1232,40 @@ function load(){
 }
 
 // NAVIGATION
+// Home stats — populate with real data
+function updateHomeStats(){
+  var projs=loadProjs();
+  var totalAreas=0;
+  projs.forEach(function(p){totalAreas+=(p.areas?p.areas.length:0);});
+  var jobsWithEst=projs.filter(function(p){return p.estItems&&p.estItems.length>0;});
+  var totalEst=0;
+  jobsWithEst.forEach(function(p){
+    if(p.quoteInfo&&p.quoteInfo.total) totalEst+=parseFloat(p.quoteInfo.total)||0;
+  });
+  var fv=document.getElementById('homeStatFieldVal');
+  var fs=document.getElementById('homeStatFieldSub');
+  var jv=document.getElementById('homeStatJobsVal');
+  var js=document.getElementById('homeStatJobsSub');
+  if(fv) fv.innerHTML=projs.length+' <span style="color:#16a34a;font-size:16px">proj</span>';
+  if(fs) fs.textContent=totalAreas+' areas measured';
+  if(jv) jv.innerHTML=jobsWithEst.length+' <span style="color:#16a34a;font-size:16px">jobs</span>';
+  if(js) js.textContent='$'+totalEst.toLocaleString()+' estimated';
+}
+
+// Stats shortcuts
+document.getElementById('homeStatField').addEventListener('click',function(){
+  document.getElementById('home').style.display='none';
+  document.getElementById('field-app').style.display='block';
+  document.getElementById('estFab').style.display='none';
+});
+document.getElementById('homeStatJobs').addEventListener('click',function(){
+  document.getElementById('home').style.display='none';
+  document.getElementById('est-app').style.display='block';
+  document.getElementById('estFab').style.display='none';
+  showEP('jobs',document.getElementById('et5'));
+  renderJobsList();
+});
+
 document.getElementById('btnField').addEventListener('click',function(){
   document.getElementById('home').style.display='none';
   document.getElementById('field-app').style.display='block';
@@ -1212,12 +1284,12 @@ document.getElementById('btnEst').addEventListener('click',function(){
 document.getElementById('backField').addEventListener('click',function(){
   document.getElementById('field-app').style.display='none';
   document.getElementById('fieldFab').style.display='none';
-  document.getElementById('home').style.display='flex';
+  document.getElementById('home').style.display='flex'; updateHomeStats();
 });
 document.getElementById('backEst').addEventListener('click',function(){
   document.getElementById('est-app').style.display='none';
   document.getElementById('estFab').style.display='none';
-  document.getElementById('home').style.display='flex';
+  document.getElementById('home').style.display='flex'; updateHomeStats();
 });
 
 // FIELD TABS
