@@ -1078,7 +1078,8 @@ var DEFAULTS=[
   {id:'p10',name:'Fiberglass Batt R-49',emoji:'🧶',cat:'Batt',price:2.90,desc:'R-49',pricingType:'per_sf'},
   {id:'p11',name:'Mineral Wool R-15',emoji:'🪨',cat:'Mineral Wool',price:1.90,desc:'R-15, 3.5"',pricingType:'per_sf'},
   {id:'p12',name:'Mineral Wool R-21',emoji:'🪨',cat:'Mineral Wool',price:2.90,desc:'R-21, 5.5"',pricingType:'per_sf'},
-  {id:'p13',name:'Ignition Barrier',emoji:'🔥',cat:'Air Barrier',price:1.10,desc:'$1.10/SF',pricingType:'per_sf'}
+  {id:'p13',name:'Ignition Barrier',emoji:'🔥',cat:'Air Barrier',price:1.10,desc:'$1.10/SF',pricingType:'per_sf'},
+  {id:'p14',name:'Hybrid — Foam + Mineral Wool',emoji:'🔀',cat:'Hybrid',price:1.00,desc:'CC foam + mineral wool',pricingType:'per_inch'}
 ];
 
 // ── LAST PRICE BY TYPE ──────────────────────────────
@@ -2403,12 +2404,35 @@ function renderJobsList(){
       h += '<span style="background:#1e2530;border-radius:6px;padding:3px 8px;font-size:11px;color:#94a3b8">'+itemCount+' item'+(itemCount!==1?'s':'')+'</span>';
     }
     h += '</div>';
+    // Estimate status
+    var estStatus = (p.estStatus)||'none';
+    var statusCfg = {
+      'none':  {label:'📨 Mark as Sent',  bg:'#1e2530', border:'#2a3340', color:'#94a3b8'},
+      'sent':  {label:'📨 Sent',          bg:'#1a2535', border:'#2a4a6a', color:'#60a5fa'},
+      'approved': {label:'✅ Approved',   bg:'#1a3020', border:'#2a6b35', color:'#4ade80'},
+      'rejected': {label:'❌ Rejected',   bg:'#2a1515', border:'#6a2a2a', color:'#f87171'}
+    };
+    var sc = statusCfg[estStatus] || statusCfg['none'];
+    if(estStatus !== 'none'){
+      h += '<div style="margin-bottom:8px">';
+      h += '<span style="background:'+sc.bg+';border:1px solid '+sc.border+';border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;color:'+sc.color+'">'+sc.label+'</span>';
+      h += '</div>';
+    }
     // Action buttons
     h += '<div style="display:flex;flex-direction:column;gap:6px">';
     h += '<button class="job-open-btn" data-act="open" data-pid="'+p.id+'" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">'+(isActive?'✓ Editing':'Open Job')+'</button>';
     h += '<button class="job-cert-btn" data-act="cert" data-pid="'+p.id+'" style="width:100%;background:#f59e0b;border:none;color:#000;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">📋 Generate Certificate</button>';
     h += '<button class="job-est-btn" data-act="est" data-pid="'+p.id+'" style="width:100%;background:#2563eb;border:none;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">📄 Generate Estimate</button>';
     h += '<button class="job-del-btn" data-act="del" data-pid="'+p.id+'" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f87171;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🗑 Delete</button>';
+    var nextStatus = {none:'sent',sent:'approved',approved:'rejected',rejected:'none'};
+    var statusBtnCfg = {
+      none:     {label:'📨 Mark as Sent',    bg:'#1e2530',border:'#2a4a6a',color:'#60a5fa'},
+      sent:     {label:'✅ Mark Approved',   bg:'#1a3020',border:'#2a6b35',color:'#4ade80'},
+      approved: {label:'❌ Mark Rejected',   bg:'#2a1515',border:'#6a2a2a',color:'#f87171'},
+      rejected: {label:'🔄 Reset Status',   bg:'#1e2530',border:'#2a3340',color:'#94a3b8'}
+    };
+    var sbc = statusBtnCfg[estStatus]||statusBtnCfg.none;
+    h += '<button class="job-status-btn" data-act="status" data-pid="'+p.id+'" data-next="'+nextStatus[estStatus]+'" style="width:100%;background:'+sbc.bg+';border:1px solid '+sbc.border+';color:'+sbc.color+';border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">'+sbc.label+'</button>';
     h += '</div>';
     h += '</div></div>';
   }
@@ -2436,6 +2460,20 @@ function renderJobsList(){
       if(el){el.classList.add('on');el.style.display='flex';}
     }
     else if(act === 'del') clearJobEstimate(pid);
+    else if(act === 'status'){
+      var nextSt = btn.getAttribute('data-next');
+      var projs = loadProjs();
+      for(var _si=0;_si<projs.length;_si++){
+        if(projs[_si].id===pid){
+          projs[_si].estStatus = nextSt;
+          // Save sent date when marking as sent
+          if(nextSt==='sent') projs[_si].estSentDate = new Date().toLocaleDateString('en-US');
+          break;
+        }
+      }
+      saveProjs(projs);
+      renderJobsList();
+    }
   });
 }
 window.renderJobsList = renderJobsList;
@@ -3234,7 +3272,7 @@ function doImport(){
     var pr=getProd(a.productId);
     // If no product, find best match from matType
     if(!pr&&a.matType){
-      var mtMap={'cc':'p2','oc':'p1','hybrid':'p3','hybrid_foam_fg':'p3','hybrid_foam_mw':'p11','cel_blown':'p4','cel':'p4','cel_dense':'p4','fg':'p6','fg_r11':'p6','fg_r13':'p6','fg_r15':'p6','fg_r19':'p7','fg_r21':'p8','fg_r25':'p8','fg_r30':'p9','fg_r38':'p9','fg_r49':'p10','fg_custom':'p6','mw':'p11','mw_r15':'p11','mw_r21':'p12','mw_r23':'p12','mw_r30':'p12','mw_custom':'p11','ign':'p13','ignition':'p13','fb':'p13','other':'p6'};
+      var mtMap={'cc':'p2','oc':'p1','hybrid':'p3','hybrid_foam_fg':'p3','hybrid_foam_mw':'p14','cel_blown':'p4','cel':'p4','cel_dense':'p4','fg':'p6','fg_r11':'p6','fg_r13':'p6','fg_r15':'p6','fg_r19':'p7','fg_r21':'p8','fg_r25':'p8','fg_r30':'p9','fg_r38':'p9','fg_r49':'p10','fg_custom':'p6','mw':'p11','mw_r15':'p11','mw_r21':'p12','mw_r23':'p12','mw_r30':'p12','mw_custom':'p11','ign':'p13','ignition':'p13','fb':'p13','other':'p6'};
       var mappedId=mtMap[a.matType];
       if(mappedId) pr=getProd(mappedId);
     }
