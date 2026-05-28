@@ -1354,7 +1354,18 @@ document.getElementById('fieldProjName').addEventListener('click', function(){ o
   var certBtn=document.getElementById('proofCertBtn');
   if(certBtn) certBtn.addEventListener('click', function(){ generateProofPDF(); });
 (function(){ var mb=document.getElementById('multToggleBtn'); if(mb) mb.addEventListener('click', toggleMultiplier); })();
-document.getElementById('projCloseBtn').addEventListener('click',function(){closeOv('projOverlay');});
+document.getElementById('projOverlay').addEventListener('click',function(e){
+  if(e.target===this){
+    var w=document.getElementById('projListWrap');
+    if(w) w.style.display='';
+    closeOv('projOverlay');
+  }
+});
+document.getElementById('projCloseBtn').addEventListener('click',function(){
+  var w=document.getElementById('projListWrap');
+  if(w) w.style.display='';
+  closeOv('projOverlay');
+});
 document.getElementById('createProjBtn').addEventListener('click',function(){createProj();});
 function openProjModal(){
   var f=document.getElementById('newProjForm');
@@ -3805,7 +3816,7 @@ document.getElementById('printCtBtn').addEventListener('click',function(){window
 
 // OVERLAY CLOSE ON BACKDROP
 // Safe overlays - close on backdrop click freely
-var safeOvs=['prodOverlay','feOverlay','importOverlay','projOverlay'];
+var safeOvs=['prodOverlay','feOverlay','importOverlay'];
 for(var oi=0;oi<safeOvs.length;oi++){
   (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(safeOvs[oi]);
 }
