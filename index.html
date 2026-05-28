@@ -453,14 +453,14 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 
   <!-- STATS -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px 20px 0">
-    <button id="homeStatField" style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px 18px;text-align:left;cursor:pointer">
-      <div style="font-size:24px;font-weight:800;color:#111827;line-height:1;margin-bottom:3px" id="homeStatFieldVal">— <span style="color:#16a34a;font-size:16px">proj</span></div>
-      <div style="font-size:11.5px;color:#9ca3af;font-weight:500" id="homeStatFieldSub">Loading...</div>
+    <button id="homeStatField" style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px 18px;text-align:left;cursor:pointer;width:100%">
+      <div id="homeStatFieldVal" style="font-size:24px;font-weight:800;color:#111827;line-height:1;margin-bottom:3px">— <span style="color:#16a34a;font-size:16px">proj</span></div>
+      <div id="homeStatFieldSub" style="font-size:11.5px;color:#9ca3af;font-weight:500">Loading...</div>
       <div style="font-size:11px;font-weight:600;color:#16a34a;margin-top:8px">Open Takeoff →</div>
     </button>
-    <button id="homeStatJobs" style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px 18px;text-align:left;cursor:pointer">
-      <div style="font-size:24px;font-weight:800;color:#111827;line-height:1;margin-bottom:3px" id="homeStatJobsVal">— <span style="color:#16a34a;font-size:16px">jobs</span></div>
-      <div style="font-size:11.5px;color:#9ca3af;font-weight:500" id="homeStatJobsSub">Loading...</div>
+    <button id="homeStatJobs" style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px 18px;text-align:left;cursor:pointer;width:100%">
+      <div id="homeStatJobsVal" style="font-size:24px;font-weight:800;color:#111827;line-height:1;margin-bottom:3px">— <span style="color:#16a34a;font-size:16px">jobs</span></div>
+      <div id="homeStatJobsSub" style="font-size:11.5px;color:#9ca3af;font-weight:500">Loading...</div>
       <div style="font-size:11px;font-weight:600;color:#16a34a;margin-top:8px">Open Jobs →</div>
     </button>
   </div>
@@ -471,24 +471,28 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
   <!-- MODE CARDS -->
   <div style="padding:0 20px 24px;display:flex;flex-direction:column;gap:12px">
 
-    <button class="mode-btn field" id="btnField" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);text-align:left">
-      <div style="width:50px;height:50px;border-radius:14px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📐</div>
-      <div style="flex:1">
-        <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">Field Takeoff</div>
-        <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#d97706;margin-bottom:6px">On-site measuring</div>
-        <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Measure areas, record SF, take photos and field notes.</div>
+    <button class="mode-btn field" id="btnField" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.06);width:100%;overflow:hidden">
+      <div style="display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;gap:16px;padding:20px">
+        <div style="width:50px;height:50px;border-radius:14px;background:#fef3c7;display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;-webkit-box-pack:center;justify-content:center;font-size:22px;flex-shrink:0">📐</div>
+        <div style="-webkit-box-flex:1;flex:1;text-align:left">
+          <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">Field Takeoff</div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#d97706;margin-bottom:6px">On-site measuring</div>
+          <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Measure areas, record SF, take photos and field notes.</div>
+        </div>
+        <div style="font-size:20px;color:#d1d5db;flex-shrink:0">›</div>
       </div>
-      <div style="font-size:20px;color:#d1d5db;flex-shrink:0">›</div>
     </button>
 
-    <button class="mode-btn est" id="btnEst" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);text-align:left">
-      <div style="width:50px;height:50px;border-radius:14px;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">💼</div>
-      <div style="flex:1">
-        <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">Estimator</div>
-        <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#16a34a;margin-bottom:6px">Quotes &amp; Contracts</div>
-        <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Build estimates, generate quotes and contracts.</div>
+    <button class="mode-btn est" id="btnEst" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.06);width:100%;overflow:hidden">
+      <div style="display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;gap:16px;padding:20px">
+        <div style="width:50px;height:50px;border-radius:14px;background:#dcfce7;display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;-webkit-box-pack:center;justify-content:center;font-size:22px;flex-shrink:0">💼</div>
+        <div style="-webkit-box-flex:1;flex:1;text-align:left">
+          <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">Estimator</div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#16a34a;margin-bottom:6px">Quotes &amp; Contracts</div>
+          <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Build estimates, generate quotes and contracts.</div>
+        </div>
+        <div style="font-size:20px;color:#d1d5db;flex-shrink:0">›</div>
       </div>
-      <div style="font-size:20px;color:#d1d5db;flex-shrink:0">›</div>
     </button>
 
   </div>
