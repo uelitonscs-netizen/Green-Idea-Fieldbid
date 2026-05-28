@@ -3286,15 +3286,15 @@ function doImport(){
     }
     // Fallback: detect from name/notes for old areas without matType
     if(!pr&&!a.matType){
-      var src=((a.name||'')+' '+(a.notes||'')+' '+(a.spec||'')).toLowerCase();
+      var _srcText=((a.name||'')+' '+(a.notes||'')+' '+(a.spec||'')).toLowerCase();
       var pid2=null;
-      if(src.match(/closed.cell|\bcc\b/)) pid2='p2';
-      else if(src.match(/hybrid/)) pid2='p3';
-      else if(src.match(/open.cell|\boc\b/)) pid2='p1';
-      else if(src.match(/mineral.wool|roxul|rockwool/)) pid2='p8';
-      else if(src.match(/cellulose/)) pid2='p4';
-      else if(src.match(/fiberglass|fiber.glass|batt/)) pid2='p6';
-      else if(src.match(/ignition|intumescent/)) pid2='p11';
+      if(_srcText.match(/closed.cell|\bcc\b/)) pid2='p2';
+      else if(_srcText.match(/hybrid/)) pid2='p3';
+      else if(_srcText.match(/open.cell|\boc\b/)) pid2='p1';
+      else if(_srcText.match(/mineral.wool|roxul|rockwool/)) pid2='p8';
+      else if(_srcText.match(/cellulose/)) pid2='p4';
+      else if(_srcText.match(/fiberglass|fiber.glass|batt/)) pid2='p6';
+      else if(_srcText.match(/ignition|intumescent/)) pid2='p11';
       if(pid2) pr=getProd(pid2);
     }
     // Priority: 1) lastPrice on area object, 2) lastPrice by name, 3) lastPrice by product, 4) product default
@@ -3318,10 +3318,20 @@ function doImport(){
     else if(a.fgInch>0) _importInch=parseFloat(a.fgInch);
     else if(a.celInch>0) _importInch=parseFloat(a.celInch);
     var _newProdId=_useProd?_useProd.id:(pr?pr.id:a.productId);
-    // Check if item with same name already exists → UPDATE it instead of duplicate
+    // Check if item with same name AND same product AND same SF exists → UPDATE, else ADD new
     var _existIdx=-1;
+    var _aMtype=a.matType||a.matCat||'';
+    var _aNewProdId=_newProdId||'';
+    var _aSF=parseFloat(a.sf)||0;
     for(var _ei2=0;_ei2<estItems.length;_ei2++){
-      if(estItems[_ei2].name===a.name){_existIdx=_ei2;break;}
+      var _eiProd=estItems[_ei2].productId||'';
+      var _eiMtype=estItems[_ei2].matType||estItems[_ei2].matCat||'';
+      var _eiSF=parseFloat(estItems[_ei2].sf)||0;
+      // Match name + product + SF — same name same product different SF = different item
+      var _nameMatch=estItems[_ei2].name===a.name;
+      var _matMatch=(_aNewProdId&&_eiProd)?(_eiProd===_aNewProdId):(_eiMtype===_aMtype);
+      var _sfMatch=Math.abs(_eiSF-_aSF)<0.5;
+      if(_nameMatch && _matMatch && _sfMatch){_existIdx=_ei2;break;}
     }
     var _newItem={name:a.name,productId:_newProdId,sf:a.sf,price:lastP,inches:_importInch||0,notes:a.notes||'',photos:a.photos?a.photos.slice():[],calcMode:a.calcMode||'',wallRows:a.wallRows?JSON.parse(JSON.stringify(a.wallRows)):null,floorRows:a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):null};
     if(_existIdx>=0){
