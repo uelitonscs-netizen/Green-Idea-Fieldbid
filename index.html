@@ -696,7 +696,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 <div class="overlay" id="projOverlay">
   <div class="modal">
     <div class="mhandle"></div>
-    <div class="mtitle">Projects</div>
+    <div class="mtitle" id="projModalTitle">Projects</div>
     <div class="fg" id="newProjForm">
       <label class="fl">New Project Name / Client</label>
       <input class="fi af" id="newProjName" type="text" placeholder="e.g. Smith Residence" style="margin-bottom:8px">
@@ -1358,12 +1358,20 @@ document.getElementById('projOverlay').addEventListener('click',function(e){
   if(e.target===this){
     var w=document.getElementById('projListWrap');
     if(w) w.style.display='';
+    var f=document.getElementById('newProjForm');
+    if(f) f.style.display='';
+    var ti=document.getElementById('projModalTitle');
+    if(ti) ti.textContent='Projects';
     closeOv('projOverlay');
   }
 });
 document.getElementById('projCloseBtn').addEventListener('click',function(){
   var w=document.getElementById('projListWrap');
   if(w) w.style.display='';
+  var f=document.getElementById('newProjForm');
+  if(f) f.style.display='';
+  var ti=document.getElementById('projModalTitle');
+  if(ti) ti.textContent='Projects';
   closeOv('projOverlay');
 });
 document.getElementById('createProjBtn').addEventListener('click',function(){createProj();});
@@ -1372,6 +1380,8 @@ function openProjModal(){
   if(f) f.style.display='';
   var w=document.getElementById('projListWrap');
   if(w) w.style.display='';
+  var t=document.getElementById('projModalTitle');
+  if(t) t.textContent='Projects';
   renderProjList();
   openOv('projOverlay');
 }
@@ -1380,15 +1390,18 @@ function openProjList(){
   if(f) f.style.display='none';
   var w=document.getElementById('projListWrap');
   if(w) w.style.display='';
+  var t=document.getElementById('projModalTitle');
+  if(t) t.textContent='Projects';
   renderProjList();
   openOv('projOverlay');
 }
 function openNewProjOnly(){
-  // Show only new project form, hide saved projects section
   var f=document.getElementById('newProjForm');
   if(f) f.style.display='';
   var w=document.getElementById('projListWrap');
   if(w) w.style.display='none';
+  var t=document.getElementById('projModalTitle');
+  if(t) t.textContent='New Project';
   openOv('projOverlay');
 }
 function switchProjById(pid){
