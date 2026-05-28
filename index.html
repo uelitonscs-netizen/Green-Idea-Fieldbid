@@ -2878,7 +2878,11 @@ function restoreMatCatFields(area){
 }
 window.restoreMatCatFields=restoreMatCatFields;
 
-document.getElementById('faCancelBtn').addEventListener('click',function(){editFAIdx=-1;faPendPh=[];closeOv('faOverlay');});
+document.getElementById('faCancelBtn').addEventListener('click',function(){
+  if(hasFADirtyData()&&editFAIdx<0){
+    appConfirm('Discard unsaved area data?',function(){editFAIdx=-1;faPendPh=[];closeOv('faOverlay');});
+  } else { editFAIdx=-1;faPendPh=[];closeOv('faOverlay'); }
+});
   // Material category change listener
   var matCatSel=document.getElementById('fa_mat_cat');
   if(matCatSel) matCatSel.addEventListener('change',function(){onMatCatChange();});
@@ -3033,7 +3037,11 @@ function updateEIPricingUI(){
 document.getElementById('ei_sf').addEventListener('input',updateEIHint);
 document.getElementById('ei_price').addEventListener('input',updateEIHint);
 document.getElementById('ei_inch').addEventListener('input',updateEIHint);
-document.getElementById('eiCancelBtn').addEventListener('click',function(){editEIIdx=-1;eiProd=null;eiPendPh=[];closeOv('eiOverlay');});
+document.getElementById('eiCancelBtn').addEventListener('click',function(){
+  if(hasEIDirtyData()&&editEIIdx<0){
+    appConfirm('Discard unsaved item data?',function(){editEIIdx=-1;eiProd=null;eiPendPh=[];closeOv('eiOverlay');});
+  } else { editEIIdx=-1;eiProd=null;eiPendPh=[];closeOv('eiOverlay'); }
+});
 document.getElementById('eiSaveBtn').addEventListener('click',function(){
   var name=document.getElementById('ei_name').value.trim();
   var sf=parseFloat(document.getElementById('ei_sf').value);
@@ -3685,10 +3693,37 @@ document.getElementById('shareCtBtn').addEventListener('click',function(){
 document.getElementById('printCtBtn').addEventListener('click',function(){window.print();});
 
 // OVERLAY CLOSE ON BACKDROP
-var ovs=['faOverlay','eiOverlay','prodOverlay','feOverlay','importOverlay','projOverlay'];
-for(var oi=0;oi<ovs.length;oi++){
-  (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(ovs[oi]);
+// Safe overlays - close on backdrop click freely
+var safeOvs=['prodOverlay','feOverlay','importOverlay','projOverlay'];
+for(var oi=0;oi<safeOvs.length;oi++){
+  (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(safeOvs[oi]);
 }
+// faOverlay and eiOverlay - check for unsaved data before closing
+function hasFADirtyData(){
+  var name=document.getElementById('fa_name');
+  var sf=document.getElementById('fa_manual_sf')||document.getElementById('fa_sf');
+  if(name&&name.value.trim()) return true;
+  return false;
+}
+function hasEIDirtyData(){
+  var name=document.getElementById('ei_name');
+  var price=document.getElementById('ei_price');
+  if(name&&name.value.trim()) return true;
+  if(price&&parseFloat(price.value)>0) return true;
+  return false;
+}
+document.getElementById('faOverlay').addEventListener('click',function(e){
+  if(e.target!==this) return;
+  if(hasFADirtyData()){
+    appConfirm('Discard unsaved area data?', function(){ closeOv('faOverlay'); });
+  } else { closeOv('faOverlay'); }
+});
+document.getElementById('eiOverlay').addEventListener('click',function(e){
+  if(e.target!==this) return;
+  if(hasEIDirtyData()){
+    appConfirm('Discard unsaved item data?', function(){ closeOv('eiOverlay'); });
+  } else { closeOv('eiOverlay'); }
+});
 
 load();
 
