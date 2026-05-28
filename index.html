@@ -1274,7 +1274,7 @@ document.getElementById('homeStatJobs').addEventListener('click',function(){
 document.getElementById('btnField').addEventListener('click',function(){
   document.getElementById('home').style.display='none';
   document.getElementById('field-app').style.display='block';
-  openProjModal();
+  openNewProjOnly();
   document.getElementById('fieldFab').style.display='flex';
   if(!currentProj){ fieldAreas=[]; window.fieldAreas=fieldAreas; }
   updateProjHeader();renderFA();renderFWO();
@@ -1359,14 +1359,26 @@ document.getElementById('createProjBtn').addEventListener('click',function(){cre
 function openProjModal(){
   var f=document.getElementById('newProjForm');
   if(f) f.style.display='';
+  var l=document.getElementById('projList');
+  if(l) l.style.display='';
   renderProjList();
   openOv('projOverlay');
 }
 function openProjList(){
-  // Open modal showing only existing projects (no new project form)
+  // Show only existing projects list, no new form
   var f=document.getElementById('newProjForm');
   if(f) f.style.display='none';
+  var l=document.getElementById('projList');
+  if(l) l.style.display='';
   renderProjList();
+  openOv('projOverlay');
+}
+function openNewProjOnly(){
+  // Show only new project form, no list
+  var f=document.getElementById('newProjForm');
+  if(f) f.style.display='';
+  var l=document.getElementById('projList');
+  if(l) l.style.display='none';
   openOv('projOverlay');
 }
 function switchProjById(pid){
