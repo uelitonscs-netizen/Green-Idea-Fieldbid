@@ -697,7 +697,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
   <div class="modal">
     <div class="mhandle"></div>
     <div class="mtitle">Projects</div>
-    <div class="fg">
+    <div class="fg" id="newProjForm">
       <label class="fl">New Project Name / Client</label>
       <input class="fi af" id="newProjName" type="text" placeholder="e.g. Smith Residence" style="margin-bottom:8px">
       <label class="fl">Address</label>
@@ -1261,6 +1261,7 @@ document.getElementById('homeStatField').addEventListener('click',function(){
   document.getElementById('home').style.display='none';
   document.getElementById('field-app').style.display='block';
   document.getElementById('estFab').style.display='none';
+  openProjList();
 });
 document.getElementById('homeStatJobs').addEventListener('click',function(){
   document.getElementById('home').style.display='none';
@@ -1273,6 +1274,7 @@ document.getElementById('homeStatJobs').addEventListener('click',function(){
 document.getElementById('btnField').addEventListener('click',function(){
   document.getElementById('home').style.display='none';
   document.getElementById('field-app').style.display='block';
+  openProjModal();
   document.getElementById('fieldFab').style.display='flex';
   if(!currentProj){ fieldAreas=[]; window.fieldAreas=fieldAreas; }
   updateProjHeader();renderFA();renderFWO();
@@ -1354,7 +1356,19 @@ document.getElementById('fieldProjName').addEventListener('click', function(){ o
 (function(){ var mb=document.getElementById('multToggleBtn'); if(mb) mb.addEventListener('click', toggleMultiplier); })();
 document.getElementById('projCloseBtn').addEventListener('click',function(){closeOv('projOverlay');});
 document.getElementById('createProjBtn').addEventListener('click',function(){createProj();});
-function openProjModal(){renderProjList();openOv('projOverlay');}
+function openProjModal(){
+  var f=document.getElementById('newProjForm');
+  if(f) f.style.display='';
+  renderProjList();
+  openOv('projOverlay');
+}
+function openProjList(){
+  // Open modal showing only existing projects (no new project form)
+  var f=document.getElementById('newProjForm');
+  if(f) f.style.display='none';
+  renderProjList();
+  openOv('projOverlay');
+}
 function switchProjById(pid){
   // Close modal immediately for instant visual feedback
   closeOv('projOverlay');
