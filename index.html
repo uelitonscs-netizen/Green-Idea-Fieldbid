@@ -1283,8 +1283,6 @@ document.getElementById('btnField').addEventListener('click',function(){
   document.getElementById('fieldFab').style.display='flex';
   if(!currentProj){ fieldAreas=[]; window.fieldAreas=fieldAreas; }
   updateProjHeader();renderFA();renderFWO();
-  // Auto-open project list if projects exist and none selected
-  if(!currentProj && loadProjs().length>0){ setTimeout(function(){openProjModal();},300); }
 });
 document.getElementById('btnEst').addEventListener('click',function(){
   document.getElementById('home').style.display='none';
