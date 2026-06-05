@@ -4099,6 +4099,11 @@ function sendToWorkLog(){
           if(pname2.indexOf('cellulose')>=0) celSqft+=sf; else fbgBagsTotal+=Math.ceil(sf/getFgSqftPerBag(0));
         } else if(cat==='Batt') fbgBagsTotal+=Math.ceil(sf/getFgSqftPerBag(0));
         else if(cat==='Air Barrier'){ignSqft+=sf; ignBuckets+=Math.ceil(sf/IGN_SQFT_BUCKET);}
+        else if(cat==='Rigid Board'){
+          var pname3=(pr&&pr.name)?pr.name.toLowerCase():'';
+          if(pname3.indexOf('2')>=0) rb2Sqft+=sf;
+          else if(pname3.indexOf('1')>=0) rb1Sqft+=sf;
+        }
       }
     }catch(e){ console.warn('area error:',e); }
   }
@@ -4114,6 +4119,8 @@ function sendToWorkLog(){
     ignSqft:Math.round(ignSqft),
     ignBuckets:ignBuckets,
     fbSqft:Math.round(fbSqft),
+    rb2Boards:Math.ceil(rb2Sqft/32),
+    rb1Boards:Math.ceil(rb1Sqft/32),
     source:'fieldbid'
   };
 
