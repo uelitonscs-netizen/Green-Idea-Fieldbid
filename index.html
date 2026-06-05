@@ -1127,7 +1127,9 @@ var DEFAULTS=[
   {id:'p12',name:'Mineral Wool R-21',emoji:'🪨',cat:'Mineral Wool',price:2.90,desc:'R-21, 5.5"',pricingType:'per_sf'},
   {id:'p13',name:'Ignition Barrier',emoji:'🔥',cat:'Air Barrier',price:1.10,desc:'$1.10/SF',pricingType:'per_sf'},
   {id:'p14',name:'Hybrid — Foam + Mineral Wool',emoji:'🔀',cat:'Hybrid',price:1.00,desc:'CC foam + mineral wool',pricingType:'per_inch'},
-  {id:'p15',name:'Other / Custom',emoji:'📦',cat:'Other',price:1.00,desc:'Custom pricing',pricingType:'per_sf'}
+  {id:'p15',name:'Other / Custom',emoji:'📦',cat:'Other',price:1.00,desc:'Custom pricing',pricingType:'per_sf'},
+  {id:'p16',name:'Rigid Board 2"',emoji:'🟫',cat:'Rigid Board',price:0.50,desc:'2" rigid board, $/SF',pricingType:'per_sf'},
+  {id:'p17',name:'Rigid Board 1"',emoji:'🟫',cat:'Rigid Board',price:0.35,desc:'1" rigid board, $/SF',pricingType:'per_sf'}
 ];
 
 // ── LAST PRICE BY TYPE ──────────────────────────────
@@ -3158,7 +3160,14 @@ function updateEIHint(){
   var price=parseFloat(document.getElementById('ei_price').value)||0;
   var pr=null; try{ pr=eiProd?getProd(eiProd):null; }catch(e){}
   var isHybrid=pr&&(pr.cat==='Hybrid');
+  var isRigid=pr&&(pr.cat==='Rigid Board');
   var total=0;
+  if(isRigid){
+    total=sf*price;
+    var boards=Math.ceil(sf/32);
+    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF ÷ 32 = <strong>'+boards+' boards</strong></span>  ·  Line total: <strong>'+fmt(total*(1+cfg.markup/100))+'</strong>';
+    return;
+  }
   if(isHybrid){
     total=sf*price;
     document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × $'+price+'/SF</span> = Line total: <strong>'+fmt(total*(1+cfg.markup/100))+'</strong>';
