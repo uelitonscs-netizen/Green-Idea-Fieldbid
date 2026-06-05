@@ -1126,7 +1126,8 @@ var DEFAULTS=[
   {id:'p11',name:'Mineral Wool R-15',emoji:'🪨',cat:'Mineral Wool',price:1.90,desc:'R-15, 3.5"',pricingType:'per_sf'},
   {id:'p12',name:'Mineral Wool R-21',emoji:'🪨',cat:'Mineral Wool',price:2.90,desc:'R-21, 5.5"',pricingType:'per_sf'},
   {id:'p13',name:'Ignition Barrier',emoji:'🔥',cat:'Air Barrier',price:1.10,desc:'$1.10/SF',pricingType:'per_sf'},
-  {id:'p14',name:'Hybrid — Foam + Mineral Wool',emoji:'🔀',cat:'Hybrid',price:1.00,desc:'CC foam + mineral wool',pricingType:'per_inch'}
+  {id:'p14',name:'Hybrid — Foam + Mineral Wool',emoji:'🔀',cat:'Hybrid',price:1.00,desc:'CC foam + mineral wool',pricingType:'per_inch'},
+  {id:'p15',name:'Other / Custom',emoji:'📦',cat:'Other',price:1.00,desc:'Custom pricing',pricingType:'per_sf'}
 ];
 
 // ── LAST PRICE BY TYPE ──────────────────────────────
@@ -3144,8 +3145,13 @@ function isPerInch(){
 function updateEIHint(){
   var sf=parseFloat(document.getElementById('ei_sf').value)||0;
   var price=parseFloat(document.getElementById('ei_price').value)||0;
+  var pr=getProd(eiProd);
+  var isHybrid=pr&&(pr.cat==='Hybrid');
   var total=0;
-  if(isPerInch()){
+  if(isHybrid){
+    total=sf*price;
+    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × $'+price+'/SF</span> = Line total: <strong>'+fmt(total*(1+cfg.markup/100))+'</strong>';
+  } else if(isPerInch()){
     var inch=parseFloat(document.getElementById('ei_inch').value)||0;
     total=sf*inch*price;
     document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × '+inch+'" × $'+price+'/in</span> = Line total: <strong>'+fmt(total*(1+cfg.markup/100))+'</strong>';
@@ -3156,10 +3162,18 @@ function updateEIHint(){
 }
 function updateEIPricingUI(){
   var perInch=isPerInch();
+  var pr=getProd(eiProd);
+  var isHybrid=pr&&(pr.cat==='Hybrid');
   var wrap=document.getElementById('ei_inch_wrap');
   var lbl=document.getElementById('ei_price_label');
-  if(wrap) wrap.style.display=perInch?'block':'none';
-  if(lbl) lbl.textContent=perInch?'Price / inch ($)':'Price / SF ($)';
+  // Hybrid: always use $/SF combined, hide thickness field
+  if(isHybrid){
+    if(wrap) wrap.style.display='none';
+    if(lbl) lbl.textContent='Price / SF (combined $)';
+  } else {
+    if(wrap) wrap.style.display=perInch?'block':'none';
+    if(lbl) lbl.textContent=perInch?'Price / inch ($)':'Price / SF ($)';
+  }
   updateEIHint();
 }
 document.getElementById('ei_sf').addEventListener('input',updateEIHint);
@@ -3408,7 +3422,7 @@ function doImport(){
     var pr=getProd(a.productId);
     // If no product, find best match from matType
     if(!pr&&a.matType){
-      var mtMap={'cc':'p2','oc':'p1','hybrid':'p3','hybrid_foam_fg':'p3','hybrid_foam_mw':'p14','cel_blown':'p4','cel':'p4','cel_dense':'p4','fg':'p6','fg_r11':'p6','fg_r13':'p6','fg_r15':'p6','fg_r19':'p7','fg_r21':'p8','fg_r25':'p8','fg_r30':'p9','fg_r38':'p9','fg_r49':'p10','fg_custom':'p6','mw':'p11','mw_r15':'p11','mw_r21':'p12','mw_r23':'p12','mw_r30':'p12','mw_custom':'p11','ign':'p13','ignition':'p13','fb':'p13','other':'p6'};
+      var mtMap={'cc':'p2','oc':'p1','hybrid':'p3','hybrid_foam_fg':'p3','hybrid_foam_mw':'p14','cel_blown':'p4','cel':'p4','cel_dense':'p4','fg':'p6','fg_r11':'p6','fg_r13':'p6','fg_r15':'p6','fg_r19':'p7','fg_r21':'p8','fg_r25':'p8','fg_r30':'p9','fg_r38':'p9','fg_r49':'p10','fg_custom':'p6','mw':'p11','mw_r15':'p11','mw_r21':'p12','mw_r23':'p12','mw_r30':'p12','mw_custom':'p11','ign':'p13','ignition':'p13','fb':'p13','other':'p15','custom':'p15'};
       var mappedId=mtMap[a.matType];
       if(mappedId) pr=getProd(mappedId);
     }
