@@ -1228,6 +1228,17 @@ function load(){
   try{var ct=localStorage.getItem('fb6_ct');if(ct)ctData=JSON.parse(ct);}catch(e){}
   try{var sg=localStorage.getItem('fb6_sg');if(sg)sigData=JSON.parse(sg);}catch(e){}
   try{var wc=localStorage.getItem('fb6_wc');if(wc)woChecked=JSON.parse(wc);}catch(e){}
+  // Migrate: ensure new default products exist
+  var defaultIds=DEFAULTS.map(function(d){return d.id;});
+  var prodIds=products.map(function(p){return p.id;});
+  var added=false;
+  for(var di=0;di<DEFAULTS.length;di++){
+    if(prodIds.indexOf(DEFAULTS[di].id)<0){
+      products.push(JSON.parse(JSON.stringify(DEFAULTS[di])));
+      added=true;
+    }
+  }
+  if(added){savePR();}
   applySettings();applyCtFields();
   if(sigData&&sigData.img){
     document.getElementById('sigSaved').style.display='block';
@@ -3145,7 +3156,7 @@ function isPerInch(){
 function updateEIHint(){
   var sf=parseFloat(document.getElementById('ei_sf').value)||0;
   var price=parseFloat(document.getElementById('ei_price').value)||0;
-  var pr=getProd(eiProd);
+  var pr=null; try{ pr=eiProd?getProd(eiProd):null; }catch(e){}
   var isHybrid=pr&&(pr.cat==='Hybrid');
   var total=0;
   if(isHybrid){
@@ -3162,11 +3173,10 @@ function updateEIHint(){
 }
 function updateEIPricingUI(){
   var perInch=isPerInch();
-  var pr=getProd(eiProd);
+  var pr=null; try{ pr=eiProd?getProd(eiProd):null; }catch(e){}
   var isHybrid=pr&&(pr.cat==='Hybrid');
   var wrap=document.getElementById('ei_inch_wrap');
   var lbl=document.getElementById('ei_price_label');
-  // Hybrid: always use $/SF combined, hide thickness field
   if(isHybrid){
     if(wrap) wrap.style.display='none';
     if(lbl) lbl.textContent='Price / SF (combined $)';
@@ -3194,12 +3204,14 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
   if(!price||price<=0){toast('Enter price');return;}
   var inch=0;
   var linePrice=price;
-  if(isPerInch()){
+  var pr2=null; try{ pr2=eiProd?getProd(eiProd):null; }catch(e){}
+  var isHybridItem=pr2&&(pr2.cat==='Hybrid');
+  if(isPerInch()&&!isHybridItem){
     inch=parseFloat(document.getElementById('ei_inch').value)||0;
     if(!inch||inch<=0){toast('Enter thickness (inches)');return;}
     linePrice=parseFloat((price*inch).toFixed(2));
   }
-  var item={name:name,productId:eiProd,sf:sf,price:linePrice,pricePerInch:isPerInch()?price:0,inches:inch,notes:notes,photos:eiPendPh.slice()};
+  var item={name:name,productId:eiProd,sf:sf,price:linePrice,pricePerInch:(!isHybridItem&&isPerInch())?price:0,inches:inch,notes:notes,photos:eiPendPh.slice()};
   if(editEIIdx>=0)window.estItems[editEIIdx]=item;else window.estItems.push(item);
   estItems=window.estItems;
   // Save price by area name (most reliable - works even without matType)
