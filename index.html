@@ -3445,6 +3445,11 @@ function doImport(){
     if(!pr&&a.matType){
       var mtMap={'cc':'p2','oc':'p1','hybrid':'p3','hybrid_foam_fg':'p3','hybrid_foam_mw':'p14','cel_blown':'p4','cel':'p4','cel_dense':'p4','fg':'p6','fg_r11':'p6','fg_r13':'p6','fg_r15':'p6','fg_r19':'p7','fg_r21':'p8','fg_r25':'p8','fg_r30':'p9','fg_r38':'p9','fg_r49':'p10','fg_custom':'p6','mw':'p11','mw_r15':'p11','mw_r21':'p12','mw_r23':'p12','mw_r30':'p12','mw_custom':'p11','ign':'p13','ignition':'p13','fb':'p13','other':'p15','custom':'p15'};
       var mappedId=mtMap[a.matType];
+      // For MW areas, pick product based on mwR value
+      if(a.matType==='mw'||a.matType==='mw_r15'||a.matType==='mw_r21'||a.matType==='mw_r23'||a.matType==='mw_r30'){
+        var _mwR=parseFloat(a.mwR)||0;
+        if(_mwR>=21) mappedId='p12'; else mappedId='p11';
+      }
       if(mappedId) pr=getProd(mappedId);
     }
     // Fallback: detect from name/notes for old areas without matType
