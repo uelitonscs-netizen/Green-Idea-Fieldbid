@@ -1543,13 +1543,8 @@ function doNewEst(){
   saveEI();renderEst();toast('New estimate');
 }
 document.getElementById('newEstBtn').addEventListener('click',function(){
-  if(estItems.length){appConfirm('Clear current estimate?',function(){doNewEst();});return;}doNewEst();
-  
-  quoteNum++;localStorage.setItem('fb6_qn',quoteNum);
-  document.getElementById('estQNum').textContent=quoteNum;
-  document.getElementById('qNumber').textContent='#'+quoteNum;
-  document.getElementById('qDate').textContent=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  saveEI();renderEst();toast('✨ New estimate');
+  if(estItems.length){appConfirm('Clear current estimate?',function(){doNewEst();});return;}
+  doNewEst();
 });
 
 // FABs
@@ -3462,7 +3457,7 @@ function doImport(){
       else if(_srcText.match(/mineral.wool|roxul|rockwool/)) pid2='p8';
       else if(_srcText.match(/cellulose/)) pid2='p4';
       else if(_srcText.match(/fiberglass|fiber.glass|batt/)) pid2='p6';
-      else if(_srcText.match(/ignition|intumescent/)) pid2='p11';
+      else if(_srcText.match(/ignition|intumescent/)) pid2='p13';
       if(pid2) pr=getProd(pid2);
     }
     // Priority: 1) lastPrice on area object, 2) lastPrice by name, 3) lastPrice by product, 4) product default
@@ -3624,7 +3619,7 @@ function showImportAreas(pid){
     togImp(b);
   });
 }
-function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':';';}
+function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':'';}
 document.getElementById('importBarBtn').addEventListener('click',function(){
   showImportProjects();
 });
@@ -3941,6 +3936,14 @@ document.getElementById('confirmYes').addEventListener('click', function() {
 });
 
 }); // end DOMContentLoaded
+
+window.addEventListener('beforeunload', function(e){
+  if(typeof save === 'function') save();
+  if(window.fieldAreas && window.fieldAreas.length > 0){
+    e.preventDefault();
+    e.returnValue = 'You have unsaved data. Are you sure you want to leave?';
+  }
+});
 
 // WorkLog uses _wlDb (set in Firebase block above)
 
