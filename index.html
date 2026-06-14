@@ -1475,6 +1475,7 @@ function renderProjList(){
     h+='<div class="proj-name">'+esc(p.name)+(active?' ✓':'')+'</div>';
     h+='<div class="proj-meta">'+(p.address?esc(p.address)+' · ':'')+''+(p.areas?p.areas.length:0)+' areas · '+p.created+'</div>';
     h+='</button>';
+    h+='<button class="proj-edit" data-act="edit" data-pid="'+safeId+'" style="width:36px;height:36px;background:rgba(240,160,44,.1);border:1px solid rgba(240,160,44,.3);border-radius:8px;color:#f0a02c;font-size:14px;display:flex;align-items:center;justify-content:center;margin-right:4px">✏️</button>';
     h+='<button class="proj-del" data-act="del" data-pid="'+safeId+'">🗑</button>';
     h+='</div>';
   }
@@ -1487,8 +1488,24 @@ function renderProjList(){
     var act=btn.getAttribute('data-act');
     var pid=btn.getAttribute('data-pid');
     if(act==='switch')switchProjById(pid);
+    else if(act==='edit')openEditProjModal(pid);
     else if(act==='del')deleteProjById(pid);
   });
+}
+function openEditProjModal(pid){
+  var projs=loadProjs();
+  var p=projs.find(function(x){return x.id===pid;});
+  if(!p) return;
+  var name=prompt('Edit project name:',p.name||'');
+  if(name===null) return;
+  var address=prompt('Edit address:',p.address||'');
+  if(address===null) return;
+  p.name=name.trim()||p.name;
+  p.address=address.trim();
+  saveProjs(projs);
+  if(currentProj&&currentProj.id===pid){currentProj.name=p.name;currentProj.address=p.address;updateProjHeader();}
+  renderProjList();
+  toast('✅ Project updated');
 }
 function createProj(){
   var name=document.getElementById('newProjName').value.trim();
