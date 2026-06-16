@@ -1444,6 +1444,8 @@ function switchProjById(pid){
     // Switch to field app and Areas tab
     document.getElementById('field-app').style.display='block';
     document.getElementById('est-app').style.display='none';
+    document.getElementById('home').style.display='none';
+    document.getElementById('fieldFab').style.display='flex';
     var ft1=document.getElementById('ft1');
     if(ft1) showFP('areas',ft1);
     toast('📂 Switched to "'+currentProj.name+'"');
