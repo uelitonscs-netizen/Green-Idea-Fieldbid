@@ -706,7 +706,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       <input class="fi af" id="newProjName" type="text" placeholder="e.g. Smith Residence" style="margin-bottom:8px">
       <label class="fl">Address</label>
       <div style="display:flex;gap:8px">
-        <input class="fi af" id="newProjAddress" type="text" placeholder="e.g. 8 Farm St, Dover MA" style="flex:1">
+        <input class="fi af" id="newProjAddress" type="text" placeholder="e.g. 8 Farm St, Dover MA" style="flex:1" autocomplete="off">
         <button class="btn ba" id="createProjBtn" style="flex:none;width:80px;height:50px;font-size:13px">Create</button>
       </div>
     </div>
@@ -938,7 +938,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
   <div class="modal" style="padding-bottom:32px">
     <div class="mhandle"></div>
     <div class="mtitle" id="feTitle">Edit</div>
-    <div class="fg"><input class="fi" id="feInput" type="text"></div>
+    <div class="fg"><input class="fi" id="feInput" type="text" autocomplete="off"></div>
     <div class="btn-row"><button class="btn bs" id="feCancelBtn">Cancel</button><button class="btn bg" id="feSaveBtn">Save</button></div>
   </div>
 </div>
@@ -3535,10 +3535,14 @@ function doImport(){
         if(_iprojs[_ip].id===_importProjId){currentProj=_iprojs[_ip];break;}
       }
     }
-    if(_importProjName){quoteInfo.client=_importProjName;}
-    else if(currentProj&&currentProj.name){quoteInfo.client=currentProj.name;}
-    if(_importProjAddress){quoteInfo.address=_importProjAddress;}
-    else if(currentProj&&currentProj.address){quoteInfo.address=currentProj.address;}
+    // Only update quoteInfo client/address if estimator was empty before this import
+    var _wasEmpty=estItems.length===added;
+    if(_wasEmpty){
+      if(_importProjName){quoteInfo.client=_importProjName;}
+      else if(currentProj&&currentProj.name){quoteInfo.client=currentProj.name;}
+      if(_importProjAddress){quoteInfo.address=_importProjAddress;}
+      else if(currentProj&&currentProj.address){quoteInfo.address=currentProj.address;}
+    }
     saveQI();renderQuote();saveEI();renderEst();
   }
   closeOv('importOverlay');
