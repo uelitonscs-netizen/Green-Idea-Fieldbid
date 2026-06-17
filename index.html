@@ -3563,7 +3563,7 @@ function doImport(){
     added++;
   }
   if(added>0){
-    // Set currentProj to source project so saveProjAreas saves correctly
+    // Set currentProj to source project ONLY if there is no current project at all
     if(_importProjId && !currentProj){
       var _iprojs=loadProjs();
       for(var _ip=0;_ip<_iprojs.length;_ip++){
@@ -3578,28 +3578,27 @@ function doImport(){
       if(_importProjAddress){quoteInfo.address=_importProjAddress;}
       else if(currentProj&&currentProj.address){quoteInfo.address=currentProj.address;}
     }
-    // Protect fieldAreas: if importing from a different project, save areas separately
-    var _savedAreas=null;
-    var _importingFromOther=_importProjId&&currentProj&&_importProjId!==currentProj.id;
-    if(_importingFromOther){
-      _savedAreas=JSON.parse(JSON.stringify(fieldAreas));
-    }
-    saveQI();renderQuote();saveEI();renderEst();
-    // Restore fieldAreas if they were overwritten by saveEI->saveProjAreas
-    if(_importingFromOther&&_savedAreas!==null){
-      fieldAreas=_savedAreas;window.fieldAreas=fieldAreas;
-      localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
-      // Also restore areas in the project record
-      var _rprojs=loadProjs();
-      for(var _ri=0;_ri<_rprojs.length;_ri++){
-        if(_rprojs[_ri].id===currentProj.id){
-          _rprojs[_ri].areas=JSON.parse(JSON.stringify(fieldAreas));
+    // Save estItems + quoteInfo WITHOUT touching fieldAreas storage at all.
+    // The import only adds estimator line items; it must never write fb6_fa
+    // or the project's takeoff areas.
+    localStorage.setItem('fb6_ei',JSON.stringify(estItems));
+    localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo));
+    // Persist estItems/quoteInfo into the current project record, but NEVER
+    // touch its 'areas' (takeoff areas stay exactly as they were).
+    if(currentProj){
+      var _projs2=loadProjs();
+      for(var _pi=0;_pi<_projs2.length;_pi++){
+        if(_projs2[_pi].id===currentProj.id){
+          _projs2[_pi].estItems=JSON.parse(JSON.stringify(estItems));
+          _projs2[_pi].quoteInfo=JSON.parse(JSON.stringify(quoteInfo));
+          // _projs2[_pi].areas left untouched on purpose
           break;
         }
       }
-      saveProjs(_rprojs);
-      save();
+      saveProjs(_projs2);
     }
+    save();
+    renderQuote();renderEst();
   }
   closeOv('importOverlay');
   toast('✅ '+added+' area'+(added>1?'s':'')+' imported');
