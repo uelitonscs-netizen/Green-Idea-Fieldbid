@@ -3528,6 +3528,13 @@ function doImport(){
     added++;
   }
   if(added>0){
+    // Set currentProj to source project so saveProjAreas saves correctly
+    if(_importProjId && !currentProj){
+      var _iprojs=loadProjs();
+      for(var _ip=0;_ip<_iprojs.length;_ip++){
+        if(_iprojs[_ip].id===_importProjId){currentProj=_iprojs[_ip];break;}
+      }
+    }
     // Only update quoteInfo client/address if estimator was empty before this import
     var _wasEmpty=estItems.length===added;
     if(_wasEmpty){
@@ -3536,30 +3543,28 @@ function doImport(){
       if(_importProjAddress){quoteInfo.address=_importProjAddress;}
       else if(currentProj&&currentProj.address){quoteInfo.address=currentProj.address;}
     }
-    saveQI();renderQuote();
-    // Save estItems without touching fieldAreas of currentProj when importing from a different project
-    if(currentProj){
-      var _curId=currentProj?currentProj.id:null;
-      var _iprojs2=loadProjs();
-      for(var _ii=0;_ii<_iprojs2.length;_ii++){
-        if(_iprojs2[_ii].id===_curId){
-          _iprojs2[_ii].estItems=JSON.parse(JSON.stringify(estItems));
-          _iprojs2[_ii].quoteInfo=JSON.parse(JSON.stringify(quoteInfo));
-          // Only save fieldAreas if import was from currentProj itself (not a different project)
-          if(!_importProjId||_importProjId===_curId){
-            _iprojs2[_ii].areas=JSON.parse(JSON.stringify(fieldAreas));
-          }
+    // Protect fieldAreas: if importing from a different project, save areas separately
+    var _savedAreas=null;
+    var _importingFromOther=_importProjId&&currentProj&&_importProjId!==currentProj.id;
+    if(_importingFromOther){
+      _savedAreas=JSON.parse(JSON.stringify(fieldAreas));
+    }
+    saveQI();renderQuote();saveEI();renderEst();
+    // Restore fieldAreas if they were overwritten by saveEI->saveProjAreas
+    if(_importingFromOther&&_savedAreas!==null){
+      fieldAreas=_savedAreas;window.fieldAreas=fieldAreas;
+      localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
+      // Also restore areas in the project record
+      var _rprojs=loadProjs();
+      for(var _ri=0;_ri<_rprojs.length;_ri++){
+        if(_rprojs[_ri].id===currentProj.id){
+          _rprojs[_ri].areas=JSON.parse(JSON.stringify(fieldAreas));
           break;
         }
       }
-      saveProjs(_iprojs2);
+      saveProjs(_rprojs);
+      save();
     }
-    // Always save to localStorage including fb6_fa and fb6_ei, then sync cloud
-    localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
-    localStorage.setItem('fb6_ei',JSON.stringify(estItems));
-    localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo));
-    save();
-    renderEst();
   }
   closeOv('importOverlay');
   toast('✅ '+added+' area'+(added>1?'s':'')+' imported');
