@@ -1154,7 +1154,28 @@ function fmt(n){return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
 function fmtN(n){return (''+Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function getProd(id){for(var i=0;i<products.length;i++)if(products[i].id===id)return products[i];return null;}
-function calcItem(it){if(!it)return 0;var sf=Number(it.sf)||0,pr=Number(it.price)||0,mk=Number(cfg&&cfg.markup)||0;return sf*pr*(1+mk/100);}
+function getEffectivePrice(it){
+  // Returns the effective price per SF for display and calculation.
+  // For all newly created/imported items, it.price already holds the
+  // computed line price ($/SF). This handles legacy items (saved before
+  // the per-inch fix) where price may still be the raw per-inch rate.
+  var prod=it&&it.productId?getProd(it.productId):null;
+  var isPerInch=prod&&prod.pricingType==='per_inch';
+  var isHybrid=prod&&prod.cat==='Hybrid';
+  var inch=Number(it&&it.inches)||0;
+  var pr=Number(it&&it.price)||0;
+  // Legacy guard: per-inch, has inches, but no pricePerInch recorded AND
+  // price looks like a raw rate (price equals product base price)
+  if(isPerInch&&!isHybrid&&inch>0&&(!it.pricePerInch||it.pricePerInch===0)){
+    return parseFloat((pr*inch).toFixed(2));
+  }
+  return pr;
+}
+function calcItem(it){
+  if(!it)return 0;
+  var sf=Number(it.sf)||0,mk=Number(cfg&&cfg.markup)||0;
+  return sf*getEffectivePrice(it)*(1+mk/100);
+}
 function calcTotals(){var s=0;if(Array.isArray(estItems))for(var i=0;i<estItems.length;i++)s+=calcItem(estItems[i]);var tr=Number(cfg&&cfg.taxRate)||0;var t=s*tr/100;return{sub:s,tax:t,total:s+t};}
 function toast(msg,type){var t=document.getElementById('toast')||(function(){var el=document.createElement('div');el.id='toast';el.className='toast';document.body.appendChild(el);return el;})();t.className='toast on'+(type?' '+type:'');t.textContent=msg;clearTimeout(t._h);t._h=setTimeout(function(){t.className='toast'+(type?' '+type:'');},2400);}
 function openOv(id){
@@ -2298,7 +2319,7 @@ function renderEst(){
     var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Custom';
     h+='<div class="card">';
     if(it.photos&&it.photos.length){h+='<div class="card-photos">';for(var p=0;p<it.photos.length;p++)h+='<img class="card-photo" src="'+it.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
-    h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+it.price.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
+    h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+effPrice.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
     h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑 Del</button></div></div>';
   }
   list.innerHTML=h;
@@ -2332,8 +2353,8 @@ function renderQuote(){
   document.getElementById('qTaxRow').style.display=cfg.taxRate>0?'flex':'none';
   var lines='';
   for(var j=0;j<estItems.length;j++){
-    var it=estItems[j];var c=calcItem(it);var pr=getProd(it.productId);
-    lines+='<div class="q-trow"><div class="q-tn">'+(pr?pr.emoji:'📦')+' '+esc(it.name)+(it.notes?'<div class="q-tnote">'+esc(it.notes)+'</div>':'')+'</div><div class="q-tv">'+fmtN(it.sf)+'</div><div class="q-tv">$'+it.price.toFixed(2)+'</div><div class="q-tt">'+fmt(c)+'</div></div>';
+    var it=estItems[j];var c=calcItem(it);var effPrice=getEffectivePrice(it);var pr=getProd(it.productId);
+    lines+='<div class="q-trow"><div class="q-tn">'+(pr?pr.emoji:'📦')+' '+esc(it.name)+(it.notes?'<div class="q-tnote">'+esc(it.notes)+'</div>':'')+'</div><div class="q-tv">'+fmtN(it.sf)+'</div><div class="q-tv">$'+getEffectivePrice(it).toFixed(2)+'</div><div class="q-tt">'+fmt(c)+'</div></div>';
   }
   if(!estItems.length)lines='<div style="padding:20px;text-align:center;color:#4d5560;font-size:13px">No items yet</div>';
   document.getElementById('quoteLines').innerHTML=lines;
@@ -3515,11 +3536,25 @@ function doImport(){
       var _sfMatch=Math.abs(_eiSF-_aSF)<0.5;
       if(_nameMatch && _matMatch && _sfMatch){_existIdx=_ei2;break;}
     }
-    var _newItem={name:a.name,productId:_newProdId,sf:a.sf,price:lastP,inches:_importInch||0,notes:a.notes||'',photos:a.photos?a.photos.slice():[],calcMode:a.calcMode||'',wallRows:a.wallRows?JSON.parse(JSON.stringify(a.wallRows)):null,floorRows:a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):null};
+    // Determine if this product is priced per-inch; if so store pricePerInch and compute line price
+    var _prodForCalc=_newProdId?getProd(_newProdId):null;
+    var _isPerInchImport=_prodForCalc&&_prodForCalc.pricingType==='per_inch';
+    var _isHybridImport=_prodForCalc&&_prodForCalc.cat==='Hybrid';
+    var _linePrice=lastP;
+    var _ppi=0;
+    if(_isPerInchImport&&!_isHybridImport&&(_importInch||0)>0){
+      // lastP is the per-inch rate; line price = rate * inches
+      _ppi=lastP;
+      _linePrice=parseFloat((lastP*(_importInch||0)).toFixed(2));
+    }
+    var _newItem={name:a.name,productId:_newProdId,sf:a.sf,price:_linePrice,pricePerInch:_ppi,inches:_importInch||0,notes:a.notes||'',photos:a.photos?a.photos.slice():[],calcMode:a.calcMode||'',wallRows:a.wallRows?JSON.parse(JSON.stringify(a.wallRows)):null,floorRows:a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):null};
     if(_existIdx>=0){
-      // Update existing: fix productId and inches but keep user-edited price if set
+      // Update existing: keep user-edited price if set
       var _old=estItems[_existIdx];
-      _newItem.price=(_old.price&&_old.price>0)?_old.price:lastP;
+      if(_old.price&&_old.price>0){
+        _newItem.price=_old.price;
+        _newItem.pricePerInch=_old.pricePerInch||0;
+      }
       _newItem.photos=_old.photos&&_old.photos.length?_old.photos:_newItem.photos;
       estItems[_existIdx]=_newItem;
     } else {
@@ -3882,7 +3917,7 @@ document.getElementById('licToggle').addEventListener('click',function(){
 function buildQT(){
   var totals=calcTotals();
   var lines=[cfg.company,cfg.contact,'','INSULATION ESTIMATE','Quote #'+quoteNum,new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),'','Client: '+(quoteInfo.client||'N/A'),'Address: '+(quoteInfo.address||'N/A'),'','─────────────────────────'];
-  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);lines.push('  '+fmtN(it.sf)+' SF × $'+it.price.toFixed(2)+'/SF = '+fmt(c));var dims=formatDimText(it,'  ');for(var di=0;di<dims.length;di++)lines.push(dims[di]);if(it.notes)lines.push('  Note: '+it.notes);}
+  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);lines.push('  '+fmtN(it.sf)+' SF × $'+getEffectivePrice(it).toFixed(2)+'/SF = '+fmt(c));var dims=formatDimText(it,'  ');for(var di=0;di<dims.length;di++)lines.push(dims[di]);if(it.notes)lines.push('  Note: '+it.notes);}
   lines.push('─────────────────────────','Subtotal: '+fmt(totals.sub));
   if(cfg.taxRate>0)lines.push('Tax ('+cfg.taxRate+'%): '+fmt(totals.tax));
   lines.push('TOTAL: '+fmt(totals.total),'','Thank you for your business!');
