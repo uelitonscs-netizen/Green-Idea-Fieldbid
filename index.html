@@ -2315,7 +2315,7 @@ function renderEst(){
   if(!estItems.length){list.innerHTML='<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">No items yet</div><div class="empty-body">Tap + or import from Field Takeoff</div></div>';renderQuote();return;}
   var h='';
   for(var i=0;i<estItems.length;i++){
-    var it=estItems[i];var pr=getProd(it.productId);var cost=calcItem(it);
+    var it=estItems[i];var pr=getProd(it.productId);var cost=calcItem(it);var effPrice=getEffectivePrice(it);
     var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Custom';
     h+='<div class="card">';
     if(it.photos&&it.photos.length){h+='<div class="card-photos">';for(var p=0;p<it.photos.length;p++)h+='<img class="card-photo" src="'+it.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
