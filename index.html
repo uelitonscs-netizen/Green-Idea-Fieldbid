@@ -588,6 +588,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       <div class="q-row"><span class="q-lbl">Address</span><span class="q-val tap" id="qAddress">Tap to add</span></div>
       <div class="q-row"><span class="q-lbl">Date</span><span class="q-val" id="qDate"></span></div>
       <div class="q-row"><span class="q-lbl">Quote #</span><span class="q-val" id="qNumber"></span></div>
+      <div class="q-row"><span class="q-lbl">Markup</span><span class="q-val tap" id="qMarkup">Tap to set</span></div>
     </div>
     <div class="q-table">
       <div class="q-thead"><div>Description</div><div style="text-align:right">SF</div><div style="text-align:right">$/SF</div><div style="text-align:right">Total</div></div>
@@ -664,7 +665,6 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       </button>
     </div>
     <div class="st-g"><div class="st-t">Markup &amp; Tax</div>
-      <div class="st-row"><div><div class="st-lbl">Markup</div><div class="st-sub">On top of material cost</div></div><div style="display:flex;align-items:center;gap:4px"><input class="st-inp" type="number" id="cfgMarkup" value="30"><span style="color:#7d8590">%</span></div></div>
       <div class="st-row"><div><div class="st-lbl">Tax Rate</div><div class="st-sub">Applied to final total</div></div><div style="display:flex;align-items:center;gap:4px"><input class="st-inp" type="number" id="cfgTax" value="0"><span style="color:#7d8590">%</span></div></div>
     </div>
     <div class="st-g"><div class="st-t">Company Info</div>
@@ -1098,7 +1098,7 @@ document.addEventListener('DOMContentLoaded', function() {
 window.fieldAreas=window.fieldAreas||[]; var fieldAreas=window.fieldAreas;
 window.estItems=window.estItems||[]; var estItems=window.estItems;
 window.products=window.products||[]; var products=window.products;
-window.cfg=window.cfg||{markup:30,taxRate:0,company:'Green Idea Insulation',contact:'',license:'',showLicense:false}; var cfg=window.cfg;
+window.cfg=window.cfg||{taxRate:0,company:'Green Idea Insulation',contact:'',license:'',showLicense:false}; var cfg=window.cfg;
 window.quoteInfo=window.quoteInfo||{client:'',address:''}; var quoteInfo=window.quoteInfo;
 window.quoteNum=window.quoteNum||1001; var quoteNum=window.quoteNum;
 var editFAIdx=-1, editEIIdx=-1, editProdIdx=-1;
@@ -1154,6 +1154,14 @@ function fmt(n){return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
 function fmtN(n){return (''+Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function getProd(id){for(var i=0;i<products.length;i++)if(products[i].id===id)return products[i];return null;}
+function getMarkup(){
+  // Markup is per-project (stored in quoteInfo). No global default:
+  // if a project has no markup set, it is simply 0 until the user sets one.
+  if(quoteInfo&&quoteInfo.markup!==undefined&&quoteInfo.markup!==null&&quoteInfo.markup!==''){
+    return Number(quoteInfo.markup)||0;
+  }
+  return 0;
+}
 function getEffectivePrice(it){
   // Returns the effective price per SF for display and calculation.
   // For all newly created/imported items, it.price already holds the
@@ -1173,7 +1181,7 @@ function getEffectivePrice(it){
 }
 function calcItem(it){
   if(!it)return 0;
-  var sf=Number(it.sf)||0,mk=Number(cfg&&cfg.markup)||0;
+  var sf=Number(it.sf)||0,mk=getMarkup();
   return sf*getEffectivePrice(it)*(1+mk/100);
 }
 function calcTotals(){var s=0;if(Array.isArray(estItems))for(var i=0;i<estItems.length;i++)s+=calcItem(estItems[i]);var tr=Number(cfg&&cfg.taxRate)||0;var t=s*tr/100;return{sub:s,tax:t,total:s+t};}
@@ -1812,7 +1820,7 @@ function generateEstimatePDF(pid, totalOnly){
     if(item.price>0&&item.sf>0) itemPrice=item.price*item.sf;
     else if(item.price>0) itemPrice=item.price;
     // apply markup
-    var mk=Number(cfg&&cfg.markup)||0;
+    var mk=getMarkup();
     if(mk>0) itemPrice=itemPrice*(1+mk/100);
     subtotal+=itemPrice;
 
@@ -2309,7 +2317,7 @@ function renderEst(){
   document.getElementById('eTotalSF').textContent=fmtN(sf);
   document.getElementById('eItemCount').textContent=estItems.length;
   document.getElementById('eTotalCost').textContent=fmt(totals.total);
-  document.getElementById('eTotalNote').textContent=cfg.markup+'% markup'+(cfg.taxRate>0?' + '+cfg.taxRate+'% tax':'');
+  document.getElementById('eTotalNote').textContent=(getMarkup()>0?getMarkup()+'% markup':'no markup')+(cfg.taxRate>0?' + '+cfg.taxRate+'% tax':'');
   document.getElementById('eItemSub').textContent=estItems.length?estItems.length+' item'+(estItems.length>1?'s':''):'';
   checkImportBar();
   if(!estItems.length){list.innerHTML='<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">No items yet</div><div class="empty-body">Tap + or import from Field Takeoff</div></div>';renderQuote();return;}
@@ -2351,6 +2359,7 @@ function renderQuote(){
   document.getElementById('qTotal').textContent=fmt(totals.total);
   document.getElementById('qTaxPct').textContent=cfg.taxRate;
   document.getElementById('qTaxRow').style.display=cfg.taxRate>0?'flex':'none';
+  var _mkEl=document.getElementById('qMarkup');if(_mkEl){var _hasMk=quoteInfo&&quoteInfo.markup!==undefined&&quoteInfo.markup!==null&&quoteInfo.markup!=='';_mkEl.textContent=_hasMk?(getMarkup()+'%'):'Tap to set';}
   var lines='';
   for(var j=0;j<estItems.length;j++){
     var it=estItems[j];var c=calcItem(it);var effPrice=getEffectivePrice(it);var pr=getProd(it.productId);
@@ -2550,7 +2559,7 @@ function renderJobsList(){
       var sf=Number(items[k].sf)||0;
       totalSF += sf;
       var pr=Number(items[k].price)||0;
-      var mk=Number(cfg&&cfg.markup)||0;
+      var mk=getMarkup();
       quoteTotal += sf*pr*(1+mk/100);
     }
     var taxRate=Number(cfg&&cfg.taxRate)||0;
@@ -3200,19 +3209,19 @@ function updateEIHint(){
   if(isRigid){
     total=sf*price;
     var boards=Math.ceil(sf/32);
-    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF ÷ 32 = <strong>'+boards+' boards</strong></span>  ·  Line total: <strong>'+fmt(total*(1+cfg.markup/100))+'</strong>';
+    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF ÷ 32 = <strong>'+boards+' boards</strong></span>  ·  Line total: <strong>'+fmt(total*(1+getMarkup()/100))+'</strong>';
     return;
   }
   if(isHybrid){
     total=sf*price;
-    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × $'+price+'/SF</span> = Line total: <strong>'+fmt(total*(1+cfg.markup/100))+'</strong>';
+    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × $'+price+'/SF</span> = Line total: <strong>'+fmt(total*(1+getMarkup()/100))+'</strong>';
   } else if(isPerInch()){
     var inch=parseFloat(document.getElementById('ei_inch').value)||0;
     total=sf*inch*price;
-    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × '+inch+'" × $'+price+'/in</span> = Line total: <strong>'+fmt(total*(1+cfg.markup/100))+'</strong>';
+    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × '+inch+'" × $'+price+'/in</span> = Line total: <strong>'+fmt(total*(1+getMarkup()/100))+'</strong>';
   } else {
     total=sf*price;
-    document.getElementById('eiHint').innerHTML='Line total (w/ markup): <strong>'+fmt(total*(1+cfg.markup/100))+'</strong>';
+    document.getElementById('eiHint').innerHTML='Line total (w/ markup): <strong>'+fmt(total*(1+getMarkup()/100))+'</strong>';
   }
 }
 function updateEIPricingUI(){
@@ -3460,9 +3469,18 @@ document.getElementById('lb').addEventListener('click',function(e){if(e.target==
 // QUOTE FIELDS
 document.getElementById('qClient').addEventListener('click',function(){openFE('client','Client Name',quoteInfo.client);});
 document.getElementById('qAddress').addEventListener('click',function(){openFE('address','Job Address',quoteInfo.address);});
+(function(){var _mkEl=document.getElementById('qMarkup');if(_mkEl)_mkEl.addEventListener('click',function(){openFE('markup','Markup % (this project)',getMarkup());});})();
 function openFE(field,title,val){curFieldEdit=field;document.getElementById('feTitle').textContent=title;document.getElementById('feInput').value=val||'';openOv('feOverlay');}
 document.getElementById('feCancelBtn').addEventListener('click',function(){closeOv('feOverlay');});
-document.getElementById('feSaveBtn').addEventListener('click',function(){quoteInfo[curFieldEdit]=document.getElementById('feInput').value.trim();saveEI();renderEst();closeOv('feOverlay');});
+document.getElementById('feSaveBtn').addEventListener('click',function(){
+  var _val=document.getElementById('feInput').value.trim();
+  if(curFieldEdit==='markup'){
+    quoteInfo.markup=parseFloat(_val)||0;
+  } else {
+    quoteInfo[curFieldEdit]=_val;
+  }
+  saveEI();renderEst();renderQuote();closeOv('feOverlay');
+});
 
 // IMPORT
 var _importProjId=null;var _importProjName='';var _importProjAddress='';var _importAreas=[];
@@ -3871,7 +3889,6 @@ document.getElementById('prodDelBtn').addEventListener('click',function(){
 
 // SETTINGS
 function applySettings(){
-  document.getElementById('cfgMarkup').value=cfg.markup;
   document.getElementById('cfgTax').value=cfg.taxRate;
   document.getElementById('cfgCompany').value=cfg.company;
   document.getElementById('cfgContact').value=cfg.contact;
@@ -3893,14 +3910,12 @@ function updateLicToggle(){
   }
 }
 function saveSettings(){
-  cfg.markup=parseFloat(document.getElementById('cfgMarkup').value)||0;
   cfg.taxRate=parseFloat(document.getElementById('cfgTax').value)||0;
   cfg.company=document.getElementById('cfgCompany').value;
   cfg.contact=document.getElementById('cfgContact').value;
   cfg.license=document.getElementById('cfgLicense').value;
   saveCfg();renderEst();
 }
-document.getElementById('cfgMarkup').addEventListener('change',saveSettings);
 document.getElementById('cfgTax').addEventListener('change',saveSettings);
 document.getElementById('cfgCompany').addEventListener('change',saveSettings);
 document.getElementById('cfgContact').addEventListener('change',saveSettings);
