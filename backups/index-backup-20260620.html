@@ -4042,7 +4042,10 @@ document.getElementById('shareQuoteBtn').addEventListener('click',function(){
   if(navigator.share)navigator.share({title:'Quote #'+quoteNum,text:buildQT()}).catch(function(){});
   else document.getElementById('copyQuoteBtn').click();
 });
-document.getElementById('printQuoteBtn').addEventListener('click',function(){window.print();});
+document.getElementById('printQuoteBtn').addEventListener('click',function(){
+  try{ generateEstimatePDF(null, false); }
+  catch(e){ toast('PDF error: '+(e&&e.message||e),'err'); }
+});
 document.getElementById('copyCtBtn').addEventListener('click',function(){
   var el=document.getElementById('ctDoc');var t=el?el.innerText:'';
   if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast('📋 Copied!');});
