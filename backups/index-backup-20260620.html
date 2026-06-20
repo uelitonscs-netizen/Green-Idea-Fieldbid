@@ -3660,7 +3660,9 @@ function doImport(){
       _ppi=lastP;
       _linePrice=parseFloat((lastP*(_importInch||0)).toFixed(2));
     }
-    var _newItem={name:a.name,productId:_newProdId,sf:a.sf,price:_linePrice,pricePerInch:_ppi,inches:_importInch||0,notes:a.notes||'',photos:a.photos?a.photos.slice():[],calcMode:a.calcMode||'',wallRows:a.wallRows?JSON.parse(JSON.stringify(a.wallRows)):null,floorRows:a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):null};
+    var _newItem={name:a.name,productId:_newProdId,sf:a.sf,price:_linePrice,pricePerInch:_ppi,inches:_importInch||0,notes:a.notes||'',photos:a.photos?a.photos.slice():[],calcMode:a.calcMode||'',wallRows:a.wallRows?JSON.parse(JSON.stringify(a.wallRows)):null,floorRows:a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):null,
+      // Preserve material fields so WorkLog matBudget tracking works after import
+      matType:a.matType||a.matCat||'',matCat:a.matCat||'',ccInch:a.ccInch||0,ocInch:a.ocInch||0,fgR:a.fgR||0,celR:a.celR||0,mwR:a.mwR||0};
     if(_existIdx>=0){
       // Update existing: keep user-edited price if set
       var _old=estItems[_existIdx];
@@ -4234,10 +4236,16 @@ function sendToWorkLog(){
   }
 
 
-  // Combine fieldAreas + estItems
+  // Build material source. Prefer fieldAreas (full takeoff data with matType);
+  // fall back to estItems when there are no field areas (e.g. estimate sent
+  // straight from the Estimator after importing). Combining both would
+  // double-count the same material, so we pick one source.
   var all=[];
-  if(Array.isArray(fieldAreas)) all=all.concat(fieldAreas);
-  if(Array.isArray(estItems)) all=all.concat(estItems);
+  if(Array.isArray(fieldAreas)&&fieldAreas.length>0){
+    all=all.concat(fieldAreas);
+  } else if(Array.isArray(estItems)&&estItems.length>0){
+    all=all.concat(estItems);
+  }
 
   for(var i=0;i<all.length;i++){
     try{
