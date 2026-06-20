@@ -589,6 +589,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       <div class="q-row"><span class="q-lbl">Date</span><span class="q-val" id="qDate"></span></div>
       <div class="q-row"><span class="q-lbl">Quote #</span><span class="q-val" id="qNumber"></span></div>
       <div class="q-row"><span class="q-lbl">Markup</span><span class="q-val tap" id="qMarkup">Tap to set</span></div>
+      <div class="q-row"><span class="q-lbl">Discount</span><span class="q-val tap" id="qDiscount">Tap to set</span></div>
     </div>
     <div class="q-table">
       <div class="q-thead"><div>Description</div><div style="text-align:right">SF</div><div style="text-align:right">$/SF</div><div style="text-align:right">Total</div></div>
@@ -596,6 +597,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
       <div class="q-foot">
         <div class="q-frow"><span class="q-fl">Subtotal</span><span class="q-fv" id="qSub">$0.00</span></div>
         <div class="q-frow" id="qTaxRow"><span class="q-fl">Tax (<span id="qTaxPct">0</span>%)</span><span class="q-fv" id="qTax">$0.00</span></div>
+        <div class="q-frow" id="qDiscRow" style="display:none"><span class="q-fl" id="qDiscLbl">Discount</span><span class="q-fv" id="qDisc" style="color:#3fb950">-$0.00</span></div>
         <div class="q-frow grand"><span class="q-fl">TOTAL</span><span class="q-fv" id="qTotal">$0.00</span></div>
       </div>
     </div>
@@ -938,6 +940,10 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
   <div class="modal" style="padding-bottom:32px">
     <div class="mhandle"></div>
     <div class="mtitle" id="feTitle">Edit</div>
+    <div id="feMkToggle" style="display:none;gap:8px;margin-bottom:12px">
+      <button type="button" id="feMkPct" class="btn" style="flex:1;background:#1f6feb;color:#fff">Percent (%)</button>
+      <button type="button" id="feMkUsd" class="btn" style="flex:1;background:#21262d;color:#7d8590">Dollar ($)</button>
+    </div>
     <div class="fg"><input class="fi" id="feInput" type="text" autocomplete="off"></div>
     <div class="btn-row"><button class="btn bs" id="feCancelBtn">Cancel</button><button class="btn bg" id="feSaveBtn">Save</button></div>
   </div>
@@ -1162,6 +1168,30 @@ function getMarkup(){
   }
   return 0;
 }
+function getMarkupType(){
+  // 'pct' (percent, applied per item) or 'usd' (flat dollar, added once to total)
+  return (quoteInfo&&quoteInfo.markupType==='usd')?'usd':'pct';
+}
+function hasMarkup(){
+  return quoteInfo&&quoteInfo.markup!==undefined&&quoteInfo.markup!==null&&quoteInfo.markup!=='';
+}
+function lineMarkupMult(){
+  // Per-line multiplier: only percent markup applies per line. Dollar markup
+  // is a single flat amount added to the grand total, so per-line it is 1.
+  return (getMarkupType()==='pct')?(1+getMarkup()/100):1;
+}
+function getDiscount(){
+  if(quoteInfo&&quoteInfo.discount!==undefined&&quoteInfo.discount!==null&&quoteInfo.discount!==''){
+    return Number(quoteInfo.discount)||0;
+  }
+  return 0;
+}
+function getDiscountType(){
+  return (quoteInfo&&quoteInfo.discountType==='usd')?'usd':'pct';
+}
+function hasDiscount(){
+  return quoteInfo&&quoteInfo.discount!==undefined&&quoteInfo.discount!==null&&quoteInfo.discount!=='';
+}
 function getEffectivePrice(it){
   // Returns the effective price per SF for display and calculation.
   // For all newly created/imported items, it.price already holds the
@@ -1181,10 +1211,26 @@ function getEffectivePrice(it){
 }
 function calcItem(it){
   if(!it)return 0;
-  var sf=Number(it.sf)||0,mk=getMarkup();
+  var sf=Number(it.sf)||0;
+  // Percent markup applies per item; dollar markup is added once in calcTotals.
+  var mk=(getMarkupType()==='pct')?getMarkup():0;
   return sf*getEffectivePrice(it)*(1+mk/100);
 }
-function calcTotals(){var s=0;if(Array.isArray(estItems))for(var i=0;i<estItems.length;i++)s+=calcItem(estItems[i]);var tr=Number(cfg&&cfg.taxRate)||0;var t=s*tr/100;return{sub:s,tax:t,total:s+t};}
+function calcTotals(){
+  var s=0;if(Array.isArray(estItems))for(var i=0;i<estItems.length;i++)s+=calcItem(estItems[i]);
+  // Flat dollar markup is added once on top of the item subtotal.
+  if(getMarkupType()==='usd')s+=getMarkup();
+  var tr=Number(cfg&&cfg.taxRate)||0;var t=s*tr/100;
+  var afterTax=s+t;
+  // Discount is applied at the very end, after tax.
+  var disc=0;
+  if(hasDiscount()){
+    disc=(getDiscountType()==='usd')?getDiscount():(afterTax*getDiscount()/100);
+  }
+  var total=afterTax-disc;
+  if(total<0)total=0;
+  return{sub:s,tax:t,discount:disc,total:total};
+}
 function toast(msg,type){var t=document.getElementById('toast')||(function(){var el=document.createElement('div');el.id='toast';el.className='toast';document.body.appendChild(el);return el;})();t.className='toast on'+(type?' '+type:'');t.textContent=msg;clearTimeout(t._h);t._h=setTimeout(function(){t.className='toast'+(type?' '+type:'');},2400);}
 function openOv(id){
   var el=document.getElementById(id);
@@ -1816,12 +1862,9 @@ function generateEstimatePDF(pid, totalOnly){
   var subtotal=0;
   for(var i=0;i<projEstItems.length;i++){
     var item=projEstItems[i];
-    var itemPrice=0;
-    if(item.price>0&&item.sf>0) itemPrice=item.price*item.sf;
-    else if(item.price>0) itemPrice=item.price;
-    // apply markup
-    var mk=getMarkup();
-    if(mk>0) itemPrice=itemPrice*(1+mk/100);
+    // Use the same calc as the app: handles per-inch effective price and
+    // percent markup per item (dollar markup is added once below).
+    var itemPrice=calcItem(item);
     subtotal+=itemPrice;
 
     var nameLines=doc.splitTextToSize(item.name||'',W-margin*2-30);
@@ -1862,6 +1905,8 @@ function generateEstimatePDF(pid, totalOnly){
   // ── TOTALS ──
   y+=4;
   var totX=W-margin-50;
+  // Add flat dollar markup once (percent markup already in subtotal via calcItem)
+  if(getMarkupType()==='usd')subtotal+=getMarkup();
   setFont('normal',9,[130,130,130]);
   txt('Subtotal',totX,y,{align:'right'});
   setFont('normal',10,[20,20,20]);
@@ -1879,6 +1924,19 @@ function generateEstimatePDF(pid, totalOnly){
     setFont('normal',10,[20,20,20]);
     txt('$'+taxAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),W-margin,y,{align:'right'});
     y+=5;
+  }
+
+  // Discount (applied after tax)
+  if(hasDiscount()){
+    var discAmt=(getDiscountType()==='usd')?getDiscount():(total*getDiscount()/100);
+    if(discAmt>0){
+      total=total-discAmt;if(total<0)total=0;
+      setFont('normal',9,[63,185,80]);
+      txt('Discount'+(getDiscountType()==='pct'?' ('+getDiscount()+'%)':''),totX,y,{align:'right'});
+      setFont('normal',10,[63,185,80]);
+      txt('-$'+discAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),W-margin,y,{align:'right'});
+      y+=5;
+    }
   }
 
   line(totX-10,y,W-margin,y,[20,20,20],0.5);
@@ -2317,7 +2375,7 @@ function renderEst(){
   document.getElementById('eTotalSF').textContent=fmtN(sf);
   document.getElementById('eItemCount').textContent=estItems.length;
   document.getElementById('eTotalCost').textContent=fmt(totals.total);
-  document.getElementById('eTotalNote').textContent=(getMarkup()>0?getMarkup()+'% markup':'no markup')+(cfg.taxRate>0?' + '+cfg.taxRate+'% tax':'');
+  document.getElementById('eTotalNote').textContent=(hasMarkup()?(getMarkupType()==='usd'?('$'+getMarkup().toFixed(2)+' markup'):(getMarkup()+'% markup')):'no markup')+(cfg.taxRate>0?' + '+cfg.taxRate+'% tax':'');
   document.getElementById('eItemSub').textContent=estItems.length?estItems.length+' item'+(estItems.length>1?'s':''):'';
   checkImportBar();
   if(!estItems.length){list.innerHTML='<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">No items yet</div><div class="empty-body">Tap + or import from Field Takeoff</div></div>';renderQuote();return;}
@@ -2359,7 +2417,9 @@ function renderQuote(){
   document.getElementById('qTotal').textContent=fmt(totals.total);
   document.getElementById('qTaxPct').textContent=cfg.taxRate;
   document.getElementById('qTaxRow').style.display=cfg.taxRate>0?'flex':'none';
-  var _mkEl=document.getElementById('qMarkup');if(_mkEl){var _hasMk=quoteInfo&&quoteInfo.markup!==undefined&&quoteInfo.markup!==null&&quoteInfo.markup!=='';_mkEl.textContent=_hasMk?(getMarkup()+'%'):'Tap to set';}
+  var _mkEl=document.getElementById('qMarkup');if(_mkEl){if(hasMarkup()){_mkEl.textContent=(getMarkupType()==='usd')?('$'+getMarkup().toFixed(2)):(getMarkup()+'%');}else{_mkEl.textContent='Tap to set';}}
+  var _dcEl=document.getElementById('qDiscount');if(_dcEl){if(hasDiscount()){_dcEl.textContent=(getDiscountType()==='usd')?('$'+getDiscount().toFixed(2)):(getDiscount()+'%');}else{_dcEl.textContent='Tap to set';}}
+  var _dcRow=document.getElementById('qDiscRow');if(_dcRow){if(hasDiscount()&&totals.discount>0){_dcRow.style.display='flex';document.getElementById('qDisc').textContent='-'+fmt(totals.discount);document.getElementById('qDiscLbl').textContent='Discount'+(getDiscountType()==='pct'?' ('+getDiscount()+'%)':'');}else{_dcRow.style.display='none';}}
   var lines='';
   for(var j=0;j<estItems.length;j++){
     var it=estItems[j];var c=calcItem(it);var effPrice=getEffectivePrice(it);var pr=getProd(it.productId);
@@ -3209,19 +3269,19 @@ function updateEIHint(){
   if(isRigid){
     total=sf*price;
     var boards=Math.ceil(sf/32);
-    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF ÷ 32 = <strong>'+boards+' boards</strong></span>  ·  Line total: <strong>'+fmt(total*(1+getMarkup()/100))+'</strong>';
+    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF ÷ 32 = <strong>'+boards+' boards</strong></span>  ·  Line total: <strong>'+fmt(total*lineMarkupMult())+'</strong>';
     return;
   }
   if(isHybrid){
     total=sf*price;
-    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × $'+price+'/SF</span> = Line total: <strong>'+fmt(total*(1+getMarkup()/100))+'</strong>';
+    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × $'+price+'/SF</span> = Line total: <strong>'+fmt(total*lineMarkupMult())+'</strong>';
   } else if(isPerInch()){
     var inch=parseFloat(document.getElementById('ei_inch').value)||0;
     total=sf*inch*price;
-    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × '+inch+'" × $'+price+'/in</span> = Line total: <strong>'+fmt(total*(1+getMarkup()/100))+'</strong>';
+    document.getElementById('eiHint').innerHTML='<span style="color:var(--amber);font-size:11px">'+sf+' SF × '+inch+'" × $'+price+'/in</span> = Line total: <strong>'+fmt(total*lineMarkupMult())+'</strong>';
   } else {
     total=sf*price;
-    document.getElementById('eiHint').innerHTML='Line total (w/ markup): <strong>'+fmt(total*(1+getMarkup()/100))+'</strong>';
+    document.getElementById('eiHint').innerHTML='Line total (w/ markup): <strong>'+fmt(total*lineMarkupMult())+'</strong>';
   }
 }
 function updateEIPricingUI(){
@@ -3469,13 +3529,48 @@ document.getElementById('lb').addEventListener('click',function(e){if(e.target==
 // QUOTE FIELDS
 document.getElementById('qClient').addEventListener('click',function(){openFE('client','Client Name',quoteInfo.client);});
 document.getElementById('qAddress').addEventListener('click',function(){openFE('address','Job Address',quoteInfo.address);});
-(function(){var _mkEl=document.getElementById('qMarkup');if(_mkEl)_mkEl.addEventListener('click',function(){openFE('markup','Markup % (this project)',getMarkup());});})();
-function openFE(field,title,val){curFieldEdit=field;document.getElementById('feTitle').textContent=title;document.getElementById('feInput').value=val||'';openOv('feOverlay');}
+var _feMkType='pct';
+function _setFeMkType(t){
+  _feMkType=t;
+  var pctBtn=document.getElementById('feMkPct'),usdBtn=document.getElementById('feMkUsd');
+  if(t==='pct'){pctBtn.style.background='#1f6feb';pctBtn.style.color='#fff';usdBtn.style.background='#21262d';usdBtn.style.color='#7d8590';}
+  else{usdBtn.style.background='#1f6feb';usdBtn.style.color='#fff';pctBtn.style.background='#21262d';pctBtn.style.color='#7d8590';}
+}
+(function(){
+  var _mkEl=document.getElementById('qMarkup');
+  if(_mkEl)_mkEl.addEventListener('click',function(){
+    curFieldEdit='markup';
+    document.getElementById('feTitle').textContent='Markup (this project)';
+    document.getElementById('feMkToggle').style.display='flex';
+    _setFeMkType(getMarkupType());
+    document.getElementById('feInput').value=hasMarkup()?getMarkup():'';
+    document.getElementById('feInput').setAttribute('inputmode','decimal');
+    openOv('feOverlay');
+  });
+  var _dcEl=document.getElementById('qDiscount');
+  if(_dcEl)_dcEl.addEventListener('click',function(){
+    curFieldEdit='discount';
+    document.getElementById('feTitle').textContent='Discount (this project)';
+    document.getElementById('feMkToggle').style.display='flex';
+    _setFeMkType(getDiscountType());
+    document.getElementById('feInput').value=hasDiscount()?getDiscount():'';
+    document.getElementById('feInput').setAttribute('inputmode','decimal');
+    openOv('feOverlay');
+  });
+  var pctBtn=document.getElementById('feMkPct'),usdBtn=document.getElementById('feMkUsd');
+  if(pctBtn)pctBtn.addEventListener('click',function(){_setFeMkType('pct');});
+  if(usdBtn)usdBtn.addEventListener('click',function(){_setFeMkType('usd');});
+})();
+function openFE(field,title,val){curFieldEdit=field;document.getElementById('feTitle').textContent=title;document.getElementById('feMkToggle').style.display='none';document.getElementById('feInput').value=val||'';openOv('feOverlay');}
 document.getElementById('feCancelBtn').addEventListener('click',function(){closeOv('feOverlay');});
 document.getElementById('feSaveBtn').addEventListener('click',function(){
   var _val=document.getElementById('feInput').value.trim();
   if(curFieldEdit==='markup'){
-    quoteInfo.markup=parseFloat(_val)||0;
+    if(_val===''){quoteInfo.markup='';quoteInfo.markupType='pct';}
+    else{quoteInfo.markup=parseFloat(_val)||0;quoteInfo.markupType=_feMkType;}
+  } else if(curFieldEdit==='discount'){
+    if(_val===''){quoteInfo.discount='';quoteInfo.discountType='pct';}
+    else{quoteInfo.discount=parseFloat(_val)||0;quoteInfo.discountType=_feMkType;}
   } else {
     quoteInfo[curFieldEdit]=_val;
   }
@@ -3934,6 +4029,7 @@ function buildQT(){
   for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);lines.push('  '+fmtN(it.sf)+' SF × $'+getEffectivePrice(it).toFixed(2)+'/SF = '+fmt(c));var dims=formatDimText(it,'  ');for(var di=0;di<dims.length;di++)lines.push(dims[di]);if(it.notes)lines.push('  Note: '+it.notes);}
   lines.push('─────────────────────────','Subtotal: '+fmt(totals.sub));
   if(cfg.taxRate>0)lines.push('Tax ('+cfg.taxRate+'%): '+fmt(totals.tax));
+  if(hasDiscount()&&totals.discount>0)lines.push('Discount'+(getDiscountType()==='pct'?' ('+getDiscount()+'%)':'')+': -'+fmt(totals.discount));
   lines.push('TOTAL: '+fmt(totals.total),'','Thank you for your business!');
   return lines.join('\n');
 }
