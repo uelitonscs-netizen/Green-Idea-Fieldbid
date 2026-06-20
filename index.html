@@ -1258,7 +1258,14 @@ function parseSum(str){
 function saveFA(){ saveEI(); } // alias - same operation
 function saveEI(){
   if(currentProj){ saveProjAreas(); }
-  localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
+  // Only persist fieldAreas to fb6_fa when in the Field Takeoff screen.
+  // In the Estimator fieldAreas is empty/irrelevant, so writing it would wipe
+  // the saved takeoff areas in localStorage (and then in the cloud).
+  var faEl=document.getElementById('field-app');
+  var inTakeoff=faEl&&faEl.style.display!=='none'&&faEl.style.display!=='';
+  if(inTakeoff){
+    localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
+  }
   localStorage.setItem('fb6_ei',JSON.stringify(estItems));
   localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo));
   save();
@@ -1272,9 +1279,16 @@ function saveProjs(p){localStorage.setItem('fb6_projs',JSON.stringify(p)); save(
 function saveProjAreas(){
   if(!currentProj) return;
   var projs=loadProjs();
+  // Only overwrite the project's takeoff 'areas' when we are actually in the
+  // Field Takeoff screen (field-app visible). In the Estimator, fieldAreas is
+  // not the takeoff data, so writing it would wipe the project's real areas.
+  var faEl=document.getElementById('field-app');
+  var inTakeoff=faEl&&faEl.style.display!=='none'&&faEl.style.display!=='';
   for(var i=0;i<projs.length;i++){
     if(projs[i].id===currentProj.id){
-      projs[i].areas=JSON.parse(JSON.stringify(fieldAreas));
+      if(inTakeoff){
+        projs[i].areas=JSON.parse(JSON.stringify(fieldAreas));
+      }
       projs[i].estItems=JSON.parse(JSON.stringify(estItems));
       projs[i].quoteInfo=JSON.parse(JSON.stringify(quoteInfo));
       break;
