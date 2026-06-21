@@ -581,6 +581,7 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
     <div class="total-bar"><div><div class="total-lbl">Estimated Total</div><div class="total-note" id="eTotalNote">with markup</div></div><div class="total-val" id="eTotalCost">$0.00</div></div>
     <div class="sec"><span class="sec-lbl">Line Items</span><span class="sec-ct" id="eItemSub"></span></div>
     <div id="estItemList" class="cards"></div>
+    <button id="sendToTakeoffBtn" style="display:none;width:100%;margin-top:14px;background:#21262d;border:1px solid #1f6feb;color:#58a6ff;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📐 Rebuild Takeoff from these items</button>
   </div>
   <div id="ep-quote" class="page">
     <div class="q-info">
@@ -2419,8 +2420,85 @@ function renderEst(){
     else if(act==='edit')openEIModal(idx);
     else if(act==='del')delEI(idx);
   });
+  // Show "Rebuild Takeoff" button when the current project has items but its
+  // takeoff areas are missing/fewer (e.g. areas were lost). Lets the user
+  // regenerate takeoff areas from the estimate line items.
+  var _sttBtn=document.getElementById('sendToTakeoffBtn');
+  if(_sttBtn){
+    var _projAreas=(currentProj&&Array.isArray(currentProj.areas))?currentProj.areas.length:0;
+    _sttBtn.style.display=(estItems.length>0&&_projAreas<estItems.length)?'block':'none';
+  }
   renderQuote();
 }
+
+function rebuildTakeoffFromItems(){
+  if(!currentProj){toast('Open a project first');return;}
+  if(!estItems.length){toast('No items to rebuild from');return;}
+  appConfirm('Rebuild takeoff areas from these '+estItems.length+' estimate items? This will replace the current takeoff areas of this project.',function(){
+    var newAreas=[];
+    for(var i=0;i<estItems.length;i++){
+      var it=estItems[i];
+      var prod=it.productId?getProd(it.productId):null;
+      // Derive material category/type, preferring preserved fields
+      var matCat=it.matCat||(prod?prod.cat:'')||'other';
+      var matType=it.matType||'';
+      if(!matType&&prod){
+        var c=(prod.cat||'').toLowerCase();
+        if(prod.id==='p2')matType='cc';
+        else if(prod.id==='p1')matType='oc';
+        else if(c.indexOf('hybrid')>=0)matType='hybrid';
+        else if(c.indexOf('mineral')>=0)matType='mw';
+        else if(c.indexOf('blown')>=0||c.indexOf('cellulose')>=0)matType='cel';
+        else if(c.indexOf('batt')>=0||c.indexOf('fiberglass')>=0)matType='fg';
+        else if(c.indexOf('air')>=0||c.indexOf('ignition')>=0)matType='ign';
+        else matType='other';
+      }
+      var area={
+        name:it.name||'Area '+(i+1),
+        productId:it.productId||null,
+        sf:Number(it.sf)||0,
+        sfBase:Number(it.sf)||0,
+        spec:it.notes||'',
+        notes:it.notes||'',
+        photos:(it.photos&&it.photos.length)?it.photos.slice():[],
+        mult:1,
+        matCat:matCat,
+        matType:matType,
+        ccInch:Number(it.ccInch)||0,
+        ocInch:Number(it.ocInch)||0,
+        fgR:Number(it.fgR)||0,
+        fgInch:0,
+        celR:Number(it.celR)||0,
+        celInch:0,
+        mwR:Number(it.mwR)||0,
+        calcMode:'manual',
+        wallRows:null,
+        floorRows:null,
+        _rebuilt:true
+      };
+      newAreas.push(area);
+    }
+    // Save reconstructed areas to the project record
+    var projs=loadProjs();
+    for(var p=0;p<projs.length;p++){
+      if(projs[p].id===currentProj.id){
+        projs[p].areas=newAreas;
+        currentProj.areas=newAreas;
+        break;
+      }
+    }
+    saveProjs(projs);
+    // Also load the rebuilt areas into the live takeoff so they show up
+    // immediately when the user opens Field Takeoff.
+    fieldAreas=JSON.parse(JSON.stringify(newAreas));
+    window.fieldAreas=fieldAreas;
+    localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
+    save();
+    toast('✅ Takeoff rebuilt — '+newAreas.length+' areas. Open Field Takeoff to review.');
+    renderEst();
+  });
+}
+(function(){var b=document.getElementById('sendToTakeoffBtn');if(b)b.addEventListener('click',rebuildTakeoffFromItems);})();
 
 function renderQuote(){
   var totals=calcTotals();
