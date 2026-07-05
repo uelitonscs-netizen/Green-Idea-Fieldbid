@@ -436,6 +436,88 @@ canvas#sigCanvas{width:100%;height:88px;cursor:crosshair;display:block;touch-act
 .nav-pill-btn .inner .ico{font-size:15px;flex-shrink:0}
 .nav-pill-btn .inner .lbl{font-size:13px;font-weight:600;color:#60a5fa;flex:1;text-align:left}
 .nav-pill-btn .inner .arr{font-size:16px;color:#2a4a6a}
+
+/* ═══════════ MODERN UI LAYER (visual polish only) ═══════════ */
+
+/* Smooth transitions on all interactive elements */
+button{transition:transform .12s ease,opacity .12s ease,background .15s ease,border-color .15s ease,box-shadow .15s ease;}
+
+/* Header: subtle gradient + blur */
+.app-hd{background:linear-gradient(180deg,#1a212b 0%,#161b22 100%);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 1px 12px rgba(0,0,0,.35);}
+.back-btn:active,.hd-action:active{transform:scale(.96);}
+
+/* Tabs: smoother active state */
+.tab{transition:color .18s ease,border-color .18s ease;}
+
+/* Cards: soft elevation */
+.card,.q-info,.q-table,.wo-hd,.wo-task,.prod-card,.prod-item,.st-g,.import-bar,.total-bar,.stat{box-shadow:0 1px 3px rgba(0,0,0,.25);}
+.card,.prod-card,.prod-item{transition:border-color .18s ease,box-shadow .18s ease;}
+
+/* Stats: subtle depth */
+.stat.a{background:linear-gradient(145deg,rgba(240,160,44,.12),rgba(240,160,44,.05));}
+.stat.g{background:linear-gradient(145deg,rgba(63,185,80,.14),rgba(63,185,80,.06));}
+
+/* Total bar: richer gradient */
+.total-bar{background:linear-gradient(135deg,rgba(63,185,80,.16),rgba(63,185,80,.06));box-shadow:0 2px 12px rgba(63,185,80,.12);}
+
+/* Mode buttons (home): lift on press, glow */
+.mode-btn{box-shadow:0 2px 10px rgba(0,0,0,.3);transition:transform .14s ease,box-shadow .14s ease;}
+.mode-btn.field{box-shadow:0 2px 14px rgba(240,160,44,.12);}
+.mode-btn.est{box-shadow:0 2px 14px rgba(63,185,80,.1);}
+.mode-btn:active{transform:scale(.97);}
+
+/* Action buttons + card actions */
+.act-btn,.ca{transition:background .15s ease,color .15s ease;}
+.act-btn:active{transform:scale(.97);}
+
+/* FAB: bigger glow, smoother press */
+.fab{transition:transform .14s cubic-bezier(.34,1.56,.64,1),box-shadow .2s ease;}
+.fab.f{box-shadow:0 6px 24px rgba(240,160,44,.45),0 2px 6px rgba(0,0,0,.3);}
+.fab.e{box-shadow:0 6px 24px rgba(63,185,80,.45),0 2px 6px rgba(0,0,0,.3);}
+.fab:active{transform:scale(.9);}
+
+/* Modal: blur backdrop + springy entrance */
+.overlay{background:rgba(4,8,14,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+.overlay.on{animation:ovIn .18s ease;}
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+.modal{animation:slideUp .26s cubic-bezier(.21,1.02,.73,1);box-shadow:0 -8px 40px rgba(0,0,0,.5);}
+
+/* Inputs: focus glow rings */
+.fi:focus,.fs:focus,.fta:focus{box-shadow:0 0 0 3px rgba(63,185,80,.18);}
+.fi.af:focus{box-shadow:0 0 0 3px rgba(240,160,44,.18);}
+.st-inp:focus{border-color:#3fb950;box-shadow:0 0 0 3px rgba(63,185,80,.15);}
+.fi,.fs,.fta,.st-inp{transition:border-color .18s ease,box-shadow .18s ease;}
+
+/* Buttons in modals: press effect */
+.btn:active{transform:scale(.97);opacity:.92;}
+.bg{box-shadow:0 2px 10px rgba(63,185,80,.25);}
+.ba{box-shadow:0 2px 10px rgba(240,160,44,.25);}
+
+/* Product picker + import rows: smoother select */
+.popt,.imp-chk,.imp-proj,.mmode,.proj-item{transition:background .15s ease,border-color .15s ease,color .15s ease;}
+
+/* Work order checkboxes: springy */
+.wo-cb{transition:background .18s cubic-bezier(.34,1.56,.64,1),border-color .18s ease,transform .18s ease;}
+.wo-cb.done{transform:scale(1.05);}
+
+/* Toast: softer entrance + shadow */
+.toast{box-shadow:0 8px 28px rgba(0,0,0,.45);transition:all .24s cubic-bezier(.21,1.02,.73,1);}
+
+/* Cards page fade-in on tab switch */
+.page.on{animation:pgIn .2s ease;}
+@keyframes pgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* Scrollbar (subtle, dark) */
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:#2a3340;border-radius:99px;border:3px solid #0d1117;}
+::-webkit-scrollbar-thumb:hover{background:#3a4552;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* Empty states: gentler */
+.empty-icon{opacity:.45;filter:grayscale(.2);}
+
+/* Selection color */
+::selection{background:rgba(63,185,80,.3);}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
