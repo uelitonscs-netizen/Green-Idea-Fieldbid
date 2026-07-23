@@ -1897,6 +1897,34 @@ function formatDimRows(a, opts){
 
 
 // ── PROOF OF INSULATION CERTIFICATE ────────────────────────────────
+
+// Build a material/thickness spec line from SAVED item or area data (no DOM).
+// Used by the estimate PDF so the quote carries the same detail as the takeoff.
+function specFromData(o){
+  if(!o)return '';
+  if(o.spec&&String(o.spec).trim())return String(o.spec).trim();
+  var t=o.matType||'';
+  var cc=Number(o.ccInch)||0, oc=Number(o.ocInch)||0;
+  var fg=Number(o.fgR)||0, cel=Number(o.celR)||0, mw=Number(o.mwR)||0;
+  var s='';
+  if(t==='cc')      s=cc?(cc+'" closed cell'):'Closed cell';
+  else if(t==='oc') s=oc?(oc+'" open cell'):'Open cell';
+  else if(t==='hybrid'){
+    s=(cc?cc+'" cc ':'')+(oc?oc+'" oc':'');
+    if(!s.trim())s='Hybrid';
+  }
+  else if(t==='fg') s='Fiberglass'+(fg?' R-'+fg:'');
+  else if(t==='cel')s='Cellulose'+(cel?' R-'+cel:'');
+  else if(t==='mw') s='Mineral wool'+(mw?' R-'+mw:'');
+  // Fall back to the product name when no material fields were captured
+  if(!s.trim()){
+    var pr=null;try{pr=o.productId?getProd(o.productId):null;}catch(e){}
+    if(pr)s=pr.name;
+  }
+  return s.trim();
+}
+window.specFromData=specFromData;
+
 function generateEstimatePDF(pid, totalOnly){
   if(!window.jspdf){toast('PDF library loading, try again');return;}
   var jsPDF=window.jspdf.jsPDF;
@@ -2028,8 +2056,11 @@ function generateEstimatePDF(pid, totalOnly){
     subtotal+=itemPrice;
 
     var nameLines=doc.splitTextToSize(item.name||'',W-margin*2-30);
+    // Spec line: material + thickness from the takeoff (SF intentionally omitted on the client PDF)
+    var specStr=specFromData(item);
+    var specLines=specStr?doc.splitTextToSize(specStr,W-margin*2-30):[];
     var notesLines=item.notes?doc.splitTextToSize(item.notes,W-margin*2-30):[];
-    var rowH=(nameLines.length*4.5)+(notesLines.length*3.8)+5;
+    var rowH=(nameLines.length*4.5)+(specLines.length*3.8)+(notesLines.length*3.8)+5;
     checkNewPage(rowH+4);
 
     setFont('bold',10,[20,20,20]);
@@ -2037,6 +2068,13 @@ function generateEstimatePDF(pid, totalOnly){
     for(var ni=0;ni<nameLines.length;ni++){
       txt(nameLines[ni],margin,nameY);
       nameY+=4.5;
+    }
+    if(specLines.length>0){
+      setFont('normal',8,[95,105,115]);
+      for(var si=0;si<specLines.length;si++){
+        txt(specLines[si],margin,nameY);
+        nameY+=3.8;
+      }
     }
     if(notesLines.length>0){
       setFont('normal',8,[130,130,130]);
@@ -4116,7 +4154,8 @@ function doImport(){
     }
     var _newItem={name:a.name,productId:_newProdId,sf:a.sf,price:_linePrice,pricePerInch:_ppi,inches:_importInch||0,notes:a.notes||'',photos:a.photos?a.photos.slice():[],calcMode:a.calcMode||'',wallRows:a.wallRows?JSON.parse(JSON.stringify(a.wallRows)):null,floorRows:a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):null,
       // Preserve material fields so WorkLog matBudget tracking works after import
-      matType:a.matType||a.matCat||'',matCat:a.matCat||'',ccInch:a.ccInch||0,ocInch:a.ocInch||0,fgR:a.fgR||0,celR:a.celR||0,mwR:a.mwR||0};
+      matType:a.matType||a.matCat||'',matCat:a.matCat||'',ccInch:a.ccInch||0,ocInch:a.ocInch||0,fgR:a.fgR||0,celR:a.celR||0,mwR:a.mwR||0,
+      spec:a.spec||''};
     if(_existIdx>=0){
       // Update existing: keep user-edited price if set
       var _old=estItems[_existIdx];
@@ -4482,7 +4521,7 @@ document.getElementById('licToggle').addEventListener('click',function(){
 function buildQT(){
   var totals=calcTotals();
   var lines=[cfg.company,cfg.contact,'','INSULATION ESTIMATE','Quote #'+quoteNum,new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),'','Client: '+(quoteInfo.client||'N/A'),'Address: '+(quoteInfo.address||'N/A'),'','─────────────────────────'];
-  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);lines.push('  '+fmtN(it.sf)+' SF × $'+getEffectivePrice(it).toFixed(2)+'/SF = '+fmt(c));var dims=formatDimText(it,'  ');for(var di=0;di<dims.length;di++)lines.push(dims[di]);if(it.notes)lines.push('  Note: '+it.notes);}
+  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);var sp=(typeof specFromData==='function')?specFromData(it):'';if(sp)lines.push('  Spec: '+sp);lines.push('  '+fmtN(it.sf)+' SF × $'+getEffectivePrice(it).toFixed(2)+'/SF = '+fmt(c));var dims=formatDimText(it,'  ');for(var di=0;di<dims.length;di++)lines.push(dims[di]);if(it.notes)lines.push('  Note: '+it.notes);}
   lines.push('─────────────────────────','Subtotal: '+fmt(totals.sub));
   if(cfg.taxRate>0)lines.push('Tax ('+cfg.taxRate+'%): '+fmt(totals.tax));
   if(hasDiscount()&&totals.discount>0)lines.push('Discount'+(getDiscountType()==='pct'?' ('+getDiscount()+'%)':'')+': -'+fmt(totals.discount));
