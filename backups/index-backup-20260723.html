@@ -2837,6 +2837,51 @@ var ROOF_DEFS={
 var SLOPE_FACTORS={'2-12':1.01,'3-12':1.03,'4-12':1.05,'5-12':1.08,'6-12':1.12,'8-12':1.20,'10-12':1.30,'12-12':1.41,'14-12':1.54,'16-12':1.67,'18-12':1.80};
 var roofRows=[{type:'gable',a:'',l:'',c:'',pitch:'6-12'}];
 
+
+// Simple silhouettes so the shape is recognisable before picking a formula.
+// Orange fill = the surface the formula measures.
+function roofSVG(type){
+  var S='<svg viewBox="0 0 64 44" width="60" height="42" style="flex-shrink:0;display:block">';
+  var fill='#f0a02c', fillOp='.55', line='#e6edf3', wall='#3d4753';
+  if(type==='gable'){
+    // two slopes meeting at a ridge, both shaded
+    S+='<polygon points="4,26 32,8 60,26 60,30 32,12 4,30" fill="'+fill+'" fill-opacity="'+fillOp+'"/>';
+    S+='<polyline points="4,26 32,8 60,26" fill="none" stroke="'+line+'" stroke-width="1.6"/>';
+    S+='<rect x="8" y="26" width="48" height="12" fill="none" stroke="'+wall+'" stroke-width="1.2"/>';
+  } else if(type==='hiprect'){
+    // rectangular hip: front trapezoid shaded
+    S+='<polygon points="6,28 20,12 44,12 58,28" fill="'+fill+'" fill-opacity="'+fillOp+'"/>';
+    S+='<polyline points="6,28 20,12 44,12 58,28" fill="none" stroke="'+line+'" stroke-width="1.6"/>';
+    S+='<line x1="20" y1="12" x2="44" y2="12" stroke="'+line+'" stroke-width="2"/>';
+    S+='<rect x="10" y="28" width="44" height="10" fill="none" stroke="'+wall+'" stroke-width="1.2"/>';
+  } else if(type==='hipsq'){
+    // square hip: pyramid, one triangular face shaded
+    S+='<polygon points="8,30 32,10 56,30" fill="none" stroke="'+line+'" stroke-width="1.6"/>';
+    S+='<polygon points="8,30 32,10 32,30" fill="'+fill+'" fill-opacity="'+fillOp+'"/>';
+    S+='<line x1="32" y1="10" x2="32" y2="30" stroke="'+line+'" stroke-width="1.2" stroke-dasharray="2,2"/>';
+    S+='<rect x="12" y="30" width="40" height="8" fill="none" stroke="'+wall+'" stroke-width="1.2"/>';
+  } else if(type==='leanto'){
+    // single slope
+    S+='<polygon points="8,30 8,26 56,10 56,14" fill="'+fill+'" fill-opacity="'+fillOp+'"/>';
+    S+='<line x1="8" y1="28" x2="56" y2="12" stroke="'+line+'" stroke-width="1.8"/>';
+    S+='<rect x="8" y="28" width="48" height="10" fill="none" stroke="'+wall+'" stroke-width="1.2"/>';
+  } else if(type==='mansard'){
+    // mansard: steep lower face shaded, shallow top
+    S+='<polygon points="6,32 16,16 48,16 58,32" fill="'+fill+'" fill-opacity="'+fillOp+'"/>';
+    S+='<polyline points="6,32 16,16 48,16 58,32" fill="none" stroke="'+line+'" stroke-width="1.6"/>';
+    S+='<polyline points="16,16 32,8 48,16" fill="none" stroke="'+line+'" stroke-width="1.4"/>';
+    S+='<rect x="10" y="32" width="44" height="6" fill="none" stroke="'+wall+'" stroke-width="1.2"/>';
+  } else if(type==='pitch'){
+    // footprint seen from above + pitch arrow
+    S+='<rect x="8" y="14" width="34" height="20" fill="'+fill+'" fill-opacity="'+fillOp+'" stroke="'+line+'" stroke-width="1.4"/>';
+    S+='<line x1="8" y1="24" x2="42" y2="24" stroke="'+line+'" stroke-width="1" stroke-dasharray="3,2"/>';
+    S+='<polyline points="46,32 58,32 58,20" fill="none" stroke="'+line+'" stroke-width="1.4"/>';
+    S+='<line x1="46" y1="32" x2="58" y2="20" stroke="'+fill+'" stroke-width="2"/>';
+  }
+  S+='</svg>';
+  return S;
+}
+
 function calcRoofRow(r){
   if(!r)return {sf:0,detail:''};
   var a=parseSum(r.a||''),l=parseSum(r.l||''),cv=parseSum(r.c||'');
@@ -2863,7 +2908,8 @@ function renderRoofRows(){
     var d=ROOF_DEFS[r.type]||ROOF_DEFS.gable;
     var res=calcRoofRow(r);
     h+='<div style="background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:12px;margin-bottom:8px">';
-    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
+    h+='<div style="background:#0d1117;border:1px solid #2a3340;border-radius:8px;padding:3px 4px;line-height:0">'+roofSVG(r.type)+'</div>';
     h+='<select class="fs" data-ri="'+i+'" data-rf="type" style="flex:1;font-size:13px">';
     var opts=[['gable','Gable — 2×A×L'],['hiprect','Hip rect — (C+L)×A÷2'],['hipsq','Hip square — A×½L'],['leanto','Lean-to — A×L'],['mansard','Mansard — (A+L)×C÷2'],['pitch','Footprint + Pitch']];
     for(var o=0;o<opts.length;o++){
