@@ -1860,6 +1860,7 @@ function formatDimText(a, indent){
       o.push(pad0 + '- ' + d.name + ': ' + d.f);
       var parts = 'A=' + (a.roofA||'?') + '  L=' + (a.roofL||'?') + (d.needC?('  C=' + (a.roofC||'?')):'');
       o.push(pad0 + '  ' + parts + (a.roofWaste?'  (+10% waste)':''));
+      if(a.roofType==='gable')o.push(pad0 + '  (x2 applied - both slopes)');
     }
     return o;
   }
@@ -1901,9 +1902,10 @@ function formatDimRows(a, opts){
     var cls0 = wo0 ? 'wo-dims' : 'card-dims';
     var hcls0 = wo0 ? 'wo-dims-hd' : 'card-dims-hd';
     var pr = 'A=' + esc(a.roofA||'?') + ' · L=' + esc(a.roofL||'?') + (rd.needC?(' · C=' + esc(a.roofC||'?')):'');
+    var flag = (a.roofType==='gable') ? '<div class="card-dim-row" style="color:#ff8a80;font-weight:700">⚠️ ×2 applied (both slopes)</div>' : '';
     return '<div class="'+cls0+'"><div class="'+hcls0+'">🏠 ' + esc(rd.name) + '</div>' +
            '<div class="card-dim-row">' + esc(rd.f) + '</div>' +
-           '<div class="card-dim-row">' + pr + (a.roofWaste?' · +10% waste':'') + '</div></div>';
+           '<div class="card-dim-row">' + pr + (a.roofWaste?' · +10% waste':'') + '</div>' + flag + '</div>';
   }
   var rows = a.calcMode==='walls' ? a.wallRows : (a.calcMode==='floor' ? a.floorRows : null);
   if(!rows||!rows.length)return '';
@@ -2863,11 +2865,16 @@ function setMMode(mode,btn){
 // ── ROOF SHAPES ──────────────────────────────────────────────
 // Formulas from standard roofing square-footage tables.
 var ROOF_DEFS={
-  gable:  {name:'Gable Roof',            f:'2 × A × L',        needC:false, a:'A — Slope length, eave to ridge (ft)', l:'L — Ridge length (ft)', c:'' },
-  hiprect:{name:'Hip Roof (rectangular)',f:'(C + L) × A ÷ 2',  needC:true,  a:'A — Slope length, eave to ridge (ft)', l:'L — Eave length, long side (ft)', c:'C — Ridge length, top (ft)' },
-  hipsq:  {name:'Hip Roof (square)',     f:'A × ½L  (half base)', needC:false, a:'A — Slope length, eave to peak (ft)', l:'½L — HALF the eave length (ft)', c:'' },
-  leanto: {name:'Lean-to / Shed',        f:'A × L',            needC:false, a:'A — Slope length (ft)', l:'L — Width (ft)', c:'' },
-  mansard:{name:'Mansard Roof',          f:'(A + L) × C ÷ 2',  needC:true,  a:'A — Lower slope length (ft)', l:'L — Eave length (ft)', c:'C — Upper slope length (ft)' }
+  gable:  {name:'Gable Roof',            f:'2 × A × L',        needC:false, a:'A — Slope length, eave to ridge (ft)', l:'L — Ridge length (ft)', c:'',
+           note:'⚠️ Already ×2 — covers BOTH slopes. Measure one side only. For a single slope, use Lean-to instead.' },
+  hiprect:{name:'Hip Roof (rectangular)',f:'(C + L) × A ÷ 2',  needC:true,  a:'A — Slope length, eave to ridge (ft)', l:'L — Eave length, long side (ft)', c:'C — Ridge length, top (ft)',
+           note:'Covers all four slopes of the hip.' },
+  hipsq:  {name:'Hip Roof (square)',     f:'A × ½L  (half base)', needC:false, a:'A — Slope length, eave to peak (ft)', l:'½L — HALF the eave length (ft)', c:'',
+           note:'⚠️ Enter HALF the base — the ÷2 is already built into your measurement.' },
+  leanto: {name:'Lean-to / Shed',        f:'A × L',            needC:false, a:'A — Slope length (ft)', l:'L — Width (ft)', c:'',
+           note:'Single slope only — no doubling applied.' },
+  mansard:{name:'Mansard Roof',          f:'(A + L) × C ÷ 2',  needC:true,  a:'A — Lower slope length (ft)', l:'L — Eave length (ft)', c:'C — Upper slope length (ft)',
+           note:'Covers the full mansard surface.' }
 };
 var SLOPE_FACTORS={'2-12':1.01,'3-12':1.03,'4-12':1.05,'5-12':1.08,'6-12':1.12,'8-12':1.20,'10-12':1.30,'12-12':1.41,'14-12':1.54,'16-12':1.67,'18-12':1.80};
 var roofMethod='real'; // 'real' = slope lengths measured on site, 'pitch' = footprint x slope factor
@@ -2900,7 +2907,16 @@ function updateRoofLabels(){
     var fct=SLOPE_FACTORS[pk]||1;
     helpEl.innerHTML='<strong>Footprint × Slope Factor</strong><br>Formula: Length × Width × '+fct+'<br>Measure the building footprint from above; the pitch factor converts it to actual sloped roof area.';
   } else {
-    helpEl.innerHTML='<strong>'+d.name+'</strong><br>Formula: '+d.f+'<br>Covers the shaded roof surface (both sides where applicable).';
+    var noteHtml='';
+    if(d.note){
+      var isWarn=d.note.indexOf('⚠️')===0;
+      noteHtml='<div style="margin-top:8px;padding:8px 10px;border-radius:6px;'+
+        (isWarn
+          ? 'background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.35);color:#ff8a80;font-weight:700;'
+          : 'background:rgba(125,133,144,.10);border:1px solid rgba(125,133,144,.25);color:#9aa4b0;')+
+        '">'+d.note+'</div>';
+    }
+    helpEl.innerHTML='<strong>'+d.name+'</strong><br>Formula: '+d.f+noteHtml;
   }
 }
 function calcRoofSF(){
