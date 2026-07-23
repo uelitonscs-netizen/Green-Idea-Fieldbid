@@ -835,60 +835,15 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
     <!-- ROOF MODE -->
     <div id="mRoof" style="display:none">
-      <div class="fg">
-        <label class="fl">Roof Type</label>
-        <select class="fs" id="roofType">
-          <option value="gable">Gable Roof — 2 × A × L</option>
-          <option value="hiprect">Hip Roof (rectangular) — (C+L) × A ÷ 2</option>
-          <option value="hipsq">Hip Roof (square) — A × ½L</option>
-          <option value="leanto">Lean-to / Shed — A × L</option>
-          <option value="mansard">Mansard — (A+L) × C ÷ 2</option>
-        </select>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <label class="fl" style="margin:0">Roof sections — add one per slope</label>
+        <button type="button" id="addRoofRowBtn" style="padding:6px 12px;background:#1e2530;border:1px solid #2a3340;border-radius:8px;color:#f0a02c;font-size:12px;font-weight:700;">+ Section</button>
       </div>
-      <div class="fg">
-        <label class="fl">Measurement Method</label>
-        <div style="display:flex;gap:8px">
-          <button type="button" class="mmode on" id="roofMethodReal" style="flex:1">📏 Measured<span>Slope length on site</span></button>
-          <button type="button" class="mmode" id="roofMethodPitch" style="flex:1">📐 Footprint + Pitch<span>Building L × W</span></button>
-        </div>
-      </div>
-
-      <!-- MEASURED (slope lengths taken on site) -->
-      <div id="roofInputs">
-        <div class="frow">
-          <div class="fg"><label class="fl" id="roofLblA">A — Slope length (ft)</label><input class="fi af" id="roof_a" type="text" inputmode="decimal" placeholder="0"></div>
-          <div class="fg"><label class="fl" id="roofLblL">L — Ridge length (ft)</label><input class="fi af" id="roof_l" type="text" inputmode="decimal" placeholder="0"></div>
-        </div>
-        <div class="fg" id="roofCWrap" style="display:none"><label class="fl" id="roofLblC">C — Top width (ft)</label><input class="fi af" id="roof_c" type="text" inputmode="decimal" placeholder="0"></div>
-      </div>
-
-      <!-- FOOTPRINT + PITCH -->
-      <div id="roofPitchInputs" style="display:none">
-        <div class="frow">
-          <div class="fg"><label class="fl">Building Length (ft)</label><input class="fi af" id="roof_pl" type="text" inputmode="decimal" placeholder="0"></div>
-          <div class="fg"><label class="fl">Building Width (ft)</label><input class="fi af" id="roof_pw" type="text" inputmode="decimal" placeholder="0"></div>
-        </div>
-        <div class="fg">
-          <label class="fl">Roof Pitch</label>
-          <select class="fs" id="roof_pitch">
-            <option value="2-12">2/12 — factor 1.01</option>
-            <option value="3-12">3/12 — factor 1.03</option>
-            <option value="4-12">4/12 — factor 1.05</option>
-            <option value="5-12">5/12 — factor 1.08</option>
-            <option value="6-12" selected>6/12 — factor 1.12</option>
-            <option value="8-12">8/12 — factor 1.20</option>
-            <option value="10-12">10/12 — factor 1.30</option>
-            <option value="12-12">12/12 — factor 1.41</option>
-            <option value="14-12">14/12 — factor 1.54</option>
-            <option value="16-12">16/12 — factor 1.67</option>
-            <option value="18-12">18/12 — factor 1.80</option>
-          </select>
-        </div>
-      </div>
+      <div id="roofRowsContainer"></div>
       <div style="background:rgba(240,160,44,.06);border:1px solid rgba(240,160,44,.2);border-radius:8px;padding:10px 12px;font-size:11px;color:#f0a02c;line-height:1.6;margin-bottom:10px" id="roofHelp"></div>
       <div class="fg">
         <label class="fl" style="display:flex;align-items:center;gap:8px">
-          <input type="checkbox" id="roofWaste" style="width:auto;margin:0"> Add 10% for waste
+          <input type="checkbox" id="roofWaste" style="width:auto;margin:0"> Add 10% for waste (applies to total)
         </label>
       </div>
     </div>
@@ -1849,20 +1804,25 @@ function formatDimText(a, indent){
   if(!a||!a.calcMode)return [];
   if(a.calcMode==='roof'){
     var pad0 = indent || '   ';
-    if(a.roofMethod==='pitch'){
-      var fx=(typeof SLOPE_FACTORS!=='undefined'&&SLOPE_FACTORS[a.roofPitch])?SLOPE_FACTORS[a.roofPitch]:1;
-      return [pad0 + '- Footprint x Slope Factor',
-              pad0 + '  ' + (a.roofPL||'?') + ' x ' + (a.roofPW||'?') + ' x ' + fx + ' (' + String(a.roofPitch||'').replace('-','/') + ')'];
+    var rr = (a.roofRows&&a.roofRows.length) ? a.roofRows : null;
+    if(!rr){
+      // legacy single section
+      rr = [{type:(a.roofMethod==='pitch')?'pitch':(a.roofType||'gable'),
+             a:(a.roofMethod==='pitch')?(a.roofPL||''):(a.roofA||''),
+             l:(a.roofMethod==='pitch')?(a.roofPW||''):(a.roofL||''),
+             c:a.roofC||'', pitch:a.roofPitch||'6-12'}];
     }
-    var d = (typeof ROOF_DEFS!=='undefined'&&ROOF_DEFS[a.roofType])?ROOF_DEFS[a.roofType]:null;
-    var o = [];
-    if(d){
-      o.push(pad0 + '- ' + d.name + ': ' + d.f);
-      var parts = 'A=' + (a.roofA||'?') + '  L=' + (a.roofL||'?') + (d.needC?('  C=' + (a.roofC||'?')):'');
-      o.push(pad0 + '  ' + parts + (a.roofWaste?'  (+10% waste)':''));
-      if(a.roofType==='gable')o.push(pad0 + '  (x2 applied - both slopes)');
+    var out2=[];
+    for(var ri=0;ri<rr.length;ri++){
+      var rw2=rr[ri];
+      var dd=(typeof ROOF_DEFS!=='undefined'&&ROOF_DEFS[rw2.type])?ROOF_DEFS[rw2.type]:null;
+      if(!dd)continue;
+      var res2=(typeof calcRoofRow==='function')?calcRoofRow(rw2):{detail:''};
+      out2.push(pad0 + '- ' + dd.name + (rw2.type==='gable'?' (x2 both slopes)':''));
+      out2.push(pad0 + '  ' + (res2.detail || dd.f));
     }
-    return o;
+    if(a.roofWaste)out2.push(pad0 + '  (+10% waste)');
+    return out2;
   }
   var rows = a.calcMode==='walls' ? a.wallRows : (a.calcMode==='floor' ? a.floorRows : null);
   if(!rows||!rows.length)return [];
@@ -1890,22 +1850,28 @@ function formatDimRows(a, opts){
     var wo9 = opts && opts.wo;
     var cls9 = wo9 ? 'wo-dims' : 'card-dims';
     var hcls9 = wo9 ? 'wo-dims-hd' : 'card-dims-hd';
-    if(a.roofMethod==='pitch'){
-      var fx2=(typeof SLOPE_FACTORS!=='undefined'&&SLOPE_FACTORS[a.roofPitch])?SLOPE_FACTORS[a.roofPitch]:1;
-      return '<div class="'+cls9+'"><div class="'+hcls9+'">🏠 Footprint × Slope Factor</div>' +
-             '<div class="card-dim-row">' + esc(a.roofPL||'?') + ' × ' + esc(a.roofPW||'?') + ' × ' + fx2 + '</div>' +
-             '<div class="card-dim-row">Pitch ' + esc(String(a.roofPitch||'').replace('-','/')) + '</div></div>';
+    var rr9 = (a.roofRows&&a.roofRows.length) ? a.roofRows : null;
+    if(!rr9){
+      rr9 = [{type:(a.roofMethod==='pitch')?'pitch':(a.roofType||'gable'),
+              a:(a.roofMethod==='pitch')?(a.roofPL||''):(a.roofA||''),
+              l:(a.roofMethod==='pitch')?(a.roofPW||''):(a.roofL||''),
+              c:a.roofC||'', pitch:a.roofPitch||'6-12'}];
     }
-    var rd = (typeof ROOF_DEFS!=='undefined'&&ROOF_DEFS[a.roofType])?ROOF_DEFS[a.roofType]:null;
-    if(!rd)return '';
-    var wo0 = opts && opts.wo;
-    var cls0 = wo0 ? 'wo-dims' : 'card-dims';
-    var hcls0 = wo0 ? 'wo-dims-hd' : 'card-dims-hd';
-    var pr = 'A=' + esc(a.roofA||'?') + ' · L=' + esc(a.roofL||'?') + (rd.needC?(' · C=' + esc(a.roofC||'?')):'');
-    var flag = (a.roofType==='gable') ? '<div class="card-dim-row" style="color:#ff8a80;font-weight:700">⚠️ ×2 applied (both slopes)</div>' : '';
-    return '<div class="'+cls0+'"><div class="'+hcls0+'">🏠 ' + esc(rd.name) + '</div>' +
-           '<div class="card-dim-row">' + esc(rd.f) + '</div>' +
-           '<div class="card-dim-row">' + pr + (a.roofWaste?' · +10% waste':'') + '</div>' + flag + '</div>';
+    var body9='';
+    var hasGable=false;
+    for(var q=0;q<rr9.length;q++){
+      var rq=rr9[q];
+      var dq=(typeof ROOF_DEFS!=='undefined'&&ROOF_DEFS[rq.type])?ROOF_DEFS[rq.type]:null;
+      if(!dq)continue;
+      if(rq.type==='gable')hasGable=true;
+      var resq=(typeof calcRoofRow==='function')?calcRoofRow(rq):{detail:''};
+      body9+='<div class="card-dim-row"><strong>'+esc(dq.name)+'</strong></div>';
+      body9+='<div class="card-dim-row">'+esc(resq.detail||dq.f)+'</div>';
+    }
+    if(a.roofWaste)body9+='<div class="card-dim-row">+10% waste</div>';
+    if(hasGable)body9+='<div class="card-dim-row" style="color:#ff8a80;font-weight:700">⚠️ Gable ×2 applied (both slopes)</div>';
+    if(!body9)return '';
+    return '<div class="'+cls9+'"><div class="'+hcls9+'">🏠 Roof sections ('+rr9.length+')</div>'+body9+'</div>';
   }
   var rows = a.calcMode==='walls' ? a.wallRows : (a.calcMode==='floor' ? a.floorRows : null);
   if(!rows||!rows.length)return '';
@@ -2778,24 +2744,14 @@ document.getElementById('mm3').addEventListener('click',function(){setMMode('man
 (function(){
   var b4=document.getElementById('mm4');
   if(b4)b4.addEventListener('click',function(){setMMode('roof',this);});
-  var rt=document.getElementById('roofType');
-  if(rt)rt.addEventListener('change',function(){updateRoofLabels();recalcSF();});
-  ['roof_a','roof_l','roof_c'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el)el.addEventListener('input',recalcSF);
-  });
   var rw=document.getElementById('roofWaste');
   if(rw)rw.addEventListener('change',recalcSF);
-  var bmr=document.getElementById('roofMethodReal');
-  if(bmr)bmr.addEventListener('click',function(){setRoofMethod('real');});
-  var bmp=document.getElementById('roofMethodPitch');
-  if(bmp)bmp.addEventListener('click',function(){setRoofMethod('pitch');});
-  ['roof_pl','roof_pw'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el)el.addEventListener('input',recalcSF);
+  var addRoof=document.getElementById('addRoofRowBtn');
+  if(addRoof)addRoof.addEventListener('click',function(){
+    var last=roofRows[roofRows.length-1]||{};
+    roofRows.push({type:last.type||'gable',a:'',l:'',c:'',pitch:last.pitch||'6-12'});
+    renderRoofRows();updateRoofHelp();recalcSF();
   });
-  var rp=document.getElementById('roof_pitch');
-  if(rp)rp.addEventListener('change',function(){updateRoofLabels();recalcSF();});
 })();
 
 var wallRows=[];
@@ -2858,95 +2814,139 @@ function setMMode(mode,btn){
   document.getElementById('mFloor').style.display=mode==='floor'?'block':'none';
   document.getElementById('mManual').style.display=mode==='manual'?'block':'none';
   var rf=document.getElementById('mRoof');if(rf)rf.style.display=mode==='roof'?'block':'none';
-  if(mode==='roof')updateRoofLabels();
+  if(mode==='roof'){renderRoofRows();updateRoofHelp();}
   recalcSF();
 }
 
 // ── ROOF SHAPES ──────────────────────────────────────────────
-// Formulas from standard roofing square-footage tables.
+// Each roof section is an independent row: its own type, method and measurements.
 var ROOF_DEFS={
-  gable:  {name:'Gable Roof',            f:'2 × A × L',        needC:false, a:'A — Slope length, eave to ridge (ft)', l:'L — Ridge length (ft)', c:'',
-           note:'⚠️ Already ×2 — covers BOTH slopes. Measure one side only. For a single slope, use Lean-to instead.' },
-  hiprect:{name:'Hip Roof (rectangular)',f:'(C + L) × A ÷ 2',  needC:true,  a:'A — Slope length, eave to ridge (ft)', l:'L — Eave length, long side (ft)', c:'C — Ridge length, top (ft)',
-           note:'⚠️ Covers ONE trapezoid slope only (front or back). Add a second area for the opposite slope, plus the two triangular hip ends.' },
-  hipsq:  {name:'Hip Roof (square)',     f:'A × ½L  (half base)', needC:false, a:'A — Slope length, eave to peak (ft)', l:'½L — HALF the eave length (ft)', c:'',
-           note:'⚠️ Enter HALF the base. Covers ONE triangular slope — add an area per slope you insulate.' },
-  leanto: {name:'Lean-to / Shed',        f:'A × L',            needC:false, a:'A — Slope length (ft)', l:'L — Width (ft)', c:'',
-           note:'Single flat slope — exactly what you measure, nothing added.' },
-  mansard:{name:'Mansard Roof',          f:'(A + L) × C ÷ 2',  needC:true,  a:'A — Lower slope length (ft)', l:'L — Eave length (ft)', c:'C — Upper slope length (ft)',
-           note:'⚠️ Covers ONE mansard face only. Add a separate area for each side you are insulating.' }
+  gable:  {name:'Gable Roof',            f:'2 × A × L',        needC:false, a:'A — Slope length, eave to ridge', l:'L — Ridge length', c:'',
+           note:'⚠️ Already ×2 — covers BOTH slopes. Measure one side only.' },
+  hiprect:{name:'Hip Roof (rectangular)',f:'(C + L) × A ÷ 2',  needC:true,  a:'A — Slope length, eave to ridge', l:'L — Eave length, long side', c:'C — Ridge length, top',
+           note:'⚠️ Covers ONE trapezoid slope. Add a section for the opposite slope and for each triangular hip end.' },
+  hipsq:  {name:'Hip Roof (square)',     f:'A × ½L',           needC:false, a:'A — Slope length, eave to peak', l:'½L — HALF the eave length', c:'',
+           note:'⚠️ Enter HALF the base. Covers ONE triangular slope.' },
+  leanto: {name:'Lean-to / Shed',        f:'A × L',            needC:false, a:'A — Slope length', l:'L — Width', c:'',
+           note:'Single flat slope — exactly what you measure.' },
+  mansard:{name:'Mansard Roof',          f:'(A + L) × C ÷ 2',  needC:true,  a:'A — Lower slope length', l:'L — Eave length', c:'C — Upper slope length',
+           note:'⚠️ Covers ONE mansard face.' },
+  pitch:  {name:'Footprint + Pitch',     f:'L × W × slope factor', needC:false, a:'Building Length', l:'Building Width', c:'',
+           note:'Measure the footprint from above; the pitch factor converts it to sloped area.' }
 };
 var SLOPE_FACTORS={'2-12':1.01,'3-12':1.03,'4-12':1.05,'5-12':1.08,'6-12':1.12,'8-12':1.20,'10-12':1.30,'12-12':1.41,'14-12':1.54,'16-12':1.67,'18-12':1.80};
-var roofMethod='real'; // 'real' = slope lengths measured on site, 'pitch' = footprint x slope factor
-function setRoofMethod(m){
-  roofMethod=m;
-  var br=document.getElementById('roofMethodReal'),bp=document.getElementById('roofMethodPitch');
-  if(br)br.className='mmode'+(m==='real'?' on':'');
-  if(bp)bp.className='mmode'+(m==='pitch'?' on':'');
-  var ri=document.getElementById('roofInputs'),pi=document.getElementById('roofPitchInputs');
-  if(ri)ri.style.display=(m==='real')?'block':'none';
-  if(pi)pi.style.display=(m==='pitch')?'block':'none';
-  // Roof type only applies to the measured method
-  var rtWrap=document.getElementById('roofType');
-  if(rtWrap&&rtWrap.parentNode)rtWrap.parentNode.style.display=(m==='real')?'block':'none';
-  updateRoofLabels();
-  recalcSF();
+var roofRows=[{type:'gable',a:'',l:'',c:'',pitch:'6-12'}];
+
+function calcRoofRow(r){
+  if(!r)return {sf:0,detail:''};
+  var a=parseSum(r.a||''),l=parseSum(r.l||''),cv=parseSum(r.c||'');
+  var sf=0,det='';
+  if(r.type==='pitch'){
+    var fct=SLOPE_FACTORS[r.pitch]||1;
+    if(a>0&&l>0){sf=a*l*fct;det=a+' × '+l+' × '+fct+' ('+String(r.pitch||'').replace('-','/')+')';}
+  }
+  else if(r.type==='gable'){ if(a>0&&l>0){sf=2*a*l;det='2 × '+a+' × '+l;} }
+  else if(r.type==='hiprect'){ if(a>0&&l>0&&cv>0){sf=(cv+l)*a/2;det='('+cv+' + '+l+') × '+a+' ÷ 2';} }
+  else if(r.type==='hipsq'){ if(a>0&&l>0){sf=a*l;det=a+' × '+l+' (half base)';} }
+  else if(r.type==='leanto'){ if(a>0&&l>0){sf=a*l;det=a+' × '+l;} }
+  else if(r.type==='mansard'){ if(a>0&&l>0&&cv>0){sf=(a+l)*cv/2;det='('+a+' + '+l+') × '+cv+' ÷ 2';} }
+  sf=Math.round(sf*10)/10;
+  return {sf:sf, detail:det?(det+' = '+sf+' SF'):''};
 }
-function updateRoofLabels(){
-  var sel=document.getElementById('roofType');if(!sel)return;
-  var d=ROOF_DEFS[sel.value]||ROOF_DEFS.gable;
-  document.getElementById('roofLblA').textContent=d.a;
-  document.getElementById('roofLblL').textContent=d.l;
-  var cw=document.getElementById('roofCWrap');
-  cw.style.display=d.needC?'block':'none';
-  if(d.needC)document.getElementById('roofLblC').textContent=d.c;
-  var helpEl=document.getElementById('roofHelp');
-  if(roofMethod==='pitch'){
-    var pv=document.getElementById('roof_pitch');
-    var pk=pv?pv.value:'6-12';
-    var fct=SLOPE_FACTORS[pk]||1;
-    helpEl.innerHTML='<strong>Footprint × Slope Factor</strong><br>Formula: Length × Width × '+fct+'<br>Measure the building footprint from above; the pitch factor converts it to actual sloped roof area.';
-  } else {
-    var noteHtml='';
-    if(d.note){
-      var isWarn=d.note.indexOf('⚠️')===0;
-      noteHtml='<div style="margin-top:8px;padding:8px 10px;border-radius:6px;'+
-        (isWarn
-          ? 'background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.35);color:#ff8a80;font-weight:700;'
-          : 'background:rgba(125,133,144,.10);border:1px solid rgba(125,133,144,.25);color:#9aa4b0;')+
-        '">'+d.note+'</div>';
+
+function renderRoofRows(){
+  var cont=document.getElementById('roofRowsContainer');
+  if(!cont)return;
+  var h='';
+  for(var i=0;i<roofRows.length;i++){
+    var r=roofRows[i];
+    var d=ROOF_DEFS[r.type]||ROOF_DEFS.gable;
+    var res=calcRoofRow(r);
+    h+='<div style="background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:12px;margin-bottom:8px">';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    h+='<select class="fs" data-ri="'+i+'" data-rf="type" style="flex:1;font-size:13px">';
+    var opts=[['gable','Gable — 2×A×L'],['hiprect','Hip rect — (C+L)×A÷2'],['hipsq','Hip square — A×½L'],['leanto','Lean-to — A×L'],['mansard','Mansard — (A+L)×C÷2'],['pitch','Footprint + Pitch']];
+    for(var o=0;o<opts.length;o++){
+      h+='<option value="'+opts[o][0]+'"'+(r.type===opts[o][0]?' selected':'')+'>'+opts[o][1]+'</option>';
     }
-    helpEl.innerHTML='<strong>'+d.name+'</strong><br>Formula: '+d.f+noteHtml;
+    h+='</select>';
+    if(roofRows.length>1)h+='<button type="button" class="mrow-del" data-rdel="'+i+'" style="height:40px;width:38px">✕</button>';
+    h+='</div>';
+    h+='<div class="frow">';
+    h+='<div class="fg" style="margin-bottom:6px"><label class="fl">'+esc(d.a)+'</label><input class="fi af" data-ri="'+i+'" data-rf="a" type="text" inputmode="decimal" value="'+esc(r.a||'')+'" placeholder="0"></div>';
+    h+='<div class="fg" style="margin-bottom:6px"><label class="fl">'+esc(d.l)+'</label><input class="fi af" data-ri="'+i+'" data-rf="l" type="text" inputmode="decimal" value="'+esc(r.l||'')+'" placeholder="0"></div>';
+    h+='</div>';
+    if(d.needC){
+      h+='<div class="fg" style="margin-bottom:6px"><label class="fl">'+esc(d.c)+'</label><input class="fi af" data-ri="'+i+'" data-rf="c" type="text" inputmode="decimal" value="'+esc(r.c||'')+'" placeholder="0"></div>';
+    }
+    if(r.type==='pitch'){
+      h+='<div class="fg" style="margin-bottom:6px"><label class="fl">Roof Pitch</label><select class="fs" data-ri="'+i+'" data-rf="pitch">';
+      var pk=['2-12','3-12','4-12','5-12','6-12','8-12','10-12','12-12','14-12','16-12','18-12'];
+      for(var p=0;p<pk.length;p++){
+        h+='<option value="'+pk[p]+'"'+(r.pitch===pk[p]?' selected':'')+'>'+pk[p].replace('-','/')+' — '+SLOPE_FACTORS[pk[p]]+'</option>';
+      }
+      h+='</select></div>';
+    }
+    if(res.detail)h+='<div style="font-size:11px;color:#3fb950;font-family:ui-monospace,monospace;margin-top:4px">'+esc(res.detail)+'</div>';
+    h+='</div>';
+  }
+  cont.innerHTML=h;
+  // wire inputs
+  var els=cont.querySelectorAll('[data-ri]');
+  for(var k=0;k<els.length;k++){
+    (function(el){
+      var i=parseInt(el.getAttribute('data-ri'),10);
+      var f=el.getAttribute('data-rf');
+      var ev=(el.tagName==='SELECT')?'change':'input';
+      el.addEventListener(ev,function(){
+        roofRows[i][f]=el.value;
+        if(f==='type'){renderRoofRows();}
+        updateRoofHelp();recalcSF();
+      });
+    })(els[k]);
+  }
+  var dels=cont.querySelectorAll('[data-rdel]');
+  for(var m=0;m<dels.length;m++){
+    (function(b){
+      b.addEventListener('click',function(){
+        var i=parseInt(b.getAttribute('data-rdel'),10);
+        roofRows.splice(i,1);
+        if(!roofRows.length)roofRows=[{type:'gable',a:'',l:'',c:'',pitch:'6-12'}];
+        renderRoofRows();updateRoofHelp();recalcSF();
+      });
+    })(dels[m]);
   }
 }
+
+function updateRoofHelp(){
+  var el=document.getElementById('roofHelp');if(!el)return;
+  // Show notes for the distinct types currently in use
+  var seen={},parts=[];
+  for(var i=0;i<roofRows.length;i++){
+    var t=roofRows[i].type;
+    if(seen[t])continue;seen[t]=1;
+    var d=ROOF_DEFS[t];if(!d||!d.note)continue;
+    var warn=d.note.indexOf('⚠️')===0;
+    parts.push('<div style="margin-bottom:6px;padding:7px 9px;border-radius:6px;'+
+      (warn?'background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.35);color:#ff8a80;font-weight:700;'
+           :'background:rgba(125,133,144,.10);border:1px solid rgba(125,133,144,.25);color:#9aa4b0;')+
+      '"><strong>'+esc(d.name)+'</strong><br>'+d.note+'</div>');
+  }
+  el.innerHTML=parts.join('')||'Add roof sections above.';
+}
+
 function calcRoofSF(){
-  if(roofMethod==='pitch'){
-    var pl=parseSum(document.getElementById('roof_pl').value);
-    var pw=parseSum(document.getElementById('roof_pw').value);
-    var pk=document.getElementById('roof_pitch').value;
-    var fct=SLOPE_FACTORS[pk]||1;
-    var psf=0,pdet='';
-    if(pl>0&&pw>0){
-      psf=pl*pw*fct;
-      pdet=pl+' × '+pw+' × '+fct+' ('+pk.replace('-','/')+') = '+Math.round(psf*10)/10+' SF';
-    }
-    return {sf:Math.round(psf*10)/10, detail:pdet};
+  var total=0,lines=[];
+  for(var i=0;i<roofRows.length;i++){
+    var res=calcRoofRow(roofRows[i]);
+    if(res.sf>0){total+=res.sf;lines.push(res.detail);}
   }
-  var sel=document.getElementById('roofType');if(!sel)return {sf:0,detail:''};
-  var t=sel.value;
-  var a=parseSum(document.getElementById('roof_a').value);
-  var l=parseSum(document.getElementById('roof_l').value);
-  var cEl=document.getElementById('roof_c');
-  var cv=cEl?parseSum(cEl.value):0;
-  var sf=0,detail='';
-  if(t==='gable'){ if(a>0&&l>0){sf=2*a*l;detail='2 × '+a+' × '+l+' = '+Math.round(sf*10)/10+' SF';} }
-  else if(t==='hiprect'){ if(a>0&&l>0&&cv>0){sf=(cv+l)*a/2;detail='('+cv+' + '+l+') × '+a+' ÷ 2 = '+Math.round(sf*10)/10+' SF';} }
-  else if(t==='hipsq'){ if(a>0&&l>0){sf=a*l;detail=a+' × '+l+' (half base) = '+Math.round(sf*10)/10+' SF';} }
-  else if(t==='leanto'){ if(a>0&&l>0){sf=a*l;detail=a+' × '+l+' = '+Math.round(sf*10)/10+' SF';} }
-  else if(t==='mansard'){ if(a>0&&l>0&&cv>0){sf=(a+l)*cv/2;detail='('+a+' + '+l+') × '+cv+' ÷ 2 = '+Math.round(sf*10)/10+' SF';} }
   var w=document.getElementById('roofWaste');
-  if(w&&w.checked&&sf>0){ sf=sf*1.10; detail+='\n+10% waste = '+Math.round(sf*10)/10+' SF'; }
-  return {sf:Math.round(sf*10)/10, detail:detail};
+  if(w&&w.checked&&total>0){
+    total=total*1.10;
+    lines.push('+10% waste = '+Math.round(total*10)/10+' SF');
+  }
+  return {sf:Math.round(total*10)/10, detail:lines.join('\n')};
 }
 
 
@@ -3164,12 +3164,9 @@ var _rowInputHandler = function(e){
 function initCalc(){
   calcMode='walls';
   // reset roof inputs
-  ['roof_a','roof_l','roof_c'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  roofRows=[{type:'gable',a:'',l:'',c:'',pitch:'6-12'}];
   var _rw=document.getElementById('roofWaste');if(_rw)_rw.checked=false;
-  var _rt=document.getElementById('roofType');if(_rt)_rt.value='gable';
-  ['roof_pl','roof_pw'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  var _rp=document.getElementById('roof_pitch');if(_rp)_rp.value='6-12';
-  if(typeof setRoofMethod==='function')setRoofMethod('real');
+  if(typeof renderRoofRows==='function'){renderRoofRows();updateRoofHelp();}
   wallRows=[{l:'',h:''}];
   floorRows=[{l:'',h:''}];
   document.getElementById('mm1').className='mmode on';
@@ -3322,16 +3319,18 @@ function openFAModal(idx){
       renderRows('wall');renderRows('floor');
       setTimeout(function(){recalcSF();},50);
     } else if(savedMode==='roof'){
-      var _rpl=document.getElementById('roof_pl');if(_rpl)_rpl.value=a.roofPL||'';
-      var _rpw=document.getElementById('roof_pw');if(_rpw)_rpw.value=a.roofPW||'';
-      var _rpt=document.getElementById('roof_pitch');if(_rpt)_rpt.value=a.roofPitch||'6-12';
-      var _rt=document.getElementById('roofType');if(_rt)_rt.value=a.roofType||'gable';
-      var _ra=document.getElementById('roof_a');if(_ra)_ra.value=a.roofA||'';
-      var _rl=document.getElementById('roof_l');if(_rl)_rl.value=a.roofL||'';
-      var _rc=document.getElementById('roof_c');if(_rc)_rc.value=a.roofC||'';
+      if(a.roofRows&&a.roofRows.length){
+        roofRows=JSON.parse(JSON.stringify(a.roofRows));
+      } else {
+        // legacy single-section areas saved before multi-section support
+        roofRows=[{type:(a.roofMethod==='pitch')?'pitch':(a.roofType||'gable'),
+                   a:(a.roofMethod==='pitch')?(a.roofPL||''):(a.roofA||''),
+                   l:(a.roofMethod==='pitch')?(a.roofPW||''):(a.roofL||''),
+                   c:a.roofC||'',
+                   pitch:a.roofPitch||'6-12'}];
+      }
       var _rw2=document.getElementById('roofWaste');if(_rw2)_rw2.checked=!!a.roofWaste;
       setMMode('roof',document.getElementById('mm4'));
-      if(typeof setRoofMethod==='function')setRoofMethod(a.roofMethod==='pitch'?'pitch':'real');
       setTimeout(function(){recalcSF();},50);
     } else {
       setMMode('manual',document.getElementById('mm3'));
@@ -3575,15 +3574,8 @@ document.getElementById('faSaveBtn').addEventListener('click',function(){
   if(saveFloorRows.length===0&&calcMode==='floor') saveFloorRows=JSON.parse(JSON.stringify(floorRows));
   var area=Object.assign({name:name,productId:null,sf:sf,sfBase:sfBase,spec:spec,notes:notes,photos:faPendPh.slice(),mult:multVal},matData,{
     calcMode:calcMode||'manual',
-    roofType:(calcMode==='roof'&&document.getElementById('roofType'))?document.getElementById('roofType').value:'',
-    roofA:(calcMode==='roof'&&document.getElementById('roof_a'))?document.getElementById('roof_a').value:'',
-    roofL:(calcMode==='roof'&&document.getElementById('roof_l'))?document.getElementById('roof_l').value:'',
-    roofC:(calcMode==='roof'&&document.getElementById('roof_c'))?document.getElementById('roof_c').value:'',
+    roofRows:(calcMode==='roof')?JSON.parse(JSON.stringify(roofRows)):null,
     roofWaste:(calcMode==='roof'&&document.getElementById('roofWaste'))?document.getElementById('roofWaste').checked:false,
-    roofMethod:(calcMode==='roof')?roofMethod:'',
-    roofPL:(calcMode==='roof'&&document.getElementById('roof_pl'))?document.getElementById('roof_pl').value:'',
-    roofPW:(calcMode==='roof'&&document.getElementById('roof_pw'))?document.getElementById('roof_pw').value:'',
-    roofPitch:(calcMode==='roof'&&document.getElementById('roof_pitch'))?document.getElementById('roof_pitch').value:'',
     wallRows:saveWallRows,
     floorRows:saveFloorRows});
   // Always use window.fieldAreas to avoid closure scope divergence
