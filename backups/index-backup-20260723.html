@@ -2868,13 +2868,13 @@ var ROOF_DEFS={
   gable:  {name:'Gable Roof',            f:'2 × A × L',        needC:false, a:'A — Slope length, eave to ridge (ft)', l:'L — Ridge length (ft)', c:'',
            note:'⚠️ Already ×2 — covers BOTH slopes. Measure one side only. For a single slope, use Lean-to instead.' },
   hiprect:{name:'Hip Roof (rectangular)',f:'(C + L) × A ÷ 2',  needC:true,  a:'A — Slope length, eave to ridge (ft)', l:'L — Eave length, long side (ft)', c:'C — Ridge length, top (ft)',
-           note:'Covers all four slopes of the hip.' },
+           note:'⚠️ Covers ONE trapezoid slope only (front or back). Add a second area for the opposite slope, plus the two triangular hip ends.' },
   hipsq:  {name:'Hip Roof (square)',     f:'A × ½L  (half base)', needC:false, a:'A — Slope length, eave to peak (ft)', l:'½L — HALF the eave length (ft)', c:'',
-           note:'⚠️ Enter HALF the base — the ÷2 is already built into your measurement.' },
+           note:'⚠️ Enter HALF the base. Covers ONE triangular slope — add an area per slope you insulate.' },
   leanto: {name:'Lean-to / Shed',        f:'A × L',            needC:false, a:'A — Slope length (ft)', l:'L — Width (ft)', c:'',
-           note:'Single slope only — no doubling applied.' },
+           note:'Single flat slope — exactly what you measure, nothing added.' },
   mansard:{name:'Mansard Roof',          f:'(A + L) × C ÷ 2',  needC:true,  a:'A — Lower slope length (ft)', l:'L — Eave length (ft)', c:'C — Upper slope length (ft)',
-           note:'Covers the full mansard surface.' }
+           note:'⚠️ Covers ONE mansard face only. Add a separate area for each side you are insulating.' }
 };
 var SLOPE_FACTORS={'2-12':1.01,'3-12':1.03,'4-12':1.05,'5-12':1.08,'6-12':1.12,'8-12':1.20,'10-12':1.30,'12-12':1.41,'14-12':1.54,'16-12':1.67,'18-12':1.80};
 var roofMethod='real'; // 'real' = slope lengths measured on site, 'pitch' = footprint x slope factor
