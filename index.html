@@ -840,7 +840,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
         <select class="fs" id="roofType">
           <option value="gable">Gable Roof — 2 × A × L</option>
           <option value="hiprect">Hip Roof (rectangular) — (C+L) × A ÷ 2</option>
-          <option value="hipsq">Hip Roof (square) — A × L ÷ 2</option>
+          <option value="hipsq">Hip Roof (square) — A × ½L</option>
           <option value="leanto">Lean-to / Shed — A × L</option>
           <option value="mansard">Mansard — (A+L) × C ÷ 2</option>
         </select>
@@ -2865,7 +2865,7 @@ function setMMode(mode,btn){
 var ROOF_DEFS={
   gable:  {name:'Gable Roof',            f:'2 × A × L',        needC:false, a:'A — Slope length, eave to ridge (ft)', l:'L — Ridge length (ft)', c:'' },
   hiprect:{name:'Hip Roof (rectangular)',f:'(C + L) × A ÷ 2',  needC:true,  a:'A — Slope length, eave to ridge (ft)', l:'L — Eave length, long side (ft)', c:'C — Ridge length, top (ft)' },
-  hipsq:  {name:'Hip Roof (square)',     f:'A × L ÷ 2',        needC:false, a:'A — Slope length, eave to peak (ft)', l:'L — Eave length (ft)', c:'' },
+  hipsq:  {name:'Hip Roof (square)',     f:'A × ½L  (half base)', needC:false, a:'A — Slope length, eave to peak (ft)', l:'½L — HALF the eave length (ft)', c:'' },
   leanto: {name:'Lean-to / Shed',        f:'A × L',            needC:false, a:'A — Slope length (ft)', l:'L — Width (ft)', c:'' },
   mansard:{name:'Mansard Roof',          f:'(A + L) × C ÷ 2',  needC:true,  a:'A — Lower slope length (ft)', l:'L — Eave length (ft)', c:'C — Upper slope length (ft)' }
 };
@@ -2925,7 +2925,7 @@ function calcRoofSF(){
   var sf=0,detail='';
   if(t==='gable'){ if(a>0&&l>0){sf=2*a*l;detail='2 × '+a+' × '+l+' = '+Math.round(sf*10)/10+' SF';} }
   else if(t==='hiprect'){ if(a>0&&l>0&&cv>0){sf=(cv+l)*a/2;detail='('+cv+' + '+l+') × '+a+' ÷ 2 = '+Math.round(sf*10)/10+' SF';} }
-  else if(t==='hipsq'){ if(a>0&&l>0){sf=a*l/2;detail=a+' × '+l+' ÷ 2 = '+Math.round(sf*10)/10+' SF';} }
+  else if(t==='hipsq'){ if(a>0&&l>0){sf=a*l;detail=a+' × '+l+' (half base) = '+Math.round(sf*10)/10+' SF';} }
   else if(t==='leanto'){ if(a>0&&l>0){sf=a*l;detail=a+' × '+l+' = '+Math.round(sf*10)/10+' SF';} }
   else if(t==='mansard'){ if(a>0&&l>0&&cv>0){sf=(a+l)*cv/2;detail='('+a+' + '+l+') × '+cv+' ÷ 2 = '+Math.round(sf*10)/10+' SF';} }
   var w=document.getElementById('roofWaste');
