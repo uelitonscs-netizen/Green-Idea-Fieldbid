@@ -975,6 +975,13 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     </div>
 
     <div class="frow">
+      <div class="fg">
+        <label class="fl" id="fa_price_lbl">Price ($/SF)</label>
+        <input class="fi af" id="fa_price" type="number" step="0.01" min="0" inputmode="decimal" placeholder="auto from product">
+        <div style="font-size:10px;color:#6b7684;margin-top:3px">Auto-filled from Products. Edit to override just this area.</div>
+      </div>
+    </div>
+    <div class="frow">
       <div class="fg"><label class="fl">Field Notes</label><input class="fi" id="fa_notes" type="text" placeholder="Access, instructions..."></div>
     </div>
     <div class="fg"><label class="fl">Photos</label>
@@ -3443,6 +3450,13 @@ function openFAModal(idx){
       if(multInEl) multInEl.value=1;
     }
     document.getElementById('fa_notes').value=a.notes||'';
+    // Restore the area's saved price; treat it as a manual override so it
+    // is not auto-overwritten when material fields re-render.
+    var _fpE=document.getElementById('fa_price');
+    if(_fpE){
+      if(a.lastPrice>0){_fpE.value=Number(a.lastPrice).toFixed(2);_faPriceEdited=true;}
+      else{_fpE.value='';_faPriceEdited=false;autofillFaPrice(true);}
+    }
 
     faPendPh=a.photos?a.photos.slice():[];
     // Restore measurement mode and rows
@@ -3491,9 +3505,14 @@ function openFAModal(idx){
     document.getElementById('fa_cc_inch').value='';
     document.getElementById('fa_oc_inch').value='';
     document.getElementById('fa_notes').value='';
+    _faPriceEdited=false;
+    var _fp=document.getElementById('fa_price');if(_fp)_fp.value='';
 
   }
-  onMatCatChange();openOv('faOverlay');
+  onMatCatChange();
+  // After the material fields settle, fill the price from the base product
+  autofillFaPrice(false);
+  openOv('faOverlay');
 }
 
 var MAT_CAT_DATA = {
@@ -3524,6 +3543,32 @@ var MAT_CAT_DATA = {
   'insulation_removal':{label:'Insulation Removal', type:'insulation_removal'},
   'other':    {label:'Other', type:'other'}
 };
+
+
+// Map a takeoff material type to the matching Products entry, to pull its base price.
+function basePriceForMatType(type){
+  var idByType={cc:'p2',oc:'p1',hybrid:'p3',hybrid_foam_fg:'p3',hybrid_foam_mw:'p14',
+                fg:'p6',cel:'p4',mw:'p11',ign:'p13'};
+  var pid=idByType[type];
+  if(pid){var pr=getProd(pid);if(pr)return Number(pr.price)||0;}
+  return 0;
+}
+// Auto-fill the takeoff price field from the base product, unless the user
+// has manually overridden it for this area (tracked by _faPriceEdited).
+var _faPriceEdited=false;
+function autofillFaPrice(force){
+  var el=document.getElementById('fa_price');if(!el)return;
+  var catEl=document.getElementById('fa_mat_cat');if(!catEl)return;
+  var d=MAT_CAT_DATA[catEl.value]||{type:'other'};
+  // Update the label to match how this material is priced (per inch vs per SF)
+  var perInch=(d.type==='cc'||d.type==='oc'||d.type==='hybrid'||d.type==='hybrid_foam_fg'||d.type==='hybrid_foam_mw');
+  var lblEl=document.getElementById('fa_price_lbl');
+  if(lblEl)lblEl.textContent=perInch?'Price ($/inch)':'Price ($/SF)';
+  if(_faPriceEdited&&!force)return;
+  var base=basePriceForMatType(d.type);
+  if(base>0){el.value=base.toFixed(2);el.placeholder=base.toFixed(2);}
+  else{el.value='';el.placeholder='enter price';}
+}
 
 function onMatCatChange(){
   var cat = document.getElementById('fa_mat_cat').value;
@@ -3572,6 +3617,7 @@ function onMatCatChange(){
     document.getElementById('mat_mw_fields').style.display='block';
     if(d.r) document.getElementById('fa_mw_r').value=d.r;
   }
+  autofillFaPrice(false);
 }
 window.onMatCatChange=onMatCatChange;
 
@@ -3679,6 +3725,11 @@ document.getElementById('faCancelBtn').addEventListener('click',function(){
   // Material category change listener
   var matCatSel=document.getElementById('fa_mat_cat');
   if(matCatSel) matCatSel.addEventListener('change',function(){onMatCatChange();});
+  var faPriceEl=document.getElementById('fa_price');
+  if(faPriceEl){
+    // Any manual typing marks the price as an override for this area
+    faPriceEl.addEventListener('input',function(){_faPriceEdited=true;});
+  }
 document.getElementById('faSaveBtn').addEventListener('click',function(){
   try{
   var name=document.getElementById('fa_name').value.trim();
@@ -3713,12 +3764,16 @@ document.getElementById('faSaveBtn').addEventListener('click',function(){
   var saveFloorRows=floorRows.filter(function(r){return r.l||r.h;});
   if(saveWallRows.length===0&&calcMode==='walls') saveWallRows=JSON.parse(JSON.stringify(wallRows));
   if(saveFloorRows.length===0&&calcMode==='floor') saveFloorRows=JSON.parse(JSON.stringify(floorRows));
+  var _faPriceVal=parseFloat(document.getElementById('fa_price').value);
   var area=Object.assign({name:name,productId:null,sf:sf,sfBase:sfBase,spec:spec,notes:notes,photos:faPendPh.slice(),mult:multVal},matData,{
     calcMode:calcMode||'manual',
     roofRows:(calcMode==='roof')?JSON.parse(JSON.stringify(roofRows)):null,
     roofWaste:(calcMode==='roof'&&document.getElementById('roofWaste'))?document.getElementById('roofWaste').checked:false,
     wallRows:saveWallRows,
-    floorRows:saveFloorRows});
+    floorRows:saveFloorRows,
+    // Price entered in the takeoff (auto from Products or overridden here).
+    // lastPrice is the same field the estimator import already reads.
+    lastPrice:(!isNaN(_faPriceVal)&&_faPriceVal>0)?_faPriceVal:0});
   // Always use window.fieldAreas to avoid closure scope divergence
   if(editFAIdx>=0)window.fieldAreas[editFAIdx]=area;else window.fieldAreas.push(area);
   fieldAreas=window.fieldAreas;
