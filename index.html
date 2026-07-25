@@ -3803,6 +3803,28 @@ document.getElementById('faSaveBtn').addEventListener('click',function(){
 function delFA(idx){appConfirm('Delete this area?',function(){fieldAreas.splice(idx,1);saveFA();renderFA();renderFWO();toast('🗑 Deleted');});}
 
 // EST ITEM MODAL
+
+// Derive material fields (matType + inches/R) from a product, so manually-created
+// estimator items carry the data WorkLog needs for matBudget — same as imported items.
+function deriveMatFromProduct(productId, inches){
+  var out={matType:'',matCat:'',ccInch:0,ocInch:0,fgR:0,celR:0,mwR:0};
+  var prod=null;try{prod=productId?getProd(productId):null;}catch(e){}
+  if(!prod)return out;
+  out.matCat=prod.cat||'';
+  var c=(prod.cat||'').toLowerCase();
+  var inc=Number(inches)||0;
+  if(prod.id==='p2'){out.matType='cc';out.ccInch=inc;}
+  else if(prod.id==='p1'){out.matType='oc';out.ocInch=inc;}
+  else if(c.indexOf('hybrid')>=0){out.matType='hybrid';}
+  else if(c.indexOf('mineral')>=0){out.matType='mw';}
+  else if(c.indexOf('blown')>=0||c.indexOf('cellulose')>=0){out.matType='cel';}
+  else if(c.indexOf('batt')>=0||c.indexOf('fiberglass')>=0){out.matType='fg';}
+  else if(c.indexOf('air')>=0||c.indexOf('ignition')>=0){out.matType='ign';}
+  else out.matType='other';
+  return out;
+}
+window.deriveMatFromProduct=deriveMatFromProduct;
+
 function openEIModal(idx){
   editEIIdx=idx;
   document.getElementById('eiTitle').textContent=idx>=0?'Edit Item':'Add Item';
@@ -3942,6 +3964,19 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
     linePrice=parseFloat((price*inch).toFixed(2));
   }
   var item={name:name,productId:eiProd,sf:sf,price:linePrice,pricePerInch:(!isHybridItem&&isPerInch())?price:0,inches:inch,notes:notes,photos:eiPendPh.slice()};
+  // Carry material fields derived from the chosen product so WorkLog matBudget
+  // works even when the item is created manually (not imported from takeoff).
+  // Preserve any existing material data when editing an imported item.
+  var _prevItem=(editEIIdx>=0&&window.estItems[editEIIdx])?window.estItems[editEIIdx]:null;
+  var _mat=deriveMatFromProduct(eiProd, inch);
+  item.matType=(_prevItem&&_prevItem.matType)?_prevItem.matType:_mat.matType;
+  item.matCat =(_prevItem&&_prevItem.matCat) ?_prevItem.matCat :_mat.matCat;
+  item.ccInch =(_prevItem&&_prevItem.ccInch) ?_prevItem.ccInch :_mat.ccInch;
+  item.ocInch =(_prevItem&&_prevItem.ocInch) ?_prevItem.ocInch :_mat.ocInch;
+  item.fgR    =(_prevItem&&_prevItem.fgR)    ?_prevItem.fgR    :_mat.fgR;
+  item.celR   =(_prevItem&&_prevItem.celR)   ?_prevItem.celR   :_mat.celR;
+  item.mwR    =(_prevItem&&_prevItem.mwR)    ?_prevItem.mwR    :_mat.mwR;
+  if(_prevItem&&_prevItem.spec)item.spec=_prevItem.spec;
   if(editEIIdx>=0)window.estItems[editEIIdx]=item;else window.estItems.push(item);
   estItems=window.estItems;
   // Save price by area name (most reliable - works even without matType)
