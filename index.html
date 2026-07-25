@@ -2702,6 +2702,9 @@ function rebuildTakeoffFromItems(){
 
 function renderQuote(){
   var totals=calcTotals();
+  // Always reset the WorkLog button to its default state for the current quote,
+  // so a transient "Sent!" from a previous send never sticks to another project.
+  (function(){var _wb=document.getElementById('sendWLBtn');if(_wb){_wb.textContent='🔗 Send to WorkLog';_wb.disabled=false;_wb.style.opacity='1';_wb.style.background='#1a6b2a';}})();
   document.getElementById('qClient').textContent=quoteInfo.client||'Tap to add';
   document.getElementById('qAddress').textContent=quoteInfo.address||'Tap to add';
   document.getElementById('qSub').textContent=fmt(totals.sub);
@@ -4748,7 +4751,7 @@ function sendToWorkLog(){
 
   // ── BTN STATE ──
   var btn=document.getElementById('sendWLBtn');
-  var origLabel=btn?btn.textContent:'';
+  var origLabel='🔗 Send to WorkLog'; // fixed default so it never sticks on a prior state
   if(btn){ btn.textContent='Sending...'; btn.disabled=true; btn.style.opacity='0.6'; }
 
   // ── MATERIAL BUDGET CALC ──
