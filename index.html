@@ -1449,7 +1449,7 @@ function updateHomeStats(){
   var jobsWithEst=projs.filter(function(p){return p.estItems&&p.estItems.length>0;});
   var totalEst=0;
   jobsWithEst.forEach(function(p){
-    if(p.quoteInfo&&p.quoteInfo.total) totalEst+=parseFloat(p.quoteInfo.total)||0;
+    totalEst+=projectEstimateTotal(p);
   });
   var fv=document.getElementById('homeStatFieldVal');
   var fs=document.getElementById('homeStatFieldSub');
@@ -2615,9 +2615,26 @@ function renderEst(){
 }
 
 function rebuildTakeoffFromItems(){
-  if(!currentProj){toast('Open a project first');return;}
   if(!estItems.length){toast('No items to rebuild from');return;}
-  appConfirm('Rebuild takeoff areas from these '+estItems.length+' estimate items? This will replace the current takeoff areas of this project.',function(){
+  // If this estimate has no project yet (job created straight in the Estimator),
+  // create one automatically from the quote so the takeoff has somewhere to live.
+  var _autoCreated=false;
+  if(!currentProj){
+    var _nm=(quoteInfo&&quoteInfo.client)?quoteInfo.client:('Quote #'+(quoteNum||''));
+    var _addr=(quoteInfo&&quoteInfo.address)?quoteInfo.address:'';
+    var _np={id:'p_'+Date.now(),name:_nm,address:_addr,areas:[],
+             estItems:JSON.parse(JSON.stringify(estItems)),
+             quoteInfo:JSON.parse(JSON.stringify(quoteInfo||{})),
+             created:new Date().toLocaleDateString('en-US')};
+    var _ap=loadProjs();_ap.push(_np);saveProjs(_ap);
+    currentProj=_np;
+    _autoCreated=true;
+    if(typeof updateProjHeader==='function')updateProjHeader();
+  }
+  var _msg=_autoCreated
+    ? ('Create a new takeoff project "'+currentProj.name+'" from these '+estItems.length+' estimate items?')
+    : ('Rebuild takeoff areas from these '+estItems.length+' estimate items? This will replace the current takeoff areas of this project.');
+  appConfirm(_msg,function(){
     var newAreas=[];
     for(var i=0;i<estItems.length;i++){
       var it=estItems[i];
@@ -3058,6 +3075,50 @@ function clearJobEstimate(pid){
 }
 window.clearJobEstimate=clearJobEstimate;
 
+
+// Compute a project's estimate total from its SAVED data, honoring that
+// project's own markup/discount/tax. Used by the Jobs list and the home
+// "estimated" figure (quoteInfo.total is never stored).
+function projectEstimateTotal(p){
+  if(!p||!Array.isArray(p.estItems)||!p.estItems.length)return 0;
+  var qi=p.quoteInfo||{};
+  // markup
+  var hasMk=qi.markup!==undefined&&qi.markup!==null&&qi.markup!=='';
+  var mkVal=hasMk?(Number(qi.markup)||0):0;
+  var mkType=(qi.markupType==='usd')?'usd':'pct';
+  // discount
+  var hasDc=qi.discount!==undefined&&qi.discount!==null&&qi.discount!=='';
+  var dcVal=hasDc?(Number(qi.discount)||0):0;
+  var dcType=(qi.discountType==='usd')?'usd':'pct';
+  var s=0;
+  for(var i=0;i<p.estItems.length;i++){
+    var it=p.estItems[i];
+    var sf=Number(it.sf)||0;
+    // effective price per SF (handles legacy per-inch items)
+    var eff=Number(it.price)||0;
+    try{
+      var prod=it.productId?getProd(it.productId):null;
+      var isPI=prod&&prod.pricingType==='per_inch';
+      var isHy=prod&&prod.cat==='Hybrid';
+      var inch=Number(it.inches)||0;
+      if(isPI&&!isHy&&inch>0&&(!it.pricePerInch||it.pricePerInch===0)){
+        eff=parseFloat((eff*inch).toFixed(2));
+      }
+    }catch(e){}
+    var itMk=(mkType==='pct')?mkVal:0;
+    s+=sf*eff*(1+itMk/100);
+  }
+  if(mkType==='usd')s+=mkVal;
+  var tr=Number(cfg&&cfg.taxRate)||0;
+  var afterTax=s+(s*tr/100);
+  var disc=0;
+  if(hasDc)disc=(dcType==='usd')?dcVal:(afterTax*dcVal/100);
+  var total=afterTax-disc;
+  if(total<0)total=0;
+  return Math.round(total);
+}
+window.projectEstimateTotal=projectEstimateTotal;
+
 function renderJobsList(){
   var projs = loadProjs();
   var container = document.getElementById('jobsList');
@@ -3077,20 +3138,13 @@ function renderJobsList(){
     var isActive = currentProj && currentProj.id === p.id;
     // Calc totals from saved project data
     var totalSF = 0;
-    var quoteTotal = 0;
     var areas = p.areas || [];
     var items = p.estItems || [];
-    // Use estItems SF as source of truth (includes manually added items)
     for(var k=0; k<items.length; k++){
-      var sf=Number(items[k].sf)||0;
-      totalSF += sf;
-      var pr=Number(items[k].price)||0;
-      var mk=getMarkup();
-      quoteTotal += sf*pr*(1+mk/100);
+      totalSF += Number(items[k].sf)||0;
     }
-    var taxRate=Number(cfg&&cfg.taxRate)||0;
-    if(taxRate>0) quoteTotal = quoteTotal*(1+taxRate/100);
-    quoteTotal = Math.round(quoteTotal);
+    // Use the shared helper so the card matches the Quote screen exactly
+    var quoteTotal = projectEstimateTotal(p);
     var areaCount = items.length > 0 ? items.length : areas.length;
     var itemCount = items.length;
     h += '<div style="background:'+(isActive?'#1a2f1e':'#131920')+';border:1px solid '+(isActive?'#2a6b35':'#1e2530')+';border-radius:12px;margin-bottom:10px;overflow:hidden;">';
