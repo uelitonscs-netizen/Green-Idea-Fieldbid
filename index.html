@@ -748,7 +748,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       </button>
     </div>
     <div class="st-g"><div class="st-t">Markup &amp; Tax</div>
-      <div class="st-row"><div><div class="st-lbl">Tax Rate</div><div class="st-sub">Applied to final total</div></div><div style="display:flex;align-items:center;gap:4px"><input class="st-inp" type="number" id="cfgTax" value="0"><span style="color:#7d8590">%</span></div></div>
+      <div class="st-row"><div><div class="st-lbl">Tax Rate</div><div class="st-sub">Applied to final total</div></div><div style="display:flex;align-items:center;gap:4px"><input class="st-inp" type="number" inputmode="decimal" id="cfgTax" value="0"><span style="color:#7d8590">%</span></div></div>
     </div>
     <div class="st-g"><div class="st-t">Company Info</div>
       <div class="st-row stacked"><div class="st-lbl">Company Name</div><input class="fi" type="text" id="cfgCompany" value="Green Idea Insulation" style="background:#0d1117"></div>
@@ -850,7 +850,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
     <!-- MANUAL MODE -->
     <div id="mManual" style="display:none">
-      <div class="fg"><label class="fl">Square Feet</label><input class="fi" id="fa_sf_m" type="number" placeholder="0" min="0" style="font-size:18px"></div>
+      <div class="fg"><label class="fl">Square Feet</label><input class="fi" id="fa_sf_m" type="number" inputmode="decimal" placeholder="0" min="0" style="font-size:18px"></div>
     </div>
 
     <div class="calc-result">
@@ -869,7 +869,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       <div class="frow">
         <div class="fg" style="flex:0 0 auto;min-width:0">
           <label class="fl">Units / Multiplier</label>
-          <input class="fi" id="fa_mult" type="number" placeholder="1" min="1" max="999" value="1" style="font-size:18px;width:100px" oninput="recalcSF()">
+          <input class="fi" id="fa_mult" type="number" inputmode="decimal" placeholder="1" min="1" max="999" value="1" style="font-size:18px;width:100px" oninput="recalcSF()">
         </div>
         <div class="fg" style="display:flex;align-items:flex-end;padding-bottom:2px">
           <div style="font-size:13px;color:#7d8590">× <span id="calcSF_base" style="color:#1a6b2a;font-weight:700">0</span> SF base = <span id="calcSF_total" style="color:#f59e0b;font-weight:800;font-size:16px">0</span> SF total</div>
@@ -927,11 +927,11 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       <div class="frow">
         <div class="fg" id="mat_cc_wrap">
           <label class="fl">CC Thickness (inches)</label>
-          <input class="fi" id="fa_cc_inch" type="number" placeholder="e.g. 3" step="0.5" min="0" max="20"/>
+          <input class="fi" id="fa_cc_inch" type="number" inputmode="decimal" placeholder="e.g. 3" step="0.5" min="0" max="20"/>
         </div>
         <div class="fg" id="mat_oc_wrap">
           <label class="fl">OC Thickness (inches)</label>
-          <input class="fi" id="fa_oc_inch" type="number" placeholder="e.g. 6.5" step="0.5" min="0" max="20"/>
+          <input class="fi" id="fa_oc_inch" type="number" inputmode="decimal" placeholder="e.g. 6.5" step="0.5" min="0" max="20"/>
         </div>
       </div>
     </div>
@@ -941,11 +941,11 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       <div class="frow">
         <div class="fg">
           <label class="fl">Fiberglass R-Value</label>
-          <input class="fi" id="fa_fg_r" type="number" placeholder="e.g. 21" min="1" max="60"/>
+          <input class="fi" id="fa_fg_r" type="number" inputmode="decimal" placeholder="e.g. 21" min="1" max="60"/>
         </div>
         <div class="fg">
           <label class="fl">Fiberglass Thickness (inches)</label>
-          <input class="fi" id="fa_fg_inch" type="number" placeholder="e.g. 5.5" step="0.25" min="0" max="20"/>
+          <input class="fi" id="fa_fg_inch" type="number" inputmode="decimal" placeholder="e.g. 5.5" step="0.25" min="0" max="20"/>
         </div>
       </div>
     </div>
@@ -955,11 +955,11 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       <div class="frow">
         <div class="fg">
           <label class="fl">Cellulose R-Value</label>
-          <input class="fi" id="fa_cel_r" type="number" placeholder="e.g. 49" min="1" max="80"/>
+          <input class="fi" id="fa_cel_r" type="number" inputmode="decimal" placeholder="e.g. 49" min="1" max="80"/>
         </div>
         <div class="fg">
           <label class="fl">Cellulose Depth (inches)</label>
-          <input class="fi" id="fa_cel_inch" type="number" placeholder="e.g. 12" step="0.5" min="0" max="30"/>
+          <input class="fi" id="fa_cel_inch" type="number" inputmode="decimal" placeholder="e.g. 12" step="0.5" min="0" max="30"/>
         </div>
       </div>
     </div>
@@ -969,7 +969,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       <div class="frow">
         <div class="fg">
           <label class="fl">Mineral Wool R-Value</label>
-          <input class="fi" id="fa_mw_r" type="number" placeholder="e.g. 15" min="1" max="60"/>
+          <input class="fi" id="fa_mw_r" type="number" inputmode="decimal" placeholder="e.g. 15" min="1" max="60"/>
         </div>
       </div>
     </div>
@@ -1003,9 +1003,9 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <div class="fg"><label class="fl">Description</label><input class="fi" id="ei_name" type="text" placeholder="e.g. Exterior Walls – North Wing"></div>
     <div class="fg" id="ei_prod_row" style="display:none"><label class="fl">Material</label><div id="ei_prod_label" style="font-size:13px;color:#58a6ff;padding:6px 0;font-weight:600"></div></div>
     <div class="frow">
-      <div class="fg"><label class="fl">Square Feet</label><input class="fi" id="ei_sf" type="number" placeholder="0" min="0"></div>
-      <div class="fg" id="ei_inch_wrap" style="display:none"><label class="fl">Thickness (in)</label><input class="fi" id="ei_inch" type="number" placeholder="0" step="0.5" min="0"></div>
-      <div class="fg"><label class="fl" id="ei_price_label">Price / SF ($)</label><input class="fi" id="ei_price" type="number" placeholder="0.00" step="0.01"></div>
+      <div class="fg"><label class="fl">Square Feet</label><input class="fi" id="ei_sf" type="number" inputmode="decimal" placeholder="0" min="0"></div>
+      <div class="fg" id="ei_inch_wrap" style="display:none"><label class="fl">Thickness (in)</label><input class="fi" id="ei_inch" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0"></div>
+      <div class="fg"><label class="fl" id="ei_price_label">Price / SF ($)</label><input class="fi" id="ei_price" type="number" inputmode="decimal" placeholder="0.00" step="0.01"></div>
     </div>
     <div class="hint" id="eiHint">Line total: <strong>$0.00</strong></div>
     <div class="fg" style="margin-top:10px"><label class="fl">Notes</label><input class="fi" id="ei_notes" type="text" placeholder="R-value, fire-rated..."></div>
@@ -1028,7 +1028,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <div class="fg"><label class="fl">Product Name</label><input class="fi" id="p_name" type="text" placeholder="e.g. Closed-Cell Spray Foam"></div>
     <div class="frow">
       <div class="fg"><label class="fl">Emoji</label><input class="fi" id="p_emoji" type="text" placeholder="💧" maxlength="4" style="font-size:22px;text-align:center"></div>
-      <div class="fg"><label class="fl">Default $/SF</label><input class="fi" id="p_price" type="number" placeholder="0.00" step="0.01"></div>
+      <div class="fg"><label class="fl">Default $/SF</label><input class="fi" id="p_price" type="number" inputmode="decimal" placeholder="0.00" step="0.01"></div>
     </div>
     <div class="fg"><label class="fl">Category</label>
       <select class="fs" id="p_cat"><option>Spray Foam</option><option>Hybrid</option><option>Blown-In</option><option>Batt</option><option>Mineral Wool</option><option>Board / Rigid</option><option>Air Barrier</option><option>Other</option></select>
@@ -2840,9 +2840,9 @@ function renderRows(mode){
   for(var i=0;i<rows.length;i++){
     h+='<div class="mrow" data-row="'+i+'" data-mode="'+mode+'">';
     h+='<div class="mrow-l"><div class="mrow-lbl">'+(i===0?'Length (ft)':'')+'</div>';
-    h+='<input class="fi" type="text" data-field="l" data-row="'+i+'" data-mode="'+mode+'" value="'+rows[i].l+'" placeholder="12+15+8" style="font-size:16px"></div>';
+    h+='<input class="fi" type="text" inputmode="decimal" data-field="l" data-row="'+i+'" data-mode="'+mode+'" value="'+rows[i].l+'" placeholder="12+15+8" style="font-size:16px"></div>';
     h+='<div class="mrow-h"><div class="mrow-lbl">'+(i===0?(mode==='wall'?'Height':'Width'):'')+'</div>';
-    h+='<input class="fi" type="text" data-field="h" data-row="'+i+'" data-mode="'+mode+'" value="'+rows[i].h+'" placeholder="9" style="font-size:16px"></div>';
+    h+='<input class="fi" type="text" inputmode="decimal" data-field="h" data-row="'+i+'" data-mode="'+mode+'" value="'+rows[i].h+'" placeholder="9" style="font-size:16px"></div>';
     if(rows.length>1)h+='<button class="mrow-del" data-row="'+i+'" data-mode="'+mode+'" data-act="delrow">×</button>';
     h+='</div>';
   }
