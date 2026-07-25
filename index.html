@@ -1633,14 +1633,18 @@ function switchProjById(pid){
       }
     }
     saveEI();
-    updateProjHeader();renderFA();renderFWO();renderEst();renderQuote();
-    // Switch to field app and Areas tab
+    // Show the takeoff screen + FAB FIRST, so a later render error can't leave
+    // the + button hidden for projects that already have areas/items.
     document.getElementById('field-app').style.display='block';
     document.getElementById('est-app').style.display='none';
     document.getElementById('home').style.display='none';
     document.getElementById('fieldFab').style.display='flex';
     var ft1=document.getElementById('ft1');
     if(ft1) showFP('areas',ft1);
+    try{ updateProjHeader();renderFA();renderFWO();renderEst();renderQuote(); }
+    catch(e){ console.warn('render after switch failed:',e); }
+    // Re-assert FAB visibility after renders
+    document.getElementById('fieldFab').style.display='flex';
     toast('📂 Switched to "'+currentProj.name+'"');
   },50);
 }
@@ -2532,6 +2536,15 @@ window.generateProofPDF=generateProofPDF;
 
 function renderFA(){
   fieldAreas=window.fieldAreas||fieldAreas;
+  // Keep the + button visible whenever the Field Takeoff screen is showing,
+  // regardless of whether the project already has areas/items.
+  (function(){
+    var fa=document.getElementById('field-app');
+    var fab=document.getElementById('fieldFab');
+    if(fa&&fab&&fa.style.display!=='none'&&fa.style.display!==''){
+      fab.style.display='flex';
+    }
+  })();
   var list=document.getElementById('fieldAreaList');
   var sf=0;for(var i=0;i<fieldAreas.length;i++)sf+=fieldAreas[i].sf||0;
   document.getElementById('fAreaCount').textContent=fieldAreas.length;
