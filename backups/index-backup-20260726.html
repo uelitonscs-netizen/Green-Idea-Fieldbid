@@ -1077,6 +1077,19 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     </div>
   </div>
 </div>
+<div class="overlay" id="brochureOverlay">
+  <div class="modal" style="padding-bottom:28px">
+    <div class="mhandle"></div>
+    <div class="mtitle">Attach Brochures</div>
+    <div style="padding:8px 20px 12px;font-size:13px;color:#94a3b8;text-align:center">Select which product info sheets to include. Suggestions are based on this estimate's materials.</div>
+    <div id="brochureList" style="padding:0 20px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:16px 20px 0;display:flex;flex-direction:column;gap:10px">
+      <button id="brochureAttachBtn" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📎 Add to Estimate PDF</button>
+      <button id="brochureShareBtn" style="width:100%;background:#1e3a5f;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📤 Share Brochures Separately</button>
+      <button id="brochureSkipBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Skip — Estimate Only</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="confirmOverlay">
   <div class="modal" style="padding-bottom:32px">
     <div class="mhandle"></div>
@@ -1936,7 +1949,114 @@ function specFromData(o){
 }
 window.specFromData=specFromData;
 
-function generateEstimatePDF(pid, totalOnly){
+
+// ═══════════════ BROCHURES ═══════════════
+// Loaded on demand from the repo (brochures/ folder) to keep the app light.
+var BROCHURE_DEFS=[
+  {key:'spray',      name:'Spray Foam Insulation',   matTypes:['cc','oc','hybrid']},
+  {key:'fiberglass', name:'Fiberglass Insulation',   matTypes:['fg']},
+  {key:'mineralwool',name:'Mineral Wool Insulation', matTypes:['mw']},
+  {key:'ignition',   name:'Ignition Barrier',        matTypes:['ign']}
+];
+var BROCHURE_BASE='brochures/';
+var _brochureManifest=null;
+var _brochureCache={}; // key-page -> dataURL
+
+// Which brochures match the materials currently in the estimate?
+function suggestedBrochureKeys(){
+  var present={};
+  for(var i=0;i<estItems.length;i++){
+    var it=estItems[i];
+    var t=it.matType||'';
+    if(!t){var m=(typeof deriveMatFromProduct==='function')?deriveMatFromProduct(it.productId,it.inches):null;if(m)t=m.matType;}
+    if(t)present[t]=1;
+  }
+  // also look at field areas if present
+  if(Array.isArray(fieldAreas)){
+    for(var j=0;j<fieldAreas.length;j++){if(fieldAreas[j].matType)present[fieldAreas[j].matType]=1;}
+  }
+  var keys=[];
+  for(var b=0;b<BROCHURE_DEFS.length;b++){
+    var def=BROCHURE_DEFS[b];
+    for(var k=0;k<def.matTypes.length;k++){
+      if(present[def.matTypes[k]]){keys.push(def.key);break;}
+    }
+  }
+  return keys;
+}
+
+function loadBrochureManifest(){
+  if(_brochureManifest)return Promise.resolve(_brochureManifest);
+  return fetch(BROCHURE_BASE+'manifest.json',{cache:'no-cache'})
+    .then(function(r){if(!r.ok)throw new Error('manifest '+r.status);return r.json();})
+    .then(function(j){_brochureManifest=j;return j;});
+}
+
+// Fetch a brochure page image as a dataURL (cached)
+function loadBrochurePage(file){
+  if(_brochureCache[file])return Promise.resolve(_brochureCache[file]);
+  return fetch(BROCHURE_BASE+file,{cache:'force-cache'})
+    .then(function(r){if(!r.ok)throw new Error(file+' '+r.status);return r.blob();})
+    .then(function(blob){
+      return new Promise(function(res,rej){
+        var fr=new FileReader();
+        fr.onload=function(){_brochureCache[file]=fr.result;res(fr.result);};
+        fr.onerror=rej;
+        fr.readAsDataURL(blob);
+      });
+    });
+}
+
+// Load all pages for the given brochure keys, in order
+function loadBrochurePages(keys){
+  return loadBrochureManifest().then(function(man){
+    var seq=[];
+    keys.forEach(function(key){
+      var pages=man[key]||[];
+      pages.forEach(function(p){seq.push(p);});
+    });
+    // fetch sequentially to be gentle on mobile
+    var out=[];
+    var chain=Promise.resolve();
+    seq.forEach(function(p){
+      chain=chain.then(function(){
+        return loadBrochurePage(p.file).then(function(dataUrl){
+          out.push({dataUrl:dataUrl,w:p.w,h:p.h});
+        });
+      });
+    });
+    return chain.then(function(){return out;});
+  });
+}
+
+// Populate and open the brochure modal. `onProceed(keys, mode)` is called with
+// the chosen brochure keys and mode ('attach' | 'share' | 'skip').
+var _brochureProceed=null;
+function openBrochureModal(onProceed){
+  _brochureProceed=onProceed;
+  var suggested=suggestedBrochureKeys();
+  var list=document.getElementById('brochureList');
+  var html='';
+  for(var i=0;i<BROCHURE_DEFS.length;i++){
+    var d=BROCHURE_DEFS[i];
+    var on=suggested.indexOf(d.key)>=0;
+    html+='<label style="display:flex;align-items:center;gap:10px;background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:11px 13px;cursor:pointer">'+
+      '<input type="checkbox" class="broch-chk" value="'+d.key+'"'+(on?' checked':'')+' style="width:auto;margin:0;transform:scale(1.2)">'+
+      '<span style="font-size:14px;color:#f0f0f0;font-weight:600">'+d.name+'</span>'+
+      (on?'<span style="margin-left:auto;font-size:10px;color:#4ade80;font-weight:700">SUGGESTED</span>':'')+
+      '</label>';
+  }
+  list.innerHTML=html;
+  openOv('brochureOverlay');
+}
+function _selectedBrochureKeys(){
+  var chks=document.querySelectorAll('.broch-chk');
+  var keys=[];
+  for(var i=0;i<chks.length;i++)if(chks[i].checked)keys.push(chks[i].value);
+  return keys;
+}
+
+function generateEstimatePDF(pid, totalOnly, brochurePages){
   if(!window.jspdf){toast('PDF library loading, try again');return;}
   var jsPDF=window.jspdf.jsPDF;
   var doc=new jsPDF({orientation:'portrait',unit:'mm',format:'letter'});
@@ -2211,9 +2331,24 @@ function generateEstimatePDF(pid, totalOnly){
   setFont('normal',8,[180,230,180]);
   txt('Estimate'+(estNum?' #'+estNum:''),W-margin,footerY+9,{align:'right'});
 
+  // ── ATTACH BROCHURES (full-page images) ──
+  if(brochurePages&&brochurePages.length){
+    for(var bp=0;bp<brochurePages.length;bp++){
+      var pg=brochurePages[bp];
+      doc.addPage();
+      // Fit the image to the page while preserving aspect ratio
+      var pw=W, ph=H;
+      var imgRatio=pg.w/pg.h, pageRatio=pw/ph;
+      var dw,dh,dx,dy;
+      if(imgRatio>pageRatio){ dw=pw; dh=pw/imgRatio; dx=0; dy=(ph-dh)/2; }
+      else { dh=ph; dw=ph*imgRatio; dx=(pw-dw)/2; dy=0; }
+      try{ doc.addImage(pg.dataUrl,'JPEG',dx,dy,dw,dh); }catch(e){ console.warn('brochure page failed',e); }
+    }
+  }
+
   // Save
   doc.save('Estimate-'+(clientName||'GreenIdea').replace(/[^a-zA-Z0-9]/g,'_')+'-'+dateStr.replace(/\//g,'')+'.pdf');
-  toast('📄 Estimate generated!');
+  toast(brochurePages&&brochurePages.length?'📄 Estimate + brochures generated!':'📄 Estimate generated!');
 }
 
 // Detect material category from text keywords
@@ -4698,8 +4833,10 @@ document.getElementById('shareQuoteBtn').addEventListener('click',function(){
   else document.getElementById('copyQuoteBtn').click();
 });
 document.getElementById('printQuoteBtn').addEventListener('click',function(){
-  try{ generateEstimatePDF(null, false); }
-  catch(e){ toast('PDF error: '+(e&&e.message||e),'err'); }
+  // Route through the format + brochure flow (uses current open project = null pid)
+  window._estPendingPid=null;
+  var el=document.getElementById('estModeOverlay');
+  if(el){el.classList.add('on');el.style.display='flex';}
 });
 document.getElementById('copyCtBtn').addEventListener('click',function(){
   var el=document.getElementById('ctDoc');var t=el?el.innerText:'';
@@ -4714,7 +4851,7 @@ document.getElementById('printCtBtn').addEventListener('click',function(){window
 
 // OVERLAY CLOSE ON BACKDROP
 // Safe overlays - close on backdrop click freely
-var safeOvs=['prodOverlay','feOverlay','importOverlay'];
+var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay'];
 for(var oi=0;oi<safeOvs.length;oi++){
   (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(safeOvs[oi]);
 }
@@ -4754,18 +4891,84 @@ updateHomeStats();
 document.getElementById('estModeLineItems').addEventListener('click', function(){
   var el=document.getElementById('estModeOverlay');
   if(el){el.classList.remove('on');el.style.display='none';}
-  var pid=window._estPendingPid;
-  window._estPendingPid=null;
-  try{ generateEstimatePDF(pid, false); }
-  catch(e){ toast('Estimate error: '+(e&&e.message||e),'err'); }
+  proceedToBrochureStep(false);
 });
 document.getElementById('estModeTotalOnly').addEventListener('click', function(){
   var el=document.getElementById('estModeOverlay');
   if(el){el.classList.remove('on');el.style.display='none';}
+  proceedToBrochureStep(true);
+});
+
+// After format is chosen, offer brochures, then generate.
+function proceedToBrochureStep(totalOnly){
   var pid=window._estPendingPid;
   window._estPendingPid=null;
-  try{ generateEstimatePDF(pid, true); }
-  catch(e){ toast('Estimate error: '+(e&&e.message||e),'err'); }
+  openBrochureModal(function(keys, mode){
+    closeOv('brochureOverlay');
+    if(mode==='skip'||!keys.length){
+      try{ generateEstimatePDF(pid, totalOnly); }
+      catch(e){ toast('Estimate error: '+(e&&e.message||e),'err'); }
+      return;
+    }
+    toast('⏳ Loading brochures...');
+    loadBrochurePages(keys).then(function(pages){
+      if(mode==='share'){
+        // Generate estimate normally, then share brochures as their own PDF
+        try{ generateEstimatePDF(pid, totalOnly); }catch(e){}
+        shareBrochuresPDF(pages, keys);
+      } else {
+        // Attach to the estimate PDF
+        try{ generateEstimatePDF(pid, totalOnly, pages); }
+        catch(e){ toast('Estimate error: '+(e&&e.message||e),'err'); }
+      }
+    }).catch(function(e){
+      toast('Brochure load failed: '+(e&&e.message||e),'err');
+      // Fall back to estimate without brochures
+      try{ generateEstimatePDF(pid, totalOnly); }catch(e2){}
+    });
+  });
+}
+
+// Build a standalone brochures PDF and trigger share/download.
+function shareBrochuresPDF(pages, keys){
+  if(!window.jspdf){toast('PDF library loading, try again');return;}
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF({orientation:'portrait',unit:'mm',format:'letter'});
+  var W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight();
+  for(var i=0;i<pages.length;i++){
+    if(i>0)doc.addPage();
+    var pg=pages[i];
+    var imgRatio=pg.w/pg.h, pageRatio=W/H, dw,dh,dx,dy;
+    if(imgRatio>pageRatio){ dw=W; dh=W/imgRatio; dx=0; dy=(H-dh)/2; }
+    else { dh=H; dw=H*imgRatio; dx=(W-dw)/2; dy=0; }
+    try{ doc.addImage(pg.dataUrl,'JPEG',dx,dy,dw,dh); }catch(e){}
+  }
+  var fname='GreenIdea-Brochures.pdf';
+  // Try native share with the file; fall back to download
+  if(navigator.share && navigator.canShare){
+    try{
+      var blob=doc.output('blob');
+      var file=new File([blob],fname,{type:'application/pdf'});
+      if(navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:'Green Idea Insulation'}).catch(function(){doc.save(fname);});
+        toast('📤 Sharing brochures...');
+        return;
+      }
+    }catch(e){}
+  }
+  doc.save(fname);
+  toast('📄 Brochures downloaded!');
+}
+
+// Brochure modal buttons
+document.getElementById('brochureAttachBtn').addEventListener('click',function(){
+  if(_brochureProceed)_brochureProceed(_selectedBrochureKeys(),'attach');
+});
+document.getElementById('brochureShareBtn').addEventListener('click',function(){
+  if(_brochureProceed)_brochureProceed(_selectedBrochureKeys(),'share');
+});
+document.getElementById('brochureSkipBtn').addEventListener('click',function(){
+  if(_brochureProceed)_brochureProceed([],'skip');
 });
 
 // Confirm modal
