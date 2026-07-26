@@ -1,0 +1,50 @@
+{
+  "spray": [
+    {
+      "file": "spray-1.jpg",
+      "w": 918,
+      "h": 1188
+    },
+    {
+      "file": "spray-2.jpg",
+      "w": 918,
+      "h": 1188
+    }
+  ],
+  "fiberglass": [
+    {
+      "file": "fiberglass-1.jpg",
+      "w": 918,
+      "h": 1188
+    },
+    {
+      "file": "fiberglass-2.jpg",
+      "w": 918,
+      "h": 1188
+    }
+  ],
+  "mineralwool": [
+    {
+      "file": "mineralwool-1.jpg",
+      "w": 918,
+      "h": 1188
+    },
+    {
+      "file": "mineralwool-2.jpg",
+      "w": 918,
+      "h": 1188
+    }
+  ],
+  "ignition": [
+    {
+      "file": "ignition-1.jpg",
+      "w": 918,
+      "h": 1188
+    },
+    {
+      "file": "ignition-2.jpg",
+      "w": 918,
+      "h": 1188
+    }
+  ]
+}
