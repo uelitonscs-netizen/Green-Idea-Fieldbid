@@ -792,7 +792,6 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
   </div>
 </div>
 </div>
-<button class="fab reorder" id="estReorderFab" style="display:none;position:fixed;right:20px;bottom:150px;width:56px;height:56px;border-radius:50%;background:#f0a02c;color:#1a1200;border:none;font-size:24px;font-weight:900;box-shadow:0 4px 16px rgba(240,160,44,.5);cursor:pointer;z-index:50" title="Reorder items">⇅</button>
 <button class="fab e" id="estFab" style="display:none">+</button>
 
 <!-- PROJECT MODAL -->
@@ -1572,8 +1571,7 @@ document.getElementById('btnEst').addEventListener('click',function(){
   document.getElementById('est-app').style.display='block';
   document.getElementById('estFab').style.display='flex';
   renderEst();renderProds();
-  var _rf0=document.getElementById('estReorderFab');
-  if(_rf0)_rf0.style.display=(estItems.length>1)?'flex':'none';
+
 });
 document.getElementById('btnBrochures').addEventListener('click',function(){
   openBrochureShareModal();
@@ -1657,13 +1655,8 @@ function showEP(id,tab){
   for(var i=0;i<tabs.length;i++)tabs[i].className='tab';
   tab.className='tab on';
   document.getElementById('estFab').style.display=(id==='items')?'flex':'none';
-  var _rf=document.getElementById('estReorderFab');
-  if(_rf){
-    var _showR=(id==='items' && estItems.length>1 && !window._reorderMode);
-    // In reorder mode keep it visible so the user can finish; hide + instead.
-    _rf.style.display=(id==='items' && estItems.length>1)?'flex':'none';
-    if(id!=='items'&&window._reorderMode){window._reorderMode=false;_rf.textContent='⇅';_rf.style.background='#f0a02c';}
-  }
+  // Leaving the items tab exits reorder mode
+  if(id!=='items'&&window._reorderMode){window._reorderMode=false;}
 }
 
 // PROJECT
@@ -1876,27 +1869,14 @@ document.getElementById('fieldFab').addEventListener('click',function(){openFAMo
 
 document.getElementById('exportFieldBtn').addEventListener('click',function(){exportField();});
 document.getElementById('estFab').addEventListener('click',function(){openEIModal(-1);});
-// Reorder mode toggle
+// Reorder mode state + toggle (button lives in the items list, wired in renderEst)
 window._reorderMode=false;
-document.getElementById('estReorderFab').addEventListener('click',function(){
+function toggleReorderMode(){
   window._reorderMode=!window._reorderMode;
-  var f=document.getElementById('estReorderFab');
-  var af=document.getElementById('estFab');
-  if(window._reorderMode){
-    f.textContent='✓';
-    f.style.background='#4ade80';
-    f.title='Done reordering';
-    if(af)af.style.display='none'; // hide + while reordering
-    toast('↕️ Drag the orange bars to reorder');
-  } else {
-    f.textContent='⇅';
-    f.style.background='#f0a02c';
-    f.title='Reorder items';
-    if(af)af.style.display='flex';
-    toast('✓ Order saved');
-  }
+  toast(window._reorderMode?'↕️ Drag the orange bars to reorder':'✓ Order saved');
   renderEst();
-});
+}
+window.toggleReorderMode=toggleReorderMode;
 
 // FIELD EXPORT
 function exportField(){
@@ -3198,7 +3178,11 @@ function renderEst(){
   var groups=groupItemsBySection();
   var multiSection=groups.length>=1;
   // "+ New Section" button at the top of the list
-  h+='<button id="addSectionBtn" style="width:100%;background:#1e3a5f;border:1px solid #2a4a6a;border-radius:10px;padding:11px;font-size:13px;color:#60a5fa;font-weight:700;cursor:pointer;margin-bottom:12px">📂 + New Section</button>';
+  var _rmOn=window._reorderMode;
+  h+='<div style="display:flex;gap:8px;margin-bottom:12px">';
+  h+='<button id="addSectionBtn" style="flex:1;background:#1e3a5f;border:1px solid #2a4a6a;border-radius:10px;padding:11px 8px;font-size:13px;color:#60a5fa;font-weight:700;cursor:pointer">📂 + Section</button>';
+  h+='<button id="reorderToggleBtn" style="flex:1;background:'+(_rmOn?'#4ade80':'#3a2e10')+';border:1px solid '+(_rmOn?'#4ade80':'#f0a02c')+';border-radius:10px;padding:11px 8px;font-size:13px;color:'+(_rmOn?'#0a1a0a':'#f0a02c')+';font-weight:700;cursor:pointer">'+(_rmOn?'✓ Done':'⇅ Reorder')+'</button>';
+  h+='</div>';
   for(var g=0;g<groups.length;g++){
     var grp=groups[g];
     // Section header (editable name + subtotal). Tap the name to rename.
@@ -3230,6 +3214,10 @@ function renderEst(){
     var ab=e.target;
     while(ab&&ab!==newList){if(ab.tagName==='BUTTON'&&ab.id==='addSectionBtn')break;ab=ab.parentNode;}
     if(ab&&ab!==newList&&ab.id==='addSectionBtn'){createNewSection();return;}
+    // Reorder toggle button?
+    var rb=e.target;
+    while(rb&&rb!==newList){if(rb.tagName==='BUTTON'&&rb.id==='reorderToggleBtn')break;rb=rb.parentNode;}
+    if(rb&&rb!==newList&&rb.id==='reorderToggleBtn'){toggleReorderMode();return;}
     // Section delete button?
     var sd=e.target;
     while(sd&&sd!==newList){if(sd.tagName==='BUTTON'&&sd.className.indexOf('sec-del')>=0)break;sd=sd.parentNode;}
