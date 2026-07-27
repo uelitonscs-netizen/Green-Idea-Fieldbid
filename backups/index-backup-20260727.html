@@ -1116,6 +1116,15 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     </div>
   </div>
 </div>
+<div class="overlay" id="secMoveOverlay">
+  <div class="modal" style="padding-bottom:28px">
+    <div class="mhandle"></div>
+    <div class="mtitle">Move to Section</div>
+    <div style="padding:8px 20px 12px;font-size:13px;color:#94a3b8;text-align:center">Choose a section for this item, or create a new one.</div>
+    <div id="secMoveList" style="padding:0 20px"></div>
+    <div style="padding:8px 20px 0"><button id="secMoveCancelBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Cancel</button></div>
+  </div>
+</div>
 <div class="overlay" id="qrOverlay">
   <div class="modal" style="padding-bottom:28px">
     <div class="mhandle"></div>
@@ -1564,6 +1573,9 @@ document.getElementById('brochureShareCloseBtn').addEventListener('click',functi
 });
 document.getElementById('qrCloseBtn').addEventListener('click',function(){
   closeOv('qrOverlay');
+});
+document.getElementById('secMoveCancelBtn').addEventListener('click',function(){
+  closeOv('secMoveOverlay');
 });
 document.getElementById('backField').addEventListener('click',function(){
   document.getElementById('field-app').style.display='none';
@@ -2292,10 +2304,30 @@ function generateEstimatePDF(pid, totalOnly, opts){
   line(margin,y,W-margin,y,[20,20,20],0.6);
   y+=5;
 
-  // ── ITEMS ──
+  // ── ITEMS (grouped by section) ──
   var subtotal=0;
-  for(var i=0;i<projEstItems.length;i++){
-    var item=projEstItems[i];
+  // Build section groups from projEstItems, preserving first-appearance order.
+  var _pdfOrder=[], _pdfMap={};
+  for(var _pi=0;_pi<projEstItems.length;_pi++){
+    var _s=sectionOf(projEstItems[_pi]);
+    if(!_pdfMap[_s]){_pdfMap[_s]=[];_pdfOrder.push(_s);}
+    _pdfMap[_s].push(projEstItems[_pi]);
+  }
+  var _showSections=_pdfOrder.length>1; // only show headers when there's more than one
+  for(var _sg=0;_sg<_pdfOrder.length;_sg++){
+    var _secName=_pdfOrder[_sg];
+    var _secItems=_pdfMap[_secName];
+    if(_showSections){
+      checkNewPage(12);
+      y+=(_sg>0?3:0);
+      setFont('bold',10,[26,107,42]);
+      txt(_secName.toUpperCase(),margin,y);
+      y+=2;
+      line(margin,y,W-margin,y,[26,107,42],0.5);
+      y+=5;
+    }
+  for(var i=0;i<_secItems.length;i++){
+    var item=_secItems[i];
     // Use the same calc as the app: handles per-inch effective price and
     // percent markup per item (dollar markup is added once below).
     var itemPrice=calcItem(item);
@@ -2345,6 +2377,15 @@ function generateEstimatePDF(pid, totalOnly, opts){
     line(margin,y,W-margin,y,[240,237,232],0.3);
     y+=3;
   }
+    // section subtotal (only when showing multiple sections)
+    if(_showSections&&!totalOnly){
+      var _secSub=0;for(var _ss=0;_ss<_secItems.length;_ss++)_secSub+=calcItem(_secItems[_ss]);
+      setFont('bold',9,[90,90,90]);
+      txt(_secName+' subtotal',margin,y+1);
+      txt('$'+_secSub.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),W-margin,y+1,{align:'right'});
+      y+=6;
+    }
+  } // end section group
 
   // ── TOTALS ──
   y+=4;
@@ -2824,6 +2865,90 @@ function renderFA(){
 }
 
 // RENDER EST
+
+
+// Rename a section: applies a custom section name to every item currently in it.
+function renameSection(currentName){
+  var nw=window.prompt('Rename section "'+currentName+'" to:', currentName);
+  if(nw===null)return;
+  nw=nw.trim();
+  if(!nw){toast('Section name cannot be empty');return;}
+  for(var i=0;i<estItems.length;i++){
+    if(sectionOf(estItems[i])===currentName)estItems[i].section=nw;
+  }
+  saveEI();renderEst();toast('📂 Section renamed');
+}
+
+// Move a single item to another section (existing or new).
+function moveItemToSection(idx){
+  if(idx<0||idx>=estItems.length)return;
+  var groups=groupItemsBySection();
+  var names=groups.map(function(g){return g.name;});
+  var cur=sectionOf(estItems[idx]);
+  var list=document.getElementById('secMoveList');
+  var html='';
+  for(var i=0;i<names.length;i++){
+    var on=names[i]===cur;
+    html+='<button class="sec-move-opt" data-name="'+esc(names[i])+'" style="width:100%;text-align:left;background:'+(on?'#1a3a20':'#161b22')+';border:1px solid '+(on?'#2d6a35':'#2a3340')+';border-radius:10px;padding:12px 14px;font-size:14px;color:#f0f0f0;font-weight:600;cursor:pointer;margin-bottom:8px">📂 '+esc(names[i])+(on?' ✓':'')+'</button>';
+  }
+  html+='<button class="sec-move-new" style="width:100%;text-align:left;background:#1e3a5f;border:1px solid #2a4a6a;border-radius:10px;padding:12px 14px;font-size:14px;color:#60a5fa;font-weight:700;cursor:pointer">➕ New section...</button>';
+  list.innerHTML=html;
+  window._secMoveIdx=idx;
+  // wire
+  var opts=list.querySelectorAll('.sec-move-opt');
+  for(var o=0;o<opts.length;o++){
+    (function(b){b.addEventListener('click',function(){
+      estItems[window._secMoveIdx].section=b.getAttribute('data-name');
+      saveEI();renderEst();closeOv('secMoveOverlay');toast('📂 Moved');
+    });})(opts[o]);
+  }
+  var nb=list.querySelector('.sec-move-new');
+  if(nb)nb.addEventListener('click',function(){
+    var nm=window.prompt('New section name:','');
+    if(nm===null)return;nm=nm.trim();if(!nm){toast('Name cannot be empty');return;}
+    estItems[window._secMoveIdx].section=nm;
+    saveEI();renderEst();closeOv('secMoveOverlay');toast('📂 Moved to '+nm);
+  });
+  openOv('secMoveOverlay');
+}
+window.renameSection=renameSection;
+window.moveItemToSection=moveItemToSection;
+
+// ── ESTIMATE SECTIONS ──────────────────────────────────────
+// Items are grouped into sections. A section name can be set per item (it.section);
+// if empty, it is derived automatically from the material so grouping "just works".
+function autoSectionFor(it){
+  var pr=null;try{pr=it.productId?getProd(it.productId):null;}catch(e){}
+  var t=it.matType||'';
+  if(!t&&pr){
+    var m=(typeof deriveMatFromProduct==='function')?deriveMatFromProduct(it.productId,it.inches):null;
+    if(m)t=m.matType;
+  }
+  if(t==='cc'||t==='oc'||t==='hybrid'||t==='hybrid_foam_fg'||t==='hybrid_foam_mw') return 'Spray Foam';
+  if(t==='fg') return 'Fiberglass';
+  if(t==='mw') return 'Mineral Wool';
+  if(t==='cel') return 'Cellulose';
+  if(t==='ign') return 'Ignition Barrier';
+  if(pr&&pr.name) return pr.name;
+  return 'Other';
+}
+function sectionOf(it){
+  return (it.section&&String(it.section).trim())?String(it.section).trim():autoSectionFor(it);
+}
+// Return ordered list of {name, items:[{it,idx}]} preserving first-appearance order.
+function groupItemsBySection(){
+  var order=[], map={};
+  for(var i=0;i<estItems.length;i++){
+    var s=sectionOf(estItems[i]);
+    if(!map[s]){map[s]=[];order.push(s);}
+    map[s].push({it:estItems[i],idx:i});
+  }
+  return order.map(function(name){return {name:name, items:map[name]};});
+}
+function sectionSubtotal(grp){
+  var t=0;for(var i=0;i<grp.items.length;i++)t+=calcItem(grp.items[i].it);return t;
+}
+
 function renderEst(){
   estItems=window.estItems||estItems;
   var list=document.getElementById('estItemList');
@@ -2837,19 +2962,36 @@ function renderEst(){
   checkImportBar();
   if(!estItems.length){list.innerHTML='<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">No items yet</div><div class="empty-body">Tap + or import from Field Takeoff</div></div>';renderQuote();return;}
   var h='';
-  for(var i=0;i<estItems.length;i++){
-    var it=estItems[i];var pr=getProd(it.productId);var cost=calcItem(it);var effPrice=getEffectivePrice(it);
-    var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Custom';
-    h+='<div class="card">';
-    if(it.photos&&it.photos.length){h+='<div class="card-photos">';for(var p=0;p<it.photos.length;p++)h+='<img class="card-photo" src="'+it.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
-    h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+effPrice.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
-    h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑 Del</button></div></div>';
+  var groups=groupItemsBySection();
+  var multiSection=groups.length>1;
+  for(var g=0;g<groups.length;g++){
+    var grp=groups[g];
+    // Section header (editable name + subtotal). Tap the name to rename.
+    h+='<div class="sec-hd" style="display:flex;align-items:center;justify-content:space-between;margin:'+(g>0?'18px':'4px')+' 2px 8px">'+
+       '<button class="sec-rename" data-sec="'+esc(grp.name)+'" style="background:none;border:none;color:#f0a02c;font-size:13px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;cursor:pointer;padding:0;display:flex;align-items:center;gap:6px">'+
+       '📂 '+esc(grp.name)+' <span style="font-size:10px;color:#6b7684;font-weight:600">✎</span></button>'+
+       '<span style="font-size:12px;color:#8b98a5;font-weight:700">'+fmt(sectionSubtotal(grp))+'</span></div>';
+    for(var gi=0;gi<grp.items.length;gi++){
+      var i=grp.items[gi].idx;
+      var it=grp.items[gi].it;var pr=getProd(it.productId);var cost=calcItem(it);var effPrice=getEffectivePrice(it);
+      var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Custom';
+      h+='<div class="card">';
+      if(it.photos&&it.photos.length){h+='<div class="card-photos">';for(var p=0;p<it.photos.length;p++)h+='<img class="card-photo" src="'+it.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
+      h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+effPrice.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
+      h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca" data-idx="'+i+'" data-act="sec">📂 Section</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑 Del</button></div></div>';
+    }
   }
   list.innerHTML=h;
   // Use cloneNode to remove ALL accumulated listeners before re-adding
   var newList=list.cloneNode(true);
   list.parentNode.replaceChild(newList,list);
   newList.addEventListener('click',function(e){
+    // Section rename header?
+    var rn=e.target;
+    while(rn&&rn!==newList){if(rn.tagName==='BUTTON'&&rn.className.indexOf('sec-rename')>=0)break;rn=rn.parentNode;}
+    if(rn&&rn!==newList&&rn.className.indexOf('sec-rename')>=0){
+      renameSection(rn.getAttribute('data-sec'));return;
+    }
     var btn=e.target;
     while(btn&&btn!==newList){
       if(btn.tagName==='BUTTON'&&btn.getAttribute('data-act'))break;
@@ -2861,6 +3003,7 @@ function renderEst(){
     if(act==='ph')qkPH('est',btn);
     else if(act==='edit')openEIModal(idx);
     else if(act==='del')delEI(idx);
+    else if(act==='sec')moveItemToSection(idx);
   });
   // Show "Rebuild Takeoff" button when the current project has items but its
   // takeoff areas are missing/fewer (e.g. areas were lost). Lets the user
@@ -4974,7 +5117,7 @@ document.getElementById('printCtBtn').addEventListener('click',function(){window
 
 // OVERLAY CLOSE ON BACKDROP
 // Safe overlays - close on backdrop click freely
-var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','qrOverlay'];
+var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','qrOverlay','secMoveOverlay'];
 for(var oi=0;oi<safeOvs.length;oi++){
   (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(safeOvs[oi]);
 }
