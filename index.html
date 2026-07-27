@@ -3011,10 +3011,24 @@ function deleteSection(name){
     return;
   }
 
-  // Section has items -> ask what to do
+  // Is this a custom section (some item has an explicit .section tag matching name)
+  // or an automatic material group? Keep-Items only makes sense for custom ones.
+  var isCustom=false;
+  for(var k=0;k<estItems.length;k++){
+    if(estItems[k].section&&estItems[k].section.trim()===name){isCustom=true;break;}
+  }
   window._delSecName=name;
+  window._delSecIsCustom=isCustom;
   var msg=document.getElementById('delSecMsg');
-  if(msg)msg.textContent='"'+name+'" has '+inSection.length+' item'+(inSection.length>1?'s':'')+'. What would you like to do?';
+  var keepBtn=document.getElementById('delSecKeepBtn');
+  if(isCustom){
+    if(msg)msg.textContent='"'+name+'" has '+inSection.length+' item'+(inSection.length>1?'s':'')+'. Keep the items (they return to their material group) or delete everything?';
+    if(keepBtn)keepBtn.style.display='block';
+  } else {
+    // Automatic material group: keeping items would change nothing, so only offer delete.
+    if(msg)msg.textContent='"'+name+'" is an automatic material group with '+inSection.length+' item'+(inSection.length>1?'s':'')+'. It regroups automatically, so it can only be removed by deleting its items. Delete them?';
+    if(keepBtn)keepBtn.style.display='none';
+  }
   openOv('delSecOverlay');
 }
 window.deleteSection=deleteSection;
