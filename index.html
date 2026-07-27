@@ -1002,7 +1002,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <div class="mhandle"></div>
     <div class="mtitle" id="eiTitle">Add Item</div>
     <div class="fg"><label class="fl">Description</label><input class="fi" id="ei_name" type="text" placeholder="e.g. Exterior Walls – North Wing"></div>
-    <div class="fg" id="ei_prod_row" style="display:none"><label class="fl">Material</label><div id="ei_prod_label" style="font-size:13px;color:#58a6ff;padding:6px 0;font-weight:600"></div></div>
+    <div class="fg" id="ei_prod_row" style="display:none"><label class="fl">Material</label><div id="ei_prod_label" style="font-size:13px;color:#58a6ff;padding:6px 0;font-weight:600"></div><div id="ei_spec_info" style="font-size:12px;color:#8b98a5;padding:0 0 4px;display:none"></div></div>
     <div class="frow">
       <div class="fg"><label class="fl">Square Feet</label><input class="fi" id="ei_sf" type="number" inputmode="decimal" placeholder="0" min="0"></div>
       <div class="fg" id="ei_inch_wrap" style="display:none"><label class="fl">Thickness (in)</label><input class="fi" id="ei_inch" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0"></div>
@@ -3979,6 +3979,23 @@ function openEIModal(idx){
     } else if(prodRow){
       prodRow.style.display='none';
     }
+    // Show thickness/spec as info text (esp. for Hybrid, which has no thickness field)
+    var specInfo=document.getElementById('ei_spec_info');
+    if(specInfo){
+      var _si='';
+      var _cc=parseFloat(it.ccInch)||0, _oc=parseFloat(it.ocInch)||0;
+      if(pr&&pr.cat==='Hybrid'&&(_cc>0||_oc>0)){
+        var _fmtIn=function(n){return (n%1===0)?String(n):String(n);};
+        var _parts=[];
+        if(_cc>0)_parts.push(_fmtIn(_cc)+'\" cc');
+        if(_oc>0)_parts.push(_fmtIn(_oc)+'\" oc');
+        _si=_parts.join(' + ');
+      } else if(it.spec){
+        _si=it.spec;
+      }
+      if(_si){specInfo.textContent='📏 '+_si;specInfo.style.display='block';}
+      else{specInfo.style.display='none';}
+    }
   }
   else{
     document.getElementById('ei_name').value='';
@@ -3990,6 +4007,8 @@ function openEIModal(idx){
     // Hide material label for new manual items
     var prodRow=document.getElementById('ei_prod_row');
     if(prodRow) prodRow.style.display='none';
+    var _spi=document.getElementById('ei_spec_info');
+    if(_spi)_spi.style.display='none';
   }
   updateEIPricingUI();
   // product picker removed - material shown as label
