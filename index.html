@@ -1116,6 +1116,18 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     </div>
   </div>
 </div>
+<div class="overlay" id="delSecOverlay">
+  <div class="modal" style="padding-bottom:28px">
+    <div class="mhandle"></div>
+    <div class="mtitle">Remove Section</div>
+    <div id="delSecMsg" style="padding:8px 20px 16px;font-size:13px;color:#94a3b8;text-align:center"></div>
+    <div style="padding:0 20px;display:flex;flex-direction:column;gap:10px">
+      <button id="delSecKeepBtn" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📦 Keep Items (remove section only)</button>
+      <button id="delSecAllBtn" style="width:100%;background:#7f1d1d;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">🗑 Delete Section + Items</button>
+      <button id="delSecCancelBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="secMoveOverlay">
   <div class="modal" style="padding-bottom:28px">
     <div class="mhandle"></div>
@@ -1576,6 +1588,11 @@ document.getElementById('qrCloseBtn').addEventListener('click',function(){
 });
 document.getElementById('secMoveCancelBtn').addEventListener('click',function(){
   closeOv('secMoveOverlay');
+});
+document.getElementById('delSecKeepBtn').addEventListener('click',_delSecKeepItems);
+document.getElementById('delSecAllBtn').addEventListener('click',_delSecDeleteAll);
+document.getElementById('delSecCancelBtn').addEventListener('click',function(){
+  closeOv('delSecOverlay');
 });
 document.getElementById('backField').addEventListener('click',function(){
   document.getElementById('field-app').style.display='none';
@@ -2974,6 +2991,49 @@ function createNewSection(){
   renderEst();toast('📂 Section "'+nm+'" created');
 }
 window.createNewSection=createNewSection;
+
+// Delete a section. If it holds items, ask whether to keep them (revert to the
+// automatic material group) or delete them along with the section.
+function deleteSection(name){
+  var inSection=[];
+  for(var i=0;i<estItems.length;i++){ if(sectionOf(estItems[i])===name)inSection.push(i); }
+  var isEmptyCreated=getEmptySections().indexOf(name)>=0;
+
+  function removeEmptyEntry(){
+    var emp=getEmptySections();var ix=emp.indexOf(name);
+    if(ix>=0){emp.splice(ix,1);setEmptySections(emp);}
+  }
+
+  if(inSection.length===0){
+    // empty section: just remove it
+    removeEmptyEntry();
+    renderEst();toast('📂 Section removed');
+    return;
+  }
+
+  // Section has items -> ask what to do
+  window._delSecName=name;
+  var msg=document.getElementById('delSecMsg');
+  if(msg)msg.textContent='"'+name+'" has '+inSection.length+' item'+(inSection.length>1?'s':'')+'. What would you like to do?';
+  openOv('delSecOverlay');
+}
+window.deleteSection=deleteSection;
+
+// Called by the delete-section modal buttons.
+function _delSecKeepItems(){
+  var name=window._delSecName;
+  // Clear the custom section tag so items revert to their automatic material group
+  for(var i=0;i<estItems.length;i++){ if(sectionOf(estItems[i])===name)estItems[i].section=''; }
+  var emp=getEmptySections();var ix=emp.indexOf(name);if(ix>=0){emp.splice(ix,1);setEmptySections(emp);}
+  saveEI();renderEst();closeOv('delSecOverlay');toast('📂 Section removed, items kept');
+}
+function _delSecDeleteAll(){
+  var name=window._delSecName;
+  estItems=estItems.filter(function(it){return sectionOf(it)!==name;});
+  window.estItems=estItems;
+  var emp=getEmptySections();var ix=emp.indexOf(name);if(ix>=0){emp.splice(ix,1);setEmptySections(emp);}
+  saveEI();renderEst();closeOv('delSecOverlay');toast('🗑 Section and items deleted');
+}
 function sectionSubtotal(grp){
   var t=0;for(var i=0;i<grp.items.length;i++)t+=calcItem(grp.items[i].it);return t;
 }
@@ -2998,10 +3058,12 @@ function renderEst(){
   for(var g=0;g<groups.length;g++){
     var grp=groups[g];
     // Section header (editable name + subtotal). Tap the name to rename.
-    h+='<div class="sec-hd" style="display:flex;align-items:center;justify-content:space-between;margin:'+(g>0?'18px':'4px')+' 2px 8px">'+
-       '<button class="sec-rename" data-sec="'+esc(grp.name)+'" style="background:none;border:none;color:#f0a02c;font-size:13px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;cursor:pointer;padding:0;display:flex;align-items:center;gap:6px">'+
+    h+='<div class="sec-hd" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:'+(g>0?'18px':'4px')+' 2px 8px">'+
+       '<button class="sec-rename" data-sec="'+esc(grp.name)+'" style="background:none;border:none;color:#f0a02c;font-size:13px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;cursor:pointer;padding:0;display:flex;align-items:center;gap:6px;min-width:0;flex:1;text-align:left">'+
        '📂 '+esc(grp.name)+' <span style="font-size:10px;color:#6b7684;font-weight:600">✎</span></button>'+
-       '<span style="font-size:12px;color:#8b98a5;font-weight:700">'+fmt(sectionSubtotal(grp))+'</span></div>';
+       '<span style="font-size:12px;color:#8b98a5;font-weight:700">'+fmt(sectionSubtotal(grp))+'</span>'+
+       '<button class="sec-del" data-sec="'+esc(grp.name)+'" style="background:none;border:none;color:#6b7684;font-size:13px;cursor:pointer;padding:0 2px" title="Remove section">🗑</button>'+
+       '</div>';
     for(var gi=0;gi<grp.items.length;gi++){
       var i=grp.items[gi].idx;
       var it=grp.items[gi].it;var pr=getProd(it.productId);var cost=calcItem(it);var effPrice=getEffectivePrice(it);
@@ -3021,6 +3083,12 @@ function renderEst(){
     var ab=e.target;
     while(ab&&ab!==newList){if(ab.tagName==='BUTTON'&&ab.id==='addSectionBtn')break;ab=ab.parentNode;}
     if(ab&&ab!==newList&&ab.id==='addSectionBtn'){createNewSection();return;}
+    // Section delete button?
+    var sd=e.target;
+    while(sd&&sd!==newList){if(sd.tagName==='BUTTON'&&sd.className.indexOf('sec-del')>=0)break;sd=sd.parentNode;}
+    if(sd&&sd!==newList&&sd.className.indexOf('sec-del')>=0){
+      deleteSection(sd.getAttribute('data-sec'));return;
+    }
     // Section rename header?
     var rn=e.target;
     while(rn&&rn!==newList){if(rn.tagName==='BUTTON'&&rn.className.indexOf('sec-rename')>=0)break;rn=rn.parentNode;}
@@ -5152,7 +5220,7 @@ document.getElementById('printCtBtn').addEventListener('click',function(){window
 
 // OVERLAY CLOSE ON BACKDROP
 // Safe overlays - close on backdrop click freely
-var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','qrOverlay','secMoveOverlay'];
+var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','qrOverlay','secMoveOverlay','delSecOverlay'];
 for(var oi=0;oi<safeOvs.length;oi++){
   (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(safeOvs[oi]);
 }
