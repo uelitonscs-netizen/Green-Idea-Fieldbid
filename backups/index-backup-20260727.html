@@ -2313,7 +2313,7 @@ function generateEstimatePDF(pid, totalOnly, opts){
     if(!_pdfMap[_s]){_pdfMap[_s]=[];_pdfOrder.push(_s);}
     _pdfMap[_s].push(projEstItems[_pi]);
   }
-  var _showSections=_pdfOrder.length>1; // only show headers when there's more than one
+  var _showSections=_pdfOrder.length>=1; // always show section headers
   for(var _sg=0;_sg<_pdfOrder.length;_sg++){
     var _secName=_pdfOrder[_sg];
     var _secItems=_pdfMap[_secName];
@@ -2876,6 +2876,10 @@ function renameSection(currentName){
   for(var i=0;i<estItems.length;i++){
     if(sectionOf(estItems[i])===currentName)estItems[i].section=nw;
   }
+  // rename in the empty-sections list too
+  var _emp=getEmptySections();
+  var _ei=_emp.indexOf(currentName);
+  if(_ei>=0){_emp[_ei]=nw;setEmptySections(_emp);}
   saveEI();renderEst();toast('📂 Section renamed');
 }
 
@@ -2935,6 +2939,15 @@ function autoSectionFor(it){
 function sectionOf(it){
   return (it.section&&String(it.section).trim())?String(it.section).trim():autoSectionFor(it);
 }
+// User-created sections that may not have items yet (persisted per project via quoteInfo).
+function getEmptySections(){
+  try{ return (quoteInfo&&Array.isArray(quoteInfo.emptySections))?quoteInfo.emptySections:[]; }catch(e){ return []; }
+}
+function setEmptySections(arr){
+  if(!quoteInfo)quoteInfo={};
+  quoteInfo.emptySections=arr;
+  saveEI();
+}
 // Return ordered list of {name, items:[{it,idx}]} preserving first-appearance order.
 function groupItemsBySection(){
   var order=[], map={};
@@ -2943,8 +2956,24 @@ function groupItemsBySection(){
     if(!map[s]){map[s]=[];order.push(s);}
     map[s].push({it:estItems[i],idx:i});
   }
+  // include user-created empty sections (that have no items yet)
+  var empties=getEmptySections();
+  for(var e=0;e<empties.length;e++){
+    if(!map[empties[e]]){map[empties[e]]=[];order.push(empties[e]);}
+  }
   return order.map(function(name){return {name:name, items:map[name]};});
 }
+// Create a new (empty) section the user can then move items into.
+function createNewSection(){
+  var nm=window.prompt('New section name:','');
+  if(nm===null)return;nm=nm.trim();
+  if(!nm){toast('Section name cannot be empty');return;}
+  var groups=groupItemsBySection();
+  for(var i=0;i<groups.length;i++){if(groups[i].name===nm){toast('That section already exists');return;}}
+  var empties=getEmptySections();empties.push(nm);setEmptySections(empties);
+  renderEst();toast('📂 Section "'+nm+'" created');
+}
+window.createNewSection=createNewSection;
 function sectionSubtotal(grp){
   var t=0;for(var i=0;i<grp.items.length;i++)t+=calcItem(grp.items[i].it);return t;
 }
@@ -2963,7 +2992,9 @@ function renderEst(){
   if(!estItems.length){list.innerHTML='<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">No items yet</div><div class="empty-body">Tap + or import from Field Takeoff</div></div>';renderQuote();return;}
   var h='';
   var groups=groupItemsBySection();
-  var multiSection=groups.length>1;
+  var multiSection=groups.length>=1;
+  // "+ New Section" button at the top of the list
+  h+='<button id="addSectionBtn" style="width:100%;background:#1e3a5f;border:1px solid #2a4a6a;border-radius:10px;padding:11px;font-size:13px;color:#60a5fa;font-weight:700;cursor:pointer;margin-bottom:12px">📂 + New Section</button>';
   for(var g=0;g<groups.length;g++){
     var grp=groups[g];
     // Section header (editable name + subtotal). Tap the name to rename.
@@ -2986,6 +3017,10 @@ function renderEst(){
   var newList=list.cloneNode(true);
   list.parentNode.replaceChild(newList,list);
   newList.addEventListener('click',function(e){
+    // + New Section button?
+    var ab=e.target;
+    while(ab&&ab!==newList){if(ab.tagName==='BUTTON'&&ab.id==='addSectionBtn')break;ab=ab.parentNode;}
+    if(ab&&ab!==newList&&ab.id==='addSectionBtn'){createNewSection();return;}
     // Section rename header?
     var rn=e.target;
     while(rn&&rn!==newList){if(rn.tagName==='BUTTON'&&rn.className.indexOf('sec-rename')>=0)break;rn=rn.parentNode;}
