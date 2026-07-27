@@ -518,7 +518,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
 /* Selection color */
 ::selection{background:rgba(63,185,80,.3);}
-.est-drag-card{position:relative;padding-left:34px}.est-drag-card.dragging{opacity:.5;transform:scale(.98)}.est-drop-before{border-top:3px solid #4ade80!important}.est-drop-after{border-bottom:3px solid #4ade80!important}
+.est-drag-card{position:relative}.est-drag-card.reorder-on{padding-left:38px}.est-drag-card.dragging{opacity:.5;transform:scale(.98)}.est-drop-before{border-top:3px solid #4ade80!important}.est-drop-after{border-bottom:3px solid #4ade80!important}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -792,6 +792,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
   </div>
 </div>
 </div>
+<button class="fab reorder" id="estReorderFab" style="display:none;position:fixed;right:20px;bottom:150px;width:56px;height:56px;border-radius:50%;background:#f0a02c;color:#1a1200;border:none;font-size:24px;font-weight:900;box-shadow:0 4px 16px rgba(240,160,44,.5);cursor:pointer;z-index:50" title="Reorder items">⇅</button>
 <button class="fab e" id="estFab" style="display:none">+</button>
 
 <!-- PROJECT MODAL -->
@@ -1571,6 +1572,8 @@ document.getElementById('btnEst').addEventListener('click',function(){
   document.getElementById('est-app').style.display='block';
   document.getElementById('estFab').style.display='flex';
   renderEst();renderProds();
+  var _rf0=document.getElementById('estReorderFab');
+  if(_rf0)_rf0.style.display=(estItems.length>1)?'flex':'none';
 });
 document.getElementById('btnBrochures').addEventListener('click',function(){
   openBrochureShareModal();
@@ -1654,6 +1657,13 @@ function showEP(id,tab){
   for(var i=0;i<tabs.length;i++)tabs[i].className='tab';
   tab.className='tab on';
   document.getElementById('estFab').style.display=(id==='items')?'flex':'none';
+  var _rf=document.getElementById('estReorderFab');
+  if(_rf){
+    var _showR=(id==='items' && estItems.length>1 && !window._reorderMode);
+    // In reorder mode keep it visible so the user can finish; hide + instead.
+    _rf.style.display=(id==='items' && estItems.length>1)?'flex':'none';
+    if(id!=='items'&&window._reorderMode){window._reorderMode=false;_rf.textContent='⇅';_rf.style.background='#f0a02c';}
+  }
 }
 
 // PROJECT
@@ -1866,6 +1876,27 @@ document.getElementById('fieldFab').addEventListener('click',function(){openFAMo
 
 document.getElementById('exportFieldBtn').addEventListener('click',function(){exportField();});
 document.getElementById('estFab').addEventListener('click',function(){openEIModal(-1);});
+// Reorder mode toggle
+window._reorderMode=false;
+document.getElementById('estReorderFab').addEventListener('click',function(){
+  window._reorderMode=!window._reorderMode;
+  var f=document.getElementById('estReorderFab');
+  var af=document.getElementById('estFab');
+  if(window._reorderMode){
+    f.textContent='✓';
+    f.style.background='#4ade80';
+    f.title='Done reordering';
+    if(af)af.style.display='none'; // hide + while reordering
+    toast('↕️ Drag the orange bars to reorder');
+  } else {
+    f.textContent='⇅';
+    f.style.background='#f0a02c';
+    f.title='Reorder items';
+    if(af)af.style.display='flex';
+    toast('✓ Order saved');
+  }
+  renderEst();
+});
 
 // FIELD EXPORT
 function exportField(){
@@ -3181,8 +3212,10 @@ function renderEst(){
       var i=grp.items[gi].idx;
       var it=grp.items[gi].it;var pr=getProd(it.productId);var cost=calcItem(it);var effPrice=getEffectivePrice(it);
       var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Custom';
-      h+='<div class="card est-drag-card" data-idx="'+i+'" data-sec="'+esc(grp.name)+'">';
-      h+='<div class="drag-handle" data-idx="'+i+'" style="position:absolute;top:0;left:0;bottom:0;width:34px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#f0a02c,#d97a1a);border-radius:14px 0 0 14px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2" title="Drag to reorder"><span style="color:#1a1200;font-size:20px;font-weight:900;letter-spacing:-2px;line-height:1">⁝⁝</span></div>';
+      h+='<div class="card est-drag-card'+(window._reorderMode?' reorder-on':'')+'" data-idx="'+i+'" data-sec="'+esc(grp.name)+'">';
+      if(window._reorderMode){
+        h+='<div class="drag-handle" data-idx="'+i+'" style="position:absolute;top:0;left:0;bottom:0;width:38px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#f0a02c,#d97a1a);border-radius:14px 0 0 14px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2" title="Drag to reorder"><span style="color:#1a1200;font-size:22px;font-weight:900;letter-spacing:-2px;line-height:1">⁝⁝</span></div>';
+      }
       if(it.photos&&it.photos.length){h+='<div class="card-photos">';for(var p=0;p<it.photos.length;p++)h+='<img class="card-photo" src="'+it.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
       h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+effPrice.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
       h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca" data-idx="'+i+'" data-act="sec">📂 Section</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑 Del</button></div></div>';
@@ -3222,8 +3255,8 @@ function renderEst(){
     else if(act==='del')delEI(idx);
     else if(act==='sec')moveItemToSection(idx);
   });
-  // Enable drag-and-drop reordering (works across sections too)
-  if(typeof initEstDragDrop==='function')initEstDragDrop(newList);
+  // Enable drag-and-drop only in reorder mode
+  if(window._reorderMode && typeof initEstDragDrop==='function')initEstDragDrop(newList);
   // Show "Rebuild Takeoff" button when the current project has items but its
   // takeoff areas are missing/fewer (e.g. areas were lost). Lets the user
   // regenerate takeoff areas from the estimate line items.
