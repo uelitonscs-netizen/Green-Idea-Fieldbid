@@ -518,7 +518,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
 /* Selection color */
 ::selection{background:rgba(63,185,80,.3);}
-.est-drag-card{position:relative}.est-drag-card.dragging{opacity:.5;transform:scale(.98)}.est-drop-before{border-top:3px solid #4ade80!important}.est-drop-after{border-bottom:3px solid #4ade80!important}
+.est-drag-card{position:relative;padding-left:34px}.est-drag-card.dragging{opacity:.5;transform:scale(.98)}.est-drop-before{border-top:3px solid #4ade80!important}.est-drop-after{border-bottom:3px solid #4ade80!important}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -3182,7 +3182,7 @@ function renderEst(){
       var it=grp.items[gi].it;var pr=getProd(it.productId);var cost=calcItem(it);var effPrice=getEffectivePrice(it);
       var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Custom';
       h+='<div class="card est-drag-card" data-idx="'+i+'" data-sec="'+esc(grp.name)+'">';
-      h+='<div class="drag-handle" data-idx="'+i+'" style="position:absolute;top:8px;right:10px;color:#4a5568;font-size:18px;cursor:grab;touch-action:none;padding:4px 6px;user-select:none;-webkit-user-select:none" title="Drag to reorder">⠿</div>';
+      h+='<div class="drag-handle" data-idx="'+i+'" style="position:absolute;top:0;left:0;bottom:0;width:34px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#f0a02c,#d97a1a);border-radius:14px 0 0 14px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2" title="Drag to reorder"><span style="color:#1a1200;font-size:20px;font-weight:900;letter-spacing:-2px;line-height:1">⁝⁝</span></div>';
       if(it.photos&&it.photos.length){h+='<div class="card-photos">';for(var p=0;p<it.photos.length;p++)h+='<img class="card-photo" src="'+it.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
       h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+effPrice.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
       h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca" data-idx="'+i+'" data-act="sec">📂 Section</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑 Del</button></div></div>';
