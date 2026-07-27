@@ -518,6 +518,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
 /* Selection color */
 ::selection{background:rgba(63,185,80,.3);}
+.est-drag-card{position:relative}.est-drag-card.dragging{opacity:.5;transform:scale(.98)}.est-drop-before{border-top:3px solid #4ade80!important}.est-drop-after{border-bottom:3px solid #4ade80!important}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -2935,6 +2936,104 @@ function moveItemToSection(idx){
 window.renameSection=renameSection;
 window.moveItemToSection=moveItemToSection;
 
+
+// ── DRAG & DROP for estimate items (reorder within/between sections) ──
+function initEstDragDrop(container){
+  var handles=container.querySelectorAll('.drag-handle');
+  var dragging=null, dragIdx=-1, placeholder=null, startY=0, lastTarget=null;
+
+  function cards(){ return Array.prototype.slice.call(container.querySelectorAll('.est-drag-card')); }
+
+  function clearMarks(){
+    cards().forEach(function(cd){cd.classList.remove('est-drop-before','est-drop-after');});
+  }
+
+  function onMove(clientY, clientX){
+    if(!dragging)return;
+    // find the card under the pointer
+    var all=cards();
+    var target=null, before=false;
+    for(var i=0;i<all.length;i++){
+      var cd=all[i];
+      if(cd===dragging)continue;
+      var r=cd.getBoundingClientRect();
+      if(clientY>=r.top && clientY<=r.bottom){
+        target=cd;
+        before=(clientY < r.top + r.height/2);
+        break;
+      }
+    }
+    clearMarks();
+    if(target){
+      target.classList.add(before?'est-drop-before':'est-drop-after');
+      lastTarget={idx:parseInt(target.getAttribute('data-idx')), sec:target.getAttribute('data-sec'), before:before};
+    } else {
+      // If below all cards in a section header area, drop at end of nearest section
+      lastTarget=null;
+    }
+  }
+
+  function finishDrag(){
+    if(!dragging)return;
+    dragging.classList.remove('dragging');
+    clearMarks();
+    if(lastTarget && dragIdx>=0){
+      applyReorder(dragIdx, lastTarget);
+    }
+    dragging=null;dragIdx=-1;lastTarget=null;
+    document.removeEventListener('pointermove',pmMove);
+    document.removeEventListener('pointerup',pmUp);
+  }
+
+  function pmMove(e){ e.preventDefault(); onMove(e.clientY, e.clientX); }
+  function pmUp(e){ finishDrag(); }
+
+  handles.forEach(function(h){
+    h.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      var card=h.parentNode;
+      while(card && !(card.className&&String(card.className).indexOf('est-drag-card')>=0)) card=card.parentNode;
+      if(!card)return;
+      dragging=card;
+      dragIdx=parseInt(card.getAttribute('data-idx'));
+      card.classList.add('dragging');
+      startY=e.clientY;
+      lastTarget=null;
+      document.addEventListener('pointermove',pmMove,{passive:false});
+      document.addEventListener('pointerup',pmUp);
+    });
+  });
+}
+
+// Move estItems[fromIdx] to the position indicated by target {idx, sec, before}.
+function applyReorder(fromIdx, target){
+  if(fromIdx<0||fromIdx>=estItems.length)return;
+  var moved=estItems[fromIdx];
+  var targetItem=estItems[target.idx];
+  if(!targetItem||moved===targetItem)return;
+
+  // If dropping into a different section, update the moved item's section tag.
+  var targetSecName=sectionOf(targetItem);
+  var movedSecName=sectionOf(moved);
+  if(targetSecName!==movedSecName){
+    // Only tag when the target section is custom OR differs; use the target's
+    // effective section name so it lands in the same visual group.
+    moved.section=targetSecName;
+  }
+
+  // Remove moved from array, then reinsert relative to target.
+  var arr=estItems.slice();
+  arr.splice(fromIdx,1);
+  // recompute target index after removal
+  var tIdx=arr.indexOf(targetItem);
+  var insertAt = target.before ? tIdx : tIdx+1;
+  arr.splice(insertAt,0,moved);
+  estItems=arr;window.estItems=arr;
+  saveEI();renderEst();
+  if(targetSecName!==movedSecName)toast('📂 Moved to '+targetSecName);
+}
+window.initEstDragDrop=initEstDragDrop;
+
 // ── ESTIMATE SECTIONS ──────────────────────────────────────
 // Items are grouped into sections. A section name can be set per item (it.section);
 // if empty, it is derived automatically from the material so grouping "just works".
@@ -3082,7 +3181,8 @@ function renderEst(){
       var i=grp.items[gi].idx;
       var it=grp.items[gi].it;var pr=getProd(it.productId);var cost=calcItem(it);var effPrice=getEffectivePrice(it);
       var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Custom';
-      h+='<div class="card">';
+      h+='<div class="card est-drag-card" data-idx="'+i+'" data-sec="'+esc(grp.name)+'">';
+      h+='<div class="drag-handle" data-idx="'+i+'" style="position:absolute;top:8px;right:10px;color:#4a5568;font-size:18px;cursor:grab;touch-action:none;padding:4px 6px;user-select:none;-webkit-user-select:none" title="Drag to reorder">⠿</div>';
       if(it.photos&&it.photos.length){h+='<div class="card-photos">';for(var p=0;p<it.photos.length;p++)h+='<img class="card-photo" src="'+it.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" onclick="openLB(this)" alt="">';h+='</div>';}
       h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+effPrice.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
       h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca" data-idx="'+i+'" data-act="sec">📂 Section</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑 Del</button></div></div>';
@@ -3122,6 +3222,8 @@ function renderEst(){
     else if(act==='del')delEI(idx);
     else if(act==='sec')moveItemToSection(idx);
   });
+  // Enable drag-and-drop reordering (works across sections too)
+  if(typeof initEstDragDrop==='function')initEstDragDrop(newList);
   // Show "Rebuild Takeoff" button when the current project has items but its
   // takeoff areas are missing/fewer (e.g. areas were lost). Lets the user
   // regenerate takeoff areas from the estimate line items.
