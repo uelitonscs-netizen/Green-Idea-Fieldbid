@@ -521,6 +521,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div id="home" style="background:#f2f4f7;min-height:100vh;display:flex;flex-direction:column;font-family:-apple-system,sans-serif">
@@ -575,6 +576,18 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
           <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">Estimator</div>
           <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#16a34a;margin-bottom:6px">Quotes &amp; Contracts</div>
           <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Build estimates, generate quotes and contracts.</div>
+        </div>
+        <div style="font-size:20px;color:#d1d5db;flex-shrink:0">›</div>
+      </div>
+    </button>
+
+    <button class="mode-btn broch" id="btnBrochures" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.06);width:100%;overflow:hidden">
+      <div style="display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;gap:16px;padding:20px">
+        <div style="width:50px;height:50px;border-radius:14px;background:#e0e7ff;display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;-webkit-box-pack:center;justify-content:center;font-size:22px;flex-shrink:0">📄</div>
+        <div style="-webkit-box-flex:1;flex:1;text-align:left">
+          <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">Brochures</div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#4f46e5;margin-bottom:6px">Product info sheets</div>
+          <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Share material benefit sheets with clients anytime.</div>
         </div>
         <div style="font-size:20px;color:#d1d5db;flex-shrink:0">›</div>
       </div>
@@ -1091,6 +1104,32 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     </div>
   </div>
 </div>
+<div class="overlay" id="brochureShareOverlay">
+  <div class="modal" style="padding-bottom:28px">
+    <div class="mhandle"></div>
+    <div class="mtitle">Share Brochures</div>
+    <div style="padding:8px 20px 12px;font-size:13px;color:#94a3b8;text-align:center">Tap a brochure to share it on its own, or select several and combine them.</div>
+    <div id="brochureShareList" style="padding:0 20px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:16px 20px 0;display:flex;flex-direction:column;gap:10px">
+      <button id="brochureShareMultiBtn" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📤 Share Selected (<span id="brochureShareCount">0</span>)</button>
+      <button id="brochureShareCloseBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="qrOverlay">
+  <div class="modal" style="padding-bottom:28px">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="qrTitle">Scan to Download</div>
+    <div style="padding:8px 20px 4px;font-size:13px;color:#94a3b8;text-align:center">Have your client point their camera at this code to download the brochure.</div>
+    <div style="display:flex;justify-content:center;padding:20px">
+      <div id="qrBox" style="background:#fff;padding:16px;border-radius:14px;display:inline-block"></div>
+    </div>
+    <div id="qrCaption" style="text-align:center;font-size:13px;font-weight:700;color:#f0f0f0;padding:0 20px 8px"></div>
+    <div style="padding:8px 20px 0;display:flex;flex-direction:column;gap:10px">
+      <button id="qrCloseBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="confirmOverlay">
   <div class="modal" style="padding-bottom:32px">
     <div class="mhandle"></div>
@@ -1510,6 +1549,21 @@ document.getElementById('btnEst').addEventListener('click',function(){
   document.getElementById('est-app').style.display='block';
   document.getElementById('estFab').style.display='flex';
   renderEst();renderProds();
+});
+document.getElementById('btnBrochures').addEventListener('click',function(){
+  openBrochureShareModal();
+});
+document.getElementById('brochureShareMultiBtn').addEventListener('click',function(){
+  var chks=document.querySelectorAll('.broch-share-chk');
+  var keys=[];for(var i=0;i<chks.length;i++)if(chks[i].checked)keys.push(chks[i].value);
+  if(!keys.length){toast('Select at least one brochure');return;}
+  shareBrochureKeys(keys);
+});
+document.getElementById('brochureShareCloseBtn').addEventListener('click',function(){
+  closeOv('brochureShareOverlay');
+});
+document.getElementById('qrCloseBtn').addEventListener('click',function(){
+  closeOv('qrOverlay');
 });
 document.getElementById('backField').addEventListener('click',function(){
   document.getElementById('field-app').style.display='none';
@@ -2030,6 +2084,90 @@ function _selectedBrochureKeys(){
   var keys=[];
   for(var i=0;i<chks.length;i++)if(chks[i].checked)keys.push(chks[i].value);
   return keys;
+}
+
+
+// ── STANDALONE BROCHURE SHARING (from home, no estimate needed) ──
+function openBrochureShareModal(){
+  var list=document.getElementById('brochureShareList');
+  var html='';
+  for(var i=0;i<BROCHURE_DEFS.length;i++){
+    var d=BROCHURE_DEFS[i];
+    html+='<div style="display:flex;align-items:center;gap:8px;background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:11px 13px">'+
+      '<input type="checkbox" class="broch-share-chk" value="'+d.key+'" style="width:auto;margin:0;transform:scale(1.2)" onchange="updateBrochureShareCount()">'+
+      '<span style="font-size:14px;color:#f0f0f0;font-weight:600;flex:1;min-width:0">'+d.name+'</span>'+
+      '<button class="broch-one-qr" data-key="'+d.key+'" data-name="'+d.name+'" style="background:#3a2a5f;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer">▦ QR</button>'+
+      '<button class="broch-one-share" data-key="'+d.key+'" style="background:#1e3a5f;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer">📤</button>'+
+      '</div>';
+  }
+  list.innerHTML=html;
+  // wire individual share buttons
+  var btns=list.querySelectorAll('.broch-one-share');
+  for(var b=0;b<btns.length;b++){
+    (function(btn){
+      btn.addEventListener('click',function(){
+        var key=btn.getAttribute('data-key');
+        shareBrochureKeys([key]);
+      });
+    })(btns[b]);
+  }
+  // wire QR buttons
+  var qbtns=list.querySelectorAll('.broch-one-qr');
+  for(var q=0;q<qbtns.length;q++){
+    (function(btn){
+      btn.addEventListener('click',function(){
+        showBrochureQR(btn.getAttribute('data-key'), btn.getAttribute('data-name'));
+      });
+    })(qbtns[q]);
+  }
+  updateBrochureShareCount();
+  openOv('brochureShareOverlay');
+}
+function updateBrochureShareCount(){
+  var chks=document.querySelectorAll('.broch-share-chk');
+  var n=0;for(var i=0;i<chks.length;i++)if(chks[i].checked)n++;
+  var el=document.getElementById('brochureShareCount');
+  if(el)el.textContent=n;
+}
+window.updateBrochureShareCount=updateBrochureShareCount;
+
+// Build the public URL of a brochure PDF (served by GitHub Pages) and show a QR.
+function brochurePublicUrl(key){
+  // Resolve against the current app URL so it works wherever the app is hosted.
+  return new URL(BROCHURE_BASE+key+'.pdf', location.href).href;
+}
+function showBrochureQR(key, name){
+  var url=brochurePublicUrl(key);
+  var box=document.getElementById('qrBox');
+  var cap=document.getElementById('qrCaption');
+  if(!box){return;}
+  box.innerHTML='';
+  if(typeof QRCode==='undefined'){toast('QR library still loading, try again','err');return;}
+  try{
+    new QRCode(box,{text:url,width:220,height:220,correctLevel:QRCode.CorrectLevel.M});
+  }catch(e){toast('QR error: '+(e&&e.message||e),'err');return;}
+  if(cap)cap.textContent=name||'';
+  openOv('qrOverlay');
+}
+
+// Load the given brochure keys and share as one merged PDF (or single file).
+function shareBrochureKeys(keys){
+  if(!keys||!keys.length){toast('Select at least one brochure');return;}
+  if(!window.PDFLib){toast('PDF library still loading, try again','err');return;}
+  toast('⏳ Preparing brochures...');
+  loadBrochurePdfs(keys).then(function(pdfs){
+    if(pdfs.length===1){
+      // single brochure: share the original file untouched
+      var b=pdfs[0];
+      var def=null;for(var i=0;i<BROCHURE_DEFS.length;i++)if(BROCHURE_DEFS[i].key===b.key)def=BROCHURE_DEFS[i];
+      var fname=(def?def.name.replace(/[^a-zA-Z0-9]/g,'_'):'Brochure')+'.pdf';
+      deliverPdf(new Uint8Array(b.buf), fname, true);
+    } else {
+      mergeBrochuresOnly(pdfs).then(function(bytes){
+        deliverPdf(bytes,'GreenIdea-Brochures.pdf',true);
+      });
+    }
+  }).catch(function(e){toast('Brochure error: '+(e&&e.message||e),'err');});
 }
 
 function generateEstimatePDF(pid, totalOnly, opts){
@@ -4836,7 +4974,7 @@ document.getElementById('printCtBtn').addEventListener('click',function(){window
 
 // OVERLAY CLOSE ON BACKDROP
 // Safe overlays - close on backdrop click freely
-var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay'];
+var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','qrOverlay'];
 for(var oi=0;oi<safeOvs.length;oi++){
   (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(safeOvs[oi]);
 }
