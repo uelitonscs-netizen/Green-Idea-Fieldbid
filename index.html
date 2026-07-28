@@ -3475,9 +3475,9 @@ function renderRows(mode){
   for(var i=0;i<rows.length;i++){
     h+='<div class="mrow" data-row="'+i+'" data-mode="'+mode+'">';
     h+='<div class="mrow-l"><div class="mrow-lbl">'+(i===0?'Length (ft)':'')+'</div>';
-    h+='<input class="fi" type="text" inputmode="decimal" data-field="l" data-row="'+i+'" data-mode="'+mode+'" value="'+rows[i].l+'" placeholder="12+15+8" style="font-size:16px"></div>';
+    h+='<input class="fi" type="text" inputmode="text" data-field="l" data-row="'+i+'" data-mode="'+mode+'" value="'+rows[i].l+'" placeholder="12+15+8" style="font-size:16px"></div>';
     h+='<div class="mrow-h"><div class="mrow-lbl">'+(i===0?(mode==='wall'?'Height':'Width'):'')+'</div>';
-    h+='<input class="fi" type="text" inputmode="decimal" data-field="h" data-row="'+i+'" data-mode="'+mode+'" value="'+rows[i].h+'" placeholder="9" style="font-size:16px"></div>';
+    h+='<input class="fi" type="text" inputmode="text" data-field="h" data-row="'+i+'" data-mode="'+mode+'" value="'+rows[i].h+'" placeholder="9" style="font-size:16px"></div>';
     if(rows.length>1)h+='<button class="mrow-del" data-row="'+i+'" data-mode="'+mode+'" data-act="delrow">×</button>';
     h+='</div>';
   }
@@ -3619,11 +3619,11 @@ function renderRoofRows(){
     if(roofRows.length>1)h+='<button type="button" class="mrow-del" data-rdel="'+i+'" style="height:40px;width:38px">✕</button>';
     h+='</div>';
     h+='<div class="frow">';
-    h+='<div class="fg" style="margin-bottom:6px"><label class="fl">'+esc(d.a)+'</label><input class="fi af" data-ri="'+i+'" data-rf="a" type="text" inputmode="decimal" value="'+esc(r.a||'')+'" placeholder="0"></div>';
-    h+='<div class="fg" style="margin-bottom:6px"><label class="fl">'+esc(d.l)+'</label><input class="fi af" data-ri="'+i+'" data-rf="l" type="text" inputmode="decimal" value="'+esc(r.l||'')+'" placeholder="0"></div>';
+    h+='<div class="fg" style="margin-bottom:6px"><label class="fl">'+esc(d.a)+'</label><input class="fi af" data-ri="'+i+'" data-rf="a" type="text" inputmode="text" value="'+esc(r.a||'')+'" placeholder="0"></div>';
+    h+='<div class="fg" style="margin-bottom:6px"><label class="fl">'+esc(d.l)+'</label><input class="fi af" data-ri="'+i+'" data-rf="l" type="text" inputmode="text" value="'+esc(r.l||'')+'" placeholder="0"></div>';
     h+='</div>';
     if(d.needC){
-      h+='<div class="fg" style="margin-bottom:6px"><label class="fl">'+esc(d.c)+'</label><input class="fi af" data-ri="'+i+'" data-rf="c" type="text" inputmode="decimal" value="'+esc(r.c||'')+'" placeholder="0"></div>';
+      h+='<div class="fg" style="margin-bottom:6px"><label class="fl">'+esc(d.c)+'</label><input class="fi af" data-ri="'+i+'" data-rf="c" type="text" inputmode="text" value="'+esc(r.c||'')+'" placeholder="0"></div>';
     }
     if(r.type==='pitch'){
       h+='<div class="fg" style="margin-bottom:6px"><label class="fl">Roof Pitch</label><select class="fs" data-ri="'+i+'" data-rf="pitch">';
@@ -4992,15 +4992,24 @@ function doImport(){
     // or the project's takeoff areas.
     localStorage.setItem('fb6_ei',JSON.stringify(estItems));
     localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo));
-    // Persist estItems/quoteInfo into the current project record, but NEVER
-    // touch its 'areas' (takeoff areas stay exactly as they were).
+    // Persist estItems/quoteInfo into the current project record.
     if(currentProj){
       var _projs2=loadProjs();
       for(var _pi=0;_pi<_projs2.length;_pi++){
         if(_projs2[_pi].id===currentProj.id){
           _projs2[_pi].estItems=JSON.parse(JSON.stringify(estItems));
           _projs2[_pi].quoteInfo=JSON.parse(JSON.stringify(quoteInfo));
-          // _projs2[_pi].areas left untouched on purpose
+          // If this project has NO takeoff areas yet, seed them from the imported
+          // source areas so the takeoff isn't empty. Never overwrite existing areas.
+          var _hasAreas=Array.isArray(_projs2[_pi].areas)&&_projs2[_pi].areas.length>0;
+          if(!_hasAreas && _importProjId && _importAreas && _importAreas.length){
+            _projs2[_pi].areas=JSON.parse(JSON.stringify(_importAreas));
+            currentProj.areas=_projs2[_pi].areas;
+            // Reflect into live takeoff if this is the active project
+            fieldAreas=JSON.parse(JSON.stringify(_importAreas));
+            window.fieldAreas=fieldAreas;
+            localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
+          }
           break;
         }
       }
