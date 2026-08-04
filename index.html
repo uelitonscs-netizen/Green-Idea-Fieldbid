@@ -1331,11 +1331,31 @@ function fbLoad() {
 
 
 // All code runs after DOM is ready
-function appConfirm(msg, onYes) {
+function appConfirm(msg, onYes, opts) {
+  opts = opts || {};
   var el=document.getElementById('confirmOverlay');
   var msg_el=document.getElementById('confirmMsg');
+  var yesBtn=document.getElementById('confirmYes');
   if(!el||!msg_el) return;
   msg_el.textContent = msg;
+  // Customize the confirm button label + look. Default is a red "Delete".
+  if(yesBtn){
+    yesBtn.textContent = opts.confirmLabel || 'Delete';
+    // 'bd' = destructive (red). For non-destructive actions use a neutral/positive style.
+    if(opts.confirmStyle==='positive'){
+      yesBtn.className='btn';
+      yesBtn.style.background='#1a6b2a';
+      yesBtn.style.color='#fff';
+    } else if(opts.confirmStyle==='accent'){
+      yesBtn.className='btn';
+      yesBtn.style.background='#f0a02c';
+      yesBtn.style.color='#000';
+    } else {
+      yesBtn.className='btn bd';
+      yesBtn.style.background='';
+      yesBtn.style.color='';
+    }
+  }
   window._confirmResolve = onYes;
   window._confirmReject = null;
   el.classList.add('on');
@@ -1978,7 +1998,7 @@ function doNewEst(){
   saveEI();renderEst();toast('New estimate');
 }
 document.getElementById('newEstBtn').addEventListener('click',function(){
-  if(estItems.length){appConfirm('Clear current estimate?',function(){doNewEst();});return;}
+  if(estItems.length){appConfirm('Clear current estimate?',function(){doNewEst();},{confirmLabel:'Clear',confirmStyle:'accent'});return;}
   doNewEst();
 });
 
@@ -4143,7 +4163,7 @@ function renderJobsList(){
     else if(act === 'dup'){
       appConfirm('Duplicate this job into a new independent copy?',function(){
         duplicateJobById(pid);
-      });
+      }, {confirmLabel:'⧉ Duplicate', confirmStyle:'accent'});
     }
     else if(act === 'del') clearJobEstimate(pid);
     else if(act === 'status'){
@@ -4629,7 +4649,7 @@ window.restoreMatCatFields=restoreMatCatFields;
 
 document.getElementById('faCancelBtn').addEventListener('click',function(){
   if(hasFADirtyData()&&editFAIdx<0){
-    appConfirm('Discard unsaved area data?',function(){editFAIdx=-1;faPendPh=[];closeOv('faOverlay');});
+    appConfirm('Discard unsaved area data?',function(){editFAIdx=-1;faPendPh=[];closeOv('faOverlay');},{confirmLabel:'Discard'});
   } else { editFAIdx=-1;faPendPh=[];closeOv('faOverlay'); }
 });
   // Material category change listener
@@ -4859,7 +4879,7 @@ document.getElementById('ei_price').addEventListener('input',updateEIHint);
 document.getElementById('ei_inch').addEventListener('input',updateEIHint);
 document.getElementById('eiCancelBtn').addEventListener('click',function(){
   if(hasEIDirtyData()&&editEIIdx<0){
-    appConfirm('Discard unsaved item data?',function(){editEIIdx=-1;eiProd=null;eiPendPh=[];closeOv('eiOverlay');});
+    appConfirm('Discard unsaved item data?',function(){editEIIdx=-1;eiProd=null;eiPendPh=[];closeOv('eiOverlay');},{confirmLabel:'Discard'});
   } else { editEIIdx=-1;eiProd=null;eiPendPh=[];closeOv('eiOverlay'); }
 });
 document.getElementById('eiSaveBtn').addEventListener('click',function(){
