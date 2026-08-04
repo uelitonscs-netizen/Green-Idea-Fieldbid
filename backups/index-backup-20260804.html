@@ -1782,6 +1782,43 @@ function openNewProjOnly(){
   if(t) t.textContent='New Project';
   openOv('projOverlay');
 }
+function duplicateJobById(pid){
+  var projs=loadProjs();
+  // If duplicating the project that's currently open, persist its live state first
+  // so the copy captures the latest unsaved edits.
+  if(currentProj && currentProj.id===pid){
+    try{ saveProjAreas(); saveEI(); }catch(e){}
+    projs=loadProjs();
+  }
+  var src=null;
+  for(var i=0;i<projs.length;i++){ if(projs[i].id===pid){ src=projs[i]; break; } }
+  if(!src){ toast('Job not found','err'); return; }
+
+  var newName=(src.name||'Estimate')+' (copy)';
+  // Fully independent deep copy — editing one never affects the other.
+  var newProj={
+    id:'p_'+Date.now(),
+    name:newName,
+    address:src.address||'',
+    areas: src.areas?JSON.parse(JSON.stringify(src.areas)):[],
+    estItems: src.estItems?JSON.parse(JSON.stringify(src.estItems)):[],
+    quoteInfo: src.quoteInfo?JSON.parse(JSON.stringify(src.quoteInfo)):{},
+    created: new Date().toLocaleDateString('en-US'),
+    done:false,
+    estStatus:'none' // the copy starts fresh (not sent/approved)
+  };
+  if(newProj.quoteInfo){ newProj.quoteInfo.client=newName; if(src.address)newProj.quoteInfo.address=src.address; }
+
+  projs.push(newProj);
+  saveProjs(projs);
+
+  // Refresh the jobs list so the new copy appears; don't force-open it.
+  if(typeof renderJobsList==='function')renderJobsList();
+  if(typeof renderProjList==='function')renderProjList();
+  toast('⧉ Duplicated as "'+newName+'"');
+}
+window.duplicateJobById=duplicateJobById;
+
 function switchProjById(pid){
   // Close modal immediately for instant visual feedback
   closeOv('projOverlay');
@@ -4066,6 +4103,7 @@ function renderJobsList(){
     h += '<button class="job-open-btn" data-act="open" data-pid="'+p.id+'" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">'+(isActive?'✓ Editing':'Open Job')+'</button>';
     h += '<button class="job-cert-btn" data-act="cert" data-pid="'+p.id+'" style="width:100%;background:#f59e0b;border:none;color:#000;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">📋 Generate Certificate</button>';
     h += '<button class="job-est-btn" data-act="est" data-pid="'+p.id+'" style="width:100%;background:#2563eb;border:none;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">📄 Generate Estimate</button>';
+    h += '<button class="job-dup-btn" data-act="dup" data-pid="'+p.id+'" style="width:100%;background:#1e2530;border:1px solid rgba(240,160,44,.4);color:#f0a02c;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">⧉ Duplicate</button>';
     h += '<button class="job-del-btn" data-act="del" data-pid="'+p.id+'" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f87171;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🗑 Delete</button>';
     var nextStatus = {none:'sent',sent:'approved',approved:'rejected',rejected:'none'};
     var statusBtnCfg = {
@@ -4101,6 +4139,11 @@ function renderJobsList(){
       window._estPendingPid = pid;
       var el=document.getElementById('estModeOverlay');
       if(el){el.classList.add('on');el.style.display='flex';}
+    }
+    else if(act === 'dup'){
+      appConfirm('Duplicate this job into a new independent copy?',function(){
+        duplicateJobById(pid);
+      });
     }
     else if(act === 'del') clearJobEstimate(pid);
     else if(act === 'status'){
