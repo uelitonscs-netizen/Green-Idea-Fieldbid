@@ -1234,6 +1234,8 @@ var _saveRetry = 0;
 // Keys mirrored to Firestore (one doc per key under collection "fieldbid")
 var _SYNC_KEYS = ['fa','ei','qi','qn','cfg','pr','ct','sg','projs'];
 function save() {
+  // Stamp the moment local data changed, so cloud-load can avoid clobbering newer local edits.
+  try{ localStorage.setItem('fb6_localTs', new Date().toISOString()); }catch(e){}
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(function() {
     if (typeof db === 'undefined' || !db) return;
@@ -1247,19 +1249,29 @@ function save() {
     var ls = window.localStorage;
     var batch = db.batch();
     var wrote = 0;
+    var oversized = null;
     for (var i = 0; i < _SYNC_KEYS.length; i++) {
       var k = _SYNC_KEYS[i];
       var v = ls.getItem('fb6_' + k);
       if (v !== null && v !== undefined && v !== '') {
-        if (v.length > 900000) continue; // skip if over 900KB
+        // Firestore hard limit is ~1MB per document. Leave headroom for field overhead.
+        if (v.length > 1000000) { oversized = k; continue; } // too big even for Firestore
         batch.set(col.doc(k), { data: v, updatedAt: ts });
         wrote++;
       }
     }
-    if (wrote === 0) { setFbStatus('connected'); return; }
+    if (oversized) {
+      // A critical doc (likely 'projs' with too many photos) can't be cloud-saved.
+      // Never report a false "saved" — warn the user so data isn't silently lost.
+      setFbStatus('error');
+      if (typeof toast === 'function') toast('⚠️ Too many photos to cloud-save. Reduce photos to protect your data.','err');
+      console.warn('FieldBid: doc too large to sync:', oversized);
+      // still commit the other docs that DID fit
+    }
+    if (wrote === 0) { if(!oversized) setFbStatus('connected'); return; }
     setFbStatus('saving');
     batch.commit()
-      .then(function() { setFbStatus('connected'); })
+      .then(function() { if(!oversized) setFbStatus('connected'); })
       .catch(function(e) { setFbStatus('error'); console.warn('Save error:', e && e.message); });
   }, 1000);
 }
@@ -1270,6 +1282,21 @@ function fbLoad() {
     db.collection('fieldbid').get()
     .then(function(snap) {
       var loaded = 0;
+      // Newest cloud timestamp across docs, to compare against local edits.
+      var localTs = localStorage.getItem('fb6_localTs');
+      var newestCloud = null;
+      snap.forEach(function(doc){
+        var dd=doc.data();
+        if(dd&&dd.updatedAt&&(!newestCloud||dd.updatedAt>newestCloud))newestCloud=dd.updatedAt;
+      });
+      // If local edits are NEWER than everything in the cloud, don't overwrite —
+      // the last save may not have reached the cloud (e.g. oversized doc). Push local up instead.
+      if (localTs && newestCloud && localTs > newestCloud) {
+        console.warn('FieldBid: local newer than cloud, keeping local and re-saving.');
+        setFbStatus('connected');
+        if (typeof save === 'function') save();
+        return;
+      }
       snap.forEach(function(doc) {
         var id = doc.id;
         if (_SYNC_KEYS.indexOf(id) === -1) return; // skip unknown docs (test_write, etc)
@@ -4913,7 +4940,7 @@ function validatePhoto(f){
   return null;
 }
 function compressPhoto(file, callback){
-  var MAX_W=800, MAX_H=800, QUALITY=0.45;
+  var MAX_W=720, MAX_H=720, QUALITY=0.4;
   // Use createObjectURL (single async level) instead of FileReader → Image (double async)
   var url=URL.createObjectURL(file);
   var img=new Image();
