@@ -594,6 +594,18 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       </div>
     </button>
 
+    <button class="mode-btn ds" id="btnDatasheets" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.06);width:100%;overflow:hidden">
+      <div style="display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;gap:16px;padding:20px">
+        <div style="width:50px;height:50px;border-radius:14px;background:#fef3c7;display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;-webkit-box-pack:center;justify-content:center;font-size:22px;flex-shrink:0">📋</div>
+        <div style="-webkit-box-flex:1;flex:1;text-align:left">
+          <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">Data Sheets</div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#d97706;margin-bottom:6px">Product spec sheets</div>
+          <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Share technical spec sheets for specific products.</div>
+        </div>
+        <div style="font-size:20px;color:#d1d5db;flex-shrink:0">›</div>
+      </div>
+    </button>
+
   </div>
 
   <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation</div>
@@ -1105,6 +1117,31 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     </div>
   </div>
 </div>
+<div class="overlay" id="datasheetOverlay">
+  <div class="modal" style="padding-bottom:28px">
+    <div class="mhandle"></div>
+    <div class="mtitle">Attach Data Sheets</div>
+    <div style="padding:8px 20px 12px;font-size:13px;color:#94a3b8;text-align:center">Technical spec sheets for specific products. Suggestions match this estimate's materials.</div>
+    <div id="datasheetList" style="padding:0 20px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:16px 20px 0;display:flex;flex-direction:column;gap:10px">
+      <button id="datasheetAttachBtn" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📎 Add to Estimate PDF</button>
+      <button id="datasheetShareBtn" style="width:100%;background:#1e3a5f;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📤 Share Data Sheets Separately</button>
+      <button id="datasheetSkipBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Skip</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="datasheetShareOverlay">
+  <div class="modal" style="padding-bottom:28px">
+    <div class="mhandle"></div>
+    <div class="mtitle">Share Data Sheets</div>
+    <div style="padding:8px 20px 12px;font-size:13px;color:#94a3b8;text-align:center">Tap a data sheet to share it on its own, or select several and combine them.</div>
+    <div id="datasheetShareList" style="padding:0 20px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:16px 20px 0;display:flex;flex-direction:column;gap:10px">
+      <button id="datasheetShareMultiBtn" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📤 Share Selected (<span id="datasheetShareCount">0</span>)</button>
+      <button id="datasheetShareCloseBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="brochureShareOverlay">
   <div class="modal" style="padding-bottom:28px">
     <div class="mhandle"></div>
@@ -1575,6 +1612,9 @@ document.getElementById('btnEst').addEventListener('click',function(){
 });
 document.getElementById('btnBrochures').addEventListener('click',function(){
   openBrochureShareModal();
+});
+document.getElementById('btnDatasheets').addEventListener('click',function(){
+  openDatasheetShareModal();
 });
 document.getElementById('brochureShareMultiBtn').addEventListener('click',function(){
   var chks=document.querySelectorAll('.broch-share-chk');
@@ -2100,6 +2140,63 @@ function loadBrochurePdfs(keys){
   return chain.then(function(){return out;});
 }
 
+// ═══════════════ PRODUCT DATA SHEETS ═══════════════
+// Technical spec PDFs for specific branded products, in datasheets/ on the repo.
+var DATASHEET_DEFS=[
+  {key:'cc_dynamo_eco2000', name:'Dynamo ECO 2000',        cat:'Closed Cell',      matTypes:['cc'],  file:'datasheets/Green-Idea_Closed-Cell_Dynamo-ECO-2000.pdf'},
+  {key:'oc_dynamo500',      name:'Dynamo 500',             cat:'Open Cell',        matTypes:['oc'],  file:'datasheets/Green-Idea_Open-Cell_Dynamo-500.pdf'},
+  {key:'oc_enverge',        name:'Enverge EasySeal .5',    cat:'Open Cell',        matTypes:['oc'],  file:'datasheets/Green-Idea_Open-Cell_Enverge-EasySeal.pdf'},
+  {key:'ib_fireshell',      name:'FireShell F10E',         cat:'Ignition Barrier', matTypes:['ign'], file:'datasheets/Green-Idea_Ignition-Barrier_FireShell-F10E.pdf'},
+  {key:'ib_dc315',          name:'DC315',                  cat:'Ignition Barrier', matTypes:['ign'], file:'datasheets/Green-Idea_Ignition-Barrier_DC315.pdf'}
+];
+var _datasheetPdfCache={};
+
+function datasheetDefByKey(key){
+  for(var i=0;i<DATASHEET_DEFS.length;i++)if(DATASHEET_DEFS[i].key===key)return DATASHEET_DEFS[i];
+  return null;
+}
+
+// Which data sheets match the materials currently in the estimate?
+function suggestedDatasheetKeys(){
+  var present={};
+  for(var i=0;i<estItems.length;i++){
+    var it=estItems[i];
+    var t=it.matType||'';
+    if(!t){var m=(typeof deriveMatFromProduct==='function')?deriveMatFromProduct(it.productId,it.inches):null;if(m)t=m.matType;}
+    if(t)present[t]=1;
+  }
+  if(Array.isArray(fieldAreas)){
+    for(var j=0;j<fieldAreas.length;j++){if(fieldAreas[j].matType)present[fieldAreas[j].matType]=1;}
+  }
+  var keys=[];
+  for(var b=0;b<DATASHEET_DEFS.length;b++){
+    var def=DATASHEET_DEFS[b];
+    for(var k=0;k<def.matTypes.length;k++){
+      if(present[def.matTypes[k]]){keys.push(def.key);break;}
+    }
+  }
+  return keys;
+}
+
+function loadDatasheetPdf(key){
+  if(_datasheetPdfCache[key])return Promise.resolve(_datasheetPdfCache[key]);
+  var def=datasheetDefByKey(key);
+  if(!def)return Promise.reject(new Error('unknown datasheet '+key));
+  return fetch(def.file,{cache:'force-cache'})
+    .then(function(r){if(!r.ok)throw new Error(def.file+' '+r.status);return r.arrayBuffer();})
+    .then(function(buf){_datasheetPdfCache[key]=buf;return buf;});
+}
+function loadDatasheetPdfs(keys){
+  var out=[];
+  var chain=Promise.resolve();
+  keys.forEach(function(key){
+    chain=chain.then(function(){
+      return loadDatasheetPdf(key).then(function(buf){out.push({key:key,buf:buf});});
+    });
+  });
+  return chain.then(function(){return out;});
+}
+
 // Populate and open the brochure modal. `onProceed(keys, mode)` is called with
 // the chosen brochure keys and mode ('attach' | 'share' | 'skip').
 var _brochureProceed=null;
@@ -2209,6 +2306,100 @@ function shareBrochureKeys(keys){
       });
     }
   }).catch(function(e){toast('Brochure error: '+(e&&e.message||e),'err');});
+}
+
+
+// ── DATA SHEET modal for estimate-attach flow ──
+var _datasheetProceed=null;
+function openDatasheetModal(onProceed){
+  _datasheetProceed=onProceed;
+  var suggested=suggestedDatasheetKeys();
+  var list=document.getElementById('datasheetList');
+  var html='';
+  for(var i=0;i<DATASHEET_DEFS.length;i++){
+    var d=DATASHEET_DEFS[i];
+    var on=suggested.indexOf(d.key)>=0;
+    html+='<label style="display:flex;align-items:center;gap:10px;background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:11px 13px;cursor:pointer">'+
+      '<input type="checkbox" class="ds-chk" value="'+d.key+'"'+(on?' checked':'')+' style="width:auto;margin:0;transform:scale(1.2)">'+
+      '<span style="font-size:14px;color:#f0f0f0;font-weight:600;flex:1;min-width:0">'+d.name+'<br><span style="font-size:11px;color:#8b98a5;font-weight:400">'+d.cat+'</span></span>'+
+      (on?'<span style="font-size:10px;color:#4ade80;font-weight:700">SUGGESTED</span>':'')+
+      '</label>';
+  }
+  list.innerHTML=html;
+  openOv('datasheetOverlay');
+}
+function _selectedDatasheetKeys(){
+  var chks=document.querySelectorAll('.ds-chk');
+  var keys=[];
+  for(var i=0;i<chks.length;i++)if(chks[i].checked)keys.push(chks[i].value);
+  return keys;
+}
+
+// ── DATA SHEET standalone share (home card) ──
+function openDatasheetShareModal(){
+  var list=document.getElementById('datasheetShareList');
+  var html='';
+  for(var i=0;i<DATASHEET_DEFS.length;i++){
+    var d=DATASHEET_DEFS[i];
+    html+='<div style="display:flex;align-items:center;gap:8px;background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:11px 13px">'+
+      '<input type="checkbox" class="ds-share-chk" value="'+d.key+'" style="width:auto;margin:0;transform:scale(1.2)" onchange="updateDatasheetShareCount()">'+
+      '<span style="font-size:14px;color:#f0f0f0;font-weight:600;flex:1;min-width:0">'+d.name+'<br><span style="font-size:11px;color:#8b98a5;font-weight:400">'+d.cat+'</span></span>'+
+      '<button class="ds-one-qr" data-key="'+d.key+'" data-name="'+d.name+'" style="background:#3a2a5f;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer">▦ QR</button>'+
+      '<button class="ds-one-share" data-key="'+d.key+'" style="background:#1e3a5f;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer">📤</button>'+
+      '</div>';
+  }
+  list.innerHTML=html;
+  var btns=list.querySelectorAll('.ds-one-share');
+  for(var b=0;b<btns.length;b++){
+    (function(btn){btn.addEventListener('click',function(){shareDatasheetKeys([btn.getAttribute('data-key')]);});})(btns[b]);
+  }
+  var qbtns=list.querySelectorAll('.ds-one-qr');
+  for(var q=0;q<qbtns.length;q++){
+    (function(btn){btn.addEventListener('click',function(){showDatasheetQR(btn.getAttribute('data-key'),btn.getAttribute('data-name'));});})(qbtns[q]);
+  }
+  updateDatasheetShareCount();
+  openOv('datasheetShareOverlay');
+}
+function updateDatasheetShareCount(){
+  var chks=document.querySelectorAll('.ds-share-chk');
+  var n=0;for(var i=0;i<chks.length;i++)if(chks[i].checked)n++;
+  var el=document.getElementById('datasheetShareCount');
+  if(el)el.textContent=n;
+}
+window.updateDatasheetShareCount=updateDatasheetShareCount;
+
+function datasheetPublicUrl(key){
+  var def=datasheetDefByKey(key);
+  if(!def)return location.href;
+  return new URL(def.file, location.href).href;
+}
+function showDatasheetQR(key,name){
+  var url=datasheetPublicUrl(key);
+  var box=document.getElementById('qrBox');
+  var cap=document.getElementById('qrCaption');
+  if(!box)return;
+  box.innerHTML='';
+  if(typeof QRCode==='undefined'){toast('QR library still loading, try again','err');return;}
+  try{ new QRCode(box,{text:url,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}); }
+  catch(e){toast('QR error: '+(e&&e.message||e),'err');return;}
+  if(cap)cap.textContent=name||'';
+  openOv('qrOverlay');
+}
+
+function shareDatasheetKeys(keys){
+  if(!keys||!keys.length){toast('Select at least one data sheet');return;}
+  if(!window.PDFLib){toast('PDF library still loading, try again','err');return;}
+  toast('⏳ Preparing data sheets...');
+  loadDatasheetPdfs(keys).then(function(pdfs){
+    if(pdfs.length===1){
+      var b=pdfs[0];
+      var def=datasheetDefByKey(b.key);
+      var fname=(def?def.name.replace(/[^a-zA-Z0-9]/g,'_'):'DataSheet')+'.pdf';
+      deliverPdf(new Uint8Array(b.buf), fname, true);
+    } else {
+      mergeBrochuresOnly(pdfs).then(function(bytes){ deliverPdf(bytes,'GreenIdea-DataSheets.pdf',true); });
+    }
+  }).catch(function(e){toast('Data sheet error: '+(e&&e.message||e),'err');});
 }
 
 function generateEstimatePDF(pid, totalOnly, opts){
@@ -5366,7 +5557,7 @@ document.getElementById('printCtBtn').addEventListener('click',function(){window
 
 // OVERLAY CLOSE ON BACKDROP
 // Safe overlays - close on backdrop click freely
-var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','qrOverlay','secMoveOverlay','delSecOverlay'];
+var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','datasheetOverlay','datasheetShareOverlay','qrOverlay','secMoveOverlay','delSecOverlay'];
 for(var oi=0;oi<safeOvs.length;oi++){
   (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(safeOvs[oi]);
 }
@@ -5418,35 +5609,72 @@ document.getElementById('estModeTotalOnly').addEventListener('click', function()
 function proceedToBrochureStep(totalOnly){
   var pid=window._estPendingPid;
   window._estPendingPid=null;
-  openBrochureModal(function(keys, mode){
+  // Step 1: brochures. Step 2: data sheets. Then generate/merge/share once.
+  openBrochureModal(function(brochKeys, brochMode){
     closeOv('brochureOverlay');
-    if(mode==='skip'||!keys.length){
-      try{ generateEstimatePDF(pid, totalOnly); }
-      catch(e){ toast('Estimate error: '+(e&&e.message||e),'err'); }
-      return;
-    }
-    if(!window.PDFLib){toast('PDF merge library still loading, try again','err');return;}
-    toast('⏳ Loading brochures...');
-    loadBrochurePdfs(keys).then(function(pdfs){
-      if(mode==='share'){
-        // Estimate downloads on its own; brochures shared as their original PDFs merged together
-        try{ generateEstimatePDF(pid, totalOnly); }catch(e){}
-        return mergeBrochuresOnly(pdfs).then(function(bytes){
-          deliverPdf(bytes,'GreenIdea-Brochures.pdf',true);
-        });
-      } else {
-        // Merge estimate + original brochure PDFs into one file
-        var est=generateEstimatePDF(pid, totalOnly, {returnBytes:true});
-        if(!est||!est.bytes){toast('Estimate error','err');return;}
-        return mergeEstimateWithBrochures(est.bytes, pdfs).then(function(bytes){
-          deliverPdf(bytes, est.filename, false);
-        });
-      }
-    }).catch(function(e){
-      toast('Brochure error: '+(e&&e.message||e),'err');
-      try{ generateEstimatePDF(pid, totalOnly); }catch(e2){}
+    var attachBroch = (brochMode!=='skip' && brochKeys.length) ? brochKeys : [];
+    var shareBroch  = (brochMode==='share');
+    // Now ask about data sheets
+    openDatasheetModal(function(dsKeys, dsMode){
+      closeOv('datasheetOverlay');
+      var attachDs = (dsMode!=='skip' && dsKeys.length) ? dsKeys : [];
+      var shareDs  = (dsMode==='share');
+      finalizeEstimateDelivery(pid, totalOnly, attachBroch, shareBroch, attachDs, shareDs);
     });
   });
+}
+
+// Generate estimate and attach/share brochures and data sheets per user's choices.
+function finalizeEstimateDelivery(pid, totalOnly, attachBroch, shareBroch, attachDs, shareDs){
+  // Items to MERGE into the estimate PDF (only the "attach" ones and not the "share separate" ones)
+  var mergeBrochKeys = shareBroch ? [] : attachBroch;
+  var mergeDsKeys    = shareDs    ? [] : attachDs;
+  // Items to SHARE separately
+  var shareBrochKeys = shareBroch ? attachBroch : [];
+  var shareDsKeys    = shareDs    ? attachDs    : [];
+
+  if((mergeBrochKeys.length||mergeDsKeys.length) && !window.PDFLib){
+    toast('PDF merge library still loading, try again','err');return;
+  }
+
+  // 1) Build the estimate (merged with any attach items)
+  var buildMain;
+  if(mergeBrochKeys.length||mergeDsKeys.length){
+    toast('⏳ Building estimate + attachments...');
+    var est=generateEstimatePDF(pid, totalOnly, {returnBytes:true});
+    if(!est||!est.bytes){toast('Estimate error','err');return;}
+    // load all attach PDFs (brochures first, then data sheets)
+    buildMain=loadBrochurePdfs(mergeBrochKeys).then(function(bpdfs){
+      return loadDatasheetPdfs(mergeDsKeys).then(function(dpdfs){
+        var all=bpdfs.concat(dpdfs);
+        return mergeEstimateWithBrochures(est.bytes, all).then(function(bytes){
+          deliverPdf(bytes, est.filename, false);
+        });
+      });
+    });
+  } else {
+    // no attachments: just generate the estimate normally
+    try{ generateEstimatePDF(pid, totalOnly); }catch(e){ toast('Estimate error: '+(e&&e.message||e),'err'); }
+    buildMain=Promise.resolve();
+  }
+
+  // 2) Share-separately items (combined into their own PDFs)
+  buildMain.then(function(){
+    var shareAll=shareBrochKeys.concat([]);
+    if(shareBrochKeys.length||shareDsKeys.length){
+      return loadBrochurePdfs(shareBrochKeys).then(function(bpdfs){
+        return loadDatasheetPdfs(shareDsKeys).then(function(dpdfs){
+          var all=bpdfs.concat(dpdfs);
+          if(!all.length)return;
+          if(all.length===1){
+            deliverPdf(new Uint8Array(all[0].buf),'GreenIdea-Attachment.pdf',true);
+          } else {
+            return mergeBrochuresOnly(all).then(function(bytes){ deliverPdf(bytes,'GreenIdea-Attachments.pdf',true); });
+          }
+        });
+      });
+    }
+  }).catch(function(e){ toast('Attachment error: '+(e&&e.message||e),'err'); });
 }
 
 // Merge the estimate PDF bytes with the original brochure PDFs (quality preserved).
@@ -5518,6 +5746,26 @@ document.getElementById('brochureShareBtn').addEventListener('click',function(){
 });
 document.getElementById('brochureSkipBtn').addEventListener('click',function(){
   if(_brochureProceed)_brochureProceed([],'skip');
+});
+// Data sheet modal buttons (estimate-attach flow)
+document.getElementById('datasheetAttachBtn').addEventListener('click',function(){
+  if(_datasheetProceed)_datasheetProceed(_selectedDatasheetKeys(),'attach');
+});
+document.getElementById('datasheetShareBtn').addEventListener('click',function(){
+  if(_datasheetProceed)_datasheetProceed(_selectedDatasheetKeys(),'share');
+});
+document.getElementById('datasheetSkipBtn').addEventListener('click',function(){
+  if(_datasheetProceed)_datasheetProceed([],'skip');
+});
+// Data sheet home share modal buttons
+document.getElementById('datasheetShareMultiBtn').addEventListener('click',function(){
+  var chks=document.querySelectorAll('.ds-share-chk');
+  var keys=[];for(var i=0;i<chks.length;i++)if(chks[i].checked)keys.push(chks[i].value);
+  if(!keys.length){toast('Select at least one data sheet');return;}
+  shareDatasheetKeys(keys);
+});
+document.getElementById('datasheetShareCloseBtn').addEventListener('click',function(){
+  closeOv('datasheetShareOverlay');
 });
 
 // Confirm modal
