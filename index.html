@@ -1829,13 +1829,32 @@ function duplicateJobById(pid){
   };
   if(newProj.quoteInfo){ newProj.quoteInfo.client=newName; if(src.address)newProj.quoteInfo.address=src.address; }
 
-  projs.push(newProj);
+  // Insert the copy right after the original so it's easy to find in the list.
+  var srcIdx=-1;
+  for(var s=0;s<projs.length;s++){ if(projs[s].id===pid){ srcIdx=s; break; } }
+  if(srcIdx>=0){ projs.splice(srcIdx+1,0,newProj); } else { projs.push(newProj); }
   saveProjs(projs);
 
-  // Refresh the jobs list so the new copy appears; don't force-open it.
+  // Refresh both lists so the new copy appears immediately.
   if(typeof renderJobsList==='function')renderJobsList();
   if(typeof renderProjList==='function')renderProjList();
   toast('⧉ Duplicated as "'+newName+'"');
+
+  // Scroll the jobs list to the new copy so the user can see it.
+  setTimeout(function(){
+    try{
+      var cont=document.getElementById('jobsList');
+      if(cont){
+        var cards=cont.querySelectorAll('[data-pid]');
+        for(var q=0;q<cards.length;q++){
+          if(cards[q].getAttribute('data-pid')===newProj.id){
+            cards[q].scrollIntoView({behavior:'smooth',block:'center'});
+            break;
+          }
+        }
+      }
+    }catch(e){}
+  }, 200);
 }
 window.duplicateJobById=duplicateJobById;
 
