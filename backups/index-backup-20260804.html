@@ -1829,6 +1829,17 @@ function deleteProjById(pid){
 }
 window.deleteProjById=deleteProjById;
 
+function toggleProjDone(pid){
+  var projs=loadProjs();
+  for(var i=0;i<projs.length;i++){
+    if(projs[i].id===pid){ projs[i].done=!projs[i].done; break; }
+  }
+  saveProjs(projs);
+  if(currentProj&&currentProj.id===pid){currentProj.done=!currentProj.done;}
+  renderProjList();
+}
+window.toggleProjDone=toggleProjDone;
+
 function renderProjList(){
   var projs=loadProjs();
   var list=document.getElementById('projList');
@@ -1842,6 +1853,8 @@ function renderProjList(){
     h+='<div class="proj-name">'+esc(p.name)+(active?' ✓':'')+'</div>';
     h+='<div class="proj-meta">'+(p.address?esc(p.address)+' · ':'')+''+(p.areas?p.areas.length:0)+' areas · '+p.created+'</div>';
     h+='</button>';
+    var _done=!!p.done;
+    h+='<button class="proj-check" data-act="check" data-pid="'+safeId+'" title="Mark done" style="width:36px;height:36px;background:'+(_done?'rgba(74,222,128,.15)':'rgba(120,130,140,.08)')+';border:1px solid '+(_done?'rgba(74,222,128,.5)':'rgba(120,130,140,.25)')+';border-radius:8px;color:'+(_done?'#4ade80':'#5a6470')+';font-size:16px;display:flex;align-items:center;justify-content:center;margin-right:4px">'+(_done?'✅':'⬜')+'</button>';
     h+='<button class="proj-edit" data-act="edit" data-pid="'+safeId+'" style="width:36px;height:36px;background:rgba(240,160,44,.1);border:1px solid rgba(240,160,44,.3);border-radius:8px;color:#f0a02c;font-size:14px;display:flex;align-items:center;justify-content:center;margin-right:4px">✏️</button>';
     h+='<button class="proj-del" data-act="del" data-pid="'+safeId+'">🗑</button>';
     h+='</div>';
@@ -1857,6 +1870,7 @@ function renderProjList(){
     if(act==='switch')switchProjById(pid);
     else if(act==='edit')openEditProjModal(pid);
     else if(act==='del')deleteProjById(pid);
+    else if(act==='check')toggleProjDone(pid);
   });
 }
 function openEditProjModal(pid){
