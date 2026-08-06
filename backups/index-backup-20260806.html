@@ -606,6 +606,18 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       </div>
     </button>
 
+    <button class="mode-btn ct" id="btnContracts" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.06);width:100%;overflow:hidden">
+      <div style="display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;gap:16px;padding:20px">
+        <div style="width:50px;height:50px;border-radius:14px;background:#dcfce7;display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;-webkit-box-pack:center;justify-content:center;font-size:22px;flex-shrink:0">📝</div>
+        <div style="-webkit-box-flex:1;flex:1;text-align:left">
+          <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">Contracts</div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#16a34a;margin-bottom:6px">Agreement &amp; warranty</div>
+          <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Contract + 3-year workmanship warranty to send or attach.</div>
+        </div>
+        <div style="font-size:20px;color:#d1d5db;flex-shrink:0">›</div>
+      </div>
+    </button>
+
   </div>
 
   <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation</div>
@@ -1115,6 +1127,28 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       <button id="brochureShareBtn" style="width:100%;background:#1e3a5f;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📤 Share Brochures Separately</button>
       <button id="brochureSkipBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Skip — Estimate Only</button>
     </div>
+  </div>
+</div>
+<div class="overlay" id="contractOverlay">
+  <div class="modal" style="padding-bottom:28px">
+    <div class="mhandle"></div>
+    <div class="mtitle">Attach Contract</div>
+    <div style="padding:8px 20px 12px;font-size:13px;color:#94a3b8;text-align:center">General contract + 3-year workmanship warranty. Scope &amp; price come from the estimate.</div>
+    <div id="contractList" style="padding:0 20px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:16px 20px 0;display:flex;flex-direction:column;gap:10px">
+      <button id="contractAttachBtn" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📎 Add to Estimate PDF</button>
+      <button id="contractShareBtn" style="width:100%;background:#1e3a5f;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📤 Share Contract Separately</button>
+      <button id="contractSkipBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Skip</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="contractShareOverlay">
+  <div class="modal" style="padding-bottom:28px">
+    <div class="mhandle"></div>
+    <div class="mtitle">Share Contract</div>
+    <div style="padding:8px 20px 12px;font-size:13px;color:#94a3b8;text-align:center">Send the contract + warranty, or show a QR for the client to download.</div>
+    <div id="contractShareList" style="padding:0 20px;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="padding:16px 20px 0"><button id="contractShareCloseBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Close</button></div>
   </div>
 </div>
 <div class="overlay" id="datasheetOverlay">
@@ -1662,6 +1696,9 @@ document.getElementById('btnBrochures').addEventListener('click',function(){
 });
 document.getElementById('btnDatasheets').addEventListener('click',function(){
   openDatasheetShareModal();
+});
+document.getElementById('btnContracts').addEventListener('click',function(){
+  openContractShareModal();
 });
 document.getElementById('brochureShareMultiBtn').addEventListener('click',function(){
   var chks=document.querySelectorAll('.broch-share-chk');
@@ -2314,6 +2351,37 @@ function loadDatasheetPdfs(keys){
   return chain.then(function(){return out;});
 }
 
+// ═══════════════ CONTRACTS ═══════════════
+// General contract + workmanship warranty PDF, in contracts/ on the repo.
+var CONTRACT_DEFS=[
+  {key:'general', name:'Contract + 3-Year Warranty', cat:'Service Agreement', file:'contracts/Green-Idea-Contract.pdf'}
+];
+var _contractPdfCache={};
+function contractDefByKey(key){
+  for(var i=0;i<CONTRACT_DEFS.length;i++)if(CONTRACT_DEFS[i].key===key)return CONTRACT_DEFS[i];
+  return null;
+}
+function loadContractPdf(key){
+  if(_contractPdfCache[key])return Promise.resolve(_contractPdfCache[key]);
+  var def=contractDefByKey(key);
+  if(!def)return Promise.reject(new Error('unknown contract '+key));
+  return fetch(def.file,{cache:'force-cache'})
+    .then(function(r){if(!r.ok)throw new Error(def.file+' '+r.status);return r.arrayBuffer();})
+    .then(function(buf){_contractPdfCache[key]=buf;return buf;});
+}
+function loadContractPdfs(keys){
+  var out=[];var chain=Promise.resolve();
+  keys.forEach(function(key){
+    chain=chain.then(function(){return loadContractPdf(key).then(function(buf){out.push({key:key,buf:buf});});});
+  });
+  return chain.then(function(){return out;});
+}
+function contractPublicUrl(key){
+  var def=contractDefByKey(key);
+  if(!def)return location.href;
+  return new URL(def.file, location.href).href;
+}
+
 // Populate and open the brochure modal. `onProceed(keys, mode)` is called with
 // the chosen brochure keys and mode ('attach' | 'share' | 'skip').
 var _brochureProceed=null;
@@ -2517,6 +2585,73 @@ function shareDatasheetKeys(keys){
       mergeBrochuresOnly(pdfs).then(function(bytes){ deliverPdf(bytes,'GreenIdea-DataSheets.pdf',true); });
     }
   }).catch(function(e){toast('Data sheet error: '+(e&&e.message||e),'err');});
+}
+
+
+// ── CONTRACT modal for estimate-attach flow ──
+var _contractProceed=null;
+function openContractModal(onProceed){
+  _contractProceed=onProceed;
+  var list=document.getElementById('contractList');
+  var html='';
+  for(var i=0;i<CONTRACT_DEFS.length;i++){
+    var d=CONTRACT_DEFS[i];
+    html+='<label style="display:flex;align-items:center;gap:10px;background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:11px 13px;cursor:pointer">'+
+      '<input type="checkbox" class="ct-chk" value="'+d.key+'" checked style="width:auto;margin:0;transform:scale(1.2)">'+
+      '<span style="font-size:14px;color:#f0f0f0;font-weight:600;flex:1;min-width:0">'+d.name+'<br><span style="font-size:11px;color:#8b98a5;font-weight:400">'+d.cat+'</span></span>'+
+      '</label>';
+  }
+  list.innerHTML=html;
+  openOv('contractOverlay');
+}
+function _selectedContractKeys(){
+  var chks=document.querySelectorAll('.ct-chk');
+  var keys=[];
+  for(var i=0;i<chks.length;i++)if(chks[i].checked)keys.push(chks[i].value);
+  return keys;
+}
+// ── CONTRACT standalone share (home card) ──
+function openContractShareModal(){
+  var list=document.getElementById('contractShareList');
+  var html='';
+  for(var i=0;i<CONTRACT_DEFS.length;i++){
+    var d=CONTRACT_DEFS[i];
+    html+='<div style="display:flex;align-items:center;gap:8px;background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:11px 13px">'+
+      '<span style="font-size:14px;color:#f0f0f0;font-weight:600;flex:1;min-width:0">'+d.name+'<br><span style="font-size:11px;color:#8b98a5;font-weight:400">'+d.cat+'</span></span>'+
+      '<button class="ct-one-qr" data-key="'+d.key+'" data-name="'+d.name+'" style="background:#3a2a5f;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer">▦ QR</button>'+
+      '<button class="ct-one-share" data-key="'+d.key+'" style="background:#1e3a5f;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer">📤</button>'+
+      '</div>';
+  }
+  list.innerHTML=html;
+  var btns=list.querySelectorAll('.ct-one-share');
+  for(var b=0;b<btns.length;b++){(function(btn){btn.addEventListener('click',function(){shareContractKeys([btn.getAttribute('data-key')]);});})(btns[b]);}
+  var qbtns=list.querySelectorAll('.ct-one-qr');
+  for(var q=0;q<qbtns.length;q++){(function(btn){btn.addEventListener('click',function(){showContractQR(btn.getAttribute('data-key'),btn.getAttribute('data-name'));});})(qbtns[q]);}
+  openOv('contractShareOverlay');
+}
+function showContractQR(key,name){
+  var url=contractPublicUrl(key);
+  var box=document.getElementById('qrBox'),cap=document.getElementById('qrCaption');
+  if(!box)return;box.innerHTML='';
+  if(typeof QRCode==='undefined'){toast('QR library still loading, try again','err');return;}
+  try{ new QRCode(box,{text:url,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}); }
+  catch(e){toast('QR error: '+(e&&e.message||e),'err');return;}
+  if(cap)cap.textContent=name||'';
+  openOv('qrOverlay');
+}
+function shareContractKeys(keys){
+  if(!keys||!keys.length){toast('Select the contract');return;}
+  if(!window.PDFLib){toast('PDF library still loading, try again','err');return;}
+  toast('⏳ Preparing contract...');
+  loadContractPdfs(keys).then(function(pdfs){
+    if(pdfs.length===1){
+      var b=pdfs[0];var def=contractDefByKey(b.key);
+      var fname=(def?def.name.replace(/[^a-zA-Z0-9]/g,'_'):'Contract')+'.pdf';
+      deliverPdf(new Uint8Array(b.buf), fname, true);
+    } else {
+      mergeBrochuresOnly(pdfs).then(function(bytes){ deliverPdf(bytes,'GreenIdea-Contract.pdf',true); });
+    }
+  }).catch(function(e){toast('Contract error: '+(e&&e.message||e),'err');});
 }
 
 function generateEstimatePDF(pid, totalOnly, opts){
@@ -5680,7 +5815,7 @@ document.getElementById('printCtBtn').addEventListener('click',function(){window
 
 // OVERLAY CLOSE ON BACKDROP
 // Safe overlays - close on backdrop click freely
-var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','datasheetOverlay','datasheetShareOverlay','qrOverlay','secMoveOverlay','delSecOverlay'];
+var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','datasheetOverlay','datasheetShareOverlay','contractOverlay','contractShareOverlay','qrOverlay','secMoveOverlay','delSecOverlay'];
 for(var oi=0;oi<safeOvs.length;oi++){
   (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(safeOvs[oi]);
 }
@@ -5737,63 +5872,73 @@ function proceedToBrochureStep(totalOnly){
     closeOv('brochureOverlay');
     var attachBroch = (brochMode!=='skip' && brochKeys.length) ? brochKeys : [];
     var shareBroch  = (brochMode==='share');
-    // Now ask about data sheets
+    // Step 2: data sheets
     openDatasheetModal(function(dsKeys, dsMode){
       closeOv('datasheetOverlay');
       var attachDs = (dsMode!=='skip' && dsKeys.length) ? dsKeys : [];
       var shareDs  = (dsMode==='share');
-      finalizeEstimateDelivery(pid, totalOnly, attachBroch, shareBroch, attachDs, shareDs);
+      // Step 3: contract
+      openContractModal(function(ctKeys, ctMode){
+        closeOv('contractOverlay');
+        var attachCt = (ctMode!=='skip' && ctKeys.length) ? ctKeys : [];
+        var shareCt  = (ctMode==='share');
+        finalizeEstimateDelivery(pid, totalOnly, attachBroch, shareBroch, attachDs, shareDs, attachCt, shareCt);
+      });
     });
   });
 }
 
 // Generate estimate and attach/share brochures and data sheets per user's choices.
-function finalizeEstimateDelivery(pid, totalOnly, attachBroch, shareBroch, attachDs, shareDs){
-  // Items to MERGE into the estimate PDF (only the "attach" ones and not the "share separate" ones)
+function finalizeEstimateDelivery(pid, totalOnly, attachBroch, shareBroch, attachDs, shareDs, attachCt, shareCt){
+  attachCt=attachCt||[]; shareCt=!!shareCt;
+  // Items to MERGE into the estimate PDF (attach and NOT share-separately)
   var mergeBrochKeys = shareBroch ? [] : attachBroch;
   var mergeDsKeys    = shareDs    ? [] : attachDs;
+  var mergeCtKeys    = shareCt    ? [] : attachCt;
   // Items to SHARE separately
   var shareBrochKeys = shareBroch ? attachBroch : [];
   var shareDsKeys    = shareDs    ? attachDs    : [];
+  var shareCtKeys    = shareCt    ? attachCt    : [];
 
-  if((mergeBrochKeys.length||mergeDsKeys.length) && !window.PDFLib){
+  if((mergeBrochKeys.length||mergeDsKeys.length||mergeCtKeys.length) && !window.PDFLib){
     toast('PDF merge library still loading, try again','err');return;
   }
 
-  // 1) Build the estimate (merged with any attach items)
+  // 1) Build the estimate (merged with any attach items). Order: brochures, data sheets, contract last.
   var buildMain;
-  if(mergeBrochKeys.length||mergeDsKeys.length){
+  if(mergeBrochKeys.length||mergeDsKeys.length||mergeCtKeys.length){
     toast('⏳ Building estimate + attachments...');
     var est=generateEstimatePDF(pid, totalOnly, {returnBytes:true});
     if(!est||!est.bytes){toast('Estimate error','err');return;}
-    // load all attach PDFs (brochures first, then data sheets)
     buildMain=loadBrochurePdfs(mergeBrochKeys).then(function(bpdfs){
       return loadDatasheetPdfs(mergeDsKeys).then(function(dpdfs){
-        var all=bpdfs.concat(dpdfs);
-        return mergeEstimateWithBrochures(est.bytes, all).then(function(bytes){
-          deliverPdf(bytes, est.filename, false);
+        return loadContractPdfs(mergeCtKeys).then(function(cpdfs){
+          var all=bpdfs.concat(dpdfs).concat(cpdfs);
+          return mergeEstimateWithBrochures(est.bytes, all).then(function(bytes){
+            deliverPdf(bytes, est.filename, false);
+          });
         });
       });
     });
   } else {
-    // no attachments: just generate the estimate normally
     try{ generateEstimatePDF(pid, totalOnly); }catch(e){ toast('Estimate error: '+(e&&e.message||e),'err'); }
     buildMain=Promise.resolve();
   }
 
-  // 2) Share-separately items (combined into their own PDFs)
+  // 2) Share-separately items (combined into their own PDF)
   buildMain.then(function(){
-    var shareAll=shareBrochKeys.concat([]);
-    if(shareBrochKeys.length||shareDsKeys.length){
+    if(shareBrochKeys.length||shareDsKeys.length||shareCtKeys.length){
       return loadBrochurePdfs(shareBrochKeys).then(function(bpdfs){
         return loadDatasheetPdfs(shareDsKeys).then(function(dpdfs){
-          var all=bpdfs.concat(dpdfs);
-          if(!all.length)return;
-          if(all.length===1){
-            deliverPdf(new Uint8Array(all[0].buf),'GreenIdea-Attachment.pdf',true);
-          } else {
-            return mergeBrochuresOnly(all).then(function(bytes){ deliverPdf(bytes,'GreenIdea-Attachments.pdf',true); });
-          }
+          return loadContractPdfs(shareCtKeys).then(function(cpdfs){
+            var all=bpdfs.concat(dpdfs).concat(cpdfs);
+            if(!all.length)return;
+            if(all.length===1){
+              deliverPdf(new Uint8Array(all[0].buf),'GreenIdea-Attachment.pdf',true);
+            } else {
+              return mergeBrochuresOnly(all).then(function(bytes){ deliverPdf(bytes,'GreenIdea-Attachments.pdf',true); });
+            }
+          });
         });
       });
     }
@@ -5889,6 +6034,19 @@ document.getElementById('datasheetShareMultiBtn').addEventListener('click',funct
 });
 document.getElementById('datasheetShareCloseBtn').addEventListener('click',function(){
   closeOv('datasheetShareOverlay');
+});
+// Contract modal buttons (estimate-attach flow)
+document.getElementById('contractAttachBtn').addEventListener('click',function(){
+  if(_contractProceed)_contractProceed(_selectedContractKeys(),'attach');
+});
+document.getElementById('contractShareBtn').addEventListener('click',function(){
+  if(_contractProceed)_contractProceed(_selectedContractKeys(),'share');
+});
+document.getElementById('contractSkipBtn').addEventListener('click',function(){
+  if(_contractProceed)_contractProceed([],'skip');
+});
+document.getElementById('contractShareCloseBtn').addEventListener('click',function(){
+  closeOv('contractShareOverlay');
 });
 
 // Confirm modal
