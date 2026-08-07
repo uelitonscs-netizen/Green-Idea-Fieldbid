@@ -1267,6 +1267,63 @@ function safeSetItem(key,val){try{localStorage.setItem(key,val);return true;}cat
 var _saveRetry = 0;
 // Keys mirrored to Firestore (one doc per key under collection "fieldbid")
 var _SYNC_KEYS = ['fa','ei','qi','qn','cfg','pr','ct','sg','projs'];
+
+// ═══════════ PHOTO-SAFE CLOUD SYNC ═══════════
+// Photos are base64 and can push the synced document past Firestore's ~1MB limit,
+// which made saves fail and (on reload) wiped real measurement data.
+// Fix: photos stay on the device only; the cloud carries everything else.
+function _stripPhotosFromJson(raw){
+  if(!raw)return raw;
+  var data;
+  try{ data=JSON.parse(raw); }catch(e){ return raw; }
+  function strip(obj){
+    if(!obj||typeof obj!=='object')return;
+    if(Array.isArray(obj)){ for(var i=0;i<obj.length;i++)strip(obj[i]); return; }
+    if(Array.isArray(obj.photos)){
+      // remember how many existed, so the UI can show a hint if needed
+      if(obj.photos.length)obj._phN=obj.photos.length;
+      obj.photos=[];
+    }
+    for(var k in obj){ if(obj.hasOwnProperty(k)&&typeof obj[k]==='object')strip(obj[k]); }
+  }
+  strip(data);
+  try{ return JSON.stringify(data); }catch(e){ return raw; }
+}
+// Merge device-only photos back into data coming from the cloud.
+function _mergeLocalPhotos(cloudRaw, localRaw){
+  if(!cloudRaw||!localRaw)return cloudRaw;
+  var cloud, local;
+  try{ cloud=JSON.parse(cloudRaw); local=JSON.parse(localRaw); }catch(e){ return cloudRaw; }
+  function keyOf(o,idx){ return (o&&(o.id||o.name)||'')+'#'+idx; }
+  // Build a photo lookup from the local copy
+  var photoMap={};
+  function collect(arr, prefix){
+    if(!Array.isArray(arr))return;
+    for(var i=0;i<arr.length;i++){
+      var o=arr[i]; if(!o||typeof o!=='object')continue;
+      if(Array.isArray(o.photos)&&o.photos.length)photoMap[prefix+keyOf(o,i)]=o.photos;
+      if(Array.isArray(o.areas))collect(o.areas, prefix+keyOf(o,i)+'|a|');
+      if(Array.isArray(o.estItems))collect(o.estItems, prefix+keyOf(o,i)+'|e|');
+    }
+  }
+  collect(Array.isArray(local)?local:[local], '');
+  // Re-attach into the cloud copy
+  function attach(arr, prefix){
+    if(!Array.isArray(arr))return;
+    for(var i=0;i<arr.length;i++){
+      var o=arr[i]; if(!o||typeof o!=='object')continue;
+      var k=prefix+keyOf(o,i);
+      if(photoMap[k] && (!o.photos||!o.photos.length))o.photos=photoMap[k];
+      if(Array.isArray(o.areas))attach(o.areas, k+'|a|');
+      if(Array.isArray(o.estItems))attach(o.estItems, k+'|e|');
+    }
+  }
+  attach(Array.isArray(cloud)?cloud:[cloud], '');
+  try{ return JSON.stringify(cloud); }catch(e){ return cloudRaw; }
+}
+// Keys whose payload may contain photos.
+var _PHOTO_KEYS={projs:1, fa:1, ei:1};
+
 function save() {
   // Stamp the moment local data changed, so cloud-load can avoid clobbering newer local edits.
   try{ localStorage.setItem('fb6_localTs', new Date().toISOString()); }catch(e){}
@@ -1288,8 +1345,9 @@ function save() {
       var k = _SYNC_KEYS[i];
       var v = ls.getItem('fb6_' + k);
       if (v !== null && v !== undefined && v !== '') {
-        // Firestore hard limit is ~1MB per document. Leave headroom for field overhead.
-        if (v.length > 1000000) { oversized = k; continue; } // too big even for Firestore
+        // Photos stay on the device; never send them to the cloud.
+        if (_PHOTO_KEYS[k]) v = _stripPhotosFromJson(v);
+        if (v.length > 1000000) { oversized = k; continue; }
         batch.set(col.doc(k), { data: v, updatedAt: ts });
         wrote++;
       }
@@ -1304,9 +1362,14 @@ function save() {
     }
     if (wrote === 0) { if(!oversized) setFbStatus('connected'); return; }
     setFbStatus('saving');
+    var _stuck = setTimeout(function(){
+      // Commit never came back — tell the truth instead of showing "saving" forever.
+      setFbStatus('error');
+      if (typeof toast === 'function') toast('⚠️ Cloud save is not responding. Data is safe on this device.','err');
+    }, 15000);
     batch.commit()
-      .then(function() { if(!oversized) setFbStatus('connected'); })
-      .catch(function(e) { setFbStatus('error'); console.warn('Save error:', e && e.message); });
+      .then(function() { clearTimeout(_stuck); if(!oversized) setFbStatus('connected'); })
+      .catch(function(e) { clearTimeout(_stuck); setFbStatus('error'); console.warn('Save error:', e && e.message); });
   }, 1000);
 }
 
@@ -1326,6 +1389,7 @@ function saveNow(){
     var k = _SYNC_KEYS[i];
     var v = ls.getItem('fb6_' + k);
     if (v !== null && v !== undefined && v !== '') {
+      if (_PHOTO_KEYS[k]) v = _stripPhotosFromJson(v);
       if (v.length > 1000000) { oversized = k; continue; }
       batch.set(col.doc(k), { data: v, updatedAt: ts });
       wrote++;
@@ -1334,9 +1398,13 @@ function saveNow(){
   if (oversized && typeof toast === 'function') toast('⚠️ Too many photos to cloud-save.','err');
   if (wrote === 0){ if(!oversized) setFbStatus('connected'); return; }
   setFbStatus('saving');
+  var _stuckNow = setTimeout(function(){
+    setFbStatus('error');
+    if (typeof toast === 'function') toast('⚠️ Cloud save is not responding. Data is safe on this device.','err');
+  }, 15000);
   batch.commit()
-    .then(function(){ if(!oversized) setFbStatus('connected'); })
-    .catch(function(e){ setFbStatus('error'); console.warn('saveNow error:', e && e.message); });
+    .then(function(){ clearTimeout(_stuckNow); if(!oversized) setFbStatus('connected'); })
+    .catch(function(e){ clearTimeout(_stuckNow); setFbStatus('error'); console.warn('saveNow error:', e && e.message); });
 }
 window.saveNow=saveNow;
 
@@ -1371,6 +1439,12 @@ function fbLoad() {
         // Firestore field is stored as a string (stringified JSON or scalar)
         if (typeof raw !== 'string') {
           try { raw = JSON.stringify(raw); } catch(e) { return; }
+        }
+        // Cloud data has no photos (they live only on this device).
+        // Re-attach the local photos so they aren't lost on reload.
+        if (_PHOTO_KEYS[id]) {
+          var localRaw = localStorage.getItem('fb6_' + id);
+          if (localRaw) { try { raw = _mergeLocalPhotos(raw, localRaw); } catch(e){} }
         }
         localStorage.setItem('fb6_' + id, raw);
         loaded++;
