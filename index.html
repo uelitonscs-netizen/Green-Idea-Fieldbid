@@ -3745,6 +3745,14 @@ function renderEst(){
       var i=grp.items[gi].idx;
       var it=grp.items[gi].it;var pr=getProd(it.productId);var cost=calcItem(it);var effPrice=getEffectivePrice(it);
       var em=pr?pr.emoji:'📦';var pn=pr?pr.name:'Custom';
+      // The item carries the real R-value measured in the takeoff. Show that instead of
+      // the generic product name, otherwise an R-38 area displays as the R-21 product.
+      var _mt=String(it.matType||'');
+      var _rv=0,_rlab='';
+      if(_mt.indexOf('mw')===0){ _rv=Number(it.mwR)||0; _rlab='Mineral Wool'; }
+      else if(_mt.indexOf('fg')===0){ _rv=Number(it.fgR)||0; _rlab='Fiberglass'; }
+      else if(_mt.indexOf('cel')===0){ _rv=Number(it.celR)||0; _rlab='Cellulose'; }
+      if(_rv>0){ pn=_rlab+' R-'+_rv; }
       h+='<div class="card est-drag-card'+(window._reorderMode?' reorder-on':'')+'" data-idx="'+i+'" data-sec="'+esc(grp.name)+'">';
       if(window._reorderMode){
         h+='<div class="drag-handle" data-idx="'+i+'" style="position:absolute;top:0;left:0;bottom:0;width:38px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#f0a02c,#d97a1a);border-radius:14px 0 0 14px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2" title="Drag to reorder"><span style="color:#1a1200;font-size:22px;font-weight:900;letter-spacing:-2px;line-height:1">⁝⁝</span></div>';
