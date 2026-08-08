@@ -1324,6 +1324,160 @@ function _mergeLocalPhotos(cloudRaw, localRaw){
 // Keys whose payload may contain photos.
 var _PHOTO_KEYS={projs:1, fa:1, ei:1};
 
+
+// ═══════════ PHOTO BACKUP IN SEPARATE DOCS (no Storage / no billing) ═══════════
+// Photos live in their own Firestore collection, chunked so each document stays
+// well under the 1MB limit. The main data docs never carry photos, so measurements
+// always sync. Photos are only DOWNLOADED when this device is missing them
+// (e.g. new phone), so normal use costs no extra bandwidth.
+var _PH_COL='fieldbid_photos';
+var _PH_CHUNK_MAX=700000; // ~700KB per document, safe margin under 1MB
+
+// Build {key:[photos]} for one project. Keys are stable-ish: name + index.
+function _photoMapForProj(proj){
+  var map={};
+  function walk(arr,prefix){
+    if(!Array.isArray(arr))return;
+    for(var i=0;i<arr.length;i++){
+      var o=arr[i]; if(!o||typeof o!=='object')continue;
+      if(Array.isArray(o.photos)&&o.photos.length)map[prefix+i+':'+(o.name||'')]=o.photos;
+    }
+  }
+  walk(proj.areas,'a');
+  walk(proj.estItems,'e');
+  return map;
+}
+// Split a photo map into chunks that each fit in one document.
+function _chunkPhotoMap(map){
+  var chunks=[],cur={},curLen=0;
+  var keys=Object.keys(map);
+  for(var i=0;i<keys.length;i++){
+    var k=keys[i], arr=map[k];
+    var len=0; for(var p=0;p<arr.length;p++)len+=(arr[p]||'').length;
+    if(curLen>0 && curLen+len>_PH_CHUNK_MAX){ chunks.push(cur); cur={}; curLen=0; }
+    cur[k]=arr; curLen+=len;
+  }
+  if(Object.keys(cur).length)chunks.push(cur);
+  return chunks;
+}
+// Cheap signature so we only re-upload a project's photos when they change.
+function _photoSig(map){
+  var keys=Object.keys(map).sort(), n=0, total=0;
+  for(var i=0;i<keys.length;i++){
+    var a=map[keys[i]]; n+=a.length;
+    for(var p=0;p<a.length;p++)total+=(a[p]||'').length;
+  }
+  return keys.length+'/'+n+'/'+total;
+}
+function _loadPhSigs(){ try{ return JSON.parse(localStorage.getItem('fb6_phSig')||'{}'); }catch(e){ return {}; } }
+function _savePhSigs(s){ try{ localStorage.setItem('fb6_phSig',JSON.stringify(s)); }catch(e){} }
+
+// Upload photo docs for any project whose photos changed.
+function backupPhotos(){
+  if (typeof db === 'undefined' || !db) return;
+  if (!firebase.auth().currentUser) return;
+  var projs; try{ projs=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){ return; }
+  if(!Array.isArray(projs)||!projs.length)return;
+  var sigs=_loadPhSigs(), changed=0;
+  var col=db.collection(_PH_COL);
+  var chain=Promise.resolve();
+  projs.forEach(function(proj){
+    if(!proj||!proj.id)return;
+    var map=_photoMapForProj(proj);
+    var sig=_photoSig(map);
+    if(sigs[proj.id]===sig)return; // unchanged, skip (saves quota)
+    var chunks=_chunkPhotoMap(map);
+    chain=chain.then(function(){
+      var batch=db.batch();
+      // write chunk docs
+      for(var ci=0;ci<chunks.length;ci++){
+        batch.set(col.doc(proj.id+'__'+ci),{data:JSON.stringify(chunks[ci]),n:chunks.length,updatedAt:new Date().toISOString()});
+      }
+      // if there are no photos at all, clear chunk 0 so old data doesn't linger
+      if(!chunks.length){
+        batch.set(col.doc(proj.id+'__0'),{data:'{}',n:0,updatedAt:new Date().toISOString()});
+      }
+      return batch.commit().then(function(){
+        sigs[proj.id]=sig; changed++; _savePhSigs(sigs);
+      }).catch(function(e){ console.warn('photo backup failed for '+proj.id+':', e&&e.message); });
+    });
+  });
+  chain.then(function(){ if(changed)console.log('FieldBid: photo backup updated for '+changed+' project(s)'); });
+}
+window.backupPhotos=backupPhotos;
+
+// Restore photos from the cloud for projects that are missing them on this device.
+function restoreMissingPhotos(){
+  if (typeof db === 'undefined' || !db) return Promise.resolve(0);
+  if (!firebase.auth().currentUser) return Promise.resolve(0);
+  var projs; try{ projs=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){ return Promise.resolve(0); }
+  if(!Array.isArray(projs))return Promise.resolve(0);
+  // Which projects claim to have photos (_phN) but have none stored locally?
+  var need=[];
+  projs.forEach(function(proj){
+    if(!proj||!proj.id)return;
+    var claims=0, has=0;
+    function scan(arr){
+      if(!Array.isArray(arr))return;
+      arr.forEach(function(o){
+        if(!o||typeof o!=='object')return;
+        if(o._phN)claims+=o._phN;
+        if(Array.isArray(o.photos)&&o.photos.length)has+=o.photos.length;
+      });
+    }
+    scan(proj.areas); scan(proj.estItems);
+    if(claims>0 && has===0)need.push(proj);
+  });
+  if(!need.length)return Promise.resolve(0);
+  var col=db.collection(_PH_COL);
+  var restored=0;
+  var chain=Promise.resolve();
+  need.forEach(function(proj){
+    chain=chain.then(function(){
+      // read chunk 0 to learn how many chunks exist, then the rest
+      return col.doc(proj.id+'__0').get().then(function(d0){
+        if(!d0.exists)return;
+        var total=(d0.data().n)||1;
+        var maps=[];
+        try{ maps.push(JSON.parse(d0.data().data||'{}')); }catch(e){}
+        var sub=Promise.resolve();
+        for(var ci=1;ci<total;ci++){
+          (function(idx){
+            sub=sub.then(function(){
+              return col.doc(proj.id+'__'+idx).get().then(function(d){
+                if(d.exists){ try{ maps.push(JSON.parse(d.data().data||'{}')); }catch(e){} }
+              });
+            });
+          })(ci);
+        }
+        return sub.then(function(){
+          var merged={};
+          maps.forEach(function(m){ for(var k in m)if(m.hasOwnProperty(k))merged[k]=m[k]; });
+          // put photos back onto the project
+          function apply(arr,prefix){
+            if(!Array.isArray(arr))return;
+            for(var i=0;i<arr.length;i++){
+              var o=arr[i]; if(!o||typeof o!=='object')continue;
+              var k=prefix+i+':'+(o.name||'');
+              if(merged[k]){ o.photos=merged[k]; restored+=merged[k].length; }
+            }
+          }
+          apply(proj.areas,'a'); apply(proj.estItems,'e');
+        });
+      }).catch(function(e){ console.warn('photo restore failed for '+proj.id+':', e&&e.message); });
+    });
+  });
+  return chain.then(function(){
+    if(restored){
+      try{ localStorage.setItem('fb6_projs',JSON.stringify(projs)); }catch(e){}
+      console.log('FieldBid: restored '+restored+' photo(s) from cloud');
+      if(typeof toast==='function')toast('📷 '+restored+' photo(s) restored from cloud');
+    }
+    return restored;
+  });
+}
+window.restoreMissingPhotos=restoreMissingPhotos;
+
 function save() {
   // Stamp the moment local data changed, so cloud-load can avoid clobbering newer local edits.
   try{ localStorage.setItem('fb6_localTs', new Date().toISOString()); }catch(e){}
@@ -1368,7 +1522,12 @@ function save() {
       if (typeof toast === 'function') toast('⚠️ Cloud save is not responding. Data is safe on this device.','err');
     }, 15000);
     batch.commit()
-      .then(function() { clearTimeout(_stuck); if(!oversized) setFbStatus('connected'); })
+      .then(function() {
+        clearTimeout(_stuck);
+        if(!oversized) setFbStatus('connected');
+        // Back up photos separately (own collection, chunked, only when changed)
+        if(typeof backupPhotos==='function'){ try{ backupPhotos(); }catch(e){} }
+      })
       .catch(function(e) { clearTimeout(_stuck); setFbStatus('error'); console.warn('Save error:', e && e.message); });
   }, 1000);
 }
@@ -1403,7 +1562,11 @@ function saveNow(){
     if (typeof toast === 'function') toast('⚠️ Cloud save is not responding. Data is safe on this device.','err');
   }, 15000);
   batch.commit()
-    .then(function(){ clearTimeout(_stuckNow); if(!oversized) setFbStatus('connected'); })
+    .then(function(){
+      clearTimeout(_stuckNow);
+      if(!oversized) setFbStatus('connected');
+      if(typeof backupPhotos==='function'){ try{ backupPhotos(); }catch(e){} }
+    })
     .catch(function(e){ clearTimeout(_stuckNow); setFbStatus('error'); console.warn('saveNow error:', e && e.message); });
 }
 window.saveNow=saveNow;
@@ -1457,6 +1620,17 @@ function fbLoad() {
         toast('Restored from cloud!');
       }
       setFbStatus('connected');
+      // If any project says it has photos but this device has none (new phone,
+      // cleared data), pull just those photos back from their own collection.
+      if (typeof restoreMissingPhotos === 'function') {
+        restoreMissingPhotos().then(function(n){
+          if(n>0){
+            load();
+            if (window.renderFA) renderFA();
+            if (window.renderEst) renderEst();
+          }
+        }).catch(function(){});
+      }
     })
     .catch(function(e) {
       console.warn('FieldBid load error:', e && e.code, e && e.message, e);
