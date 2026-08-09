@@ -1851,7 +1851,9 @@ function saveEI(){
   // In the Estimator fieldAreas is empty/irrelevant, so writing it would wipe
   // the saved takeoff areas in localStorage (and then in the cloud).
   var faEl=document.getElementById('field-app');
-  var inTakeoff=faEl&&faEl.style.display!=='none'&&faEl.style.display!=='';
+  // Robust visibility check: inline style can be empty even when the screen is
+  // showing (e.g. shown via CSS class), which made areas silently not save.
+  var inTakeoff=!!(faEl && (faEl.offsetParent!==null || (faEl.offsetWidth+faEl.offsetHeight)>0));
   if(inTakeoff){
     localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas));
   }
@@ -1872,7 +1874,9 @@ function saveProjAreas(){
   // Field Takeoff screen (field-app visible). In the Estimator, fieldAreas is
   // not the takeoff data, so writing it would wipe the project's real areas.
   var faEl=document.getElementById('field-app');
-  var inTakeoff=faEl&&faEl.style.display!=='none'&&faEl.style.display!=='';
+  // Robust visibility check: inline style can be empty even when the screen is
+  // showing (e.g. shown via CSS class), which made areas silently not save.
+  var inTakeoff=!!(faEl && (faEl.offsetParent!==null || (faEl.offsetWidth+faEl.offsetHeight)>0));
   for(var i=0;i<projs.length;i++){
     if(projs[i].id===currentProj.id){
       if(inTakeoff){
@@ -3581,6 +3585,8 @@ function generateProofPDF(pid){
 window.generateProofPDF=generateProofPDF;
 
 function renderFA(){
+  // Keep the header count truthful (it was showing a stale value like "0 areas").
+  if(typeof updateProjHeader==='function'){ try{ updateProjHeader(); }catch(e){} }
   fieldAreas=window.fieldAreas||fieldAreas;
   // Keep the + button visible whenever the Field Takeoff screen is showing,
   // regardless of whether the project already has areas/items.
