@@ -1330,7 +1330,10 @@ var _PHOTO_KEYS={projs:1, fa:1, ei:1};
 // well under the 1MB limit. The main data docs never carry photos, so measurements
 // always sync. Photos are only DOWNLOADED when this device is missing them
 // (e.g. new phone), so normal use costs no extra bandwidth.
-var _PH_COL='fieldbid_photos';
+// Photo docs live in the SAME collection the app already uses, so the existing
+// Firestore security rules cover them (a new collection would be blocked).
+var _PH_COL='fieldbid';
+var _PH_PREFIX='ph__';
 var _PH_CHUNK_MAX=700000; // ~700KB per document, safe margin under 1MB
 
 // Build {key:[photos]} for one project. Keys are stable-ish: name + index.
@@ -1391,15 +1394,20 @@ function backupPhotos(){
       var batch=db.batch();
       // write chunk docs
       for(var ci=0;ci<chunks.length;ci++){
-        batch.set(col.doc(proj.id+'__'+ci),{data:JSON.stringify(chunks[ci]),n:chunks.length,updatedAt:new Date().toISOString()});
+        batch.set(col.doc(_PH_PREFIX+proj.id+'__'+ci),{data:JSON.stringify(chunks[ci]),n:chunks.length,updatedAt:new Date().toISOString()});
       }
       // if there are no photos at all, clear chunk 0 so old data doesn't linger
       if(!chunks.length){
-        batch.set(col.doc(proj.id+'__0'),{data:'{}',n:0,updatedAt:new Date().toISOString()});
+        batch.set(col.doc(_PH_PREFIX+proj.id+'__0'),{data:'{}',n:0,updatedAt:new Date().toISOString()});
       }
       return batch.commit().then(function(){
         sigs[proj.id]=sig; changed++; _savePhSigs(sigs);
-      }).catch(function(e){ console.warn('photo backup failed for '+proj.id+':', e&&e.message); });
+      }).catch(function(e){
+        console.warn('photo backup failed for '+proj.id+':', e&&e.message);
+        if(e&&/permission|insufficient/i.test(e.message||'')){
+          if(typeof toast==='function')toast('⚠️ Photo backup blocked by Firebase rules','err');
+        }
+      });
     });
   });
   chain.then(function(){ if(changed)console.log('FieldBid: photo backup updated for '+changed+' project(s)'); });
@@ -1435,7 +1443,7 @@ function restoreMissingPhotos(){
   need.forEach(function(proj){
     chain=chain.then(function(){
       // read chunk 0 to learn how many chunks exist, then the rest
-      return col.doc(proj.id+'__0').get().then(function(d0){
+      return col.doc(_PH_PREFIX+proj.id+'__0').get().then(function(d0){
         if(!d0.exists)return;
         var total=(d0.data().n)||1;
         var maps=[];
@@ -1444,7 +1452,7 @@ function restoreMissingPhotos(){
         for(var ci=1;ci<total;ci++){
           (function(idx){
             sub=sub.then(function(){
-              return col.doc(proj.id+'__'+idx).get().then(function(d){
+              return col.doc(_PH_PREFIX+proj.id+'__'+idx).get().then(function(d){
                 if(d.exists){ try{ maps.push(JSON.parse(d.data().data||'{}')); }catch(e){} }
               });
             });
@@ -1574,8 +1582,14 @@ window.saveNow=saveNow;
 function fbLoad() {
   firebase.auth().onAuthStateChanged(function(user) {
     if (!user) return;
-    db.collection('fieldbid').get()
-    .then(function(snap) {
+    // Fetch ONLY the known data docs (not the whole collection), so photo
+    // documents are never downloaded during a normal app start.
+    var _col = db.collection('fieldbid');
+    Promise.all(_SYNC_KEYS.map(function(k){
+      return _col.doc(k).get().catch(function(){ return null; });
+    }))
+    .then(function(docs) {
+      var snap = { forEach: function(fn){ docs.forEach(function(d){ if(d && d.exists) fn(d); }); } };
       var loaded = 0;
       // Newest cloud timestamp across docs, to compare against local edits.
       var localTs = localStorage.getItem('fb6_localTs');
