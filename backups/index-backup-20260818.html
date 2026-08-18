@@ -2654,7 +2654,8 @@ function loadDatasheetPdfs(keys){
 // ═══════════════ CONTRACTS ═══════════════
 // General contract + workmanship warranty PDF, in contracts/ on the repo.
 var CONTRACT_DEFS=[
-  {key:'general', name:'Contract + 3-Year Warranty', cat:'Service Agreement', file:'contracts/Green-Idea-Contract.pdf'}
+  {key:'general',  name:'Contract + 3-Year Warranty', cat:'Service Agreement', file:'contracts/Green-Idea-Contract.pdf'},
+  {key:'retrofit', name:'Cellulose Retrofit Addendum', cat:'Siding Removal / Dense-Pack', file:'contracts/Green-Idea-Cellulose-Retrofit-Addendum.pdf'}
 ];
 var _contractPdfCache={};
 function contractDefByKey(key){
@@ -2897,7 +2898,7 @@ function openContractModal(onProceed){
   for(var i=0;i<CONTRACT_DEFS.length;i++){
     var d=CONTRACT_DEFS[i];
     html+='<label style="display:flex;align-items:center;gap:10px;background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:11px 13px;cursor:pointer">'+
-      '<input type="checkbox" class="ct-chk" value="'+d.key+'" checked style="width:auto;margin:0;transform:scale(1.2)">'+
+      '<input type="checkbox" class="ct-chk" value="'+d.key+'"'+(d.key==='general'?' checked':'')+' style="width:auto;margin:0;transform:scale(1.2)">'+
       '<span style="font-size:14px;color:#f0f0f0;font-weight:600;flex:1;min-width:0">'+d.name+'<br><span style="font-size:11px;color:#8b98a5;font-weight:400">'+d.cat+'</span></span>'+
       '</label>';
   }
