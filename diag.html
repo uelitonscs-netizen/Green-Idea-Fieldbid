@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diagnóstico WorkLog (site)</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif;background:#0a0a0a;color:#f0f0f0;padding:20px;min-height:100vh}
+.box{background:#111;border:1px solid #222;border-radius:16px;padding:24px;max-width:520px;margin:0 auto}
+.logo{font-size:20px;font-weight:800;margin-bottom:4px}.logo span{color:#f0a02c}
+.sub{color:#666;font-size:13px;margin-bottom:18px}
+.btn{width:100%;background:#f0a02c;color:#000;border:none;border-radius:8px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:16px}
+.btn:disabled{opacity:.5}
+#log{font-size:13px;line-height:1.9;font-family:monospace;word-break:break-word}
+.ok{color:#4ade80}.err{color:#f87171}.wait{color:#94a3b8}.info{color:#60a5fa}
+.result{margin-top:18px;padding:14px;border-radius:8px;font-size:13px;line-height:1.7;display:none}
+.result.show{display:block}
+.rgood{background:#12301c;border:1px solid #4ade80;color:#a7f3c0}
+.rbad{background:#3a1414;border:1px solid #f87171;color:#fca5a5}
+</style></head>
+<body>
+<div class="box">
+  <div class="logo">Field<span>Bid</span> · Diagnóstico</div>
+  <div class="sub">Testa o envio para o WorkLog e mostra o erro exato</div>
+  <button class="btn" id="run">▶ Rodar diagnóstico</button>
+  <div id="log"></div>
+  <div class="result" id="result"></div>
+</div>
+<script>
+var logEl=document.getElementById('log');
+var resEl=document.getElementById('result');
+function L(m,c){logEl.innerHTML+='<div class="'+(c||'wait')+'">'+m+'</div>';}
+function show(html,good){resEl.className='result show '+(good?'rgood':'rbad');resEl.innerHTML=html;}
+
+document.getElementById('run').addEventListener('click',function(){
+  var b=this; b.disabled=true; b.textContent='⏳ Testando...';
+  logEl.innerHTML=''; resEl.className='result';
+  var testId=null;
+
+  L('1️⃣ Iniciando Firebase...');
+  try{
+    firebase.initializeApp({
+      apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
+      authDomain:"work-log-5aa9f.firebaseapp.com",
+      projectId:"work-log-5aa9f",
+      storageBucket:"work-log-5aa9f.firebasestorage.app",
+      messagingSenderId:"919924820811",
+      appId:"1:919924820811:web:00460b91d51023d718b6ce"
+    });
+    L('   ✅ Firebase iniciado','ok');
+  }catch(e){
+    L('   ❌ '+e.message,'err');
+    show('<b>Falhou ao iniciar o Firebase.</b><br>'+e.message,false);
+    b.disabled=false;b.textContent='▶ Tentar de novo';return;
+  }
+
+  var db=firebase.firestore();
+  L('2️⃣ Verificando conexão de rede...');
+  L('   Navegador diz: '+(navigator.onLine?'ONLINE ✅':'OFFLINE ❌'), navigator.onLine?'ok':'err');
+  L('   Endereço: '+location.protocol+'//'+location.host,'info');
+  if(location.protocol!=='https:'&&location.protocol!=='http:'){
+    L('   ❌ Este endereço não é autorizado pelo Firebase','err');
+    show('<b>Endereço inválido para o teste.</b><br>Abra esta página pelo endereço do site (https://...), não pelo arquivo baixado.',false);
+    b.disabled=false;b.textContent='▶ Tentar de novo';return;
+  }
+
+  L('3️⃣ Autenticando (anônimo)...');
+  var authTimer=setTimeout(function(){
+    L('   ⚠️ Autenticação demorando mais de 15s','err');
+    show('<b>A autenticação não respondeu.</b><br>Isso costuma ser conexão bloqueada ou instável. Teste em outra rede (dados móveis vs Wi-Fi).',false);
+    b.disabled=false;b.textContent='▶ Tentar de novo';
+  },15000);
+
+  firebase.auth().signInAnonymously()
+  .then(function(cred){
+    clearTimeout(authTimer);
+    L('   ✅ Autenticado (uid: '+(cred.user?cred.user.uid.slice(0,10)+'...':'?')+')','ok');
+
+    L('4️⃣ Testando LEITURA da coleção "projects"...');
+    return db.collection('projects').limit(1).get();
+  })
+  .then(function(snap){
+    L('   ✅ Leitura OK ('+snap.size+' doc lido)','ok');
+
+    L('5️⃣ Testando ESCRITA em "projects"...');
+    var writeTimer=setTimeout(function(){
+      L('   ⚠️ Escrita sem resposta em 15s','err');
+      show('<b>A escrita ficou pendente.</b><br>O Firestore enfileirou o dado mas não conseguiu confirmar com o servidor. Normalmente é conexão instável — o projeto pode aparecer no WorkLog quando a rede melhorar.',false);
+      b.disabled=false;b.textContent='▶ Tentar de novo';
+    },15000);
+
+    return db.collection('projects').add({
+      name:'__TESTE_DIAGNOSTICO__',
+      client:'teste',
+      desc:'pode apagar',
+      budget:0,
+      status:'active',
+      source:'diagnostic',
+      createdAt:new Date().toISOString()
+    }).then(function(ref){
+      clearTimeout(writeTimer);
+      testId=ref.id;
+      L('   ✅ Escrita OK (id: '+ref.id.slice(0,10)+'...)','ok');
+
+      L('6️⃣ Limpando o registro de teste...');
+      return db.collection('projects').doc(ref.id).delete();
+    });
+  })
+  .then(function(){
+    L('   ✅ Teste removido','ok');
+    L('');
+    L('✅ TUDO FUNCIONANDO','ok');
+    show('<b>O envio para o WorkLog está funcionando.</b><br><br>Se o app ainda não envia, o problema não é a conexão nem as permissões — é algo no app antes do envio. Me mande o que aparece na tela ao tocar no botão.',true);
+    b.disabled=false;b.textContent='▶ Rodar de novo';
+  })
+  .catch(function(err){
+    clearTimeout(authTimer);
+    var code=(err&&err.code)||'';
+    var msg=(err&&err.message)||String(err);
+    L('   ❌ ERRO: '+code,'err');
+    L('   '+msg,'err');
+    L('');
+    var diag='<b>Erro encontrado:</b><br><code>'+code+'</code><br><br>'+msg+'<br><br>';
+    if(/permission-denied|insufficient/i.test(code+msg)){
+      diag+='<b>O que significa:</b> as regras de segurança do Firebase estão bloqueando a gravação na coleção <code>projects</code>. É preciso liberar essa coleção no console do Firebase.';
+    } else if(/unavailable|network|offline/i.test(code+msg)){
+      diag+='<b>O que significa:</b> sem conexão com o servidor do Firebase. Teste em outra rede.';
+    } else if(/not-found/i.test(code+msg)){
+      diag+='<b>O que significa:</b> a coleção ou o projeto do Firebase não foi encontrado.';
+    } else {
+      diag+='Me mande esta mensagem que eu identifico a causa.';
+    }
+    show(diag,false);
+    b.disabled=false;b.textContent='▶ Tentar de novo';
+  });
+});
+</script>
+</body></html>
