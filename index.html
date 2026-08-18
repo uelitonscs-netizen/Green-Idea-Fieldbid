@@ -6473,6 +6473,25 @@ function sendToWorkLog(){
   var origLabel='🔗 Send to WorkLog'; // fixed default so it never sticks on a prior state
   if(btn){ btn.textContent='Sending...'; btn.disabled=true; btn.style.opacity='0.6'; }
 
+  // ABSOLUTE SAFETY NET — runs no matter what fails after this point (including a
+  // thrown error before any other handler is even installed). The button must never
+  // stay stuck on "Sending..." with no explanation.
+  if(window._wlSafetyTimer) clearTimeout(window._wlSafetyTimer);
+  window._wlSafetyRelease=function(){
+    if(window._wlSafetyTimer){ clearTimeout(window._wlSafetyTimer); window._wlSafetyTimer=null; }
+  };
+  window._wlSafetyTimer=setTimeout(function(){
+    window._wlSafetyTimer=null;
+    if(btn && btn.disabled){
+      btn.textContent=origLabel;
+      btn.disabled=false;
+      btn.style.opacity='1';
+      btn.style.background='#1a6b2a';
+      toast('⚠️ Send did not finish. Check the connection and try again.','err');
+      console.warn('WorkLog send: safety net fired — nothing settled in 20s.');
+    }
+  }, 20000);
+
   // ── MATERIAL BUDGET CALC ──
   var CC_BF_SET=4500, CC_GAL_SET=55, OC_BF_SET=17000, OC_GAL_SET=55;
 
@@ -6619,6 +6638,7 @@ function sendToWorkLog(){
 
   // ── FIREBASE ADD ──
   }catch(_calcErr){
+    if(window._wlSafetyRelease)window._wlSafetyRelease();
     console.warn('WorkLog material calc failed:', _calcErr);
     toast('Error preparing material budget: '+(_calcErr&&_calcErr.message||'unknown'),'err');
     if(btn){btn.textContent=origLabel||'🔗 Send to WorkLog';btn.disabled=false;btn.style.opacity='1';btn.style.background='#1a6b2a';}
@@ -6635,6 +6655,7 @@ function sendToWorkLog(){
   var _sendWatchdog=setTimeout(function(){
     if(_sendSettled)return;
     _sendSettled=true;
+    if(window._wlSafetyRelease)window._wlSafetyRelease();
     toast('⚠️ No confirmation from WorkLog. It was saved locally and will sync when you are online.','warn');
     _restoreSendBtn();
   }, 12000);
@@ -6659,6 +6680,7 @@ function sendToWorkLog(){
     clearTimeout(_sendWatchdog);
     if(_sendSettled)return;
     _sendSettled=true;
+    if(window._wlSafetyRelease)window._wlSafetyRelease();
     if(btn){btn.textContent='✅ Sent!';btn.style.background='#16a34a';btn.style.opacity='1';}
     toast('✅ Project sent to WorkLog!');
     setTimeout(function(){
@@ -6669,6 +6691,7 @@ function sendToWorkLog(){
     clearTimeout(_sendWatchdog);
     if(_sendSettled)return;
     _sendSettled=true;
+    if(window._wlSafetyRelease)window._wlSafetyRelease();
     toast('Error: '+(err&&err.message||'failed'),'err');
     _restoreSendBtn();
   });
