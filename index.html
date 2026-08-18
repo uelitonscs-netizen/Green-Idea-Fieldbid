@@ -6481,14 +6481,26 @@ function sendToWorkLog(){
   }
 
 
-  // Build material source. Prefer fieldAreas (full takeoff data with matType);
-  // fall back to estItems when there are no field areas (e.g. estimate sent
-  // straight from the Estimator after importing). Combining both would
-  // double-count the same material, so we pick one source.
+  // Build material source SCOPED TO THE PROJECT BEING SENT.
+  // The global fieldAreas array holds whatever takeoff is loaded in memory, which
+  // may belong to a DIFFERENT project — using it produced material budgets from
+  // the wrong job (e.g. cellulose bags for a closed-cell foam estimate).
+  // Order: this project's own takeoff areas -> this project's estimate items ->
+  // live arrays only when they truly belong to the current project.
   var all=[];
-  if(Array.isArray(fieldAreas)&&fieldAreas.length>0){
-    all=all.concat(fieldAreas);
+  var _projAreas=(currentProj&&Array.isArray(currentProj.areas))?currentProj.areas:null;
+  var _projItems=(currentProj&&Array.isArray(currentProj.estItems))?currentProj.estItems:null;
+
+  if(_projAreas&&_projAreas.length>0){
+    all=all.concat(_projAreas);
+  } else if(_projItems&&_projItems.length>0){
+    all=all.concat(_projItems);
+  } else if(!currentProj){
+    // No project context at all (ad-hoc estimate): fall back to the live arrays.
+    if(Array.isArray(fieldAreas)&&fieldAreas.length>0) all=all.concat(fieldAreas);
+    else if(Array.isArray(estItems)&&estItems.length>0) all=all.concat(estItems);
   } else if(Array.isArray(estItems)&&estItems.length>0){
+    // Project exists but has no saved areas/items yet — use what's on screen.
     all=all.concat(estItems);
   }
 
