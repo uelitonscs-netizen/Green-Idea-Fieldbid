@@ -6481,6 +6481,9 @@ function sendToWorkLog(){
   }
 
 
+  // Any failure between here and the send must restore the button, otherwise
+  // it stays stuck on "Sending..." with no explanation.
+  try{
   // Build material source SCOPED TO THE PROJECT BEING SENT.
   // The global fieldAreas array holds whatever takeoff is loaded in memory, which
   // may belong to a DIFFERENT project — using it produced material budgets from
@@ -6591,6 +6594,27 @@ function sendToWorkLog(){
   };
 
   // ── FIREBASE ADD ──
+  }catch(_calcErr){
+    console.warn('WorkLog material calc failed:', _calcErr);
+    toast('Error preparing material budget: '+(_calcErr&&_calcErr.message||'unknown'),'err');
+    if(btn){btn.textContent=origLabel||'🔗 Send to WorkLog';btn.disabled=false;btn.style.opacity='1';btn.style.background='#1a6b2a';}
+    return;
+  }
+
+  // Firestore queues writes while offline and add() can stay pending forever,
+  // which left the button stuck on "Sending...". Guard with a watchdog so the
+  // button always comes back and the user is told what actually happened.
+  var _sendSettled=false;
+  function _restoreSendBtn(){
+    if(btn){btn.textContent=origLabel||'🔗 Send to WorkLog';btn.disabled=false;btn.style.opacity='1';btn.style.background='#1a6b2a';}
+  }
+  var _sendWatchdog=setTimeout(function(){
+    if(_sendSettled)return;
+    _sendSettled=true;
+    toast('⚠️ No confirmation from WorkLog. It was saved locally and will sync when you are online.','warn');
+    _restoreSendBtn();
+  }, 12000);
+
   _wlDb.collection('projects').add({
     name:client||address,
     client:client||null,
@@ -6608,15 +6632,21 @@ function sendToWorkLog(){
     fieldbidTotal:budget
   })
   .then(function(){
+    clearTimeout(_sendWatchdog);
+    if(_sendSettled)return;
+    _sendSettled=true;
     if(btn){btn.textContent='✅ Sent!';btn.style.background='#16a34a';btn.style.opacity='1';}
     toast('✅ Project sent to WorkLog!');
     setTimeout(function(){
-      if(btn){btn.textContent=origLabel||'Send to WorkLog';btn.style.background='#1a6b2a';btn.disabled=false;}
+      if(btn){btn.textContent=origLabel||'🔗 Send to WorkLog';btn.style.background='#1a6b2a';btn.disabled=false;}
     },3000);
   })
   .catch(function(err){
+    clearTimeout(_sendWatchdog);
+    if(_sendSettled)return;
+    _sendSettled=true;
     toast('Error: '+(err&&err.message||'failed'),'err');
-    if(btn){btn.textContent=origLabel||'Send to WorkLog';btn.disabled=false;btn.style.opacity='1';btn.style.background='#1a6b2a';}
+    _restoreSendBtn();
   });
 }
 
