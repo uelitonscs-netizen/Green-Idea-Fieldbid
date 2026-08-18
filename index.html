@@ -1437,6 +1437,13 @@ function restoreMissingPhotos(){
     if(claims>0 && has===0)need.push(proj);
   });
   if(!need.length)return Promise.resolve(0);
+  // Restoring photos costs one round trip per project. Doing that for dozens of
+  // projects at startup made the app feel frozen, so we restore a few per run
+  // (most recent first) and pick up the rest on later loads.
+  var _PH_RESTORE_MAX=4;
+  if(need.length>_PH_RESTORE_MAX){
+    need=need.slice(-_PH_RESTORE_MAX);
+  }
   var col=db.collection(_PH_COL);
   var restored=0;
   var chain=Promise.resolve();
@@ -1582,12 +1589,26 @@ window.saveNow=saveNow;
 function fbLoad() {
   firebase.auth().onAuthStateChanged(function(user) {
     if (!user) return;
-    // Fetch ONLY the known data docs (not the whole collection), so photo
-    // documents are never downloaded during a normal app start.
+    // Fetch ONLY the data docs in ONE round trip. Querying by document ID keeps
+    // photo docs (ph__*) out of the response without the cost of 9 separate gets,
+    // which made startup noticeably slower on mobile.
     var _col = db.collection('fieldbid');
-    Promise.all(_SYNC_KEYS.map(function(k){
-      return _col.doc(k).get().catch(function(){ return null; });
-    }))
+    var _fetchDataDocs;
+    try{
+      var _FP = firebase.firestore.FieldPath.documentId();
+      _fetchDataDocs = _col.where(_FP, 'in', _SYNC_KEYS).get()
+        .then(function(qs){ var out=[]; qs.forEach(function(d){ out.push(d); }); return out; });
+    }catch(e){
+      _fetchDataDocs = Promise.reject(e);
+    }
+    _fetchDataDocs
+    .catch(function(e){
+      // Older SDKs or an unsupported query fall back to individual gets.
+      console.warn('ID query unavailable, falling back to per-doc gets:', e && e.message);
+      return Promise.all(_SYNC_KEYS.map(function(k){
+        return _col.doc(k).get().catch(function(){ return null; });
+      }));
+    })
     .then(function(docs) {
       var snap = { forEach: function(fn){ docs.forEach(function(d){ if(d && d.exists) fn(d); }); } };
       var loaded = 0;
@@ -1637,6 +1658,8 @@ function fbLoad() {
       // If any project says it has photos but this device has none (new phone,
       // cleared data), pull just those photos back from their own collection.
       if (typeof restoreMissingPhotos === 'function') {
+        // Defer so the project list paints first; photos fill in afterwards.
+        setTimeout(function(){
         restoreMissingPhotos().then(function(n){
           if(n>0){
             load();
@@ -1644,6 +1667,7 @@ function fbLoad() {
             if (window.renderEst) renderEst();
           }
         }).catch(function(){});
+        }, 1200);
       }
     })
     .catch(function(e) {
