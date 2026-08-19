@@ -620,7 +620,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build DEBUG-envio</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260818-2324</span></div>
 </div>
 
 <div id="field-app">
@@ -6454,7 +6454,6 @@ function isCelDensePack(nameStr, notesStr){
   return t.indexOf('dense')>=0||t.indexOf('dense pack')>=0||t.indexOf('wall')>=0||t.indexOf('cavity')>=0||t.indexOf('enclosed')>=0;
 }
 function sendToWorkLog(){
-  alert('PASSO 1: clique detectado');
   // ── GUARD CHECKS ──
   var cEl=document.getElementById('qClient');
   var aEl=document.getElementById('qAddress');
@@ -6466,10 +6465,8 @@ function sendToWorkLog(){
   var budget=tEl?parseFloat(tEl.textContent.replace(/[^0-9.]/g,''))||0:0;
   if(client==='Tap to add') client='';
   if(address==='Tap to add') address='';
-  alert('PASSO 2: cliente="'+client+'" endereco="'+address+'"');
   if(!client&&!address){ alert('PAROU: falta cliente e endereco'); toast('Add client name and address first!','warn'); return; }
   if(!_wlDb){ alert('PAROU: Firebase nao pronto'); toast('Firebase not ready — please refresh','err'); return; }
-  alert('PASSO 3: Firebase pronto, botao="'+(document.getElementById('sendWLBtn')?'achado':'NAO ACHADO')+'"');
 
   // ── BTN STATE ──
   var btn=document.getElementById('sendWLBtn');
@@ -6537,14 +6534,19 @@ function sendToWorkLog(){
   // Order: this project's own takeoff areas -> this project's estimate items ->
   // live arrays only when they truly belong to the current project.
   var all=[];
-  var _projAreas=(currentProj&&Array.isArray(currentProj.areas))?currentProj.areas:null;
-  var _projItems=(currentProj&&Array.isArray(currentProj.estItems))?currentProj.estItems:null;
+  // Resolve the current project defensively: referencing the bare identifier threw
+  // "currentProj is not defined" at runtime, which killed the whole send.
+  var _cp = null;
+  try{ _cp = (typeof currentProj !== 'undefined') ? currentProj : (window.currentProj || null); }
+  catch(e){ _cp = window.currentProj || null; }
+  var _projAreas=(_cp&&Array.isArray(_cp.areas))?_cp.areas:null;
+  var _projItems=(_cp&&Array.isArray(_cp.estItems))?_cp.estItems:null;
 
   if(_projAreas&&_projAreas.length>0){
     all=all.concat(_projAreas);
   } else if(_projItems&&_projItems.length>0){
     all=all.concat(_projItems);
-  } else if(!currentProj){
+  } else if(!_cp){
     // No project context at all (ad-hoc estimate): fall back to the live arrays.
     if(Array.isArray(fieldAreas)&&fieldAreas.length>0) all=all.concat(fieldAreas);
     else if(Array.isArray(estItems)&&estItems.length>0) all=all.concat(estItems);
@@ -6642,7 +6644,6 @@ function sendToWorkLog(){
   // ── FIREBASE ADD ──
   }catch(_calcErr){
     if(window._wlSafetyRelease)window._wlSafetyRelease();
-    alert('ERRO no calculo: '+(_calcErr&&_calcErr.message||_calcErr));
     console.warn('WorkLog material calc failed:', _calcErr);
     toast('Error preparing material budget: '+(_calcErr&&_calcErr.message||'unknown'),'err');
     if(btn){btn.textContent=origLabel||'🔗 Send to WorkLog';btn.disabled=false;btn.style.opacity='1';btn.style.background='#1a6b2a';}
@@ -6663,8 +6664,6 @@ function sendToWorkLog(){
     toast('⚠️ No confirmation from WorkLog. It was saved locally and will sync when you are online.','warn');
     _restoreSendBtn();
   }, 12000);
-
-  alert('PASSO 4: enviando agora...');
   _wlDb.collection('projects').add({
     name:client||address,
     client:client||null,
@@ -6686,7 +6685,6 @@ function sendToWorkLog(){
     if(_sendSettled)return;
     _sendSettled=true;
     if(window._wlSafetyRelease)window._wlSafetyRelease();
-    alert('PASSO 5: SUCESSO! enviado.');
     if(btn){btn.textContent='✅ Sent!';btn.style.background='#16a34a';btn.style.opacity='1';}
     toast('✅ Project sent to WorkLog!');
     setTimeout(function(){
@@ -6698,7 +6696,6 @@ function sendToWorkLog(){
     if(_sendSettled)return;
     _sendSettled=true;
     if(window._wlSafetyRelease)window._wlSafetyRelease();
-    alert('ERRO: '+(err&&err.code||'')+' - '+(err&&err.message||'falhou'));
     toast('Error: '+(err&&err.message||'failed'),'err');
     _restoreSendBtn();
   });
