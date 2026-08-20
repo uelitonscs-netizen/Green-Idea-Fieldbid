@@ -620,7 +620,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260820-1859</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260820-1906</span></div>
 </div>
 
 <div id="field-app">
@@ -1132,6 +1132,26 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       <button id="brochureAttachBtn" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📎 Add to Estimate PDF</button>
       <button id="brochureShareBtn" style="width:100%;background:#1e3a5f;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">📤 Share Brochures Separately</button>
       <button id="brochureSkipBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Skip — Estimate Only</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="jobNoteOverlay">
+  <div class="modal" style="padding-bottom:28px">
+    <div class="mhandle"></div>
+    <div class="mtitle">Job Note</div>
+    <div id="jobNoteFor" style="padding:4px 20px 10px;font-size:13px;color:#94a3b8;text-align:center"></div>
+    <div style="padding:0 20px">
+      <textarea id="jobNoteText" rows="5" placeholder="e.g. Call before arriving · access through the back · waiting on customer decision"
+        style="width:100%;background:#0d1117;border:1px solid #2a3340;border-radius:10px;color:#f0f0f0;padding:12px;font-size:14px;outline:none;resize:vertical;font-family:inherit"></textarea>
+      <label style="display:flex;align-items:center;gap:10px;background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:11px 13px;margin-top:10px;cursor:pointer">
+        <input type="checkbox" id="jobNoteInPdf" style="width:auto;margin:0;transform:scale(1.2)">
+        <span style="font-size:13.5px;color:#f0f0f0;font-weight:600;flex:1">Show this note on the estimate PDF<br><span style="font-size:11px;color:#8b98a5;font-weight:400">Leave off to keep it private</span></span>
+      </label>
+    </div>
+    <div style="padding:16px 20px 0;display:flex;flex-direction:column;gap:10px">
+      <button id="jobNoteSaveBtn" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Note</button>
+      <button id="jobNoteDelBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f87171;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">🗑 Clear Note</button>
+      <button id="jobNoteCancelBtn" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">Cancel</button>
     </div>
   </div>
 </div>
@@ -2985,6 +3005,46 @@ function shareContractKeys(keys){
   }).catch(function(e){toast('Contract error: '+(e&&e.message||e),'err');});
 }
 
+
+// ── JOB NOTE (one per job; optional on the estimate PDF) ──
+function openJobNoteModal(pid){
+  var projs=loadProjs(), src=null;
+  for(var i=0;i<projs.length;i++){ if(projs[i].id===pid){ src=projs[i]; break; } }
+  if(!src){ toast('Job not found','err'); return; }
+  window._jobNotePid=pid;
+  var lbl=document.getElementById('jobNoteFor');
+  if(lbl)lbl.textContent=src.name||src.address||'';
+  var ta=document.getElementById('jobNoteText');
+  if(ta)ta.value=src.note||'';
+  var cb=document.getElementById('jobNoteInPdf');
+  if(cb)cb.checked=!!src.noteInPdf;
+  openOv('jobNoteOverlay');
+}
+function saveJobNote(){
+  var pid=window._jobNotePid;
+  var ta=document.getElementById('jobNoteText');
+  var cb=document.getElementById('jobNoteInPdf');
+  var txt=ta?ta.value:'';
+  var projs=loadProjs();
+  for(var i=0;i<projs.length;i++){
+    if(projs[i].id===pid){
+      projs[i].note=txt;
+      projs[i].noteInPdf=!!(cb&&cb.checked);
+      break;
+    }
+  }
+  saveProjs(projs);
+  if(typeof saveNow==='function')saveNow();
+  try{
+    var _cp=(typeof currentProj!=='undefined')?currentProj:(window.currentProj||null);
+    if(_cp&&_cp.id===pid){ _cp.note=txt; _cp.noteInPdf=!!(cb&&cb.checked); }
+  }catch(e){}
+  closeOv('jobNoteOverlay');
+  if(typeof renderJobsList==='function')renderJobsList();
+  toast(txt.trim()?'📝 Note saved':'📝 Note cleared');
+}
+window.openJobNoteModal=openJobNoteModal;
+
 function generateEstimatePDF(pid, totalOnly, opts){
   opts=opts||{};
   if(!window.jspdf){toast('PDF library loading, try again');return;}
@@ -3234,6 +3294,30 @@ function generateEstimatePDF(pid, totalOnly, opts){
   setFont('bold',12,[26,107,42]);
   txt('$'+total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),W-margin,y,{align:'right'});
   y+=10;
+
+  // ── JOB NOTE (only when the user marked it for the PDF) ──
+  try{
+    var _noteProj=null, _npj=loadProjs();
+    for(var _ni=0;_ni<_npj.length;_ni++){ if(_npj[_ni].id===pid){ _noteProj=_npj[_ni]; break; } }
+    if(_noteProj && _noteProj.noteInPdf && _noteProj.note && String(_noteProj.note).trim()){
+      var _noteTxt=String(_noteProj.note).trim();
+      var _noteLines=doc.splitTextToSize(_noteTxt, W-margin*2-8);
+      checkNewPage(14+_noteLines.length*4.5);
+      y+=4;
+      setFont('bold',8,[26,107,42]);
+      txt('NOTES',margin,y);
+      y+=1.5;
+      line(margin,y,W-margin,y,[26,107,42],0.4);
+      y+=5;
+      setFont('normal',9,[60,60,60]);
+      for(var _nl=0;_nl<_noteLines.length;_nl++){
+        checkNewPage(6);
+        txt(_noteLines[_nl],margin,y);
+        y+=4.5;
+      }
+      y+=3;
+    }
+  }catch(e){ console.warn('note on pdf failed:', e); }
 
   // ── TERMS ──
   checkNewPage(20);
@@ -4607,6 +4691,11 @@ function renderJobsList(){
     h += '</div>';
     // Address
     if(p.address){ h += '<div style="font-size:12px;color:#7d8590;margin-bottom:8px">📍 '+esc(p.address)+'</div>'; }
+    if(p.note && String(p.note).trim()){
+      var _np=String(p.note).trim();
+      if(_np.length>90)_np=_np.slice(0,90)+'…';
+      h += '<div style="font-size:12px;color:#93c5fd;background:#0f1c2e;border-left:3px solid #60a5fa;border-radius:4px;padding:7px 10px;margin-bottom:8px">📝 '+esc(_np)+(p.noteInPdf?' <span style="color:#4ade80;font-size:10px;font-weight:700">· ON PDF</span>':'')+'</div>';
+    }
     // Stats row
     h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
     h += '<span style="background:#1e2530;border-radius:6px;padding:3px 8px;font-size:11px;color:#94a3b8">📐 '+fmtN(Math.round(totalSF))+' SF</span>';
@@ -4636,6 +4725,8 @@ function renderJobsList(){
     h += '<button class="job-open-btn" data-act="open" data-pid="'+p.id+'" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">'+(isActive?'✓ Editing':'Open Job')+'</button>';
     h += '<button class="job-cert-btn" data-act="cert" data-pid="'+p.id+'" style="width:100%;background:#f59e0b;border:none;color:#000;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">📋 Generate Certificate</button>';
     h += '<button class="job-est-btn" data-act="est" data-pid="'+p.id+'" style="width:100%;background:#2563eb;border:none;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">📄 Generate Estimate</button>';
+    var _hasNote = !!(p.note && String(p.note).trim());
+    h += '<button class="job-note-btn" data-act="note" data-pid="'+p.id+'" style="width:100%;background:'+(_hasNote?'#1e3a5f':'#1e2530')+';border:1px solid '+(_hasNote?'rgba(96,165,250,.5)':'#2a3340')+';color:'+(_hasNote?'#60a5fa':'#7d8590')+';border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">'+(_hasNote?'📝 Note ●':'📝 Add Note')+'</button>';
     h += '<button class="job-dup-btn" data-act="dup" data-pid="'+p.id+'" style="width:100%;background:#1e2530;border:1px solid rgba(240,160,44,.4);color:#f0a02c;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">⧉ Duplicate</button>';
     h += '<button class="job-del-btn" data-act="del" data-pid="'+p.id+'" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f87171;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🗑 Delete</button>';
     var nextStatus = {none:'sent',sent:'approved',approved:'rejected',rejected:'none'};
@@ -4673,6 +4764,7 @@ function renderJobsList(){
       var el=document.getElementById('estModeOverlay');
       if(el){el.classList.add('on');el.style.display='flex';}
     }
+    else if(act === 'note'){ openJobNoteModal(pid); }
     else if(act === 'dup'){
       appConfirm('Duplicate this job into a new independent copy?',function(){
         duplicateJobById(pid);
@@ -6174,7 +6266,7 @@ document.getElementById('printCtBtn').addEventListener('click',function(){window
 
 // OVERLAY CLOSE ON BACKDROP
 // Safe overlays - close on backdrop click freely
-var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','datasheetOverlay','datasheetShareOverlay','contractOverlay','contractShareOverlay','qrOverlay','secMoveOverlay','delSecOverlay'];
+var safeOvs=['prodOverlay','feOverlay','importOverlay','brochureOverlay','brochureShareOverlay','datasheetOverlay','datasheetShareOverlay','contractOverlay','contractShareOverlay','jobNoteOverlay','qrOverlay','secMoveOverlay','delSecOverlay'];
 for(var oi=0;oi<safeOvs.length;oi++){
   (function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});})(safeOvs[oi]);
 }
@@ -6406,6 +6498,15 @@ document.getElementById('contractSkipBtn').addEventListener('click',function(){
 });
 document.getElementById('contractShareCloseBtn').addEventListener('click',function(){
   closeOv('contractShareOverlay');
+});
+// Job note modal
+document.getElementById('jobNoteSaveBtn').addEventListener('click',saveJobNote);
+document.getElementById('jobNoteCancelBtn').addEventListener('click',function(){ closeOv('jobNoteOverlay'); });
+document.getElementById('jobNoteDelBtn').addEventListener('click',function(){
+  var ta=document.getElementById('jobNoteText');
+  var cb=document.getElementById('jobNoteInPdf');
+  if(ta)ta.value=''; if(cb)cb.checked=false;
+  saveJobNote();
 });
 
 // Confirm modal
