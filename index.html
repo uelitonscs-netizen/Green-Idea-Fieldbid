@@ -620,7 +620,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260828-2043</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260828-2054</span></div>
 </div>
 
 <div id="field-app">
@@ -1911,7 +1911,27 @@ function saveEI(){
   localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo));
   save();
 }
-function saveQI(){localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); save();}
+function saveQI(){
+  localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo));
+  // The estimate PDF reads the PROJECT's stored quoteInfo. Without this, edits to
+  // markup / discount / client stayed only in the live copy and the PDF printed
+  // stale values (e.g. missing markup, old "(copy)" name).
+  try{
+    var _cp=(typeof currentProj!=='undefined')?currentProj:(window.currentProj||null);
+    if(_cp&&_cp.id){
+      var _ps=loadProjs();
+      for(var _i=0;_i<_ps.length;_i++){
+        if(_ps[_i].id===_cp.id){
+          _ps[_i].quoteInfo=JSON.parse(JSON.stringify(quoteInfo));
+          _cp.quoteInfo=_ps[_i].quoteInfo;
+          saveProjs(_ps);
+          break;
+        }
+      }
+    }
+  }catch(e){ console.warn('saveQI project sync failed:', e); }
+  save();
+}
 function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products)); save();}
 function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg)); save();}
 
@@ -3094,6 +3114,17 @@ function generateEstimatePDF(pid, totalOnly, opts){
         proj=projs[_i];
         projEstItems=projs[_i].estItems||[];
         projQuoteInfo=projs[_i].quoteInfo||{};
+        // If this is the job open in the Estimator, the live quote is the source of
+        // truth — it holds the markup/discount/client the user is looking at.
+        try{
+          var _cpq=(typeof currentProj!=='undefined')?currentProj:(window.currentProj||null);
+          if(_cpq && _cpq.id===pid && typeof quoteInfo!=='undefined' && quoteInfo){
+            var _merged={};
+            for(var _k in projQuoteInfo){ if(projQuoteInfo.hasOwnProperty(_k)) _merged[_k]=projQuoteInfo[_k]; }
+            for(var _k2 in quoteInfo){ if(quoteInfo.hasOwnProperty(_k2) && quoteInfo[_k2]!==undefined && quoteInfo[_k2]!=='') _merged[_k2]=quoteInfo[_k2]; }
+            projQuoteInfo=_merged;
+          }
+        }catch(e){}
         break;
       }
     }
