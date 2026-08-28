@@ -620,7 +620,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260820-1906</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260828-1204</span></div>
 </div>
 
 <div id="field-app">
@@ -2210,7 +2210,12 @@ function duplicateJobById(pid){
     done:false,
     estStatus:'none' // the copy starts fresh (not sent/approved)
   };
-  if(newProj.quoteInfo){ newProj.quoteInfo.client=newName; if(src.address)newProj.quoteInfo.address=src.address; }
+  // Only the job label gets "(copy)". The client name on the PDF stays the real
+  // client, so a duplicated job never prints "(copy)" to the customer.
+  if(newProj.quoteInfo){
+    if(!newProj.quoteInfo.client) newProj.quoteInfo.client=src.name||'';
+    if(src.address)newProj.quoteInfo.address=src.address;
+  }
 
   // Insert the copy right after the original so it's easy to find in the list.
   var srcIdx=-1;
@@ -2342,10 +2347,29 @@ function openEditProjModal(pid){
   if(name===null) return;
   var address=prompt('Edit address:',p.address||'');
   if(address===null) return;
+  var _oldName=p.name;
   p.name=name.trim()||p.name;
   p.address=address.trim();
+  // The estimate PDF prints quoteInfo.client / quoteInfo.address, not p.name.
+  // Keep them in sync, otherwise a renamed job still prints the old name.
+  if(!p.quoteInfo)p.quoteInfo={};
+  if(!p.quoteInfo.client || p.quoteInfo.client===_oldName) p.quoteInfo.client=p.name;
+  if(!p.quoteInfo.address || p.quoteInfo.address!==p.address) p.quoteInfo.address=p.address;
   saveProjs(projs);
-  if(currentProj&&currentProj.id===pid){currentProj.name=p.name;currentProj.address=p.address;updateProjHeader();}
+  if(currentProj&&currentProj.id===pid){
+    currentProj.name=p.name;currentProj.address=p.address;
+    currentProj.quoteInfo=p.quoteInfo;
+    // If this job is the one open in the Estimator, refresh the live quote too.
+    try{
+      if(typeof quoteInfo!=='undefined'&&quoteInfo){
+        quoteInfo.client=p.quoteInfo.client;
+        quoteInfo.address=p.quoteInfo.address;
+        localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo));
+        if(typeof renderQuote==='function')renderQuote();
+      }
+    }catch(e){}
+    updateProjHeader();
+  }
   renderProjList();
   toast('✅ Project updated');
 }
@@ -5879,13 +5903,24 @@ function doImport(){
         if(_iprojs[_ip].id===_importProjId){currentProj=_iprojs[_ip];break;}
       }
     }
-    // Only update quoteInfo client/address if estimator was empty before this import
+    // Update quoteInfo client/address when the estimator was empty OR when we are
+    // re-importing a project into its own estimate. Without the second case, a job
+    // renamed in the Takeoff kept printing its old name (e.g. "... (copy)") on the PDF.
     var _wasEmpty=estItems.length===added;
-    if(_wasEmpty){
+    var _sameProj=!!(currentProj && _importProjId && currentProj.id===_importProjId);
+    if(_wasEmpty || _sameProj){
       if(_importProjName){quoteInfo.client=_importProjName;}
       else if(currentProj&&currentProj.name){quoteInfo.client=currentProj.name;}
       if(_importProjAddress){quoteInfo.address=_importProjAddress;}
       else if(currentProj&&currentProj.address){quoteInfo.address=currentProj.address;}
+      // Keep the project record in step so a later PDF uses the same name.
+      try{
+        if(currentProj){
+          if(!currentProj.quoteInfo)currentProj.quoteInfo={};
+          currentProj.quoteInfo.client=quoteInfo.client;
+          currentProj.quoteInfo.address=quoteInfo.address;
+        }
+      }catch(e){}
     }
     // Save estItems + quoteInfo WITHOUT touching fieldAreas storage at all.
     // The import only adds estimator line items; it must never write fb6_fa
