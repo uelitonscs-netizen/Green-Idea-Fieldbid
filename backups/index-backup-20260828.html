@@ -620,7 +620,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260828-1204</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260828-2043</span></div>
 </div>
 
 <div id="field-app">
@@ -2633,10 +2633,14 @@ function suggestedBrochureKeys(){
     if(!t){var m=(typeof deriveMatFromProduct==='function')?deriveMatFromProduct(it.productId,it.inches):null;if(m)t=m.matType;}
     if(t)present[t]=1;
   }
-  // also look at field areas if present
-  if(Array.isArray(fieldAreas)){
-    for(var j=0;j<fieldAreas.length;j++){if(fieldAreas[j].matType)present[fieldAreas[j].matType]=1;}
-  }
+  // Use THIS project's takeoff areas. The global fieldAreas array may belong to a
+  // different job, which made the suggestions match the wrong materials.
+  try{
+    var _cp=(typeof currentProj!=='undefined')?currentProj:(window.currentProj||null);
+    var _src=(_cp&&Array.isArray(_cp.areas)&&_cp.areas.length)?_cp.areas
+             :((!_cp&&Array.isArray(fieldAreas))?fieldAreas:null);
+    if(_src){ for(var j=0;j<_src.length;j++){ if(_src[j].matType)present[_src[j].matType]=1; } }
+  }catch(e){}
   var keys=[];
   for(var b=0;b<BROCHURE_DEFS.length;b++){
     var def=BROCHURE_DEFS[b];
@@ -2693,9 +2697,12 @@ function suggestedDatasheetKeys(){
     if(!t){var m=(typeof deriveMatFromProduct==='function')?deriveMatFromProduct(it.productId,it.inches):null;if(m)t=m.matType;}
     if(t)present[t]=1;
   }
-  if(Array.isArray(fieldAreas)){
-    for(var j=0;j<fieldAreas.length;j++){if(fieldAreas[j].matType)present[fieldAreas[j].matType]=1;}
-  }
+  try{
+    var _cp2=(typeof currentProj!=='undefined')?currentProj:(window.currentProj||null);
+    var _src2=(_cp2&&Array.isArray(_cp2.areas)&&_cp2.areas.length)?_cp2.areas
+              :((!_cp2&&Array.isArray(fieldAreas))?fieldAreas:null);
+    if(_src2){ for(var j=0;j<_src2.length;j++){ if(_src2[j].matType)present[_src2[j].matType]=1; } }
+  }catch(e){}
   var keys=[];
   for(var b=0;b<DATASHEET_DEFS.length;b++){
     var def=DATASHEET_DEFS[b];
@@ -6867,9 +6874,35 @@ function sendToWorkLog(){
 // This init used to run ONLY inside DOMContentLoaded. If that event had already
 // fired by the time this block executed, none of it ran: the Send button got no
 // click handler (tapping did nothing) and fbLoad() never loaded cloud data.
+// Older duplicates stored the client name with a "(copy)" suffix, which then
+// printed on the estimate PDF. Clean those up once; the job label keeps its own name.
+function _stripCopyFromClients(){
+  try{
+    if(localStorage.getItem('fb6_copyFix')==='1') return;
+    var projs=loadProjs(), changed=0;
+    for(var i=0;i<projs.length;i++){
+      var p=projs[i];
+      if(p&&p.quoteInfo&&typeof p.quoteInfo.client==='string'){
+        var cleaned=p.quoteInfo.client.replace(/\s*\(copy\)\s*$/i,'').trim();
+        if(cleaned && cleaned!==p.quoteInfo.client){ p.quoteInfo.client=cleaned; changed++; }
+      }
+    }
+    if(changed){ saveProjs(projs); console.log('FieldBid: cleaned "(copy)" from '+changed+' client name(s)'); }
+    // Also fix the live quote if it carries the suffix.
+    try{
+      if(typeof quoteInfo!=='undefined'&&quoteInfo&&typeof quoteInfo.client==='string'){
+        var lc=quoteInfo.client.replace(/\s*\(copy\)\s*$/i,'').trim();
+        if(lc&&lc!==quoteInfo.client){ quoteInfo.client=lc; localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); }
+      }
+    }catch(e){}
+    localStorage.setItem('fb6_copyFix','1');
+  }catch(e){ console.warn('copy cleanup failed:', e); }
+}
+
 function _fbInitApp(){
   if(window._fbInitDone) return;
   window._fbInitDone = true;
+  try{ _stripCopyFromClients(); }catch(e){}
   try{
     var b = document.getElementById("sendWLBtn");
     if (b) { b.addEventListener("click", sendToWorkLog); b._wlDirectWired = true; }
