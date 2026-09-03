@@ -620,7 +620,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260902-2114</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260903-2030</span></div>
 </div>
 
 <div id="field-app">
@@ -1118,7 +1118,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <div style="padding:8px 20px 16px;font-size:13px;color:#94a3b8;text-align:center">Choose how to display pricing</div>
     <div style="padding:0 20px;display:flex;flex-direction:column;gap:10px">
       <button id="estModeLineItems" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:15px 14px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;line-height:1.35">📋 Line Items + Total<br><span style="font-size:11.5px;font-weight:500;opacity:.85">Shows every item with its own price</span></button>
-      <button id="estModeTotalOnly" style="width:100%;background:#1e2530;border:1px solid #3a3340;color:#f0f0f0;border-radius:10px;padding:15px 14px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;line-height:1.35">💰 Total Only<br><span style="font-size:11.5px;font-weight:500;color:#fca5a5">⚠️ Hides all line items — only the total is shown</span></button>
+      <button id="estModeTotalOnly" style="width:100%;background:#1e2530;border:1px solid #3a3340;color:#f0f0f0;border-radius:10px;padding:15px 14px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;line-height:1.35">💰 Total Only<br><span style="font-size:11.5px;font-weight:500;color:#94a3b8">Lists the work without per-item prices — one total at the end</span></button>
     </div>
   </div>
 </div>
@@ -3261,11 +3261,9 @@ function generateEstimatePDF(pid, totalOnly, opts){
     if(!_pdfMap[_s]){_pdfMap[_s]=[];_pdfOrder.push(_s);}
     _pdfMap[_s].push(projEstItems[_pi]);
   }
-  var _showSections=_pdfOrder.length>=1 && !totalOnly; // no section headers in Total Only
-  // Total Only skips the per-item rows, so compute the subtotal up front.
-  if(totalOnly){
-    for(var _ti=0;_ti<projEstItems.length;_ti++){ subtotal+=calcItem(projEstItems[_ti]); }
-  }
+  // Total Only still lists the scope (sections + item lines). It only hides the
+  // per-line prices and section subtotals, leaving a single price at the bottom.
+  var _showSections=_pdfOrder.length>=1;
   for(var _sg=0;_sg<_pdfOrder.length;_sg++){
     var _secName=_pdfOrder[_sg];
     var _secItems=_pdfMap[_secName];
@@ -3278,7 +3276,6 @@ function generateEstimatePDF(pid, totalOnly, opts){
       line(margin,y,W-margin,y,[26,107,42],0.5);
       y+=5;
     }
-  if(totalOnly){ continue; } // Total Only: no per-item lines at all
   for(var i=0;i<_secItems.length;i++){
     var item=_secItems[i];
     // Use the same calc as the app: handles per-inch effective price and
