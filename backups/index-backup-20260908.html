@@ -618,9 +618,21 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
       </div>
     </button>
 
+    <button class="mode-btn wl" id="btnWorkLog" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.06);width:100%;overflow:hidden">
+      <div style="display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;gap:16px;padding:20px">
+        <div style="width:50px;height:50px;border-radius:14px;background:#d1fae5;display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;-webkit-box-pack:center;justify-content:center;font-size:22px;flex-shrink:0">⏱️</div>
+        <div style="-webkit-box-flex:1;flex:1;text-align:left">
+          <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:2px">WorkLog</div>
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#059669;margin-bottom:6px">Hours &amp; job costs</div>
+          <div style="font-size:12.5px;color:#6b7280;line-height:1.45">Open WorkLog in a new tab — FieldBid stays open.</div>
+        </div>
+        <div style="font-size:18px;color:#d1d5db;flex-shrink:0">↗</div>
+      </div>
+    </button>
+
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260908-1309</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260908-2038</span></div>
 </div>
 
 <div id="field-app">
@@ -2093,6 +2105,15 @@ document.getElementById('btnDatasheets').addEventListener('click',function(){
 });
 document.getElementById('btnContracts').addEventListener('click',function(){
   openContractShareModal();
+});
+var WORKLOG_URL='https://uelitonscs-netizen.github.io/Greenideaworklog/';
+document.getElementById('btnWorkLog').addEventListener('click',function(){
+  // New tab keeps FieldBid loaded (and any unsaved screen state) behind it.
+  try{
+    var w=window.open(WORKLOG_URL,'_blank');
+    if(!w){ location.href=WORKLOG_URL; } // popup blocked: navigate instead
+    else { toast('⏱️ WorkLog opened in a new tab'); }
+  }catch(e){ location.href=WORKLOG_URL; }
 });
 document.getElementById('brochureShareMultiBtn').addEventListener('click',function(){
   var chks=document.querySelectorAll('.broch-share-chk');
