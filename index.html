@@ -620,7 +620,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260903-2208</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260908-1309</span></div>
 </div>
 
 <div id="field-app">
@@ -1925,9 +1925,7 @@ function _syncJobLabelFromClient(){
     for(var i=0;i<_ps.length;i++){
       if(_ps[i].id===_cp.id){
         var _nm=_ps[i].name?String(_ps[i].name):'';
-        if(/\(copy\)\s*$/i.test(_nm) && _cl!==_nm){
-          _ps[i].name=_cl; _cp.name=_cl; changed=true;
-        }
+        if(_cl!==_nm){ _ps[i].name=_cl; _cp.name=_cl; changed=true; }
         break;
       }
     }
@@ -2403,7 +2401,10 @@ function openEditProjModal(pid){
   // The estimate PDF prints quoteInfo.client / quoteInfo.address, not p.name.
   // Keep them in sync, otherwise a renamed job still prints the old name.
   if(!p.quoteInfo)p.quoteInfo={};
-  if(!p.quoteInfo.client || p.quoteInfo.client===_oldName) p.quoteInfo.client=p.name;
+  // The job label and the client name are the same thing in practice, so renaming
+  // the job always renames the client the PDF prints. (Set a different client in the
+  // Quote tab afterwards if you ever need them to differ.)
+  p.quoteInfo.client=p.name;
   if(!p.quoteInfo.address || p.quoteInfo.address!==p.address) p.quoteInfo.address=p.address;
   saveProjs(projs);
   if(currentProj&&currentProj.id===pid){
