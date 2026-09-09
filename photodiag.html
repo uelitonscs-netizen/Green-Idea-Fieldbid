@@ -24,6 +24,7 @@ body{font-family:sans-serif;background:#0a0a0a;color:#f0f0f0;padding:16px}
   <div class="sub">Mostra o que está no aparelho e o que está na nuvem</div>
   <button class="btn b1" id="check">🔍 Verificar</button>
   <button class="btn b2" id="force">⬆️ Forçar backup das fotos</button>
+  <button class="btn b3" id="restore" style="background:#4ade80;color:#062">⬇️ Restaurar fotos da nuvem</button>
   <div id="log"></div>
   <div class="res" id="res"></div>
 </div>
@@ -152,6 +153,56 @@ document.getElementById('force').addEventListener('click',function(){
     show('<b>Erro:</b> '+(e.message||e),false);
     b.disabled=false;
   });
+});
+
+document.getElementById('restore').addEventListener('click',function(){
+  var b=this;b.disabled=true;logEl.innerHTML='';resEl.className='res';
+  L('Buscando fotos na nuvem...');
+  auth().then(function(){
+    var projs=[]; try{ projs=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
+    if(!projs.length){ show('Nenhum projeto no aparelho.',false); b.disabled=false; return; }
+    var col=db.collection('fieldbid'), chain=Promise.resolve(), restored=0, checked=0, empties=0;
+    projs.forEach(function(proj){
+      if(!proj||!proj.id)return;
+      chain=chain.then(function(){
+        return col.doc('ph__'+proj.id+'__0').get().then(function(d0){
+          checked++;
+          if(!d0.exists){ return; }
+          var raw=(d0.data()&&d0.data().data)||'';
+          if(!raw||raw==='{}'){ empties++; return; }
+          var total=(d0.data().n)||1, maps=[];
+          try{ maps.push(JSON.parse(raw)); }catch(e){}
+          var sub=Promise.resolve();
+          for(var ci=1;ci<total;ci++){(function(ix){
+            sub=sub.then(function(){ return col.doc('ph__'+proj.id+'__'+ix).get().then(function(dd){
+              if(dd.exists){ try{ maps.push(JSON.parse(dd.data().data||'{}')); }catch(e){} } }); });
+          })(ci);}
+          return sub.then(function(){
+            var merged={}; maps.forEach(function(m){ for(var k in m)merged[k]=m[k]; });
+            var n=0;
+            function apply(arr,pre){ if(!Array.isArray(arr))return;
+              for(var i=0;i<arr.length;i++){ var o=arr[i]; if(!o||typeof o!=='object')continue;
+                var k=pre+i+':'+(o.name||'');
+                if(merged[k]){ o.photos=merged[k]; n+=merged[k].length; } } }
+            apply(proj.areas,'a'); apply(proj.estItems,'e');
+            if(n){ restored+=n; L('   ✅ '+(proj.name||proj.id)+' — '+n+' foto(s)','ok'); }
+            else { L('   ⚠️ '+(proj.name||proj.id)+' — doc existe mas as chaves não bateram','warn'); }
+          });
+        }).catch(function(e){ L('   ❌ '+(proj.name||proj.id)+': '+(e.code||'')+' '+(e.message||e),'err'); });
+      });
+    });
+    return chain.then(function(){
+      L('');
+      L('projetos verificados: '+checked+'  ·  documentos vazios: '+empties,'info');
+      if(restored){
+        try{ localStorage.setItem('fb6_projs',JSON.stringify(projs)); }catch(e){}
+        show('<b>'+restored+' foto(s) restauradas!</b><br><br>Recarregue o app para vê-las.',true);
+      } else {
+        show('<b>Nenhuma foto para restaurar.</b><br><br>Documentos vazios: '+empties+'.<br>Se um documento existia mas as chaves não bateram, o nome da área mudou depois do backup — me avise.',false);
+      }
+      b.disabled=false;
+    });
+  }).catch(function(e){ L('❌ '+(e.message||e),'err'); show('Erro: '+(e.message||e),false); b.disabled=false; });
 });
 </script>
 </body></html>
