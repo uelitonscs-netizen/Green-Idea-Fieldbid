@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260910-0202</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260910-0216</span></div>
 </div>
 
 <div id="field-app">
@@ -1717,8 +1717,30 @@ function saveNow(){
 window.saveNow=saveNow;
 
 function fbLoad() {
+  // Right after clearing browser data the app has nothing locally and must fetch
+  // everything. Showing "0 proj" during that looks exactly like data loss, so mark
+  // the stats as loading and time each stage to see where the delay really is.
+  window._fbT0 = Date.now();
+  try{
+    // Only show the loading state when there is genuinely nothing stored yet.
+    if(!localStorage.getItem('fb6_projs')){
+      var _fv=document.getElementById('homeStatFieldVal'), _fs=document.getElementById('homeStatFieldSub');
+      var _jv=document.getElementById('homeStatJobsVal'),  _js=document.getElementById('homeStatJobsSub');
+      if(_fv)_fv.textContent='…';
+      if(_jv)_jv.textContent='…';
+      if(_fs)_fs.textContent='carregando da nuvem…';
+      if(_js)_js.textContent='carregando da nuvem…';
+    }
+  }catch(e){}
   firebase.auth().onAuthStateChanged(function(user) {
     if (!user) return;
+    // onAuthStateChanged also fires on token refresh. Re-running the whole load
+    // rewrote localStorage from the cloud copy (which has no photos) and erased
+    // the photos the restore had just put back. Load once per session.
+    if (window._fbLoadRan) { console.log('FieldBid: carga ja feita, ignorando novo evento de auth'); return; }
+    window._fbLoadRan = true;
+    console.log('FieldBid: auth pronto em '+(Date.now()-window._fbT0)+'ms');
+    window._fbT1 = Date.now();
     // Fetch ONLY the data docs in ONE round trip. Querying by document ID keeps
     // photo docs (ph__*) out of the response without the cost of 9 separate gets,
     // which made startup noticeably slower on mobile.
@@ -1769,7 +1791,8 @@ function fbLoad() {
           try { raw = JSON.stringify(raw); } catch(e) { return; }
         }
         // Cloud data has no photos (they live only on this device).
-        // Re-attach the local photos so they aren't lost on reload.
+        // Re-attach the local photos so they aren't lost on reload. This also
+        // protects photos that the restore already brought back.
         if (_PHOTO_KEYS[id]) {
           var localRaw = localStorage.getItem('fb6_' + id);
           if (localRaw) { try { raw = _mergeLocalPhotos(raw, localRaw); } catch(e){} }
@@ -1777,6 +1800,7 @@ function fbLoad() {
         localStorage.setItem('fb6_' + id, raw);
         loaded++;
       });
+      console.log('FieldBid: dados chegaram em '+(Date.now()-window._fbT1)+'ms (total '+(Date.now()-window._fbT0)+'ms)');
       if (loaded > 0) {
         load();
         updateHomeStats();
