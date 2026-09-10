@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260910-0216</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build DEBUG-0227</span></div>
 </div>
 
 <div id="field-app">
@@ -1284,6 +1284,63 @@ firebase.initializeApp({
 });
 
 var db = firebase.firestore();
+
+// ═══════ PAINEL DE DIAGNOSTICO (temporario) ═══════
+// Registra na tela cada gravacao de fb6_projs com hora, tamanho e nº de fotos,
+// para descobrir exatamente quem apaga a foto e quanto tempo leva a carga.
+(function(){
+  var T0=Date.now();
+  function ms(){ return String(Date.now()-T0).padStart(5,' ')+'ms'; }
+  var lines=[];
+  function panel(){
+    var p=document.getElementById('dbgPanel');
+    if(!p){
+      p=document.createElement('div');
+      p.id='dbgPanel';
+      p.style.cssText='position:fixed;left:0;right:0;bottom:0;max-height:45vh;overflow:auto;background:rgba(0,0,0,.93);color:#7ee89a;font:11px/1.5 monospace;padding:8px 10px 10px;z-index:99999;border-top:2px solid #4ade80;white-space:pre-wrap';
+      var h=document.createElement('div');
+      h.style.cssText='color:#fcd34d;font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between';
+      h.innerHTML='<span>DIAGNOSTICO — sequencia de inicializacao</span>';
+      var x=document.createElement('button');
+      x.textContent='ocultar';
+      x.style.cssText='background:#333;color:#eee;border:none;border-radius:4px;padding:2px 8px;font-size:11px';
+      x.onclick=function(){p.style.display='none';};
+      h.appendChild(x); p.appendChild(h);
+      var b=document.createElement('div'); b.id='dbgBody'; p.appendChild(b);
+      document.body.appendChild(p);
+    }
+    var b=document.getElementById('dbgBody');
+    if(b)b.textContent=lines.join('\n');
+  }
+  window.DBG=function(msg,color){
+    lines.push(ms()+'  '+msg);
+    if(lines.length>60)lines.shift();
+    try{ panel(); }catch(e){}
+    console.log('[DBG] '+ms()+' '+msg);
+  };
+  // Count photos inside a fb6_projs payload
+  function photoCount(raw){
+    try{
+      var d=JSON.parse(raw||'[]'), n=0;
+      (Array.isArray(d)?d:[]).forEach(function(p){
+        function s(a){ if(Array.isArray(a))a.forEach(function(o){ if(o&&Array.isArray(o.photos))n+=o.photos.length; }); }
+        s(p.areas); s(p.estItems);
+      });
+      return n;
+    }catch(e){ return -1; }
+  }
+  // Wrap setItem to see EVERY write to the project data
+  var _si=localStorage.setItem.bind(localStorage);
+  localStorage.setItem=function(k,v){
+    if(k==='fb6_projs'){
+      var np=0; try{ np=(JSON.parse(v)||[]).length; }catch(e){}
+      window.DBG('GRAVA fb6_projs  projetos='+np+'  fotos='+photoCount(v)+'  '+(v.length/1024).toFixed(0)+'KB');
+    }
+    return _si(k,v);
+  };
+  window.DBG('app iniciou');
+})();
+
 var _wlDb = db;
 firebase.auth().signInAnonymously().catch(function(e){ console.warn('Auth:', e && e.message); });
 firebase.auth().onAuthStateChanged(function(u){ if (u) { setFbStatus('connected'); } });
@@ -1614,8 +1671,8 @@ function _doPhotoRestore(need, col, projs){
       }
       if(_touched){ saveProjs(_fresh); }
     }catch(e){ console.warn('photo persist skipped:', e); }
+    if(window.DBG)DBG('RESTAURACAO terminou: '+restored+' foto(s)');
     if(restored){
-      console.log('FieldBid: restored '+restored+' photo(s) from cloud');
       if(typeof toast==='function')toast('📷 '+restored+' photo(s) restored from cloud');
     }
     return restored;
@@ -1737,9 +1794,9 @@ function fbLoad() {
     // onAuthStateChanged also fires on token refresh. Re-running the whole load
     // rewrote localStorage from the cloud copy (which has no photos) and erased
     // the photos the restore had just put back. Load once per session.
-    if (window._fbLoadRan) { console.log('FieldBid: carga ja feita, ignorando novo evento de auth'); return; }
+    if (window._fbLoadRan) { if(window.DBG)DBG('auth disparou de novo -> carga ignorada'); return; }
     window._fbLoadRan = true;
-    console.log('FieldBid: auth pronto em '+(Date.now()-window._fbT0)+'ms');
+    if(window.DBG)DBG('AUTH pronto');
     window._fbT1 = Date.now();
     // Fetch ONLY the data docs in ONE round trip. Querying by document ID keeps
     // photo docs (ph__*) out of the response without the cost of 9 separate gets,
@@ -1800,7 +1857,7 @@ function fbLoad() {
         localStorage.setItem('fb6_' + id, raw);
         loaded++;
       });
-      console.log('FieldBid: dados chegaram em '+(Date.now()-window._fbT1)+'ms (total '+(Date.now()-window._fbT0)+'ms)');
+      if(window.DBG)DBG('DADOS chegaram da nuvem ('+docs.length+' docs)');
       if (loaded > 0) {
         load();
         updateHomeStats();
@@ -1811,6 +1868,7 @@ function fbLoad() {
       setFbStatus('connected');
       // If any project says it has photos but this device has none (new phone,
       // cleared data), pull just those photos back from their own collection.
+      if(window.DBG)DBG('agendando restauracao de fotos (1,2s)');
       if (typeof restoreMissingPhotos === 'function') {
         // Defer so the project list paints first; photos fill in afterwards.
         setTimeout(function(){
