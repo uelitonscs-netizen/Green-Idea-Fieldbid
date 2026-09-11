@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260911-0158</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260911-0209</span></div>
 </div>
 
 <div id="field-app">
@@ -1284,6 +1284,17 @@ firebase.initializeApp({
 });
 
 var db = firebase.firestore();
+// Firestore's default transport (WebChannel) is blocked on some mobile networks.
+// When that happens get() never resolves and never rejects — the app just hangs
+// with no error, which is exactly what the startup log showed. Auto-detect and
+// fall back to long polling. Must be set before any read/write.
+try{
+  db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
+  if(window.DBG)DBG('Firestore: long-polling auto-detect ligado');
+}catch(e){
+  try{ db.settings({ experimentalForceLongPolling: true, merge: true }); }catch(_){}
+  console.warn('firestore settings:', e && e.message);
+}
 
 // ═══════ PAINEL DE DIAGNOSTICO (temporario) ═══════
 // Registra na tela cada gravacao de fb6_projs com hora, tamanho e nº de fotos,
@@ -1840,13 +1851,28 @@ function fbLoad() {
     }catch(e){
       _fetchDataDocs = Promise.reject(e);
     }
+    // Guard against a query that never settles.
+    _fetchDataDocs = Promise.race([
+      _fetchDataDocs,
+      new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('timeout: consulta nao respondeu em 12s')); },12000); })
+    ]);
     _fetchDataDocs
     .catch(function(e){
+      if(window.DBG)DBG('consulta falhou: '+(e&&e.message||e)+' -> tentando doc a doc');
       // Older SDKs or an unsupported query fall back to individual gets.
       console.warn('ID query unavailable, falling back to per-doc gets:', e && e.message);
+      // Same guard here: each doc read gets its own timeout so one stuck read
+      // cannot hold the whole startup hostage.
       return Promise.all(_SYNC_KEYS.map(function(k){
-        return _col.doc(k).get().catch(function(){ return null; });
-      }));
+        return Promise.race([
+          _col.doc(k).get().catch(function(){ return null; }),
+          new Promise(function(res){ setTimeout(function(){ res(null); }, 10000); })
+        ]);
+      })).then(function(docs){
+        var got=docs.filter(function(d){return d&&d.exists;}).length;
+        if(window.DBG)DBG('leitura doc a doc: '+got+'/'+_SYNC_KEYS.length+' documentos');
+        return docs;
+      });
     })
     .then(function(docs) {
       var snap = { forEach: function(fn){ docs.forEach(function(d){ if(d && d.exists) fn(d); }); } };
@@ -1889,13 +1915,27 @@ function fbLoad() {
       });
       if(window.DBG)DBG('DADOS chegaram da nuvem ('+docs.length+' docs)');
       if (loaded > 0) {
-        // Each step is isolated: a failure in one render used to abort everything
-        // after it — including the photo restore, which then never ran at all.
-        try{ load(); }catch(e){ if(window.DBG)DBG('ERRO load(): '+(e&&e.message||e)); console.warn('load failed',e); }
-        try{ updateHomeStats(); }catch(e){ if(window.DBG)DBG('ERRO updateHomeStats(): '+(e&&e.message||e)); console.warn('updateHomeStats failed',e); }
-        try{ if (window.renderFA) renderFA(); }catch(e){ if(window.DBG)DBG('ERRO renderFA(): '+(e&&e.message||e)); console.warn('renderFA failed',e); }
-        try{ if (window.renderEst) renderEst(); }catch(e){ if(window.DBG)DBG('ERRO renderEst(): '+(e&&e.message||e)); console.warn('renderEst failed',e); }
-        try{ toast('Restored from cloud!'); }catch(e){}
+        // The cloud can answer BEFORE the rest of this (large) app file has been
+        // parsed, so load()/updateHomeStats() did not exist yet and threw. The data
+        // was saved but the screen never refreshed — which is why a manual reload
+        // "fixed" it. Wait until the app is ready, then paint.
+        (function applyWhenReady(tries){
+          tries=tries||0;
+          var ready=(typeof load==='function' && typeof updateHomeStats==='function');
+          if(!ready){
+            if(tries<100){ return setTimeout(function(){ applyWhenReady(tries+1); }, 100); }
+            if(window.DBG)DBG('app nao ficou pronto para pintar a tela');
+            return;
+          }
+          if(window.DBG)DBG('app pronto -> atualizando tela'+(tries?' (apos '+(tries*100)+'ms)':''));
+          try{ load(); }catch(e){ if(window.DBG)DBG('ERRO load(): '+(e&&e.message||e)); }
+          try{ updateHomeStats(); }catch(e){ if(window.DBG)DBG('ERRO updateHomeStats(): '+(e&&e.message||e)); }
+          try{ if (window.renderFA) renderFA(); }catch(e){ if(window.DBG)DBG('ERRO renderFA(): '+(e&&e.message||e)); }
+          try{ if (window.renderEst) renderEst(); }catch(e){ if(window.DBG)DBG('ERRO renderEst(): '+(e&&e.message||e)); }
+          try{ if (window.renderJobsList) renderJobsList(); }catch(e){}
+          try{ if (window.renderProjList) renderProjList(); }catch(e){}
+          try{ toast('Restored from cloud!'); }catch(e){}
+        })(0);
       }
       try{ setFbStatus('connected'); }catch(e){}
       // If any project says it has photos but this device has none (new phone,
