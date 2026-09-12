@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260911-0209</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build DEBUG3-0009</span></div>
 </div>
 
 <div id="field-app">
@@ -1349,6 +1349,26 @@ try{
     }
     return _si(k,v);
   };
+  // Catch EVERY error on the page, including ones thrown before our own handlers
+  // exist. This is what finally shows why the app's functions never appear.
+  window.addEventListener('error', function(ev){
+    var m=(ev&&ev.message)||'erro';
+    var f=(ev&&ev.filename)||'';
+    var l=(ev&&ev.lineno)||0;
+    window.DBG('!! ERRO JS: '+m+(l?(' [linha '+l+']'):''));
+  }, true);
+  window.addEventListener('unhandledrejection', function(ev){
+    var r=ev&&ev.reason;
+    window.DBG('!! PROMISE: '+((r&&r.message)||r));
+  });
+  // Report what actually exists once the page finishes parsing.
+  function _reportFns(tag){
+    window.DBG(tag+' load='+(typeof load)+' updateHomeStats='+(typeof updateHomeStats)+
+               ' renderFA='+(typeof window.renderFA)+' renderEst='+(typeof window.renderEst));
+  }
+  window._reportFns=_reportFns;
+  setTimeout(function(){ try{_reportFns('estado 3s:');}catch(e){} }, 3000);
+  document.addEventListener('DOMContentLoaded', function(){ try{_reportFns('DOM pronto:');}catch(e){} });
   window.DBG('app iniciou');
 })();
 
@@ -1925,6 +1945,7 @@ function fbLoad() {
           if(!ready){
             if(tries<100){ return setTimeout(function(){ applyWhenReady(tries+1); }, 100); }
             if(window.DBG)DBG('app nao ficou pronto para pintar a tela');
+            try{ if(window._reportFns)window._reportFns('estado final:'); }catch(e){}
             return;
           }
           if(window.DBG)DBG('app pronto -> atualizando tela'+(tries?' (apos '+(tries*100)+'ms)':''));
