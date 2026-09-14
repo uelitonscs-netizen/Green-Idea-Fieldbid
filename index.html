@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260913-2059</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260914-0046</span></div>
 </div>
 
 <div id="field-app">
@@ -1503,6 +1503,7 @@ window.schedulePhotoBackup=schedulePhotoBackup;
   setInterval(function(){
     if(typeof db==='undefined'||!db)return;
     if(!firebase.auth().currentUser)return;
+    if(!window._phRestoreDone) return; // don't upload before we've pulled photos back
     var s=photoSig();
     if(s!==lastSig){
       lastSig=s;
@@ -1510,6 +1511,9 @@ window.schedulePhotoBackup=schedulePhotoBackup;
       try{ backupPhotos(); }catch(e){ if(window.DBG)DBG('ERRO backup: '+(e&&e.message||e)); }
     }
   }, 4000);
+  // If the restore never reports back (e.g. offline start), unblock after 30s so
+  // photos taken on this device can still be saved.
+  setTimeout(function(){ if(!window._phRestoreDone) window._phRestoreDone = true; }, 30000);
 })();
 
 function backupPhotos(){
@@ -1557,8 +1561,17 @@ function backupPhotos(){
         if(!p||!p.id)return;
         if(Object.keys(_photoMapForProj(p)).length)withPhotos.push(p.id);
       });
-      col.doc(_PH_PREFIX+'index').set({ids:JSON.stringify(withPhotos),updatedAt:new Date().toISOString()})
-        .catch(function(e){ console.warn('photo index failed:', e&&e.message); });
+      // NEVER publish an empty index, and never before the restore has finished.
+      // Right after clearing browser data this device has no photos yet, and
+      // writing "nobody has photos" wiped the map the restore depends on.
+      if(!withPhotos.length){
+        console.warn('photo index: skipped (no local photos yet)');
+      } else if(!window._phRestoreDone){
+        console.warn('photo index: skipped (restore has not finished)');
+      } else {
+        col.doc(_PH_PREFIX+'index').set({ids:JSON.stringify(withPhotos),updatedAt:new Date().toISOString()})
+          .catch(function(e){ console.warn('photo index failed:', e&&e.message); });
+      }
     }catch(e){}
   });
 }
@@ -1608,9 +1621,21 @@ function restoreMissingPhotos(){
         if(allow) arr.forEach(function(id){ allow[id]=1; });
       }
     }catch(e){}
+    var _allowCount = allow ? Object.keys(allow).length : -1;
+    if(allow && _allowCount===0){
+      // The index exists but is EMPTY — it was wiped by a backup that ran before
+      // this device had pulled its photos back. Ignore it and rebuild from the
+      // photo documents that are still in the cloud.
+      console.warn('photo index is empty — rebuilding from cloud documents');
+      allow=null;
+    }
     if(allow){
       // Only projects listed in the index; every one of them, no cap.
       need=projs.filter(function(p){ return p&&p.id&&allow[p.id]; });
+    } else if(projs.length){
+      // No usable index: check every project's photo doc directly. Costs more
+      // reads once, but it rebuilds the index and nothing is left behind.
+      need=projs.slice();
     } else if(need.length>8){
       need=need.slice(-8); // no index yet: keep startup reasonable
     }
@@ -1705,6 +1730,26 @@ function _doPhotoRestore(need, col, projs){
         }catch(e){ if(window.DBG)DBG('ERRO ao gravar fotos: '+(e&&e.message||e)); }
       }
     }catch(e){ console.warn('photo persist skipped:', e); }
+    window._phRestoreDone = true;
+    // Republish a correct index from what this device now holds.
+    try{
+      if(restored){
+        var _cur=[]; try{ _cur=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
+        var _ids=[];
+        _cur.forEach(function(p){
+          if(!p||!p.id)return;
+          var has=false;
+          function w(a){ if(Array.isArray(a))a.forEach(function(o){ if(o&&Array.isArray(o.photos)&&o.photos.length)has=true; }); }
+          w(p.areas); w(p.estItems);
+          if(has)_ids.push(p.id);
+        });
+        if(_ids.length){
+          db.collection(_PH_COL).doc(_PH_PREFIX+'index')
+            .set({ids:JSON.stringify(_ids),updatedAt:new Date().toISOString()})
+            .catch(function(){});
+        }
+      }
+    }catch(e){}
     if(window.DBG)DBG('RESTAURACAO terminou: '+restored+' foto(s)');
     try{ if(restored && typeof updateHomeStats==='function')updateHomeStats(); }catch(e){}
     if(restored){
