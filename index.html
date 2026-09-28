@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260928-0023</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260928-0255</span></div>
 </div>
 
 <div id="field-app">
@@ -1163,6 +1163,13 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <div class="mtitle" id="importTitle">Import from Field Takeoff</div>
     <p style="font-size:13px;color:#7d8590;margin-bottom:14px" id="importDesc">Choose a project to import.</p>
     <div class="imp-replace" id="importReplaceWrap" style="display:none"><button class="imp-chk on" id="importReplaceChk" type="button">✓</button><div class="imp-replace-txt"><strong>Replace current items</strong> (<span id="importReplaceCount">0</span> in estimator)<br>Uncheck to add to existing items instead.</div></div>
+    <div id="importDestWrap" style="display:none;background:#0f1c2e;border:1px solid #2a4a6a;border-radius:10px;padding:11px 13px;margin-bottom:12px">
+      <div style="font-size:11px;color:#60a5fa;font-weight:700;letter-spacing:.05em;margin-bottom:8px">IMPORTAR PARA</div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="imp-dest on" data-dest="current" style="flex:1;background:#1a6b2a;border:1px solid #1a6b2a;color:#fff;border-radius:8px;padding:10px 8px;font-size:12.5px;font-weight:700;cursor:pointer;line-height:1.3">Este orçamento<br><span style="font-size:10px;font-weight:500;opacity:.85">acrescenta aos itens</span></button>
+        <button type="button" class="imp-dest" data-dest="new" style="flex:1;background:#1e2530;border:1px solid #2a3340;color:#9ca3af;border-radius:8px;padding:10px 8px;font-size:12.5px;font-weight:700;cursor:pointer;line-height:1.3">Novo orçamento<br><span style="font-size:10px;font-weight:500;opacity:.85">outra proposta</span></button>
+      </div>
+    </div>
     <div id="importList"></div>
     <div class="btn-row"><button class="btn bs" id="importCancelBtn">Cancel</button><button class="btn bs" id="importBackBtn" style="display:none">← Back</button><button class="btn bg" id="importConfirmBtn" style="display:none">Import Selected</button></div>
   </div>
@@ -6428,7 +6435,61 @@ document.getElementById('feSaveBtn').addEventListener('click',function(){
 
 // IMPORT
 var _importProjId=null;var _importProjName='';var _importProjAddress='';var _importAreas=[];
+// Create an independent variant of a project so the same takeoff can be quoted
+// two different ways (e.g. closed cell vs fiberglass) without touching the first.
+function createEstimateVariant(srcProjId){
+  var projs=loadProjs(), src=null, idx=-1;
+  for(var i=0;i<projs.length;i++){ if(projs[i].id===srcProjId){ src=projs[i]; idx=i; break; } }
+  if(!src)return null;
+  // Number the variant by how many already exist for this base name.
+  var base=String(src.name||'Estimate').replace(/\s*·\s*Option\s*\d+\s*$/i,'').trim();
+  // Find the highest Option number already in use and go one past it, so two
+  // variants never end up with the same name.
+  var maxN=1;
+  projs.forEach(function(p){
+    if(!p||!p.name)return;
+    if(p.name===base){ if(maxN<1)maxN=1; return; }
+    var m=p.name.match(/^(.*)\s·\sOption\s(\d+)$/);
+    if(m && m[1]===base){ var v=parseInt(m[2],10)||1; if(v>maxN)maxN=v; }
+  });
+  var n=maxN+1;
+  var v=JSON.parse(JSON.stringify(src));
+  v.id='p_'+Date.now()+'_'+Math.floor(Math.random()*1000);
+  v.name=base+' · Option '+n;
+  v.estItems=[];                       // fresh estimate
+  v.estStatus='none';
+  v.note=''; v.noteInPdf=false;
+  if(!v.quoteInfo)v.quoteInfo={};
+  // Job label and client name must MATCH from the start. They mirror each other,
+  // so leaving the client as the base name would make the sync wipe the "Option N"
+  // label on the first save. Renaming either one later still updates both.
+  v.quoteInfo.client=v.name;
+  v.quoteInfo.markup=''; v.quoteInfo.discount='';
+  v.created=new Date().toLocaleDateString('en-US');
+  projs.splice(idx+1,0,v);
+  saveProjs(projs);
+  return v;
+}
+window.createEstimateVariant=createEstimateVariant;
+
 function doImport(){
+  // If the user asked for a separate proposal, spin up a variant first and make
+  // it the active project, so the existing estimate is left untouched.
+  try{
+    if(window._impDest==='new' && window._importProjId){
+      var _v=createEstimateVariant(window._importProjId);
+      if(_v){
+        currentProj=_v; window.currentProj=_v;
+        estItems=[]; window.estItems=estItems;
+        quoteInfo=JSON.parse(JSON.stringify(_v.quoteInfo||{client:'',address:''}));
+        window.quoteInfo=quoteInfo;
+        try{ localStorage.setItem('fb6_ei',JSON.stringify(estItems)); }catch(e){}
+        try{ localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); }catch(e){}
+        if(typeof toast==='function')toast('📋 Novo orçamento: '+_v.name);
+      }
+    }
+  }catch(e){ console.warn('variant failed:', e && e.message); }
+
   var added=0;
   var src=(_importProjId&&_importAreas.length)?_importAreas:fieldAreas;
   var replaceChk=document.getElementById('importReplaceChk');
@@ -6598,7 +6659,7 @@ function showImportProjects(){
   if(descEl)descEl.textContent='Choose a project to import.';
   if(backBtn)backBtn.style.display='none';
   if(confBtn)confBtn.style.display='none';
-  var _rw=document.getElementById('importReplaceWrap');if(_rw)_rw.style.display='none';
+  var _rw=document.getElementById('importReplaceWrap');if(_rw)_rw.style.display='none';try{document.getElementById('importDestWrap').style.display='block'}catch(e){};
   var projs=loadProjs();
   var h='';
   if(!projs.length){
@@ -6703,6 +6764,26 @@ document.getElementById('importReplaceWrap').addEventListener('click',function(e
   c.textContent=!on?'✓':'';
 });
 document.getElementById('importCancelBtn').addEventListener('click',function(){closeOv('importOverlay');});
+
+// ── Import destination: current estimate vs a new variant of the same project ──
+window._impDest='current';
+(function(){
+  var btns=document.querySelectorAll('.imp-dest');
+  for(var i=0;i<btns.length;i++){
+    (function(b){
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        window._impDest=b.getAttribute('data-dest');
+        for(var j=0;j<btns.length;j++){
+          var on=btns[j]===b;
+          btns[j].style.background=on?'#1a6b2a':'#1e2530';
+          btns[j].style.borderColor=on?'#1a6b2a':'#2a3340';
+          btns[j].style.color=on?'#fff':'#9ca3af';
+        }
+      });
+    })(btns[i]);
+  }
+})();
 document.getElementById('importConfirmBtn').addEventListener('click',function(e){e.stopPropagation();doImport();});
 
 // CONTRACT TABS
