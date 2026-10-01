@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20260930-0002</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261001-0215</span></div>
 </div>
 
 <div id="field-app">
@@ -740,19 +740,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
         <span style="font-size:10px;color:#a16207;font-weight:700" id="matCostTaxTag">INTERNAL · NOT ON PDF</span>
       </div>
       <div id="matCostRows" style="padding:4px 14px"></div>
-      <div style="padding:10px 14px;border-top:1px solid #78350f22;background:#0f0a0333">
-        <div style="font-size:11px;color:#a16207;font-weight:700;letter-spacing:.05em;margin-bottom:8px">QUANTIDADE MANUAL</div>
-        <div style="display:flex;gap:10px">
-          <div style="flex:1">
-            <div style="font-size:11.5px;color:#fde68a;margin-bottom:4px">Caulking (tubos)</div>
-            <input id="qtyCaulk" type="text" inputmode="decimal" placeholder="0" style="width:100%;background:#0d0d0d;border:1px solid #78350f;border-radius:8px;color:#fbbf24;padding:9px 11px;font-size:15px;font-weight:700;outline:none;text-align:center">
-          </div>
-          <div style="flex:1">
-            <div style="font-size:11.5px;color:#fde68a;margin-bottom:4px">Window &amp; door (latas)</div>
-            <input id="qtyWdCan" type="text" inputmode="decimal" placeholder="0" style="width:100%;background:#0d0d0d;border:1px solid #78350f;border-radius:8px;color:#fbbf24;padding:9px 11px;font-size:15px;font-weight:700;outline:none;text-align:center">
-          </div>
-        </div>
-      </div>
+      <div id="matManualBox" style="display:none;padding:10px 14px;border-top:1px solid #78350f22;background:#0f0a0333"></div>
       <div style="padding:10px 14px;border-top:1px solid #78350f;display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:13px;font-weight:800;color:#fbbf24">Total material</span>
         <span style="font-size:17px;font-weight:800;color:#fbbf24" id="matCostTotal">$0.00</span>
@@ -4730,9 +4718,41 @@ function renderQuote(){
 
   // ── Material cost panel (internal only; never printed on the customer PDF) ──
   try{
-    var _qc=document.getElementById('qtyCaulk'), _qw=document.getElementById('qtyWdCan');
-    if(_qc && document.activeElement!==_qc) _qc.value = quoteInfo.qtyCaulk || '';
-    if(_qw && document.activeElement!==_qw) _qw.value = quoteInfo.qtyWdCan || '';
+    // Build the manual-quantity fields for the materials this job actually mentions.
+    try{
+      var _mbox=document.getElementById('matManualBox');
+      if(_mbox){
+        var _rel=relevantManualMats(estItems);
+        if(!_rel.length){ _mbox.style.display='none'; }
+        else{
+          _mbox.style.display='block';
+          var _focusId=(document.activeElement&&document.activeElement.id)||'';
+          var _h='<div style="font-size:11px;color:#a16207;font-weight:700;letter-spacing:.05em;margin-bottom:8px">QUANTIDADE MANUAL</div><div style="display:flex;flex-wrap:wrap;gap:10px">';
+          _rel.forEach(function(m){
+            _h+='<div style="flex:1 1 44%;min-width:120px">'+
+                '<div style="font-size:11.5px;color:#fde68a;margin-bottom:4px">'+m.label+'</div>'+
+                '<input id="mq_'+m.qk+'" data-qk="'+m.qk+'" class="mq-in" type="text" inputmode="decimal" placeholder="0" '+
+                'value="'+(quoteInfo[m.qk]||'')+'" '+
+                'style="width:100%;background:#0d0d0d;border:1px solid #78350f;border-radius:8px;color:#fbbf24;padding:9px 11px;font-size:15px;font-weight:700;outline:none;text-align:center"></div>';
+          });
+          _h+='</div>';
+          // Don't rebuild while the user is typing in one of these fields.
+          if(_focusId.indexOf('mq_')!==0){
+            _mbox.innerHTML=_h;
+            var _ins=_mbox.querySelectorAll('.mq-in');
+            for(var _i=0;_i<_ins.length;_i++){
+              (function(el){
+                el.addEventListener('change',function(){
+                  quoteInfo[el.getAttribute('data-qk')]=parseFloat(el.value)||0;
+                  saveQI();
+                  if(typeof renderQuote==='function')renderQuote();
+                });
+              })(_ins[_i]);
+            }
+          }
+        }
+      }
+    }catch(e){ console.warn('manual mats:', e && e.message); }
     var _mu=computeMaterialUsage(estItems);
     var _box=document.getElementById('matCostBox');
     var _rows=document.getElementById('matCostRows');
@@ -6323,18 +6343,7 @@ document.getElementById('feCancelBtn').addEventListener('click',function(){close
 
 // ── Material cost inputs (Settings), built from MAT_COST_DEFS ──
 
-// ── Manual material quantities (per job) ──
-(function(){
-  [['qtyCaulk','qtyCaulk'],['qtyWdCan','qtyWdCan']].forEach(function(p){
-    var el=document.getElementById(p[0]);
-    if(!el)return;
-    el.addEventListener('change',function(){
-      quoteInfo[p[1]]=parseFloat(el.value)||0;
-      saveQI();
-      if(typeof renderQuote==='function')renderQuote();
-    });
-  });
-})();
+
 
 // ── Material Costs section: collapsed by default (18 rows is a lot of scrolling) ──
 (function(){
@@ -7337,8 +7346,44 @@ var MAT_COST_DEFS=[
   {k:'fb2',      label:'Foam Board 2"',      unit:'sheet'},
   {k:'ignBucket',label:'Ignition Barrier',   unit:'bucket'},
   {k:'caulkTube',label:'Caulking tube',      unit:'tube',  manual:true},
-  {k:'wdCan',    label:'Window & door can',  unit:'can',   manual:true}
+  {k:'wdCan',    label:'Window & door can',  unit:'can',   manual:true},
+  {k:'thermDome',label:'Thermal dome',       unit:'un',    manual:true},
+  {k:'baffle',   label:'Ventilation baffle', unit:'un',    manual:true},
+  {k:'exhWrap',  label:'Exhaust / pipe wrap',unit:'un',    manual:true},
+  {k:'dumpster', label:'Disposal / dumpster',unit:'un',    manual:true},
+  {k:'plywood',  label:'Plywood sheet',      unit:'sheet', manual:true}
 ];
+
+// Manual fields only show when the estimate actually mentions that work, so the
+// panel stays short instead of listing every possible extra on every job.
+var MANUAL_MATS=[
+  {k:'caulkTube',qk:'qtyCaulk',  label:'Caulking (tubos)',        words:['caulk','fire block','fireblock','air seal','airseal','seal']},
+  {k:'wdCan',    qk:'qtyWdCan',  label:'Window & door (latas)',   words:['window','door','janela','porta']},
+  {k:'thermDome',qk:'qtyDome',   label:'Thermal dome (un)',       words:['dome','attic entrance','hatch','scuttle']},
+  {k:'baffle',   qk:'qtyBaffle', label:'Baffles / vents (un)',    words:['baffle','vent','proper vent','soffit']},
+  {k:'exhWrap',  qk:'qtyExh',    label:'Exhaust / wrap (un)',     words:['exhaust','bathroom','pipe','duct','wrap']},
+  {k:'dumpster', qk:'qtyDump',   label:'Disposal (un)',           words:['removal','disposal','remove','demo','dumpster']},
+  {k:'plywood',  qk:'qtyPly',    label:'Plywood (chapas)',        words:['plywood','deck','platform','board walk','catwalk']}
+];
+window.MANUAL_MATS=MANUAL_MATS;
+
+// Which manual materials are relevant for the items on screen.
+function relevantManualMats(items){
+  var hay='';
+  (items||[]).forEach(function(it){
+    if(!it)return;
+    hay+=' '+String(it.name||'')+' '+String(it.notes||'')+' '+String(it.spec||'');
+  });
+  hay=hay.toLowerCase();
+  try{ hay=hay.normalize('NFD').replace(/[\u0300-\u036f]/g,''); }catch(e){}
+  var qi=(typeof quoteInfo!=='undefined'&&quoteInfo)?quoteInfo:{};
+  return MANUAL_MATS.filter(function(m){
+    if(Number(qi[m.qk])>0) return true;            // already filled: never hide it
+    for(var i=0;i<m.words.length;i++){ if(hay.indexOf(m.words[i])>=0) return true; }
+    return false;
+  });
+}
+window.relevantManualMats=relevantManualMats;
 window.MAT_COST_DEFS=MAT_COST_DEFS;
 
 window.matCost = window.matCost || {};
@@ -7439,9 +7484,13 @@ function computeMaterialUsage(items){
 
   // Manual quantities: caulking tubes and window/door cans, stored per job.
   var qi=(typeof quoteInfo!=='undefined'&&quoteInfo)?quoteInfo:{};
-  [['caulkTube','Caulking tube','tube',Number(qi.qtyCaulk)||0],
-   ['wdCan','Window & door can','can',Number(qi.qtyWdCan)||0]].forEach(function(m){
-    if(m[3]>0) add(m[0],m[1],m[3],m[2]);
+  MANUAL_MATS.forEach(function(m){
+    var q=Number(qi[m.qk])||0;
+    if(q>0){
+      var def=null;
+      for(var i=0;i<MAT_COST_DEFS.length;i++){ if(MAT_COST_DEFS[i].k===m.k){ def=MAT_COST_DEFS[i]; break; } }
+      add(m.k, def?def.label:m.label, q, def?def.unit:'un');
+    }
   });
 
   return {rows:rows,total:total};
