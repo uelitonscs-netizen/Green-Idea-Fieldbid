@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261001-0230</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261001-1747</span></div>
 </div>
 
 <div id="field-app">
@@ -749,9 +749,34 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
         <span style="font-size:13px;font-weight:800;color:#fbbf24">Total material</span>
         <span style="font-size:17px;font-weight:800;color:#fbbf24" id="matCostTotal">$0.00</span>
       </div>
-      <div id="matMarginRow" style="padding:9px 14px;border-top:1px solid #78350f;display:flex;align-items:center;justify-content:space-between;background:#0f0a03">
-        <span style="font-size:12px;color:#a16207;font-weight:700">Estimate minus material</span>
-        <span style="font-size:14px;font-weight:800;color:#4ade80" id="matMarginVal">$0.00</span>
+      <div style="padding:10px 14px;border-top:1px solid #78350f22;background:#0f0a0333">
+        <div style="font-size:11px;color:#a16207;font-weight:700;letter-spacing:.05em;margin-bottom:8px">MÃO DE OBRA</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <div style="flex:1"><div style="font-size:11px;color:#fde68a;margin-bottom:4px">Trabalhadores</div>
+            <input id="labWorkers" type="text" inputmode="decimal" placeholder="0" style="width:100%;background:#0d0d0d;border:1px solid #78350f;border-radius:8px;color:#fbbf24;padding:8px;font-size:15px;font-weight:700;outline:none;text-align:center"></div>
+          <div style="flex:1"><div style="font-size:11px;color:#fde68a;margin-bottom:4px">Horas (cada)</div>
+            <input id="labHours" type="text" inputmode="decimal" placeholder="0" style="width:100%;background:#0d0d0d;border:1px solid #78350f;border-radius:8px;color:#fbbf24;padding:8px;font-size:15px;font-weight:700;outline:none;text-align:center"></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1"><div style="font-size:11px;color:#fde68a;margin-bottom:4px">$/hora (média)</div>
+            <input id="labRate" type="text" inputmode="decimal" placeholder="0.00" style="width:100%;background:#0d0d0d;border:1px solid #78350f;border-radius:8px;color:#fbbf24;padding:8px;font-size:15px;font-weight:700;outline:none;text-align:center"></div>
+          <div style="flex:1"><div style="font-size:11px;color:#fde68a;margin-bottom:4px">Dias (overhead)</div>
+            <input id="labDays" type="text" inputmode="decimal" placeholder="0" style="width:100%;background:#0d0d0d;border:1px solid #78350f;border-radius:8px;color:#fbbf24;padding:8px;font-size:15px;font-weight:700;outline:none;text-align:center"></div>
+        </div>
+        <div id="labHint" style="font-size:10.5px;color:#a16207;margin-top:7px"></div>
+      </div>
+
+      <div style="padding:9px 14px;border-top:1px solid #78350f;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12.5px;color:#fde68a">Mão de obra</span>
+        <span style="font-size:14px;font-weight:700;color:#fbbf24" id="labCostVal">$0.00</span>
+      </div>
+      <div style="padding:9px 14px;border-top:1px solid #78350f22;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12.5px;color:#fde68a">Overhead</span>
+        <span style="font-size:14px;font-weight:700;color:#fbbf24" id="labOhVal">$0.00</span>
+      </div>
+      <div id="matMarginRow" style="padding:12px 14px;border-top:2px solid #78350f;display:flex;align-items:center;justify-content:space-between;background:#0f0a03">
+        <span style="font-size:13px;color:#fbbf24;font-weight:800">LUCRO ESTIMADO<br><span id="matMarginPct" style="font-size:10.5px;font-weight:600;color:#a16207"></span></span>
+        <span style="font-size:19px;font-weight:800;color:#4ade80" id="matMarginVal">$0.00</span>
       </div>
     </div>
 
@@ -820,6 +845,25 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
         <div class="inner"><span class="ico">📄</span><span class="lbl">Contract</span><span class="arr">›</span></div>
       </button>
     </div>
+    <div class="st-g">
+      <div class="st-t" id="ohHead" style="color:#fbbf24;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+        <span>🏭 Overhead & Labor</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <span id="ohDayTag" style="font-size:10.5px;font-weight:600;color:#a16207;letter-spacing:0"></span>
+          <span id="ohChev" style="font-size:13px;color:#a16207;transition:transform .15s">▼</span>
+        </span>
+      </div>
+      <div id="ohBody" style="display:none">
+        <div style="padding:2px 14px 10px;font-size:11.5px;color:#7d8590;line-height:1.5">
+          Mesma fórmula do WorkLog: mensal ÷ dias úteis ÷ equipes = custo por equipe/dia.
+        </div>
+        <div class="st-r"><span class="st-l">Overhead mensal <span style="color:#6b7280">$</span></span><input class="st-i" id="ohMonthly" type="text" inputmode="decimal"></div>
+        <div class="st-r"><span class="st-l">Dias úteis <span style="color:#6b7280">/ mês</span></span><input class="st-i" id="ohWorkDays" type="text" inputmode="decimal"></div>
+        <div class="st-r"><span class="st-l">Equipes</span><input class="st-i" id="ohTeams" type="text" inputmode="decimal"></div>
+        <div class="st-r"><span class="st-l">$/hora padrão <span style="color:#6b7280">média</span></span><input class="st-i" id="ohAvgRate" type="text" inputmode="decimal"></div>
+      </div>
+    </div>
+
     <div class="st-g">
       <div class="st-t" id="matCostHead" style="color:#fbbf24;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
         <span>📦 Material Costs</span>
@@ -4781,10 +4825,36 @@ function renderQuote(){
           var _t=loadMatTax();
           _tt.textContent = _t.on ? ('INCL. '+_t.rate+'% TAX · NOT ON PDF') : 'SEM IMPOSTO · NOT ON PDF';
         }
+        // Labor inputs (per job) — fill without stealing focus while typing.
+        var _lb=computeLabor();
+        [['labWorkers','labWorkers'],['labHours','labHours'],['labRate','labRate'],['labDays','labDays']].forEach(function(p){
+          var el=document.getElementById(p[0]);
+          if(el && document.activeElement!==el){
+            el.value = (p[0]==='labRate')
+              ? (quoteInfo.labRate || (loadLaborCfg().avgRate || ''))
+              : (quoteInfo[p[1]] || '');
+          }
+        });
+        var _hint=document.getElementById('labHint');
+        if(_hint){
+          _hint.textContent = _lb.manHours>0
+            ? (_lb.manHours+' horas-homem · overhead $'+_lb.ohPerDay.toFixed(2)+'/dia')
+            : ('overhead $'+_lb.ohPerDay.toFixed(2)+'/dia — preencha para ver o lucro');
+        }
+        var _lc=document.getElementById('labCostVal'); if(_lc)_lc.textContent='$'+_lb.labor.toFixed(2);
+        var _lo=document.getElementById('labOhVal');   if(_lo)_lo.textContent='$'+_lb.overhead.toFixed(2);
+
+        // Real profit: estimate − material − labor − overhead
         var _gt=parseFloat((document.getElementById('qTotal').textContent||'0').replace(/[^0-9.]/g,''))||0;
-        var _mg=_gt-_mu.total;
+        var _profit=_gt-_mu.total-_lb.total;
         var _mv=document.getElementById('matMarginVal');
-        if(_mv){ _mv.textContent='$'+_mg.toFixed(2); _mv.style.color=_mg>=0?'#4ade80':'#f87171'; }
+        if(_mv){ _mv.textContent='$'+_profit.toFixed(2); _mv.style.color=_profit>=0?'#4ade80':'#f87171'; }
+        var _mp=document.getElementById('matMarginPct');
+        if(_mp){
+          _mp.textContent = (_gt>0 && (_lb.total>0||_mu.total>0))
+            ? ('margem '+((_profit/_gt)*100).toFixed(0)+'%'+(_lb.total===0?' · sem mão de obra':''))
+            : '';
+        }
       }
     }
   }catch(e){ console.warn('material panel:', e && e.message); }
@@ -6398,6 +6468,52 @@ document.getElementById('feCancelBtn').addEventListener('click',function(){close
     }catch(e){ console.warn('price shortcut:', e && e.message); }
   });
 })();
+
+// ── Labor inputs (per job) ──
+(function(){
+  ['labWorkers','labHours','labRate','labDays'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    el.addEventListener('change',function(){
+      quoteInfo[id]=parseFloat(el.value)||0;
+      // Remember the rate as the default for the next job.
+      if(id==='labRate'){ window.laborCfg.avgRate=parseFloat(el.value)||0; saveLaborCfg(); }
+      saveQI();
+      if(typeof renderQuote==='function')renderQuote();
+    });
+  });
+})();
+
+// ── Overhead & labor settings ──
+(function(){
+  var L=loadLaborCfg();
+  var map={ohMonthly:'monthlyOH', ohWorkDays:'workDays', ohTeams:'teams', ohAvgRate:'avgRate'};
+  function tag(){
+    var t=document.getElementById('ohDayTag');
+    if(t)t.textContent='$'+dailyOverhead().toFixed(2)+'/equipe/dia';
+  }
+  for(var id in map){
+    (function(id,key){
+      var el=document.getElementById(id);
+      if(!el)return;
+      el.value = L[key] || '';
+      el.addEventListener('change',function(){
+        window.laborCfg[key]=parseFloat(el.value)||0;
+        saveLaborCfg(); tag();
+        if(typeof renderQuote==='function')renderQuote();
+      });
+    })(id,map[id]);
+  }
+  var head=document.getElementById('ohHead'), body=document.getElementById('ohBody'), chev=document.getElementById('ohChev');
+  if(head&&body){
+    head.addEventListener('click',function(){
+      var open=body.style.display!=='none';
+      body.style.display=open?'none':'block';
+      if(chev)chev.style.transform=open?'':'rotate(180deg)';
+    });
+  }
+  tag();
+})();
 function buildMatCostSettings(){
   var box=document.getElementById('matCostSettings');
   if(!box)return;
@@ -7355,6 +7471,47 @@ function getCelLookup(rVal, isDense){
   }
   return best;
 }
+
+
+// ══════ MAO DE OBRA + OVERHEAD ══════
+// Overhead mirrors WorkLog exactly: monthly ÷ working days ÷ teams = per team/day.
+window.laborCfg = {avgRate:0, monthlyOH:21314.48, workDays:22, teams:2};
+function loadLaborCfg(){
+  try{
+    var s=localStorage.getItem('fb6_labor');
+    if(s){ var o=JSON.parse(s); for(var k in o) if(o[k]!==undefined) window.laborCfg[k]=Number(o[k])||0; }
+  }catch(e){}
+  return window.laborCfg;
+}
+function saveLaborCfg(){
+  try{ localStorage.setItem('fb6_labor',JSON.stringify(window.laborCfg)); }catch(e){}
+  if(typeof save==='function')save();
+}
+function dailyOverhead(){
+  var L=loadLaborCfg();
+  var wd=Number(L.workDays)||22, tm=Number(L.teams)||1;
+  if(wd<=0||tm<=0)return 0;
+  return Math.round((Number(L.monthlyOH)||0)/wd/tm*100)/100;
+}
+window.dailyOverhead=dailyOverhead;
+
+// Per-job labor figures live in quoteInfo so each estimate keeps its own.
+function computeLabor(){
+  var L=loadLaborCfg();
+  var qi=(typeof quoteInfo!=='undefined'&&quoteInfo)?quoteInfo:{};
+  var workers=Number(qi.labWorkers)||0;
+  var hours=Number(qi.labHours)||0;      // hours per worker
+  var rate=(Number(qi.labRate)||Number(L.avgRate)||0);
+  var days=Number(qi.labDays)||0;
+  var manHours=workers*hours;
+  var laborCost=manHours*rate;
+  var ohPerDay=dailyOverhead();
+  var ohCost=days*ohPerDay;
+  return {workers:workers, hours:hours, rate:rate, days:days,
+          manHours:manHours, labor:laborCost, ohPerDay:ohPerDay, overhead:ohCost,
+          total:laborCost+ohCost};
+}
+window.computeLabor=computeLabor;
 
 // ══════ CUSTO DE MATERIAL ══════
 // Unit costs are stored per SKU (R-value / thickness) so they can be kept accurate.
