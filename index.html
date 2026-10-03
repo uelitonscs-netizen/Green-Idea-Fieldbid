@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261002-0112</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261002-1600</span></div>
 </div>
 
 <div id="field-app">
@@ -718,6 +718,8 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <div class="q-info">
       <div class="q-row"><span class="q-lbl">Client</span><span class="q-val tap" id="qClient">Tap to add</span></div>
       <div class="q-row"><span class="q-lbl">Address</span><span class="q-val tap" id="qAddress">Tap to add</span></div>
+      <div class="q-row"><span class="q-lbl">Phone</span><span class="q-val tap" id="qPhone">Tap to add</span></div>
+      <div class="q-row"><span class="q-lbl">Email</span><span class="q-val tap" id="qEmail">Tap to add</span></div>
       <div class="q-row"><span class="q-lbl">Date</span><span class="q-val" id="qDate"></span></div>
       <div class="q-row"><span class="q-lbl">Quote #</span><span class="q-val" id="qNumber"></span></div>
       <div class="q-row"><span class="q-lbl">Markup</span><span class="q-val tap" id="qMarkup">Tap to set</span></div>
@@ -4766,6 +4768,7 @@ function renderQuote(){
   (function(){var _wb=document.getElementById('sendWLBtn');if(_wb){_wb.textContent='🔗 Send to WorkLog';_wb.disabled=false;_wb.style.opacity='1';_wb.style.background='#1a6b2a';}})();
   document.getElementById('qClient').textContent=quoteInfo.client||'Tap to add';
   document.getElementById('qAddress').textContent=quoteInfo.address||'Tap to add';
+  (function(){var _ph=document.getElementById('qPhone'),_em=document.getElementById('qEmail');if(_ph)_ph.textContent=quoteInfo.phone||'Tap to add';if(_em)_em.textContent=quoteInfo.email||'Tap to add';})();
   document.getElementById('qSub').textContent=fmt(totals.sub);
   document.getElementById('qTax').textContent=fmt(totals.tax);
   document.getElementById('qTotal').textContent=fmt(totals.total);
@@ -6366,6 +6369,8 @@ document.getElementById('lb').addEventListener('click',function(e){if(e.target==
 // QUOTE FIELDS
 document.getElementById('qClient').addEventListener('click',function(){openFE('client','Client Name',quoteInfo.client);});
 document.getElementById('qAddress').addEventListener('click',function(){openFE('address','Job Address',quoteInfo.address);});
+document.getElementById('qPhone').addEventListener('click',function(){openFE('phone','Client Phone',quoteInfo.phone);});
+document.getElementById('qEmail').addEventListener('click',function(){openFE('email','Client Email',quoteInfo.email);});
 var _feMkType='pct';
 function _setFeMkType(t){
   _feMkType=t;
@@ -6410,6 +6415,14 @@ function openFE(field,title,val){
   var _numeric={markup:1,discount:1,tax:1};
   if(_numeric[field]){
     _fi.setAttribute('inputmode','decimal');
+    _fi.setAttribute('type','text');
+    _fi.setAttribute('autocapitalize','off');
+  } else if(field==='phone'){
+    _fi.setAttribute('inputmode','tel');
+    _fi.setAttribute('type','text');
+    _fi.setAttribute('autocapitalize','off');
+  } else if(field==='email'){
+    _fi.setAttribute('inputmode','email');
     _fi.setAttribute('type','text');
     _fi.setAttribute('autocapitalize','off');
   } else {
@@ -7931,6 +7944,8 @@ function sendToWorkLog(){
   _wlDb.collection('projects').add({
     name:client||address,
     client:client||null,
+    clientPhone:(quoteInfo&&quoteInfo.phone)?String(quoteInfo.phone).trim():null,
+    clientEmail:(quoteInfo&&quoteInfo.email)?String(quoteInfo.email).trim():null,
     desc:address,
     budget:budget,
     overhead:0,
