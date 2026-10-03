@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261002-1700</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261002-1800</span></div>
 </div>
 
 <div id="field-app">
@@ -938,7 +938,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
         <button class="btn ba" id="createProjBtn" style="flex:none;width:80px;height:50px;font-size:13px">Create</button>
       </div>
     </div>
-    <div class="fg" id="projListWrap"><label class="fl">Saved Projects</label><div id="projList" style="max-height:300px;overflow-y:auto"></div></div>
+    <div class="fg" id="projListWrap"><label class="fl">Saved Projects</label><div style="position:relative;margin-bottom:8px"><input id="projSearch" type="text" inputmode="search" autocomplete="off" autocapitalize="off" placeholder="🔍 Search name, address, phone or email" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #2a3340;border-radius:10px;color:#f0f0f0;padding:11px 34px 11px 12px;font-size:14px;outline:none"><button id="projSearchClear" type="button" title="Clear" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#7d8590;font-size:18px;padding:4px 8px;cursor:pointer">×</button></div><div id="projSearchCount" style="display:none;font-size:11px;color:#7d8590;margin:0 0 8px 2px"></div><div id="projList" style="max-height:300px;overflow-y:auto"></div></div>
     <div class="btn-row"><button class="btn bs" id="projCloseBtn">Close</button></div>
   </div>
 </div>
@@ -2662,6 +2662,7 @@ function openProjModal(){
   if(w) w.style.display='';
   var t=document.getElementById('projModalTitle');
   if(t) t.textContent='Projects';
+  if(window._resetProjSearch) window._resetProjSearch();
   renderProjList();
   openOv('projOverlay');
 }
@@ -2672,6 +2673,7 @@ function openProjList(){
   if(w) w.style.display='';
   var t=document.getElementById('projModalTitle');
   if(t) t.textContent='Projects';
+  if(window._resetProjSearch) window._resetProjSearch();
   renderProjList();
   openOv('projOverlay');
 }
@@ -2805,10 +2807,36 @@ function toggleProjDone(pid){
 }
 window.toggleProjDone=toggleProjDone;
 
+function _projSearchNorm(s){
+  s=String(s||'').toLowerCase();
+  try{ s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,''); }catch(e){}
+  return s;
+}
+// Matches name, address, client phone and client email (accent/case-insensitive;
+// phone also matches by digits only, so "5085" finds "(508) 555-...").
+function _projMatchesSearch(p,q){
+  var nq=_projSearchNorm(q).trim(); if(!nq) return true;
+  var qi=(p&&p.quoteInfo)?p.quoteInfo:{};
+  var hay=[p.name,p.address,qi.client,qi.address,qi.phone,qi.email];
+  for(var i=0;i<hay.length;i++){ if(_projSearchNorm(hay[i]).indexOf(nq)>=0) return true; }
+  var dq=nq.replace(/[^0-9]/g,'');
+  if(dq.length>=3){ var dp=String(qi.phone||'').replace(/[^0-9]/g,''); if(dp.indexOf(dq)>=0) return true; }
+  return false;
+}
+window._projMatchesSearch=_projMatchesSearch;
 function renderProjList(){
   var projs=loadProjs();
   var list=document.getElementById('projList');
+  var _cnt=document.getElementById('projSearchCount');
+  if(_cnt){ _cnt.style.display='none'; _cnt.textContent=''; }
   if(!projs.length){list.innerHTML='<div style="padding:14px;text-align:center;color:#4d5560;font-size:13px">No projects yet</div>';return;}
+  var _pq=(window._projSearchQ||'').trim();
+  if(_pq){
+    var _tot=projs.length;
+    projs=projs.filter(function(p){ return _projMatchesSearch(p,_pq); });
+    if(_cnt){ _cnt.style.display='block'; _cnt.textContent=projs.length+' of '+_tot+' project'+(_tot!==1?'s':''); }
+    if(!projs.length){ list.innerHTML='<div style="padding:14px;text-align:center;color:#4d5560;font-size:13px">No project matches "'+esc(_pq)+'"</div>'; return; }
+  }
   var h='';
   for(var i=0;i<projs.length;i++){
     var p=projs[i];var active=currentProj&&currentProj.id===p.id;
@@ -8050,6 +8078,31 @@ function _fbInitApp(){
       });
     }
   }catch(e){ console.warn('job search wiring failed:', e); }
+  // Projects list: live search by name/address/phone/email
+  try{
+    var _ps=document.getElementById('projSearch');
+    var _pc=document.getElementById('projSearchClear');
+    window._resetProjSearch=function(){
+      window._projSearchQ='';
+      if(_ps) _ps.value='';
+      if(_pc) _pc.style.display='none';
+    };
+    if(_ps){
+      _ps.addEventListener('input',function(){
+        window._projSearchQ=_ps.value;
+        if(_pc)_pc.style.display=_ps.value?'block':'none';
+        renderProjList();
+      });
+      _ps.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); _ps.blur(); } });
+    }
+    if(_pc){
+      _pc.addEventListener('click',function(){
+        window._resetProjSearch();
+        renderProjList();
+        if(_ps)_ps.focus();
+      });
+    }
+  }catch(e){ console.warn('project search wiring failed:', e); }
   try{
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(function(e){ console.log('SW:', e); });
