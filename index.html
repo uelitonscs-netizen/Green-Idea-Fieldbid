@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261003-1400</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261003-1500</span></div>
 </div>
 
 <div id="field-app">
@@ -2906,6 +2906,8 @@ function renderProjList(){
     else if(act==='check')toggleProjDone(pid);
   });
 }
+// The search box is wired outside this scope: expose the function like the others.
+window.renderProjList=renderProjList;
 function openEditProjModal(pid){
   var projs=loadProjs();
   var p=projs.find(function(x){return x.id===pid;});
@@ -7792,6 +7794,13 @@ function isCelDensePack(nameStr, notesStr){
   var t=((nameStr||'')+' '+(notesStr||'')).toLowerCase();
   return t.indexOf('dense')>=0||t.indexOf('dense pack')>=0||t.indexOf('wall')>=0||t.indexOf('cavity')>=0||t.indexOf('enclosed')>=0;
 }
+// Phone/email for WorkLog: quoteInfo first, else what the Quote tab shows (same fallback
+// client/address use, in case window.quoteInfo is a stale copy).
+function _wlQiOrScreen(field,elId){
+  var v=(quoteInfo&&quoteInfo[field])?String(quoteInfo[field]).trim():'';
+  if(!v){ var el=document.getElementById(elId); var t=el?el.textContent.trim():''; if(t&&t!=='Tap to add') v=t; }
+  return v||null;
+}
 function sendToWorkLog(){
   // ── GUARD CHECKS ──
   var cEl=document.getElementById('qClient');
@@ -8021,8 +8030,8 @@ function sendToWorkLog(){
   _wlDb.collection('projects').add({
     name:client||address,
     client:client||null,
-    clientPhone:(quoteInfo&&quoteInfo.phone)?String(quoteInfo.phone).trim():null,
-    clientEmail:(quoteInfo&&quoteInfo.email)?String(quoteInfo.email).trim():null,
+    clientPhone:_wlQiOrScreen('phone','qPhone'),
+    clientEmail:_wlQiOrScreen('email','qEmail'),
     desc:address,
     budget:budget,
     overhead:0,
@@ -8133,14 +8142,14 @@ function _fbInitApp(){
       _ps.addEventListener('input',function(){
         window._projSearchQ=_ps.value;
         if(_pc)_pc.style.display=_ps.value?'block':'none';
-        renderProjList();
+        if(typeof window.renderProjList==='function') window.renderProjList();
       });
       _ps.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); _ps.blur(); } });
     }
     if(_pc){
       _pc.addEventListener('click',function(){
         window._resetProjSearch();
-        renderProjList();
+        if(typeof window.renderProjList==='function') window.renderProjList();
         if(_ps)_ps.focus();
       });
     }
