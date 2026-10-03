@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261003-1500</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261003-1600</span></div>
 </div>
 
 <div id="field-app">
@@ -2824,7 +2824,7 @@ function toggleProjDone(pid){
   }
   saveProjs(projs);
   if(currentProj&&currentProj.id===pid){currentProj.done=!currentProj.done;}
-  renderProjList();
+  renderProjList(true);   // keep the scroll position: the list is rebuilt, which would jump to the top
 }
 window.toggleProjDone=toggleProjDone;
 
@@ -2863,9 +2863,10 @@ function _projPhotoCount(p){
   }
   return n;
 }
-function renderProjList(){
+function renderProjList(keepScroll){
   var projs=loadProjs();
   var list=document.getElementById('projList');
+  var _keepTop=(keepScroll===true&&list)?list.scrollTop:0;
   var _cnt=document.getElementById('projSearchCount');
   if(_cnt){ _cnt.style.display='none'; _cnt.textContent=''; }
   if(!projs.length){list.innerHTML='<div style="padding:14px;text-align:center;color:#4d5560;font-size:13px">No projects yet</div>';return;}
@@ -2894,6 +2895,7 @@ function renderProjList(){
   }
   list.innerHTML=h;
   var newList=list.cloneNode(true);list.parentNode.replaceChild(newList,list);
+  if(_keepTop) newList.scrollTop=_keepTop;
   newList.addEventListener('click',function(e){
     var btn=e.target;
     while(btn&&btn!==newList){if(btn.tagName==='BUTTON'&&btn.getAttribute('data-act'))break;btn=btn.parentNode;}
