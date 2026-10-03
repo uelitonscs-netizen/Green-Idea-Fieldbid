@@ -632,7 +632,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261002-1600</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261002-1700</span></div>
 </div>
 
 <div id="field-app">
@@ -928,6 +928,10 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <div class="fg" id="newProjForm">
       <label class="fl">New Project Name / Client</label>
       <input class="fi af" id="newProjName" type="text" placeholder="e.g. Smith Residence" style="margin-bottom:8px">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <div style="flex:1;min-width:0"><label class="fl">Phone</label><input class="fi af" id="newProjPhone" type="text" inputmode="tel" autocapitalize="off" placeholder="(508) 555-0000" autocomplete="off" style="width:100%;box-sizing:border-box"></div>
+        <div style="flex:1;min-width:0"><label class="fl">Email</label><input class="fi af" id="newProjEmail" type="text" inputmode="email" autocapitalize="off" placeholder="client@email.com" autocomplete="off" style="width:100%;box-sizing:border-box"></div>
+      </div>
       <label class="fl">Address</label>
       <div style="display:flex;gap:8px">
         <input class="fi af" id="newProjAddress" type="text" placeholder="e.g. 8 Farm St, Dover MA" style="flex:1" autocomplete="off">
@@ -2874,17 +2878,20 @@ function openEditProjModal(pid){
 function createProj(){
   var name=document.getElementById('newProjName').value.trim();
   var address=document.getElementById('newProjAddress').value.trim();
+  var _npPh=document.getElementById('newProjPhone'), _npEm=document.getElementById('newProjEmail');
+  var phone=_npPh?_npPh.value.trim():'', email=_npEm?_npEm.value.trim():'';
   if(!name){toast('Enter a project name');return;}
   if(currentProj)saveProjAreas();
   var projs=loadProjs();
-  var proj={id:'p_'+Date.now(),name:name,address:address||'',areas:[],estItems:[],quoteInfo:{client:name,address:address||''},created:new Date().toLocaleDateString('en-US')};
+  var proj={id:'p_'+Date.now(),name:name,address:address||'',areas:[],estItems:[],quoteInfo:{client:name,address:address||'',phone:phone,email:email},created:new Date().toLocaleDateString('en-US')};
   projs.unshift(proj);saveProjs(projs);
   currentProj=proj;
   fieldAreas=[];window.fieldAreas=fieldAreas;
   estItems=[];window.estItems=estItems;
-  quoteInfo={client:name,address:address||''};window.quoteInfo=quoteInfo;
+  quoteInfo={client:name,address:address||'',phone:phone,email:email};window.quoteInfo=quoteInfo;
   document.getElementById('newProjName').value='';
   document.getElementById('newProjAddress').value='';
+  if(_npPh)_npPh.value=''; if(_npEm)_npEm.value='';
   saveEI();
   updateProjHeader();renderFA();renderFWO();renderEst();renderQuote();
   closeOv('projOverlay');
