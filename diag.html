@@ -1,139 +1,76 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Diagnóstico WorkLog (site)</title>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FieldBid · Diagnóstico de fotos</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:sans-serif;background:#0a0a0a;color:#f0f0f0;padding:20px;min-height:100vh}
-.box{background:#111;border:1px solid #222;border-radius:16px;padding:24px;max-width:520px;margin:0 auto}
-.logo{font-size:20px;font-weight:800;margin-bottom:4px}.logo span{color:#f0a02c}
-.sub{color:#666;font-size:13px;margin-bottom:18px}
-.btn{width:100%;background:#f0a02c;color:#000;border:none;border-radius:8px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:16px}
-.btn:disabled{opacity:.5}
-#log{font-size:13px;line-height:1.9;font-family:monospace;word-break:break-word}
-.ok{color:#4ade80}.err{color:#f87171}.wait{color:#94a3b8}.info{color:#60a5fa}
-.result{margin-top:18px;padding:14px;border-radius:8px;font-size:13px;line-height:1.7;display:none}
-.result.show{display:block}
-.rgood{background:#12301c;border:1px solid #4ade80;color:#a7f3c0}
-.rbad{background:#3a1414;border:1px solid #f87171;color:#fca5a5}
-</style></head>
-<body>
-<div class="box">
-  <div class="logo">Field<span>Bid</span> · Diagnóstico</div>
-  <div class="sub">Testa o envio para o WorkLog e mostra o erro exato</div>
-  <button class="btn" id="run">▶ Rodar diagnóstico</button>
-  <div id="log"></div>
-  <div class="result" id="result"></div>
-</div>
+body{font-family:system-ui,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:14px;font-size:13px}
+h1{font-size:17px;margin:0 0 2px}.sub{color:#7d8590;font-size:12px;margin-bottom:12px}
+.box{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:12px;margin-bottom:12px}
+.box h2{font-size:13px;margin:0 0 8px;color:#f0a02c;text-transform:uppercase;letter-spacing:.5px}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:5px 4px;border-bottom:1px solid #21262d;text-align:left}th{color:#7d8590;font-weight:600}
+.r{text-align:right;font-variant-numeric:tabular-nums}.ok{color:#3fb950}.bad{color:#f85149;font-weight:700}.warn{color:#f0a02c}
+.bar{height:10px;border-radius:99px;background:#21262d;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%}
+</style></head><body>
+<h1>FieldBid · Diagnóstico de fotos</h1>
+<div class="sub">Só leitura. Não altera nenhum dado. Tire uma foto desta tela e mande para o Claude.</div>
+<div class="box" id="b1"><h2>1 · Espaço do navegador</h2><div id="s1">Calculando…</div></div>
+<div class="box" id="b2"><h2>2 · Fotos no celular (FieldBid)</h2><div id="s2">Lendo…</div></div>
+<div class="box" id="b3"><h2>3 · Fotos na nuvem</h2><div id="s3">Conectando…</div></div>
 <script>
-var logEl=document.getElementById('log');
-var resEl=document.getElementById('result');
-function L(m,c){logEl.innerHTML+='<div class="'+(c||'wait')+'">'+m+'</div>';}
-function show(html,good){resEl.className='result show '+(good?'rgood':'rbad');resEl.innerHTML=html;}
-
-document.getElementById('run').addEventListener('click',function(){
-  var b=this; b.disabled=true; b.textContent='⏳ Testando...';
-  logEl.innerHTML=''; resEl.className='result';
-  var testId=null;
-
-  L('1️⃣ Iniciando Firebase...');
-  try{
-    firebase.initializeApp({
-      apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",
-      authDomain:"work-log-5aa9f.firebaseapp.com",
-      projectId:"work-log-5aa9f",
-      storageBucket:"work-log-5aa9f.firebasestorage.app",
-      messagingSenderId:"919924820811",
-      appId:"1:919924820811:web:00460b91d51023d718b6ce"
-    });
-    L('   ✅ Firebase iniciado','ok');
-  }catch(e){
-    L('   ❌ '+e.message,'err');
-    show('<b>Falhou ao iniciar o Firebase.</b><br>'+e.message,false);
-    b.disabled=false;b.textContent='▶ Tentar de novo';return;
-  }
-
-  var db=firebase.firestore();
-  L('2️⃣ Verificando conexão de rede...');
-  L('   Navegador diz: '+(navigator.onLine?'ONLINE ✅':'OFFLINE ❌'), navigator.onLine?'ok':'err');
-  L('   Endereço: '+location.protocol+'//'+location.host,'info');
-  if(location.protocol!=='https:'&&location.protocol!=='http:'){
-    L('   ❌ Este endereço não é autorizado pelo Firebase','err');
-    show('<b>Endereço inválido para o teste.</b><br>Abra esta página pelo endereço do site (https://...), não pelo arquivo baixado.',false);
-    b.disabled=false;b.textContent='▶ Tentar de novo';return;
-  }
-
-  L('3️⃣ Autenticando (anônimo)...');
-  var authTimer=setTimeout(function(){
-    L('   ⚠️ Autenticação demorando mais de 15s','err');
-    show('<b>A autenticação não respondeu.</b><br>Isso costuma ser conexão bloqueada ou instável. Teste em outra rede (dados móveis vs Wi-Fi).',false);
-    b.disabled=false;b.textContent='▶ Tentar de novo';
-  },15000);
-
-  firebase.auth().signInAnonymously()
-  .then(function(cred){
-    clearTimeout(authTimer);
-    L('   ✅ Autenticado (uid: '+(cred.user?cred.user.uid.slice(0,10)+'...':'?')+')','ok');
-
-    L('4️⃣ Testando LEITURA da coleção "projects"...');
-    return db.collection('projects').limit(1).get();
-  })
-  .then(function(snap){
-    L('   ✅ Leitura OK ('+snap.size+' doc lido)','ok');
-
-    L('5️⃣ Testando ESCRITA em "projects"...');
-    var writeTimer=setTimeout(function(){
-      L('   ⚠️ Escrita sem resposta em 15s','err');
-      show('<b>A escrita ficou pendente.</b><br>O Firestore enfileirou o dado mas não conseguiu confirmar com o servidor. Normalmente é conexão instável — o projeto pode aparecer no WorkLog quando a rede melhorar.',false);
-      b.disabled=false;b.textContent='▶ Tentar de novo';
-    },15000);
-
-    return db.collection('projects').add({
-      name:'__TESTE_DIAGNOSTICO__',
-      client:'teste',
-      desc:'pode apagar',
-      budget:0,
-      status:'active',
-      source:'diagnostic',
-      createdAt:new Date().toISOString()
-    }).then(function(ref){
-      clearTimeout(writeTimer);
-      testId=ref.id;
-      L('   ✅ Escrita OK (id: '+ref.id.slice(0,10)+'...)','ok');
-
-      L('6️⃣ Limpando o registro de teste...');
-      return db.collection('projects').doc(ref.id).delete();
-    });
-  })
-  .then(function(){
-    L('   ✅ Teste removido','ok');
-    L('');
-    L('✅ TUDO FUNCIONANDO','ok');
-    show('<b>O envio para o WorkLog está funcionando.</b><br><br>Se o app ainda não envia, o problema não é a conexão nem as permissões — é algo no app antes do envio. Me mande o que aparece na tela ao tocar no botão.',true);
-    b.disabled=false;b.textContent='▶ Rodar de novo';
-  })
-  .catch(function(err){
-    clearTimeout(authTimer);
-    var code=(err&&err.code)||'';
-    var msg=(err&&err.message)||String(err);
-    L('   ❌ ERRO: '+code,'err');
-    L('   '+msg,'err');
-    L('');
-    var diag='<b>Erro encontrado:</b><br><code>'+code+'</code><br><br>'+msg+'<br><br>';
-    if(/permission-denied|insufficient/i.test(code+msg)){
-      diag+='<b>O que significa:</b> as regras de segurança do Firebase estão bloqueando a gravação na coleção <code>projects</code>. É preciso liberar essa coleção no console do Firebase.';
-    } else if(/unavailable|network|offline/i.test(code+msg)){
-      diag+='<b>O que significa:</b> sem conexão com o servidor do Firebase. Teste em outra rede.';
-    } else if(/not-found/i.test(code+msg)){
-      diag+='<b>O que significa:</b> a coleção ou o projeto do Firebase não foi encontrado.';
-    } else {
-      diag+='Me mande esta mensagem que eu identifico a causa.';
-    }
-    show(diag,false);
-    b.disabled=false;b.textContent='▶ Tentar de novo';
+function each(a,f){ for(var i=0;i<a.length;i++) f(a[i],i); }
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function kb(n){return n>=1048576?(n/1048576).toFixed(2)+' MB':Math.round(n/1024)+' KB';}
+function setH(id,h){document.getElementById(id).innerHTML=h;}
+// ── 1. storage usage (chars ×2 = bytes, as browsers store UTF-16) ──
+var groups={}, total=0, keys=[];
+for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i), v=localStorage.getItem(k)||''; var b=(k.length+v.length)*2; total+=b; keys.push([k,b]);
+  var g=/^fb6_/.test(k)?'FieldBid':(/^wl_/.test(k)?'WorkLog':(/^ff_|finance/i.test(k)?'FinanceFlow':(/^gi|maint/i.test(k)?'GI Maintenance':(/faz/i.test(k)?'Fazenda':'Outros')))); groups[g]=(groups[g]||0)+b; }
+keys.sort(function(a,b){return b[1]-a[1];});
+// free space probe: write a temporary key in growing blocks, then remove it
+var free=0, probeKey='__diag_probe__', chunk='x'.repeat(102400);
+try{ var s=''; for(var t=0;t<120;t++){ s+=chunk; localStorage.setItem(probeKey,s); free=s.length*2; } }catch(e){}
+try{ localStorage.removeItem(probeKey); }catch(e){}
+var cap=total+free, pct=Math.min(100,100*total/cap);
+var h='<div>Usado: <b>'+kb(total)+'</b> · Livre: <b class="'+(free<307200?'bad':free<1048576?'warn':'ok')+'">'+(free>=12288000?'mais de 12 MB':kb(free))+'</b></div>';
+h+='<div class="bar"><i style="width:'+pct.toFixed(1)+'%;background:'+(pct>92?'#f85149':pct>75?'#f0a02c':'#3fb950')+'"></i></div><table><tr><th>App</th><th class="r">Ocupa</th></tr>';
+each(Object.keys(groups).sort(function(a,b){return groups[b]-groups[a];}),function(g){ h+='<tr><td>'+g+'</td><td class="r">'+kb(groups[g])+'</td></tr>'; });
+h+='</table><div class="sub" style="margin-top:8px">Maiores itens:</div><table>'; each(keys.slice(0,6),function(k){ h+='<tr><td>'+esc(k[0])+'</td><td class="r">'+kb(k[1])+'</td></tr>'; }); h+='</table>';
+setH('s1',h);
+// ── 2. photos stored on this phone ──
+function countPh(arr){ var n=0,c=0; each(arr||[],function(o){ if(o&&Array.isArray(o.photos)) n+=o.photos.length; if(o&&o._phN) c+=o._phN; }); return [n,c]; }
+var projs=[]; try{ projs=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
+var fa=[],ei=[],qi={}; try{fa=JSON.parse(localStorage.getItem('fb6_fa')||'[]');}catch(e){} try{ei=JSON.parse(localStorage.getItem('fb6_ei')||'[]');}catch(e){} try{qi=JSON.parse(localStorage.getItem('fb6_qi')||'{}');}catch(e){}
+var local={};
+var h2='<table><tr><th>Projeto</th><th class="r">Fotos</th><th class="r">Deveria ter</th></tr>', tl=0;
+each(projs,function(p){ if(!p) return; var a=countPh(p.areas), e=countPh(p.estItems), n=a[0]+e[0], c=a[1]+e[1]; local[p.id]={n:n,name:p.name}; tl+=n;
+  if(n||c) h2+='<tr><td>'+esc(p.name||p.id)+'</td><td class="r '+(c>n?'bad':'ok')+'">'+n+'</td><td class="r">'+(c||'')+'</td></tr>'; });
+h2+='</table><div style="margin-top:8px">Projetos: <b>'+projs.length+'</b> · Fotos na lista: <b>'+tl+'</b> · Projeto aberto: <b>'+(countPh(fa)[0]+countPh(ei)[0])+'</b> fotos · Marcas de foto: <b>'+Object.keys((qi&&qi.photoMarks)||{}).length+'</b></div>';
+h2+='<div class="sub">"Deveria ter" = quantas fotos o app registrou que o projeto tinha antes de ir para a nuvem.</div>';
+setH('s2',h2);
+// ── 3. photos in the cloud (read-only) ──
+try{
+  firebase.initializeApp({apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"});
+  var db=firebase.firestore(); try{ db.settings({experimentalAutoDetectLongPolling:true,merge:true}); }catch(e){}
+  var started=false;
+  firebase.auth().onAuthStateChanged(function(u){
+    if(!u){ setH('s3','Entrando…'); firebase.auth().signInAnonymously().catch(function(e){ setH('s3','<span class="bad">Não conectou: '+esc(e.message)+'</span>'); }); return; }
+    if(started) return; started=true;
+    var col=db.collection('fieldbid');
+    col.doc('ph__index').get().then(function(d){
+      var ids=[]; try{ ids=JSON.parse((d.exists&&d.data().ids)||'[]'); }catch(e){}
+      var h3='<div>Índice da nuvem: <b>'+ids.length+'</b> projeto(s) com fotos</div><table><tr><th>Projeto</th><th class="r">Nuvem</th><th class="r">Celular</th></tr>';
+      var chain=Promise.resolve(), tot=0;
+      each(ids,function(id){ chain=chain.then(function(){ return col.doc('ph__'+id+'__0').get().then(function(d0){
+          if(!d0.exists){ h3+='<tr><td>'+esc((local[id]||{}).name||id)+'</td><td class="r bad">0</td><td class="r">'+((local[id]||{}).n||0)+'</td></tr>'; return; }
+          var n=(d0.data().n)||1, maps=[]; try{ maps.push(JSON.parse(d0.data().data||'{}')); }catch(e){}
+          var sub=Promise.resolve(); for(var c=1;c<n;c++){ (function(ci){ sub=sub.then(function(){ return col.doc('ph__'+id+'__'+ci).get().then(function(dd){ if(dd.exists){ try{ maps.push(JSON.parse(dd.data().data||'{}')); }catch(e){} } }); }); })(c); }
+          return sub.then(function(){ var cnt=0; each(maps,function(m){ for(var k in m) if(Array.isArray(m[k])) cnt+=m[k].length; }); tot+=cnt; var loc=(local[id]||{}).n||0;
+            h3+='<tr><td>'+esc((local[id]||{}).name||id)+'</td><td class="r '+(cnt?'ok':'bad')+'">'+cnt+'</td><td class="r '+(loc<cnt?'warn':'')+'">'+loc+'</td></tr>'; });
+        }); }); });
+      return chain.then(function(){ setH('s3',h3+'</table><div style="margin-top:8px">Total na nuvem: <b>'+tot+'</b> fotos</div>'); });
+    }).catch(function(e){ setH('s3','<span class="bad">Erro ao ler a nuvem: '+esc(e.message)+'</span>'); });
   });
-});
-</script>
-</body></html>
+}catch(e){ setH('s3','<span class="bad">'+esc(e.message)+'</span>'); }
+</script></body></html>
