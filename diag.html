@@ -18,6 +18,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:5px 4px;b
 <div class="box" id="b1"><h2>1 · Espaço do navegador</h2><div id="s1">Calculando…</div></div>
 <div class="box" id="b2"><h2>2 · Fotos no celular (FieldBid)</h2><div id="s2">Lendo…</div></div>
 <div class="box" id="b3"><h2>3 · Fotos na nuvem</h2><div id="s3">Conectando…</div></div>
+<div class="box" id="b4"><h2>4 · Projetos fora do índice (busca direta)</h2><div id="s4">Aguardando…</div></div>
 <script>
 function each(a,f){ for(var i=0;i<a.length;i++) f(a[i],i); }
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -42,9 +43,10 @@ setH('s1',h);
 function countPh(arr){ var n=0,c=0; each(arr||[],function(o){ if(o&&Array.isArray(o.photos)) n+=o.photos.length; if(o&&o._phN) c+=o._phN; }); return [n,c]; }
 var projs=[]; try{ projs=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
 var fa=[],ei=[],qi={}; try{fa=JSON.parse(localStorage.getItem('fb6_fa')||'[]');}catch(e){} try{ei=JSON.parse(localStorage.getItem('fb6_ei')||'[]');}catch(e){} try{qi=JSON.parse(localStorage.getItem('fb6_qi')||'{}');}catch(e){}
-var local={};
+var local={}, claimed=[];
 var h2='<table><tr><th>Projeto</th><th class="r">Fotos</th><th class="r">Deveria ter</th></tr>', tl=0;
 each(projs,function(p){ if(!p) return; var a=countPh(p.areas), e=countPh(p.estItems), n=a[0]+e[0], c=a[1]+e[1]; local[p.id]={n:n,name:p.name}; tl+=n;
+  if(c>n) claimed.push(p.id);
   if(n||c) h2+='<tr><td>'+esc(p.name||p.id)+'</td><td class="r '+(c>n?'bad':'ok')+'">'+n+'</td><td class="r">'+(c||'')+'</td></tr>'; });
 h2+='</table><div style="margin-top:8px">Projetos: <b>'+projs.length+'</b> · Fotos na lista: <b>'+tl+'</b> · Projeto aberto: <b>'+(countPh(fa)[0]+countPh(ei)[0])+'</b> fotos · Marcas de foto: <b>'+Object.keys((qi&&qi.photoMarks)||{}).length+'</b></div>';
 h2+='<div class="sub">"Deveria ter" = quantas fotos o app registrou que o projeto tinha antes de ir para a nuvem.</div>';
@@ -69,7 +71,21 @@ try{
           return sub.then(function(){ var cnt=0; each(maps,function(m){ for(var k in m) if(Array.isArray(m[k])) cnt+=m[k].length; }); tot+=cnt; var loc=(local[id]||{}).n||0;
             h3+='<tr><td>'+esc((local[id]||{}).name||id)+'</td><td class="r '+(cnt?'ok':'bad')+'">'+cnt+'</td><td class="r '+(loc<cnt?'warn':'')+'">'+loc+'</td></tr>'; });
         }); }); });
-      return chain.then(function(){ setH('s3',h3+'</table><div style="margin-top:8px">Total na nuvem: <b>'+tot+'</b> fotos</div>'); });
+      return chain.then(function(){ setH('s3',h3+'</table><div style="margin-top:8px">Total na nuvem: <b>'+tot+'</b> fotos</div>');
+        // 4. projects that claim photos but are NOT in the index: read their photo doc directly
+        var inIdx={}; each(ids,function(x){inIdx[x]=1;});
+        var todo=[]; each(claimed,function(x){ if(!inIdx[x]) todo.push(x); });
+        if(!todo.length){ setH('s4','Nenhum projeto fora do índice.'); return; }
+        var h4='<table><tr><th>Projeto</th><th class="r">Na nuvem</th></tr>', found=0, ch2=Promise.resolve();
+        each(todo,function(id){ ch2=ch2.then(function(){ return col.doc('ph__'+id+'__0').get().then(function(d0){
+            if(!d0.exists||!(d0.data()&&d0.data().data)||d0.data().data==='{}'){ h4+='<tr><td>'+esc((local[id]||{}).name||id)+'</td><td class="r bad">não existe</td></tr>'; return; }
+            var n=(d0.data().n)||1, maps=[]; try{ maps.push(JSON.parse(d0.data().data||'{}')); }catch(e){}
+            var sub=Promise.resolve(); for(var c=1;c<n;c++){ (function(ci){ sub=sub.then(function(){ return col.doc('ph__'+id+'__'+ci).get().then(function(dd){ if(dd.exists){ try{ maps.push(JSON.parse(dd.data().data||'{}')); }catch(e){} } }); }); })(c); }
+            return sub.then(function(){ var cnt=0; each(maps,function(m){ for(var k in m) if(Array.isArray(m[k])) cnt+=m[k].length; }); found+=cnt;
+              h4+='<tr><td>'+esc((local[id]||{}).name||id)+'</td><td class="r '+(cnt?'ok':'bad')+'">'+(cnt?cnt+' fotos':'vazio')+'</td></tr>'; });
+          }); }); });
+        return ch2.then(function(){ setH('s4',h4+'</table><div style="margin-top:8px">'+(found?'<b class="ok">'+found+' fotos existem na nuvem e podem ser recuperadas.</b>':'<b class="bad">Nenhuma foto desses projetos existe na nuvem.</b>')+'</div>'); });
+      });
     }).catch(function(e){ setH('s3','<span class="bad">Erro ao ler a nuvem: '+esc(e.message)+'</span>'); });
   });
 }catch(e){ setH('s3','<span class="bad">'+esc(e.message)+'</span>'); }
