@@ -14,7 +14,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:5px 4px;b
 .bar{height:10px;border-radius:99px;background:#21262d;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%}
 </style></head><body>
 <h1>FieldBid · Diagnóstico de fotos</h1>
-<div class="sub">Só leitura. Não altera nenhum dado. Tire uma foto desta tela e mande para o Claude.</div>
+<div class="sub">Só leitura, exceto o botão "Recuperar" no quadro 4, que só acrescenta projetos ao índice de fotos. Tire uma foto desta tela e mande para o Claude.</div>
 <div class="box" id="b1"><h2>1 · Espaço do navegador</h2><div id="s1">Calculando…</div></div>
 <div class="box" id="b2"><h2>2 · Fotos no celular (FieldBid)</h2><div id="s2">Lendo…</div></div>
 <div class="box" id="b3"><h2>3 · Fotos na nuvem</h2><div id="s3">Conectando…</div></div>
@@ -76,15 +76,33 @@ try{
         var inIdx={}; each(ids,function(x){inIdx[x]=1;});
         var todo=[]; each(claimed,function(x){ if(!inIdx[x]) todo.push(x); });
         if(!todo.length){ setH('s4','Nenhum projeto fora do índice.'); return; }
-        var h4='<table><tr><th>Projeto</th><th class="r">Na nuvem</th></tr>', found=0, ch2=Promise.resolve();
+        var h4='<table><tr><th>Projeto</th><th class="r">Na nuvem</th></tr>', found=0, ch2=Promise.resolve(), recoverIds=[];
         each(todo,function(id){ ch2=ch2.then(function(){ return col.doc('ph__'+id+'__0').get().then(function(d0){
             if(!d0.exists||!(d0.data()&&d0.data().data)||d0.data().data==='{}'){ h4+='<tr><td>'+esc((local[id]||{}).name||id)+'</td><td class="r bad">não existe</td></tr>'; return; }
             var n=(d0.data().n)||1, maps=[]; try{ maps.push(JSON.parse(d0.data().data||'{}')); }catch(e){}
             var sub=Promise.resolve(); for(var c=1;c<n;c++){ (function(ci){ sub=sub.then(function(){ return col.doc('ph__'+id+'__'+ci).get().then(function(dd){ if(dd.exists){ try{ maps.push(JSON.parse(dd.data().data||'{}')); }catch(e){} } }); }); })(c); }
-            return sub.then(function(){ var cnt=0; each(maps,function(m){ for(var k in m) if(Array.isArray(m[k])) cnt+=m[k].length; }); found+=cnt;
+            return sub.then(function(){ var cnt=0; each(maps,function(m){ for(var k in m) if(Array.isArray(m[k])) cnt+=m[k].length; }); found+=cnt; if(cnt) recoverIds.push(id);
               h4+='<tr><td>'+esc((local[id]||{}).name||id)+'</td><td class="r '+(cnt?'ok':'bad')+'">'+(cnt?cnt+' fotos':'vazio')+'</td></tr>'; });
           }); }); });
-        return ch2.then(function(){ setH('s4',h4+'</table><div style="margin-top:8px">'+(found?'<b class="ok">'+found+' fotos existem na nuvem e podem ser recuperadas.</b>':'<b class="bad">Nenhuma foto desses projetos existe na nuvem.</b>')+'</div>'); });
+        return ch2.then(function(){
+          setH('s4',h4+'</table><div style="margin-top:8px">'+(found?'<b class="ok">'+found+' fotos existem na nuvem e podem ser recuperadas.</b>':'<b class="bad">Nenhuma foto desses projetos existe na nuvem.</b>')+'</div>'+
+            (recoverIds.length?'<button id="recBtn" type="button" style="width:100%;margin-top:10px;min-height:46px;border:none;border-radius:10px;background:#238636;color:#fff;font-size:15px;font-weight:700">Recuperar '+found+' foto(s)</button><div id="recMsg" style="margin-top:8px;font-size:12px"></div>':''));
+          var rb=document.getElementById('recBtn'); if(!rb) return;
+          rb.addEventListener('click',function(){
+            if(!confirm('Incluir '+recoverIds.length+' projeto(s) no índice de fotos da nuvem? Nada é apagado.')) return;
+            rb.disabled=true; rb.textContent='Gravando…';
+            // re-read the index right before writing; only ADD ids, never remove
+            col.doc('ph__index').get().then(function(d){
+              var cur=[]; try{ cur=JSON.parse((d.exists&&d.data().ids)||'[]'); }catch(e){ cur=[]; }
+              var set={}; each(cur,function(x){set[x]=1;}); var added=0;
+              each(recoverIds,function(x){ if(!set[x]){ cur.push(x); set[x]=1; added++; } });
+              return col.doc('ph__index').set({ids:JSON.stringify(cur),updatedAt:new Date().toISOString()}).then(function(){ return [added,cur.length]; });
+            }).then(function(r){
+              rb.textContent='Feito ✓';
+              document.getElementById('recMsg').innerHTML='<span class="ok">Índice agora com '+r[1]+' projeto(s) ('+r[0]+' acrescentado(s)). Abra o FieldBid: as fotos voltam sozinhas em alguns segundos.</span>';
+            }).catch(function(e){ rb.disabled=false; rb.textContent='Tentar de novo'; document.getElementById('recMsg').innerHTML='<span class="bad">Não gravou: '+esc(e.message)+'. Nada foi alterado.</span>'; });
+          });
+        });
       });
     }).catch(function(e){ setH('s3','<span class="bad">Erro ao ler a nuvem: '+esc(e.message)+'</span>'); });
   });
