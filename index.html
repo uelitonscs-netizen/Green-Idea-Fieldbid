@@ -649,7 +649,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261006-1200</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261006-1300</span></div>
 </div>
 
 <div id="field-app">
@@ -8110,20 +8110,37 @@ function sendToWorkLog(){
   for(var _n=0;_n<all.length;_n++){
     var _o=all[_n]; if(!_o||typeof _o!=='object'||_o.matType) continue;
     var _p=null; try{ _p=getProd(_o.productId); }catch(_e){}
-    if(!_p) continue;
-    var _c=_p.cat||'', _pn=String(_p.name||'').toLowerCase(), _t='';
+    var _c=_p?(_p.cat||''):'', _pn=_p?String(_p.name||'').toLowerCase():'';
+    var _nm=String(_o.name||'').toLowerCase(), _txt=_pn+' '+_nm, _t='';
+    // A lump-sum "fire blocking" line is not ignition-barrier coverage.
+    var _fireBlock=/fire\s*-?block/.test(_nm);
+    // ...so a fire-blocking line without a material type is left out of the material
+    // count entirely (its price is still part of the estimate total / contract).
+    if(_fireBlock){ all[_n]=null; continue; }
     if(_c==='Spray Foam') _t=(_pn.indexOf('closed')>=0)?'cc':'oc';
     else if(_c==='Hybrid') _t='hybrid';
     else if(_c==='Blown-In'&&_pn.indexOf('cellulose')>=0) _t='cel';
     else if(_c==='Mineral Wool') _t='mw';
+    else if(!_fireBlock&&/ignition|intumescent|thermal\s*barrier/.test(_txt)) _t='ign';
+    else if(!_p){
+      // No product chosen ("Custom" line): read the material from the item's name.
+      if(/closed\s*-?\s*cell/.test(_nm)) _t='cc';
+      else if(/open\s*-?\s*cell/.test(_nm)) _t='oc';
+      else if(/cellulose/.test(_nm)) _t='cel';
+      else if(/roxul|rockwool|mineral\s*wool/.test(_nm)) _t='mw';
+      else if(/fiber\s*glass|fibreglass/.test(_nm)) _t='fg';
+    }
     if(!_t) continue;
     var _in=Number(_o.inches)||0;
-    if(!_in){ var _m=String(_p.name||'').match(/(\d+(?:\.\d+)?)\s*(?:"|in\b|inch)/i); if(_m) _in=parseFloat(_m[1])||0; }
+    if(!_in){ var _m=String((_p&&_p.name)||_o.name||'').match(/(\d+(?:\.\d+)?)\s*(?:"|in\b|inch)/i); if(_m) _in=parseFloat(_m[1])||0; }
+    var _rm=String(_o.name||'').match(/R[\-\s]?(\d{2})/i)||String((_p&&_p.name)||'').match(/R[\-\s]?(\d{2})/i);
     var _cpy={}; for(var _k in _o){ if(Object.prototype.hasOwnProperty.call(_o,_k)) _cpy[_k]=_o[_k]; }
     _cpy.matType=_t;
     if(_t==='cc'&&!_cpy.ccInch&&_in) _cpy.ccInch=_in;
     if(_t==='oc'&&!_cpy.ocInch&&_in) _cpy.ocInch=_in;
-    if(_t==='cel'&&!_cpy.celR){ var _rm=String(_o.name||'').match(/R[\-]?(\d+)/i); if(_rm) _cpy.celR=parseInt(_rm[1],10); }
+    if(_t==='cel'&&!_cpy.celR&&_rm) _cpy.celR=parseInt(_rm[1],10);
+    if(_t==='fg'&&!_cpy.fgR&&_rm) _cpy.fgR=parseInt(_rm[1],10);
+    if(_t==='mw'&&!_cpy.mwR&&_rm) _cpy.mwR=parseInt(_rm[1],10);
     all[_n]=_cpy;
   }
 
