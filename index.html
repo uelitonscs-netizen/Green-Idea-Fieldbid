@@ -649,7 +649,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261006-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261006-1100</span></div>
 </div>
 
 <div id="field-app">
@@ -4137,6 +4137,7 @@ function generateEstimatePDF(pid, totalOnly, opts){
         setFont('normal',8,[80,80,80]); txt(String(_pics[_k].cap).slice(0,60),_x,y+_ch+4.5);
       }
     }
+    if(typeof toast==='function') toast(_pics.length?('📄 '+_pics.length+' photo(s) on the estimate'):'📄 No photos marked for this estimate');
   }catch(_phErr){ console.warn('estimate photos page failed:',_phErr); }
 
   var _fname='Estimate-'+(clientName||'GreenIdea').replace(/[^a-zA-Z0-9]/g,'_')+'-'+dateStr.replace(/\//g,'')+'.pdf';
@@ -6581,7 +6582,14 @@ function qkPH(mode,btn){
 // ── PHOTO MARKS: Work Order / Estimate (stored per photo in the project's quoteInfo) ──
 // A photo is identified by a signature of its data, so the same photo shown on a takeoff
 // area and on an estimate item shares one setting. Defaults: Work Order ON, Estimate OFF.
-function phSig(s){ s=String(s||''); return s.length+'|'+s.substr(64,48)+'|'+s.slice(-48); }
+// Identify a photo by hashing ALL of its data (two independent 32-bit hashes + length).
+// The old signature sampled the JPEG header — identical in every photo — so two
+// different photos could be taken for the same one.
+function phSig(s){
+  s=String(s||''); var n=s.length, h1=0x811c9dc5, h2=5381;
+  for(var i=0;i<n;i++){ var c=s.charCodeAt(i); h1=Math.imul(h1^c,16777619)>>>0; h2=(Math.imul(h2,33)+c)>>>0; }
+  return 'v2:'+n+':'+h1.toString(36)+':'+h2.toString(36);
+}
 function phGet(src,k){ var m=(quoteInfo&&quoteInfo.photoMarks)||{}, r=m[phSig(src)]; return k==='wo'?!(r&&r.wo===0):!!(r&&r.est===1); }
 function phCls(src){ return (phGet(src,'wo')?' wo':'')+(phGet(src,'est')?' est':''); }
 function phFor(arr,k){ var out=[]; if(!arr) return out; for(var i=0;i<arr.length;i++){ if(phGet(arr[i],k)) out.push(arr[i]); } return out; }
