@@ -649,7 +649,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261006-1300</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261006-1400</span></div>
 </div>
 
 <div id="field-app">
@@ -5656,6 +5656,8 @@ function renderJobsList(){
   });
 }
 window.renderJobsList = renderJobsList;
+// Refresh the WorkLog summary whenever the Estimator is drawn (open or edit).
+(function(){ var _re=renderEst; renderEst=function(){ var r=_re.apply(this,arguments); try{ if(window._wlSyncSummary) window._wlSyncSummary(); }catch(e){} return r; }; window.renderEst=renderEst; })();
 
 function openJobFromList(pid){
   if(currentProj && currentProj.id === pid){
@@ -7988,45 +7990,46 @@ function _wlQiOrScreen(field,elId){
   if(!v){ var el=document.getElementById(elId); var t=el?el.textContent.trim():''; if(t&&t!=='Tap to add') v=t; }
   return v||null;
 }
-function sendToWorkLog(){
-  // ── GUARD CHECKS ──
-  var cEl=document.getElementById('qClient');
-  var aEl=document.getElementById('qAddress');
-  var tEl=document.getElementById('eTotalCost');
-  var client=(quoteInfo&&quoteInfo.client)?quoteInfo.client:(cEl?cEl.textContent.trim():'');
-  var address=(quoteInfo&&quoteInfo.address)?quoteInfo.address:(aEl?aEl.textContent.trim():'');
-  // Also check currentProj address as fallback
-  if((!address||address==='Tap to add')&&currentProj&&currentProj.address) address=currentProj.address;
+// ── FieldBid → WorkLog SUMMARY ─────────────────────────────────────
+// Whenever the Estimator renders a project, keep a small summary in the cloud
+// (fieldbid/wlsync__<projectId>) with exactly what "Send to WorkLog" would send.
+// WorkLog's "Update from FieldBid" reads it to refresh an EXISTING project.
+// Uses 'savedAt' (not 'updatedAt') so it never affects the cloud-vs-local check.
+var _wlSumTimer=null;
+function _wlHash(s){ s=String(s||''); var h=0x811c9dc5; for(var i=0;i<s.length;i++){ h=Math.imul(h^s.charCodeAt(i),16777619)>>>0; } return s.length+':'+h.toString(36); }
+function _wlSummaryNow(){
+  var cp=window.currentProj; if(!cp||!cp.id) return null;
+  var cEl=document.getElementById('qClient'), aEl=document.getElementById('qAddress'), tEl=document.getElementById('eTotalCost');
+  var qi=window.quoteInfo||{};
+  var client=qi.client||(cEl?cEl.textContent.trim():''); if(client==='Tap to add') client='';
+  var address=qi.address||(aEl?aEl.textContent.trim():''); if(address==='Tap to add') address='';
+  if(!address&&cp.address) address=cp.address;
   var budget=tEl?parseFloat(tEl.textContent.replace(/[^0-9.]/g,''))||0:0;
-  if(client==='Tap to add') client='';
-  if(address==='Tap to add') address='';
-  if(!client&&!address){ alert('PAROU: falta cliente e endereco'); toast('Add client name and address first!','warn'); return; }
-  if(!_wlDb){ alert('PAROU: Firebase nao pronto'); toast('Firebase not ready — please refresh','err'); return; }
+  var mb=_wlBuildMatBudget();
+  return {fbProjectId:cp.id, projName:cp.name||'', client:client, address:address,
+          clientPhone:_wlQiOrScreen('phone','qPhone'), clientEmail:_wlQiOrScreen('email','qEmail'),
+          budget:budget, matBudget:mb};
+}
+function _wlSyncSummary(){
+  clearTimeout(_wlSumTimer);
+  _wlSumTimer=setTimeout(function(){
+    try{
+      if(typeof db==='undefined'||!db||!firebase.auth().currentUser) return;
+      var sm=_wlSummaryNow(); if(!sm||!(sm.budget>0)) return;
+      var js=JSON.stringify(sm), hs=_wlHash(js), last={};
+      try{ last=JSON.parse(localStorage.getItem('fb6_wlsum')||'{}'); }catch(e){ last={}; }
+      if(last[sm.fbProjectId]===hs) return;          // unchanged: no write
+      db.collection('fieldbid').doc('wlsync__'+sm.fbProjectId).set({data:js,savedAt:new Date().toISOString()}).then(function(){
+        last[sm.fbProjectId]=hs; try{ localStorage.setItem('fb6_wlsum',JSON.stringify(last)); }catch(e){}
+      }).catch(function(e){ console.warn('WorkLog summary not saved:',e&&e.message); });
+    }catch(e){ console.warn('WorkLog summary failed:',e&&e.message); }
+  },4000);
+}
+window._wlSyncSummary=_wlSyncSummary;
 
-  // ── BTN STATE ──
-  var btn=document.getElementById('sendWLBtn');
-  var origLabel='🔗 Send to WorkLog'; // fixed default so it never sticks on a prior state
-  if(btn){ btn.textContent='Sending...'; btn.disabled=true; btn.style.opacity='0.6'; }
-
-  // ABSOLUTE SAFETY NET — runs no matter what fails after this point (including a
-  // thrown error before any other handler is even installed). The button must never
-  // stay stuck on "Sending..." with no explanation.
-  if(window._wlSafetyTimer) clearTimeout(window._wlSafetyTimer);
-  window._wlSafetyRelease=function(){
-    if(window._wlSafetyTimer){ clearTimeout(window._wlSafetyTimer); window._wlSafetyTimer=null; }
-  };
-  window._wlSafetyTimer=setTimeout(function(){
-    window._wlSafetyTimer=null;
-    if(btn && btn.disabled){
-      btn.textContent=origLabel;
-      btn.disabled=false;
-      btn.style.opacity='1';
-      btn.style.background='#1a6b2a';
-      toast('⚠️ Send did not finish. Check the connection and try again.','err');
-      console.warn('WorkLog send: safety net fired — nothing settled in 20s.');
-    }
-  }, 20000);
-
+// Material budget for the project open in the Estimator — the exact calculation
+// "Send to WorkLog" uses. Shared with the FieldBid→WorkLog summary (Update from FieldBid).
+function _wlBuildMatBudget(){
   // ── MATERIAL BUDGET CALC ──
   var CC_BF_SET=4500, CC_GAL_SET=55, OC_BF_SET=17000, OC_GAL_SET=55;
 
@@ -8059,9 +8062,6 @@ function sendToWorkLog(){
   }
 
 
-  // Any failure between here and the send must restore the button, otherwise
-  // it stays stuck on "Sending..." with no explanation.
-  try{
   // Build material source SCOPED TO THE PROJECT BEING SENT.
   // The global fieldAreas array holds whatever takeoff is loaded in memory, which
   // may belong to a DIFFERENT project — using it produced material budgets from
@@ -8245,6 +8245,52 @@ function sendToWorkLog(){
     source:'fieldbid'
   };
 
+  return matBudget;
+}
+
+function sendToWorkLog(){
+  // ── GUARD CHECKS ──
+  var cEl=document.getElementById('qClient');
+  var aEl=document.getElementById('qAddress');
+  var tEl=document.getElementById('eTotalCost');
+  var client=(quoteInfo&&quoteInfo.client)?quoteInfo.client:(cEl?cEl.textContent.trim():'');
+  var address=(quoteInfo&&quoteInfo.address)?quoteInfo.address:(aEl?aEl.textContent.trim():'');
+  // Also check currentProj address as fallback
+  if((!address||address==='Tap to add')&&currentProj&&currentProj.address) address=currentProj.address;
+  var budget=tEl?parseFloat(tEl.textContent.replace(/[^0-9.]/g,''))||0:0;
+  if(client==='Tap to add') client='';
+  if(address==='Tap to add') address='';
+  if(!client&&!address){ alert('PAROU: falta cliente e endereco'); toast('Add client name and address first!','warn'); return; }
+  if(!_wlDb){ alert('PAROU: Firebase nao pronto'); toast('Firebase not ready — please refresh','err'); return; }
+
+  // ── BTN STATE ──
+  var btn=document.getElementById('sendWLBtn');
+  var origLabel='🔗 Send to WorkLog'; // fixed default so it never sticks on a prior state
+  if(btn){ btn.textContent='Sending...'; btn.disabled=true; btn.style.opacity='0.6'; }
+
+  // ABSOLUTE SAFETY NET — runs no matter what fails after this point (including a
+  // thrown error before any other handler is even installed). The button must never
+  // stay stuck on "Sending..." with no explanation.
+  if(window._wlSafetyTimer) clearTimeout(window._wlSafetyTimer);
+  window._wlSafetyRelease=function(){
+    if(window._wlSafetyTimer){ clearTimeout(window._wlSafetyTimer); window._wlSafetyTimer=null; }
+  };
+  window._wlSafetyTimer=setTimeout(function(){
+    window._wlSafetyTimer=null;
+    if(btn && btn.disabled){
+      btn.textContent=origLabel;
+      btn.disabled=false;
+      btn.style.opacity='1';
+      btn.style.background='#1a6b2a';
+      toast('⚠️ Send did not finish. Check the connection and try again.','err');
+      console.warn('WorkLog send: safety net fired — nothing settled in 20s.');
+    }
+  }, 20000);
+
+  // ── MATERIAL BUDGET CALC (shared: _wlBuildMatBudget) ──
+  var matBudget;
+  try{
+    matBudget=_wlBuildMatBudget();
   // ── FIREBASE ADD ──
   }catch(_calcErr){
     if(window._wlSafetyRelease)window._wlSafetyRelease();
@@ -8284,7 +8330,8 @@ function sendToWorkLog(){
     matBudget:matBudget,
     createdAt:new Date().toISOString(),
     source:'fieldbid',
-    fieldbidTotal:budget
+    fieldbidTotal:budget,
+    fbProjectId:(window.currentProj&&window.currentProj.id)||null
   })
   .then(function(){
     clearTimeout(_sendWatchdog);
