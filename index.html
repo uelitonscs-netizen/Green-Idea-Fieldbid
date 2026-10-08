@@ -649,7 +649,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261006-1400</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261007-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -7825,7 +7825,10 @@ var MAT_COST_DEFS=[
   {k:'baffle',   label:'Ventilation baffle', unit:'un',    manual:true},
   {k:'exhWrap',  label:'Exhaust / pipe wrap',unit:'un',    manual:true},
   {k:'dumpster', label:'Disposal / dumpster',unit:'un',    manual:true},
-  {k:'plywood',  label:'Plywood sheet',      unit:'sheet', manual:true}
+  {k:'plywood',  label:'Plywood sheet',      unit:'sheet', manual:true},
+  {k:'plastic4', label:'Plastic 4 mil',      unit:'roll',  manual:true},
+  {k:'plastic15',label:'Plastic 1.5 mil',    unit:'roll',  manual:true},
+  {k:'smartMemb',label:'Smart membrane',     unit:'roll',  manual:true}
 ];
 
 // Manual fields only show when the estimate actually mentions that work, so the
@@ -7837,7 +7840,10 @@ var MANUAL_MATS=[
   {k:'baffle',   qk:'qtyBaffle', label:'Baffles / vents (un)',    words:['baffle','vent','proper vent','soffit']},
   {k:'exhWrap',  qk:'qtyExh',    label:'Exhaust / wrap (un)',     words:['exhaust','bathroom','pipe','duct','wrap']},
   {k:'dumpster', qk:'qtyDump',   label:'Disposal (un)',           words:['removal','disposal','remove','demo','dumpster']},
-  {k:'plywood',  qk:'qtyPly',    label:'Plywood (chapas)',        words:['plywood','deck','platform','board walk','catwalk']}
+  {k:'plywood',  qk:'qtyPly',    label:'Plywood (chapas)',        words:['plywood','deck','platform','board walk','catwalk']},
+  {k:'plastic4', qk:'qtyPl4',    label:'Plastic 4 mil (rolos)',   words:['plastic','poly','4 mil','4mil','vapor barrier','visqueen']},
+  {k:'plastic15',qk:'qtyPl15',   label:'Plastic 1.5 mil (rolos)', words:['plastic','poly','1.5 mil','1.5mil','masking','protection']},
+  {k:'smartMemb',qk:'qtySmart',  label:'Smart membrane (rolos)',  words:['smart membrane','membrain','membrane','vapor retarder','smart vapor']}
 ];
 window.MANUAL_MATS=MANUAL_MATS;
 
