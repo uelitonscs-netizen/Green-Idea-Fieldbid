@@ -649,7 +649,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261007-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261007-1200</span></div>
 </div>
 
 <div id="field-app">
@@ -896,6 +896,22 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
           O que você paga no fornecedor, por R-value e espessura. Usado só no resumo interno da aba Quote — nunca aparece no PDF do cliente.
         </div>
         <div id="matCostSettings"></div>
+      </div>
+    </div>
+
+    <div class="st-g">
+      <div class="st-t" id="covHead" style="color:#7dd3fc;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+        <span>📏 Coverage</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <span id="covCount" style="font-size:10.5px;font-weight:600;color:#38bdf8;letter-spacing:0"></span>
+          <span id="covChev" style="font-size:13px;color:#38bdf8;transition:transform .15s">▼</span>
+        </span>
+      </div>
+      <div id="covBody" style="display:none">
+        <div style="padding:2px 14px 10px;font-size:11.5px;color:#7d8590;line-height:1.5">
+          Quanto cada unidade cobre. Usado para calcular sacos, sets, baldes, chapas e rolos — no estimate e no WorkLog. Campo em branco = valor de fábrica (mostrado em cinza).
+        </div>
+        <div id="covSettings"></div>
       </div>
     </div>
 
@@ -2205,6 +2221,7 @@ function fbLoad() {
           // the Settings inputs so the panel shows real prices immediately.
           try{ loadMatCost(); loadMatTax(); loadLaborCfg(); }catch(e){}
           try{ if (window.buildMatCostSettings) buildMatCostSettings(); }catch(e){}
+          try{ if (window.buildCovSettings) buildCovSettings(); }catch(e){}
           try{ if (window.renderProjList) renderProjList(); }catch(e){}
           try{ toast('Restored from cloud!'); }catch(e){}
         })(0);
@@ -6805,19 +6822,18 @@ function buildMatCostSettings(){
   var box=document.getElementById('matCostSettings');
   if(!box)return;
   var mc=loadMatCost(), tx=loadMatTax(), h='';
-  h+='<div class="st-r" style="border-bottom:1px solid #78350f55">'+
-     '<span class="st-l">Sales tax <span style="color:#6b7280">%</span></span>'+
-     '<input class="st-i" id="mcTaxRate" type="text" inputmode="decimal" value="'+tx.rate+'" style="max-width:90px"></div>';
-  h+='<div class="st-r" style="border-bottom:1px solid #78350f55">'+
-     '<span class="st-l">Aplicar imposto aos custos</span>'+
+  h+='<div class="st-row"><div class="st-lbl">Sales tax <span style="color:#6b7280;font-weight:500">%</span></div>'+
+     '<input class="st-inp" id="mcTaxRate" type="text" inputmode="decimal" value="'+tx.rate+'" style="width:84px"></div>';
+  h+='<div class="st-row">'+
+     '<div class="st-lbl">Aplicar imposto aos custos</div>'+
      '<label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="mcTaxOn" '+(tx.on?'checked':'')+' style="width:auto;transform:scale(1.25)">'+
      '<span style="font-size:12px;color:#9ca3af">on</span></label></div>';
   h+='<div style="padding:6px 14px 8px;font-size:11px;color:#a16207">Digite o preço <b>sem imposto</b>. O valor com imposto aparece ao lado.</div>';
   MAT_COST_DEFS.forEach(function(d){
     var v=mc[d.k]||'';
-    h+='<div class="st-r"><span class="st-l">'+d.label+' <span style="color:#6b7280">/ '+d.unit+'</span>'+
-       '<span class="mc-tax" data-for="'+d.k+'" style="display:block;font-size:10.5px;color:#fbbf24;margin-top:2px"></span></span>'+
-       '<input class="st-i mc-in" data-k="'+d.k+'" type="text" inputmode="decimal" placeholder="0.00" value="'+v+'"></div>';
+    h+='<div class="st-row"><div><div class="st-lbl">'+d.label+'</div><div style="font-size:11px;color:#7d8590;margin-top:2px">por '+d.unit+'</div>'+
+       '<span class="mc-tax" data-for="'+d.k+'" style="display:block;font-size:10.5px;color:#fbbf24;margin-top:2px"></span></div>'+
+       '<input class="st-inp mc-in" data-k="'+d.k+'" type="text" inputmode="decimal" placeholder="0.00" value="'+v+'" style="width:84px'+(Number(v)>0?';border-color:#a16207;color:#fbbf24':'')+'"></div>';
   });
   box.innerHTML=h;
 
@@ -6860,6 +6876,46 @@ function buildMatCostSettings(){
 }
 window.buildMatCostSettings=buildMatCostSettings;
 try{ buildMatCostSettings(); }catch(e){}
+
+// ── Coverage settings (Settings → Coverage) ──
+function buildCovSettings(){
+  var box=document.getElementById('covSettings'); if(!box) return;
+  var mc=loadMatCost(), h='', g='', n=0, inSub=false;
+  function sub(lbl){ return '<details style="margin:4px 0 6px"><summary style="cursor:pointer;padding:10px 14px;font-size:12.5px;font-weight:700;color:#7dd3fc;list-style:none">▸ '+lbl+'</summary>'; }
+  for(var i=0;i<COV_DEFS.length;i++){ var d=COV_DEFS[i], v=Number(mc[d.k])||0; if(v>0) n++;
+    var grp=d.g; if(grp==='Cellulose') grp=(d.k.indexOf('cov_celD_')===0)?'Cellulose dense':'Cellulose loose';
+    if(grp!==g){
+      if(inSub){ h+='</details>'; inSub=false; }
+      g=grp;
+      if(grp==='Cellulose loose'){ h+='<div style="padding:12px 14px 2px;font-size:10.5px;font-weight:800;letter-spacing:.08em;color:#38bdf8">CELLULOSE</div>'+sub('Solta (sótão) · sq ft por saco'); inSub=true; }
+      else if(grp==='Cellulose dense'){ h+=sub('Dense pack (parede) · sq ft por saco'); inSub=true; }
+      else h+='<div style="padding:12px 14px 4px;font-size:10.5px;font-weight:800;letter-spacing:.08em;color:#38bdf8">'+grp.toUpperCase()+'</div>';
+    }
+    var lbl=d.label.replace(/^Cellulose (loose|dense) /,'');
+    h+='<div class="st-row"><div><div class="st-lbl">'+lbl+'</div><div style="font-size:11px;color:#7d8590;margin-top:2px">'+d.unit+
+       (v>0&&d.def?' · fábrica '+d.def+' · <a href="#" data-cov-reset="'+d.k+'" style="color:#38bdf8">voltar</a>':'')+'</div></div>'+
+       '<input class="st-inp cov-in" data-k="'+d.k+'" type="text" inputmode="decimal" placeholder="'+(d.def||'—')+'" value="'+(v>0?v:'')+'" style="width:84px'+(v>0?';border-color:#38bdf8;color:#7dd3fc':'')+'"></div>';
+  }
+  if(inSub) h+='</details>';
+  box.innerHTML=h;
+  var c=document.getElementById('covCount'); if(c) c.textContent=n?(n+' editado'+(n>1?'s':'')):'valores de fábrica';
+  var ins=box.querySelectorAll('.cov-in');
+  for(var j=0;j<ins.length;j++){ (function(el){ el.addEventListener('change',function(){
+    var k=el.getAttribute('data-k'), v=parseFloat(String(el.value).replace(',','.'))||0;
+    if(v>0) window.matCost[k]=v; else delete window.matCost[k];
+    saveMatCost(); buildCovSettings(); if(typeof renderQuote==='function') renderQuote(); if(typeof renderEst==='function'){ try{ renderEst(); }catch(e){} }
+  }); })(ins[j]); }
+  var rs=box.querySelectorAll('[data-cov-reset]');
+  for(var r=0;r<rs.length;r++){ (function(a){ a.addEventListener('click',function(ev){ ev.preventDefault();
+    delete window.matCost[a.getAttribute('data-cov-reset')]; saveMatCost(); buildCovSettings(); if(typeof renderQuote==='function') renderQuote();
+  }); })(rs[r]); }
+}
+window.buildCovSettings=buildCovSettings; try{ buildCovSettings(); }catch(e){}
+(function(){
+  var head=document.getElementById('covHead'), body=document.getElementById('covBody'), chev=document.getElementById('covChev');
+  if(!head||!body) return;
+  head.addEventListener('click',function(){ var open=body.style.display!=='none'; body.style.display=open?'none':'block'; if(chev) chev.style.transform=open?'':'rotate(180deg)'; });
+})();
 
 document.getElementById('feSaveBtn').addEventListener('click',function(){
   var _val=document.getElementById('feInput').value.trim();
@@ -7866,6 +7922,52 @@ function relevantManualMats(items){
 window.relevantManualMats=relevantManualMats;
 window.MAT_COST_DEFS=MAT_COST_DEFS;
 
+// ══════ COVERAGE (editable in Settings → Coverage) ══════
+// What one unit covers. Stored with the material costs (key "cov_…", synced with them).
+// A blank / 0 value falls back to the factory default below.
+var COV_FG_R=[11,13,15,19,21,25,30,38,49], COV_MW_R=[13,15,21,23,30];
+var COV_DEFS=[
+  {g:'Spray foam', k:'cov_ccBF',  label:'Closed cell',      unit:'BF / set',      def:4500},
+  {g:'Spray foam', k:'cov_ccGal', label:'Closed cell',      unit:'gal / set',     def:55},
+  {g:'Spray foam', k:'cov_ocBF',  label:'Open cell',        unit:'BF / set',      def:17000},
+  {g:'Spray foam', k:'cov_ocGal', label:'Open cell',        unit:'gal / set',     def:55}
+];
+(function(){
+  var FG={11:162,13:113,15:60,19:55,21:49,25:65,30:58,38:32,49:24};   // R-30 = 58 (Ueliton)   // R-11/13/25 from the older table
+  var MW={13:59,15:49,21:39,23:34,30:29.86};                           // R-30 from the older table
+  for(var i=0;i<COV_FG_R.length;i++) COV_DEFS.push({g:'Fiberglass',k:'cov_fgR'+COV_FG_R[i],label:'Fiberglass R-'+COV_FG_R[i],unit:'sq ft / bag',def:FG[COV_FG_R[i]]});
+  for(var j=0;j<COV_MW_R.length;j++) COV_DEFS.push({g:'Roxul',k:'cov_mwR'+COV_MW_R[j],label:'Roxul R-'+COV_MW_R[j],unit:'sq ft / bag',def:MW[COV_MW_R[j]]});
+  try{ for(var a=0;a<CEL_LOOSE_TABLE.length;a++) COV_DEFS.push({g:'Cellulose',k:'cov_celL_'+CEL_LOOSE_TABLE[a][0],label:'Cellulose loose R-'+CEL_LOOSE_TABLE[a][0],unit:'sq ft / bag',def:CEL_LOOSE_TABLE[a][3]}); }catch(e){}
+  try{ for(var b=0;b<CEL_DENSE_TABLE.length;b++) COV_DEFS.push({g:'Cellulose',k:'cov_celD_'+CEL_DENSE_TABLE[b][0],label:'Cellulose dense R-'+CEL_DENSE_TABLE[b][0],unit:'sq ft / bag',def:CEL_DENSE_TABLE[b][2]}); }catch(e){}
+  COV_DEFS.push({g:'Other',k:'cov_ign',  label:'Ignition barrier', unit:'sq ft / bucket', def:800});
+  COV_DEFS.push({g:'Other',k:'cov_fb',   label:'Foam board',       unit:'sq ft / sheet',  def:32});
+  COV_DEFS.push({g:'Rolls',k:'cov_pl4',  label:'Plastic 4 mil',    unit:'sq ft / roll',   def:0});
+  COV_DEFS.push({g:'Rolls',k:'cov_pl15', label:'Plastic 1.5 mil',  unit:'sq ft / roll',   def:0});
+  COV_DEFS.push({g:'Rolls',k:'cov_smart',label:'Smart membrane',   unit:'sq ft / roll',   def:0});
+})();
+window.COV_DEFS=COV_DEFS;
+function covDef(k){ for(var i=0;i<COV_DEFS.length;i++){ if(COV_DEFS[i].k===k) return COV_DEFS[i].def; } return 0; }
+function covGet(k){
+  var mc=(typeof loadMatCost==='function')?loadMatCost():(window.matCost||{});
+  var v=Number(mc&&mc[k]); return v>0?v:covDef(k);
+}
+function covNearest(prefix,list,r){
+  var rv=Math.round(parseFloat(r)||0), best=list[0];
+  for(var i=0;i<list.length;i++){ if(Math.abs(list[i]-rv)<Math.abs(best-rv)) best=list[i]; }
+  return covGet(prefix+best);
+}
+function covFg(r){ return covNearest('cov_fgR',COV_FG_R,r); }
+function covMw(r){ return covNearest('cov_mwR',COV_MW_R,r); }
+window.covGet=covGet; window.covFg=covFg; window.covMw=covMw;
+// Which roll product an item is about (by its name + notes), or ''.
+function covRollKind(it){
+  var t=(String(it&&it.name||'')+' '+String(it&&it.notes||'')).toLowerCase();
+  if(/smart\s*-?\s*membrane|membrain|smart\s*vapor/.test(t)) return 'smart';
+  if(/1\.5\s*-?\s*mil/.test(t)) return 'pl15';
+  if(/plastic|\bpoly\b|polyethylene|visqueen|vapor\s*barrier|4\s*-?\s*mil/.test(t)) return 'pl4';
+  return '';
+}
+
 window.matCost = window.matCost || {};
 // Supplier prices are entered pre-tax; MA sales tax is added on top. Editable in
 // case the rate changes or a job is tax-exempt.
@@ -7911,18 +8013,17 @@ function _snapR(r, list){
 }
 
 function computeMaterialUsage(items){
-  var CC_BF_SET=4500, OC_BF_SET=17000, IGN_SQFT_BUCKET=800;
+  // Coverage comes from Settings → Coverage (covGet / covFg / covMw).
+  var CC_BF_SET=covGet('cov_ccBF'), OC_BF_SET=covGet('cov_ocBF'), IGN_SQFT_BUCKET=covGet('cov_ign'), FB_SHEET=covGet('cov_fb');
   var FG_R=[15,19,21,30,38,49], MW_R=[13,15,21,23];
-  // sq ft covered by one bag, per R-value
-  var FG_PER_BAG={15:60,19:55,21:49,30:42,38:32,49:24};
-  var MW_PER_BAG={13:59,15:49,21:39,23:34};
   var ccBF=0, ocBF=0, celBags=0, ignSqft=0;
-  var fgBags={}, mwBags={}, fbSqft={1:0,2:0};
+  var fgBags={}, mwBags={}, fbSqft={1:0,2:0}, rollSf={pl4:0,pl15:0,smart:0};
 
   (items||[]).forEach(function(it){
     if(!it)return;
     var sf=Number(it.sf)||0; if(sf<=0)return;
     var t=String(it.matType||'').toLowerCase();
+    if(!t){ var rk=covRollKind(it); if(rk) rollSf[rk]+=sf; }
     if(t==='cc'){ ccBF+=sf*(Number(it.ccInch)||0); }
     else if(t==='oc'){ ocBF+=sf*(Number(it.ocInch)||0); }
     else if(t==='hybrid'){ ccBF+=sf*(Number(it.hybCc)||2); ocBF+=sf*(Number(it.hybOc)||5); }
@@ -7932,11 +8033,11 @@ function computeMaterialUsage(items){
     }
     else if(t==='fg'){
       var r=_snapR(it.fgR||15, FG_R);
-      fgBags[r]=(fgBags[r]||0)+Math.ceil(sf/(FG_PER_BAG[r]||50));
+      fgBags[r]=(fgBags[r]||0)+Math.ceil(sf/(covFg(r)||50));
     }
     else if(t==='mw'){
       var mr=_snapR(it.mwR||15, MW_R);
-      mwBags[mr]=(mwBags[mr]||0)+Math.ceil(sf/(MW_PER_BAG[mr]||45));
+      mwBags[mr]=(mwBags[mr]||0)+Math.ceil(sf/(covMw(mr)||45));
     }
     else if(t==='ign'){ ignSqft+=sf; }
     else if(t==='fb'||t==='rb1'||t==='rb2'){
@@ -7958,14 +8059,17 @@ function computeMaterialUsage(items){
   add('celBag','Cellulose',   celBags,'bag');
   FG_R.forEach(function(r){ add('fgR'+r,'Fiberglass R-'+r, fgBags[r]||0,'bag'); });
   MW_R.forEach(function(r){ add('mwR'+r,'Roxul R-'+r,      mwBags[r]||0,'bag'); });
-  add('fb1','Foam Board 1"',  Math.ceil(fbSqft[1]/32),'sheet');
-  add('fb2','Foam Board 2"',  Math.ceil(fbSqft[2]/32),'sheet');
+  add('fb1','Foam Board 1"',  Math.ceil(fbSqft[1]/(FB_SHEET||32)),'sheet');
+  add('fb2','Foam Board 2"',  Math.ceil(fbSqft[2]/(FB_SHEET||32)),'sheet');
   add('ignBucket','Ignition Barrier', Math.ceil(ignSqft/IGN_SQFT_BUCKET),'bucket');
 
   // Manual quantities: caulking tubes and window/door cans, stored per job.
   var qi=(typeof quoteInfo!=='undefined'&&quoteInfo)?quoteInfo:{};
+  // Rolls (plastic / smart membrane): a manual quantity wins; otherwise sq ft ÷ coverage per roll.
+  var ROLL_AUTO={plastic4:['pl4','cov_pl4'],plastic15:['pl15','cov_pl15'],smartMemb:['smart','cov_smart']};
   MANUAL_MATS.forEach(function(m){
     var q=Number(qi[m.qk])||0;
+    if(!(q>0)&&ROLL_AUTO[m.k]){ var cv=covGet(ROLL_AUTO[m.k][1]), rs=rollSf[ROLL_AUTO[m.k][0]]; if(cv>0&&rs>0) q=Math.ceil(rs/cv); }
     if(q>0){
       var def=null;
       for(var i=0;i<MAT_COST_DEFS.length;i++){ if(MAT_COST_DEFS[i].k===m.k){ def=MAT_COST_DEFS[i]; break; } }
@@ -7979,7 +8083,9 @@ window.computeMaterialUsage=computeMaterialUsage;
 
 function getCelSqftPerBag(rVal, isDense){
   var row=getCelLookup(rVal,isDense);
-  return isDense?row[2]:row[3];
+  var base=isDense?row[2]:row[3];
+  try{ var ov=Number((loadMatCost()||{})[(isDense?'cov_celD_':'cov_celL_')+row[0]]); if(ov>0) return ov; }catch(e){}
+  return base;
 }
 function getCelDepth(rVal, isDense){
   var row=getCelLookup(rVal,isDense);
@@ -8037,10 +8143,11 @@ window._wlSyncSummary=_wlSyncSummary;
 // "Send to WorkLog" uses. Shared with the FieldBid→WorkLog summary (Update from FieldBid).
 function _wlBuildMatBudget(){
   // ── MATERIAL BUDGET CALC ──
-  var CC_BF_SET=4500, CC_GAL_SET=55, OC_BF_SET=17000, OC_GAL_SET=55;
+  var CC_BF_SET=covGet('cov_ccBF'), CC_GAL_SET=covGet('cov_ccGal'), OC_BF_SET=covGet('cov_ocBF'), OC_GAL_SET=covGet('cov_ocGal');
 
   // Roxul/Rockwool coverage per bag by R-value (15.25" width)
-  function getRoxSqftPerBag(r){
+  function getRoxSqftPerBag(r){ return covMw(r); }
+  function _oldRoxSqftPerBag(r){
     var map={13:59.7, 15:59.7, 21:39.8, 23:39, 30:29.86};
     var rv=Math.round(parseFloat(r)||0);
     if(map[rv]) return map[rv];
@@ -8049,7 +8156,8 @@ function _wlBuildMatBudget(){
     return map[nearest]||32;
   }
   // Fiberglass coverage per bag by R-value (15" on center, midpoint of manufacturer range)
-  function getFgSqftPerBag(r){
+  function getFgSqftPerBag(r){ return covFg(r); }
+  function _oldFgSqftPerBag(r){
     var map={11:162, 13:113, 15:71, 19:81, 21:71, 25:65, 30:51, 38:35, 49:30};
     var rv=Math.round(parseFloat(r)||0);
     if(map[rv]) return map[rv];
@@ -8058,7 +8166,7 @@ function _wlBuildMatBudget(){
     return map[nearest]||51;
   }
   var ccSqft=0, ocSqft=0, ccInchTotal=0, ocInchTotal=0, ccCount=0, ocCount=0;
-  var IGN_SQFT_BUCKET=800; // 1 bucket covers 800 sq ft
+  var IGN_SQFT_BUCKET=covGet('cov_ign'); // Settings → Coverage (default 800 sq ft / bucket)
   var celSqft=0, celBagsTotal=0, roxBagsTotal=0, fbgBagsTotal=0, ignSqft=0, ignBuckets=0, fbSqft=0;
   var rb2Sqft=0, rb1Sqft=0;
 
@@ -8231,8 +8339,8 @@ function _wlBuildMatBudget(){
     ignSqft:Math.round(ignSqft),
     ignBuckets:ignBuckets,
     fbSqft:Math.round(fbSqft),
-    rb2Boards:Math.ceil(rb2Sqft/32),
-    rb1Boards:Math.ceil(rb1Sqft/32),
+    rb2Boards:Math.ceil(rb2Sqft/(covGet('cov_fb')||32)),
+    rb1Boards:Math.ceil(rb1Sqft/(covGet('cov_fb')||32)),
     // Per-SKU breakdown. The totals above are kept for compatibility; this adds
     // the detail so two different fiberglass R-values no longer collapse into a
     // single "Fiberglass 13/18 bags" line in WorkLog.
