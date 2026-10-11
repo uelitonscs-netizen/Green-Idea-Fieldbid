@@ -14,11 +14,13 @@ table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:5px 4px;b
 .bar{height:10px;border-radius:99px;background:#21262d;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%}
 </style></head><body>
 <h1>FieldBid · Diagnóstico de fotos</h1>
-<div class="sub">Só leitura, exceto o botão "Recuperar" no quadro 4, que só acrescenta projetos ao índice de fotos. Tire uma foto desta tela e mande para o Claude.</div>
+<div class="sub">Só leitura, exceto os botões dos quadros 4 e 5, que só agem quando você toca e confirma. Tire uma foto desta tela e mande para o Claude.</div>
 <div class="box" id="b1"><h2>1 · Espaço do navegador</h2><div id="s1">Calculando…</div></div>
 <div class="box" id="b2"><h2>2 · Fotos no celular (FieldBid)</h2><div id="s2">Lendo…</div></div>
 <div class="box" id="b3"><h2>3 · Fotos na nuvem</h2><div id="s3">Conectando…</div></div>
 <div class="box" id="b4"><h2>4 · Projetos fora do índice (busca direta)</h2><div id="s4">Aguardando…</div></div>
+<div class="box" id="b5l"><h2>5 · Quando as fotos saíram do celular</h2><div id="s5l">Lendo…</div></div>
+<div class="box" id="b5"><h2>5 · Trazer fotos da nuvem para este celular</h2><div id="s5">Aguardando…</div></div>
 <script>
 function each(a,f){ for(var i=0;i<a.length;i++) f(a[i],i); }
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -51,6 +53,55 @@ each(projs,function(p){ if(!p) return; var a=countPh(p.areas), e=countPh(p.estIt
 h2+='</table><div style="margin-top:8px">Projetos: <b>'+projs.length+'</b> · Fotos na lista: <b>'+tl+'</b> · Projeto aberto: <b>'+(countPh(fa)[0]+countPh(ei)[0])+'</b> fotos · Marcas de foto: <b>'+Object.keys((qi&&qi.photoMarks)||{}).length+'</b></div>';
 h2+='<div class="sub">"Deveria ter" = quantas fotos o app registrou que o projeto tinha antes de ir para a nuvem.</div>';
 setH('s2',h2);
+// ── 5. bring cloud photos back into THIS phone's FieldBid storage (local write only) ──
+function wlPullPlan(){
+  var projs=[]; try{ projs=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){ return null; }
+  var maps=window.__cloudMaps||{}, fill=0, already=0, unmatched=0, perProj=[];
+  for(var i=0;i<projs.length;i++){ var p=projs[i]; if(!p||!maps[p.id]) continue; var mg=maps[p.id], used={}, got=0;
+    var lists=[[p.areas,'a'],[p.estItems,'e']];
+    for(var l=0;l<lists.length;l++){ var arr=lists[l][0], pre=lists[l][1]; if(!Array.isArray(arr)) continue;
+      for(var j=0;j<arr.length;j++){ var o=arr[j]; if(!o||typeof o!=='object') continue; var k=pre+j+':'+(o.name||'');
+        if(mg[k]){ used[k]=1; if(Array.isArray(o.photos)&&o.photos.length){ already+=o.photos.length; } else { got+=mg[k].length; } } } }
+    var um=0; for(var key in mg){ if(!used[key]) um+=mg[key].length; }
+    fill+=got; unmatched+=um; if(got||um) perProj.push([p.name||p.id,got,um]); }
+  return {projs:projs,fill:fill,already:already,unmatched:unmatched,perProj:perProj};
+}
+function wlRenderPull(){
+  var pl=wlPullPlan(); if(!pl){ setH('s5','<span class="bad">Não consegui ler os projetos deste celular.</span>'); return; }
+  var h='<table><tr><th>Projeto</th><th class="r">Vai voltar</th><th class="r">Sem lugar</th></tr>';
+  each(pl.perProj,function(r){ h+='<tr><td>'+esc(r[0])+'</td><td class="r ok">'+r[1]+'</td><td class="r '+(r[2]?'warn':'')+'">'+(r[2]||'')+'</td></tr>'; });
+  h+='</table><div style="margin-top:8px">Fotos que voltam: <b class="ok">'+pl.fill+'</b>'+(pl.already?' · já estavam no celular: '+pl.already:'')+(pl.unmatched?' · <span class="warn">sem área correspondente: '+pl.unmatched+'</span>':'')+'</div>';
+  if(pl.fill){ h+='<div class="sub" style="margin-top:8px">Antes de tocar: feche o FieldBid (app e abas). Grava só neste celular, nada na nuvem.</div><button id="pullBtn" type="button" style="width:100%;margin-top:6px;min-height:46px;border:none;border-radius:10px;background:#1f6feb;color:#fff;font-size:15px;font-weight:700">Trazer '+pl.fill+' foto(s) para este celular</button><div id="pullMsg" style="margin-top:8px;font-size:12px"></div>'; }
+  setH('s5',h);
+  var b=document.getElementById('pullBtn'); if(!b) return;
+  b.addEventListener('click',function(){
+    if(!confirm('O FieldBid está fechado? Trazer '+pl.fill+' foto(s) da nuvem para este celular.')) return;
+    var fresh=wlPullPlan(); if(!fresh){ return; }
+    var maps=window.__cloudMaps, put=0;
+    for(var i=0;i<fresh.projs.length;i++){ var p=fresh.projs[i]; if(!p||!maps[p.id]) continue; var mg=maps[p.id];
+      var lists=[[p.areas,'a'],[p.estItems,'e']];
+      for(var l=0;l<lists.length;l++){ var arr=lists[l][0], pre=lists[l][1]; if(!Array.isArray(arr)) continue;
+        for(var j=0;j<arr.length;j++){ var o=arr[j]; if(!o||typeof o!=='object') continue; var k=pre+j+':'+(o.name||'');
+          if(mg[k]&&!(Array.isArray(o.photos)&&o.photos.length)){ o.photos=mg[k].slice(); put+=mg[k].length; } } } }
+    try{
+      localStorage.setItem('fb6_projs',JSON.stringify(fresh.projs));
+      localStorage.setItem('fb6_localTs',new Date().toISOString());   // FieldBid keeps this copy instead of the photo-less cloud one
+      b.disabled=true; b.textContent='Feito ✓';
+      document.getElementById('pullMsg').innerHTML='<span class="ok">'+put+' foto(s) de volta neste celular. Agora abra o FieldBid e abra um projeto (Casa do meio, Craig Silvio…).</span>';
+    }catch(e){ document.getElementById('pullMsg').innerHTML='<span class="bad">Não gravou: '+esc(e.message)+'. Nada foi alterado.</span>'; }
+  });
+}
+// ── 5. photo log written by FieldBid (fb6_phlog) ──
+(function(){
+  var L=[]; try{ L=JSON.parse(localStorage.getItem('fb6_phlog')||'[]'); }catch(e){ L=[]; }
+  if(!Array.isArray(L)||!L.length){ setH('s5l','Nada registrado ainda. (O registro começa na build v20261011-1100 do FieldBid.)'); return; }
+  var h='<table><tr><th>Quando</th><th>O quê</th><th>Detalhe</th></tr>';
+  for(var i=L.length-1;i>=0;i--){ var x=L[i], when='';
+    try{ when=new Date(x.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ when=x.t; }
+    if(x.type==='restore') h+='<tr><td>'+esc(when)+'</td><td class="'+(x.errors?'warn':'ok')+'">Restauração</td><td>'+(x.restored||0)+' foto(s) de volta'+(x.errors?' · <span class="bad">'+x.errors+' falha(s): '+esc(x.why||'')+'</span>':'')+'</td></tr>';
+    else h+='<tr><td>'+esc(when)+'</td><td class="'+(x.purpose?'':'bad')+'">'+esc(x.name||x.pid||'?')+'</td><td>'+(x.from)+' → '+(x.to)+' foto(s)'+(x.purpose?' · apagada de propósito (✕)':' · <b>por:</b> '+esc(x.by||'?'))+(x.build?' · '+esc(x.build):'')+'</td></tr>'; }
+  setH('s5l',h+'</table>');
+})();
 // ── 3. photos in the cloud (read-only) ──
 try{
   firebase.initializeApp({apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"});
@@ -63,15 +114,16 @@ try{
     col.doc('ph__index').get().then(function(d){
       var ids=[]; try{ ids=JSON.parse((d.exists&&d.data().ids)||'[]'); }catch(e){}
       var h3='<div>Índice da nuvem: <b>'+ids.length+'</b> projeto(s) com fotos</div><table><tr><th>Projeto</th><th class="r">Nuvem</th><th class="r">Celular</th></tr>';
-      var chain=Promise.resolve(), tot=0;
+      var chain=Promise.resolve(), tot=0; window.__cloudMaps={};
       each(ids,function(id){ chain=chain.then(function(){ return col.doc('ph__'+id+'__0').get().then(function(d0){
           if(!d0.exists){ h3+='<tr><td>'+esc((local[id]||{}).name||id)+'</td><td class="r bad">0</td><td class="r">'+((local[id]||{}).n||0)+'</td></tr>'; return; }
           var n=(d0.data().n)||1, maps=[]; try{ maps.push(JSON.parse(d0.data().data||'{}')); }catch(e){}
           var sub=Promise.resolve(); for(var c=1;c<n;c++){ (function(ci){ sub=sub.then(function(){ return col.doc('ph__'+id+'__'+ci).get().then(function(dd){ if(dd.exists){ try{ maps.push(JSON.parse(dd.data().data||'{}')); }catch(e){} } }); }); })(c); }
-          return sub.then(function(){ var cnt=0; each(maps,function(m){ for(var k in m) if(Array.isArray(m[k])) cnt+=m[k].length; }); tot+=cnt; var loc=(local[id]||{}).n||0;
+          return sub.then(function(){ var cnt=0, mg={}; each(maps,function(m){ for(var k in m) if(Array.isArray(m[k])){ cnt+=m[k].length; mg[k]=m[k]; } }); window.__cloudMaps[id]=mg; tot+=cnt; var loc=(local[id]||{}).n||0;
             h3+='<tr><td>'+esc((local[id]||{}).name||id)+'</td><td class="r '+(cnt?'ok':'bad')+'">'+cnt+'</td><td class="r '+(loc<cnt?'warn':'')+'">'+loc+'</td></tr>'; });
         }); }); });
       return chain.then(function(){ setH('s3',h3+'</table><div style="margin-top:8px">Total na nuvem: <b>'+tot+'</b> fotos</div>');
+        wlRenderPull();
         // 4. projects that claim photos but are NOT in the index: read their photo doc directly
         var inIdx={}; each(ids,function(x){inIdx[x]=1;});
         var todo=[]; each(claimed,function(x){ if(!inIdx[x]) todo.push(x); });
