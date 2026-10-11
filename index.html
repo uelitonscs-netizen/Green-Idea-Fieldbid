@@ -649,7 +649,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261010-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -2133,6 +2133,16 @@ function fbLoad() {
         console.warn('FieldBid: local newer than cloud, keeping local and re-saving.');
         setFbStatus('connected');
         if (typeof save === 'function') save();
+        // Still bring back any photos this device is missing. This path used to
+        // return before the restore, so a device that had lost its photos never
+        // got them back while its local copy stayed "newer" than the cloud.
+        if (typeof restoreMissingPhotos === 'function') {
+          setTimeout(function(){
+            restoreMissingPhotos().then(function(n){
+              if(n>0){ load(); if (window.renderFA) renderFA(); if (window.renderEst) renderEst(); if (window._phRefreshOpen) window._phRefreshOpen(); }
+            }).catch(function(){});
+          }, 1200);
+        }
         return;
       }
       snap.forEach(function(doc) {
