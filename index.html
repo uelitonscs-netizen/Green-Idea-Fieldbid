@@ -562,6 +562,41 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .em-tip{padding:2px 22px 14px;font-size:12.5px;color:#94a3b8;line-height:1.45;}
 .em-go{width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;}
 .em-sec{width:100%;background:#1e2530;border:1px solid #2a3340;color:#f0f0f0;border-radius:10px;padding:12px;font-size:14px;font-weight:700;}
+
+/* Jobs list (compact) */
+.jf-row{display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;padding-bottom:2px;}
+.jf{flex:none;border:1px solid #2a3340;background:#131920;color:#94a3b8;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;}
+.jf span{opacity:.7;margin-left:2px;}
+.jf.on{background:#1a6b2a;border-color:#1a6b2a;color:#fff;}
+.jc{background:#131920;border:1px solid #1e2530;border-radius:14px;padding:12px 14px;margin-bottom:10px;cursor:pointer;}
+.jc.active{background:#14251a;border-color:#2a6b35;}
+.jc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.jc-name{font-size:16px;font-weight:800;color:#f0f0f0;line-height:1.25;}
+.jc-edit{font-size:9.5px;font-weight:800;letter-spacing:.06em;color:#4ade80;background:#1a3020;border-radius:5px;padding:2px 6px;vertical-align:middle;}
+.jc-st{flex:none;border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:800;border:1px solid;white-space:nowrap;}
+.st-none{background:#1e2530;border-color:#2a3340;color:#94a3b8;}
+.st-sent{background:#162338;border-color:#2a4a6a;color:#60a5fa;}
+.st-approved{background:#15291b;border-color:#2a6b35;color:#4ade80;}
+.st-rejected{background:#2a1515;border-color:#6a2a2a;color:#f87171;}
+.jc-addr{font-size:12.5px;color:#7d8590;margin-top:3px;}
+.jc-note{font-size:12px;color:#93c5fd;font-style:italic;margin-top:5px;}
+.jc-note b{color:#4ade80;font-style:normal;font-size:10.5px;}
+.jc-stats{display:flex;flex-wrap:wrap;gap:4px 12px;margin:8px 0 10px;font-size:12.5px;color:#94a3b8;align-items:center;}
+.jc-tot{color:#4ade80;font-weight:800;}
+.jc-date{margin-left:auto;color:#4d5560;font-size:11px;}
+.jc-act{display:flex;gap:6px;}
+.jc-open{flex:1.3;background:#1a6b2a;color:#fff;border:none;border-radius:9px;padding:10px 6px;font-size:13px;font-weight:800;}
+.jc-b{flex:1;background:#1e2530;border:1px solid #2a3340;color:#e6edf3;border-radius:9px;padding:10px 4px;font-size:12.5px;font-weight:700;white-space:nowrap;}
+.jc-em{border-color:#1b7a8c;color:#bdf1fb;}
+.jc-more{flex:none;width:42px;background:#1e2530;border:1px solid #2a3340;color:#e6edf3;border-radius:9px;font-size:18px;font-weight:800;line-height:1;}
+.js-list{display:flex;flex-direction:column;gap:6px;padding:4px 20px 8px;}
+.js-b{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:#1e2530;border:1px solid #2a3340;color:#e6edf3;border-radius:10px;padding:12px 14px;font-size:14px;}
+.js-b span{font-size:11.5px;color:#8b98a5;}
+.js-b.on{outline:2px solid currentColor;}
+.js-sep{height:6px;}
+.js-b.row{flex-direction:row;align-items:center;gap:10px;}
+.js-del{color:#f87171;border-color:#6a2a2a;}
+.js-cancel{width:100%;background:transparent;border:1px solid #2a3340;color:#94a3b8;border-radius:10px;padding:11px;font-size:14px;font-weight:700;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -675,7 +710,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1600</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1700</span></div>
 </div>
 
 <div id="field-app">
@@ -5731,84 +5766,40 @@ function renderJobsList(){
     container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#4d5560;font-size:13px">No estimator jobs yet.<br>Import areas from takeoff to create a job.</div>';
     return;
   }
+  // Status filter (counts follow the search)
+  var _SF=window._jobStatusF||'all', _cnt={all:projs.length,none:0,sent:0,approved:0,rejected:0};
+  for(var _c=0;_c<projs.length;_c++){ var _st=projs[_c].estStatus||'none'; if(_cnt[_st]!==undefined) _cnt[_st]++; }
+  var _chips=[['all','All'],['none','Draft'],['sent','Sent'],['approved','Approved'],['rejected','Rejected']];
+  h+='<div class="jf-row">';
+  for(var _k=0;_k<_chips.length;_k++){ var _ck=_chips[_k][0]; if(_ck!=='all'&&!_cnt[_ck]&&_SF!==_ck) continue;
+    h+='<button type="button" class="jf'+(_SF===_ck?' on':'')+'" data-act="filter" data-st="'+_ck+'">'+_chips[_k][1]+' <span>'+_cnt[_ck]+'</span></button>'; }
+  h+='</div>';
+  if(_SF!=='all') projs=projs.filter(function(p){ return (p.estStatus||'none')===_SF; });
+  if(!projs.length) h+='<div style="text-align:center;padding:30px 20px;color:#4d5560;font-size:13px">No jobs with this status.</div>';
+  var _STL={none:'Draft',sent:'Sent',approved:'Approved',rejected:'Rejected'};
   for(var i=0; i<projs.length; i++){
     var p = projs[i];
     var isActive = currentProj && currentProj.id === p.id;
-    // Calc totals from saved project data
-    var totalSF = 0;
-    var areas = p.areas || [];
-    var items = p.estItems || [];
-    for(var k=0; k<items.length; k++){
-      totalSF += Number(items[k].sf)||0;
-    }
-    // Use the shared helper so the card matches the Quote screen exactly
+    var totalSF = 0, areas = p.areas || [], items = p.estItems || [];
+    for(var k=0; k<items.length; k++){ totalSF += Number(items[k].sf)||0; }
     var quoteTotal = projectEstimateTotal(p);
     var areaCount = items.length > 0 ? items.length : areas.length;
-    var itemCount = items.length;
-    h += '<div style="background:'+(isActive?'#1a2f1e':'#131920')+';border:1px solid '+(isActive?'#2a6b35':'#1e2530')+';border-radius:12px;margin-bottom:10px;overflow:hidden;">';
-    // Active badge
-    if(isActive){
-      h += '<div style="background:#1a6b2a;color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;padding:3px 10px;">● ACTIVE</div>';
-    }
-    h += '<div style="padding:12px 14px;">';
-    // Name + date
-    h += '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">';
-    h += '<div style="font-size:15px;font-weight:800;color:#f0f0f0;line-height:1.2">'+esc(p.name)+'</div>';
-    h += '<div style="font-size:10px;color:#4d5560;white-space:nowrap;margin-top:2px">'+esc(p.created||'')+'</div>';
+    var estStatus = p.estStatus||'none';
+    var stTxt = _STL[estStatus]||'Draft';
+    if(estStatus==='sent'&&p.estSentDate){ var _sd=String(p.estSentDate).split('/'); stTxt+=' · '+(_sd.length>=2?_sd[0]+'/'+_sd[1]:p.estSentDate); }
+    h += '<div class="jc'+(isActive?' active':'')+'" data-pid="'+p.id+'">';
+    h += '<div class="jc-top"><div class="jc-name">'+esc(p.name)+(isActive?' <span class="jc-edit">EDITING</span>':'')+'</div>'+
+         '<button type="button" class="jc-st st-'+estStatus+'" data-act="stmenu" data-pid="'+p.id+'">'+stTxt+' ▾</button></div>';
+    if(p.address){ h += '<div class="jc-addr">📍 '+esc(p.address)+'</div>'; }
+    if(p.note && String(p.note).trim()){ var _np=String(p.note).trim(); if(_np.length>80)_np=_np.slice(0,80)+'…'; h += '<div class="jc-note">📝 '+esc(_np)+(p.noteInPdf?' <b>· on PDF</b>':'')+'</div>'; }
+    h += '<div class="jc-stats"><span>'+fmtN(Math.round(totalSF))+' SF</span><span>'+areaCount+' area'+(areaCount!==1?'s':'')+'</span>'+(quoteTotal>0?'<span class="jc-tot">$'+quoteTotal.toLocaleString()+'</span>':'')+'<span class="jc-date">'+esc(p.created||'')+'</span></div>';
+    h += '<div class="jc-act"><button type="button" class="jc-open" data-act="open" data-pid="'+p.id+'">'+(isActive?'✓ Editing':'Open Job')+'</button>'+
+         '<button type="button" class="jc-b" data-act="est" data-pid="'+p.id+'">📄 Estimate</button>'+
+         '<button type="button" class="jc-b jc-em" data-act="email" data-pid="'+p.id+'">📧 Email</button>'+
+         '<button type="button" class="jc-more" data-act="more" data-pid="'+p.id+'" aria-label="More">⋯</button></div>';
     h += '</div>';
-    // Address
-    if(p.address){ h += '<div style="font-size:12px;color:#7d8590;margin-bottom:8px">📍 '+esc(p.address)+'</div>'; }
-    if(p.note && String(p.note).trim()){
-      var _np=String(p.note).trim();
-      if(_np.length>90)_np=_np.slice(0,90)+'…';
-      h += '<div style="font-size:12px;color:#93c5fd;background:#0f1c2e;border-left:3px solid #60a5fa;border-radius:4px;padding:7px 10px;margin-bottom:8px">📝 '+esc(_np)+(p.noteInPdf?' <span style="color:#4ade80;font-size:10px;font-weight:700">· ON PDF</span>':'')+'</div>';
-    }
-    // Stats row
-    h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
-    h += '<span style="background:#1e2530;border-radius:6px;padding:3px 8px;font-size:11px;color:#94a3b8">📐 '+fmtN(Math.round(totalSF))+' SF</span>';
-    h += '<span style="background:#1e2530;border-radius:6px;padding:3px 8px;font-size:11px;color:#94a3b8">'+areaCount+' area'+(areaCount!==1?'s':'')+'</span>';
-    if(quoteTotal>0){
-      h += '<span style="background:#1a3020;border:1px solid #2a6b35;border-radius:6px;padding:3px 8px;font-size:11px;color:#4ade80;font-weight:700">$'+quoteTotal.toLocaleString()+'</span>';
-    } else if(itemCount>0){
-      h += '<span style="background:#1e2530;border-radius:6px;padding:3px 8px;font-size:11px;color:#94a3b8">'+itemCount+' item'+(itemCount!==1?'s':'')+'</span>';
-    }
-    h += '</div>';
-    // Estimate status
-    var estStatus = (p.estStatus)||'none';
-    var statusCfg = {
-      'none':  {label:'📨 Mark as Sent',  bg:'#1e2530', border:'#2a3340', color:'#94a3b8'},
-      'sent':  {label:'📨 Sent',          bg:'#1a2535', border:'#2a4a6a', color:'#60a5fa'},
-      'approved': {label:'✅ Approved',   bg:'#1a3020', border:'#2a6b35', color:'#4ade80'},
-      'rejected': {label:'❌ Rejected',   bg:'#2a1515', border:'#6a2a2a', color:'#f87171'}
-    };
-    var sc = statusCfg[estStatus] || statusCfg['none'];
-    if(estStatus !== 'none'){
-      h += '<div style="margin-bottom:8px">';
-      h += '<span style="background:'+sc.bg+';border:1px solid '+sc.border+';border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;color:'+sc.color+'">'+sc.label+'</span>';
-      h += '</div>';
-    }
-    // Action buttons
-    h += '<div style="display:flex;flex-direction:column;gap:6px">';
-    h += '<button class="job-open-btn" data-act="open" data-pid="'+p.id+'" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">'+(isActive?'✓ Editing':'Open Job')+'</button>';
-    h += '<button class="job-cert-btn" data-act="cert" data-pid="'+p.id+'" style="width:100%;background:#f59e0b;border:none;color:#000;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">📋 Generate Certificate</button>';
-    h += '<button class="job-est-btn" data-act="est" data-pid="'+p.id+'" style="width:100%;background:#2563eb;border:none;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">📄 Generate Estimate</button>';
-    h += '<button class="job-email-btn" data-act="email" data-pid="'+p.id+'" style="width:100%;background:#0e4f5c;border:1px solid #1b7a8c;color:#e6fbff;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">📧 Email Estimate</button>';
-    var _hasNote = !!(p.note && String(p.note).trim());
-    h += '<button class="job-note-btn" data-act="note" data-pid="'+p.id+'" style="width:100%;background:'+(_hasNote?'#1e3a5f':'#1e2530')+';border:1px solid '+(_hasNote?'rgba(96,165,250,.5)':'#2a3340')+';color:'+(_hasNote?'#60a5fa':'#7d8590')+';border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">'+(_hasNote?'📝 Note ●':'📝 Add Note')+'</button>';
-    h += '<button class="job-dup-btn" data-act="dup" data-pid="'+p.id+'" style="width:100%;background:#1e2530;border:1px solid rgba(240,160,44,.4);color:#f0a02c;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">⧉ Duplicate</button>';
-    h += '<button class="job-del-btn" data-act="del" data-pid="'+p.id+'" style="width:100%;background:#1e2530;border:1px solid #2a3340;color:#f87171;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🗑 Delete</button>';
-    var nextStatus = {none:'sent',sent:'approved',approved:'rejected',rejected:'none'};
-    var statusBtnCfg = {
-      none:     {label:'📨 Mark as Sent',    bg:'#1e2530',border:'#2a4a6a',color:'#60a5fa'},
-      sent:     {label:'✅ Mark Approved',   bg:'#1a3020',border:'#2a6b35',color:'#4ade80'},
-      approved: {label:'❌ Mark Rejected',   bg:'#2a1515',border:'#6a2a2a',color:'#f87171'},
-      rejected: {label:'🔄 Reset Status',   bg:'#1e2530',border:'#2a3340',color:'#94a3b8'}
-    };
-    var sbc = statusBtnCfg[estStatus]||statusBtnCfg.none;
-    h += '<button class="job-status-btn" data-act="status" data-pid="'+p.id+'" data-next="'+nextStatus[estStatus]+'" style="width:100%;background:'+sbc.bg+';border:1px solid '+sbc.border+';color:'+sbc.color+';border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">'+sbc.label+'</button>';
-    h += '</div>';
-    h += '</div></div>';
   }
+
   container.innerHTML = h;
   // cloneNode removes all accumulated listeners, then add one clean listener
   var newContainer = container.cloneNode(true);
@@ -5819,9 +5810,22 @@ function renderJobsList(){
       if(btn.tagName === 'BUTTON' && btn.getAttribute('data-act')) break;
       btn = btn.parentNode;
     }
-    if(!btn || btn === newContainer) return;
+    if(!btn || btn === newContainer){
+      // Tap anywhere on a job card (not a button) opens the job
+      var card=e.target; while(card&&card!==newContainer&&!(card.classList&&card.classList.contains('jc'))) card=card.parentNode;
+      if(card&&card!==newContainer&&card.getAttribute('data-pid')) openJobFromList(card.getAttribute('data-pid'));
+      return;
+    }
     var act = btn.getAttribute('data-act');
     var pid = btn.getAttribute('data-pid');
+    if(act === 'filter'){ window._jobStatusF=btn.getAttribute('data-st'); renderJobsList(); return; }
+    if(act === 'more'){ _jobSheet(pid,'more'); return; }
+    if(act === 'stmenu'){ _jobSheet(pid,'status'); return; }
+    _jobAct(act,pid,btn);
+  });
+}
+// One place for every job action (card buttons and the ⋯ / status sheets).
+function _jobAct(act,pid,btn){
     if(act === 'open') openJobFromList(pid);
     else if(act === 'cert'){
       try{ generateProofPDF(pid); }
@@ -5860,7 +5864,41 @@ function renderJobsList(){
       saveProjs(projs);
       renderJobsList();
     }
-  });
+}
+window._jobAct=_jobAct;
+function _jobSetStatus(pid,st){
+  var projs=loadProjs();
+  for(var i=0;i<projs.length;i++){ if(projs[i].id===pid){ projs[i].estStatus=st; if(st==='sent') projs[i].estSentDate=new Date().toLocaleDateString('en-US'); break; } }
+  saveProjs(projs); renderJobsList();
+}
+function _jobSheet(pid,kind){
+  var p=null, ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } }
+  if(!p) return;
+  var ov=document.getElementById('jobSheetOverlay');
+  if(!ov){ ov=document.createElement('div'); ov.className='overlay'; ov.id='jobSheetOverlay'; document.body.appendChild(ov); }
+  var h='<div class="modal" style="padding-bottom:22px"><div class="mhandle"></div><div class="mtitle">'+esc(p.name)+'</div><div class="js-list">';
+  if(kind==='status'){
+    var cur=p.estStatus||'none', opts=[['none','Draft','Not sent yet'],['sent','Sent','Sent to the client'+(cur==='sent'&&p.estSentDate?' · '+p.estSentDate:'')],['approved','Approved','Client accepted'],['rejected','Rejected','Client declined']];
+    for(var k=0;k<opts.length;k++) h+='<button type="button" class="js-b st-'+opts[k][0]+(cur===opts[k][0]?' on':'')+'" data-js="st" data-v="'+opts[k][0]+'"><b>'+opts[k][1]+(cur===opts[k][0]?' ✓':'')+'</b><span>'+opts[k][2]+'</span></button>';
+  } else {
+    var hasNote=!!(p.note&&String(p.note).trim());
+    h+='<button type="button" class="js-b row" data-js="cert">📋 <b>Generate Certificate</b></button>'+
+       '<button type="button" class="js-b row" data-js="note">📝 <b>'+(hasNote?'Edit Note':'Add Note')+'</b></button>'+
+       '<button type="button" class="js-b row" data-js="dup">⧉ <b>Duplicate</b></button>'+
+       '<div class="js-sep"></div>'+
+       '<button type="button" class="js-b row js-del" data-js="del">🗑 <b>Delete</b></button>';
+  }
+  h+='</div><div style="padding:6px 20px 0"><button type="button" class="js-cancel" data-js="close">Cancel</button></div></div>';
+  ov.innerHTML=h; ov.classList.add('on'); ov.style.display='flex';
+  ov.onclick=function(e){
+    var b=e.target; while(b&&b!==ov&&!(b.getAttribute&&b.getAttribute('data-js'))) b=b.parentNode;
+    if(e.target===ov){ ov.classList.remove('on'); ov.style.display='none'; return; }
+    if(!b||b===ov) return;
+    var a=b.getAttribute('data-js'); ov.classList.remove('on'); ov.style.display='none';
+    if(a==='close') return;
+    if(a==='st') _jobSetStatus(pid,b.getAttribute('data-v'));
+    else _jobAct(a,pid,null);
+  };
 }
 window.renderJobsList = renderJobsList;
 // Refresh the WorkLog summary whenever the Estimator is drawn (open or edit).
