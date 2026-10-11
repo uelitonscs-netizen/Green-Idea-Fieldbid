@@ -655,7 +655,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1300</span></div>
 </div>
 
 <div id="field-app">
@@ -4252,11 +4252,24 @@ function generateEstimatePDF(pid, totalOnly, opts){
   try{
     var _pm=(projQuoteInfo&&projQuoteInfo.photoMarks)||{}, _pics=[], _seen={};
     var _areas=(currentProj&&currentProj.id===proj.id)?fieldAreas:(proj.areas||[]);
-    var _lists=[_areas||[],projEstItems||[]];
+    // Estimate items first (what the client sees), then takeoff areas.
+    var _lists=[projEstItems||[],_areas||[]];
+    var _MT={cc:'Closed cell',oc:'Open cell',hybrid:'Hybrid (CC + OC)',hybrid_foam_fg:'Hybrid (foam + fiberglass)',hybrid_foam_mw:'Hybrid (foam + mineral wool)',cel:'Cellulose',fg:'Fiberglass',mw:'Mineral wool',ign:'Ignition barrier',rb:'Foam board',fb:'Foam board'};
+    var _capLine2=function(o){
+      var parts=[], nm=String(o.name||'').trim().toLowerCase(), pn='';
+      try{ var _p=getProd(o.productId); if(_p&&_p.name) pn=_p.name; }catch(_e){}
+      if(!pn){ var _mt=String(o.matType||o.matCat||'').toLowerCase(); for(var _k2 in _MT){ if(_mt===_k2||_mt.indexOf(_k2+'_')===0){ pn=_MT[_k2]; break; } } if(!pn&&/^hybrid/.test(_mt)) pn='Hybrid'; }
+      if(pn&&pn.toLowerCase()!==nm) parts.push(pn);
+      // (no square footage on the client estimate; the work order shows it per task)
+      var inch=parseFloat(o.inches)||0, cc=parseFloat(o.ccInch)||0, oc=parseFloat(o.ocInch)||0;
+      if(cc>0&&oc>0) parts.push(cc+'" + '+oc+'"'); else if(cc>0) parts.push(cc+'"'); else if(oc>0) parts.push(oc+'"'); else if(inch>0) parts.push(inch+'"');
+      return parts.join('  ·  ');
+    };
     for(var _l=0;_l<_lists.length;_l++){ for(var _o=0;_o<_lists[_l].length;_o++){ var _ob=_lists[_l][_o], _ph=(_ob&&_ob.photos)||[];
-      for(var _q=0;_q<_ph.length;_q++){ var _sg=phSig(_ph[_q]); if(_pm[_sg]&&_pm[_sg].est===1&&!_seen[_sg]){ _seen[_sg]=1; _pics.push({src:_ph[_q],cap:_ob.name||''}); } } } }
+      for(var _q=0;_q<_ph.length;_q++){ var _sg=phSig(_ph[_q]); if(_pm[_sg]&&_pm[_sg].est===1&&!_seen[_sg]){ _seen[_sg]=1;
+        _pics.push({src:_ph[_q],cap:_ob.name||'',sub:_capLine2(_ob),notes:String(_ob.notes||'').trim()}); } } } }
     if(_pics.length){
-      var _cw=(W-margin*2-8)/2, _ch=_cw*0.68, _gx=[margin,margin+_cw+8];
+      var _cw=(W-margin*2-8)/2, _ch=_cw*0.6, _gx=[margin,margin+_cw+8], _capH=17;
       var _newPhotoPage=function(first){
         doc.addPage(); y=margin;
         doc.setFillColor(26,107,42); doc.rect(0,0,W,10,'F');
@@ -4269,13 +4282,22 @@ function generateEstimatePDF(pid, totalOnly, opts){
       _newPhotoPage(true);
       for(var _k=0;_k<_pics.length;_k++){
         var _col=_k%2;
-        if(_col===0&&_k>0) y+=_ch+12;
-        if(_col===0&&y+_ch+10>H-20){ _newPhotoPage(false); }
+        if(_col===0&&_k>0) y+=_ch+_capH;
+        if(_col===0&&y+_ch+_capH-2>H-20){ _newPhotoPage(false); }
         var _x=_gx[_col], _iw=_cw, _ih=_ch;
         try{ var _pr=doc.getImageProperties(_pics[_k].src); var _r=Math.min(_cw/_pr.width,_ch/_pr.height); _iw=_pr.width*_r; _ih=_pr.height*_r; }catch(_e){}
         doc.setFillColor(245,245,243); doc.rect(_x,y,_cw,_ch,'F');
         try{ doc.addImage(_pics[_k].src,'JPEG',_x+(_cw-_iw)/2,y+(_ch-_ih)/2,_iw,_ih); }catch(_e2){}
-        setFont('normal',8,[80,80,80]); txt(String(_pics[_k].cap).slice(0,60),_x,y+_ch+4.5);
+        // Caption: item name · product / SF / thickness · item description (up to 2 lines)
+        var _cy=y+_ch+4.2;
+        setFont('bold',8.5,[30,30,30]); txt(String(_pics[_k].cap||'').slice(0,52),_x,_cy);
+        if(_pics[_k].sub){ _cy+=3.6; setFont('normal',7.5,[90,90,90]); txt(String(_pics[_k].sub).slice(0,70),_x,_cy); }
+        if(_pics[_k].notes){
+          setFont('italic',7.5,[110,110,110]);
+          var _nl=[]; try{ _nl=doc.splitTextToSize(_pics[_k].notes,_cw); }catch(_e3){ _nl=[_pics[_k].notes.slice(0,60)]; }
+          if(_nl.length>2){ _nl=_nl.slice(0,2); _nl[1]=String(_nl[1]).replace(/\s*\S*$/,'')+'…'; }
+          for(var _n=0;_n<_nl.length;_n++){ _cy+=3.4; txt(_nl[_n],_x,_cy); }
+        }
       }
     }
     if(typeof toast==='function') toast(_pics.length?('📄 '+_pics.length+' photo(s) on the estimate'):'📄 No photos marked for this estimate');
