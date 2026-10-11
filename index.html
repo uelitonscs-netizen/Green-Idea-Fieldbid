@@ -597,6 +597,16 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .js-b.row{flex-direction:row;align-items:center;gap:10px;}
 .js-del{color:#f87171;border-color:#6a2a2a;}
 .js-cancel{width:100%;background:transparent;border:1px solid #2a3340;color:#94a3b8;border-radius:10px;padding:11px;font-size:14px;font-weight:700;}
+
+/* job header (Items tab) */
+.jh{background:#131920;border:1px solid #1e2530;border-radius:14px;padding:12px 14px;margin:0 0 12px;}
+.jh-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;}
+.jh-name{font-size:18px;font-weight:800;color:#f0f0f0;line-height:1.25;}
+.jh-l{display:inline-block;color:#8fb8ff;font-size:13px;text-decoration:none;padding:3px 0;margin-right:14px;}
+.jh-c{display:flex;flex-wrap:wrap;}
+.jh-miss{font-size:12.5px;color:#8b98a5;font-style:italic;padding:3px 0;}
+.jh-ft{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:8px;border-top:1px solid #1e2530;font-size:12px;color:#7d8590;}
+.jh-edit{border:1px solid #2a3340;background:#1e2530;color:#e6edf3;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -710,7 +720,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1700</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1800</span></div>
 </div>
 
 <div id="field-app">
@@ -779,6 +789,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <button class="tab" id="et5">💼 Jobs</button>
   </div>
   <div id="ep-items" class="page on">
+    <div id="jobHdr" style="display:none"></div>
     <div class="import-bar" id="importBar" style="display:none">
       <div class="import-icon">📐</div>
       <div class="import-text"><div class="import-title">Field Takeoff Available</div><div class="import-sub" id="importBarSub"></div></div>
@@ -5869,7 +5880,7 @@ window._jobAct=_jobAct;
 function _jobSetStatus(pid,st){
   var projs=loadProjs();
   for(var i=0;i<projs.length;i++){ if(projs[i].id===pid){ projs[i].estStatus=st; if(st==='sent') projs[i].estSentDate=new Date().toLocaleDateString('en-US'); break; } }
-  saveProjs(projs); renderJobsList();
+  saveProjs(projs); renderJobsList(); try{ renderJobHeader(); }catch(e){}
 }
 function _jobSheet(pid,kind){
   var p=null, ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } }
@@ -5901,8 +5912,33 @@ function _jobSheet(pid,kind){
   };
 }
 window.renderJobsList = renderJobsList;
+// ── Job header on the Items tab (client, address, phone, email, status, quote #) ──
+function renderJobHeader(){
+  var box=document.getElementById('jobHdr'); if(!box) return;
+  var cp=(typeof currentProj!=='undefined'&&currentProj)?currentProj:null;
+  if(!cp){ box.style.display='none'; box.innerHTML=''; return; }
+  var p=null, ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===cp.id){ p=ps[i]; break; } }
+  p=p||cp;
+  var qi=quoteInfo||{}, name=String(qi.client||p.name||'').trim()||'Untitled job', addr=String(qi.address||p.address||'').trim();
+  var phone=String(qi.phone||'').trim(), email=String(qi.email||'').trim();
+  var st=p.estStatus||'none', L={none:'Draft',sent:'Sent',approved:'Approved',rejected:'Rejected'}, stTxt=L[st]||'Draft';
+  if(st==='sent'&&p.estSentDate){ var sd=String(p.estSentDate).split('/'); stTxt+=' · '+(sd.length>=2?sd[0]+'/'+sd[1]:p.estSentDate); }
+  var h='<div class="jh"><div class="jh-top"><div class="jh-name">'+esc(name)+'</div><button type="button" class="jc-st st-'+st+'" id="jhSt">'+stTxt+' ▾</button></div>';
+  if(addr) h+='<a class="jh-l" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(addr)+'" target="_blank" rel="noopener">📍 '+esc(addr)+'</a>';
+  if(phone||email){ h+='<div class="jh-c">';
+    if(phone) h+='<a class="jh-l" href="tel:'+esc(phone.replace(/[^\d+]/g,''))+'">📞 '+esc(phone)+'</a>';
+    if(email) h+='<a class="jh-l" href="mailto:'+esc(email)+'">✉ '+esc(email)+'</a>';
+    h+='</div>'; }
+  if(!addr&&!phone&&!email) h+='<div class="jh-miss">No address or contact yet</div>';
+  h+='<div class="jh-ft"><span>Quote #'+esc(String(window.quoteNum||quoteNum||''))+(p.created?' · '+esc(p.created):'')+'</span><button type="button" class="jh-edit" id="jhEdit">Edit ›</button></div></div>';
+  box.innerHTML=h; box.style.display='block';
+  var sb=document.getElementById('jhSt'); if(sb) sb.onclick=function(){ _jobSheet(cp.id,'status'); };
+  var eb=document.getElementById('jhEdit'); if(eb) eb.onclick=function(){ var t=document.getElementById('et2'); if(t) t.click(); };
+}
+window.renderJobHeader=renderJobHeader;
+
 // Refresh the WorkLog summary whenever the Estimator is drawn (open or edit).
-(function(){ var _re=renderEst; renderEst=function(){ var r=_re.apply(this,arguments); try{ if(window._wlSyncSummary) window._wlSyncSummary(); }catch(e){} return r; }; window.renderEst=renderEst; })();
+(function(){ var _re=renderEst; renderEst=function(){ var r=_re.apply(this,arguments); try{ if(window._wlSyncSummary) window._wlSyncSummary(); }catch(e){} try{ renderJobHeader(); }catch(e){} return r; }; window.renderEst=renderEst; })();
 
 function openJobFromList(pid){
   if(currentProj && currentProj.id === pid){
