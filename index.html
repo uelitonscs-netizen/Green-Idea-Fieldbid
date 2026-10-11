@@ -536,6 +536,12 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .wo-photos{display:grid!important;grid-template-columns:repeat(3,1fr);gap:8px;overflow:visible!important;}
 .wo-photo{width:100%!important;height:auto!important;aspect-ratio:4/3;object-fit:cover;}
 @media print{.wo-photos{grid-template-columns:repeat(3,1fr)!important;}.wo-photo{break-inside:avoid;page-break-inside:avoid;border:1px solid #ccc!important;}.lb-marks{display:none!important;}}
+
+/* restore progress bar */
+.ph-bar{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:9999;max-width:92vw;padding:9px 14px;border-radius:12px;font-size:13px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px;}
+.ph-bar.busy{background:#0d419d;color:#fff;}
+.ph-bar.err{background:#9a6700;color:#fff;}
+.ph-bar button{border:none;border-radius:8px;padding:6px 10px;font-weight:800;background:#fff;color:#7a4a05;font-size:12.5px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -649,7 +655,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1100</span></div>
 </div>
 
 <div id="field-app">
@@ -1657,6 +1663,69 @@ window.schedulePhotoBackup=schedulePhotoBackup;
   setTimeout(function(){ if(!window._phRestoreDone) window._phRestoreDone = true; }, 30000);
 })();
 
+// ── PHOTO WATCH (build v20261011-1100) ──────────────────────────────
+// 1) Restore progress bar with a "Try again" button when something fails.
+// 2) A small log (fb6_phlog) of every time a project LOSES photos on this device:
+//    when, which project, from → to, and which part of the app wrote it.
+//    Shown in diag.html. Deleting with ✕ is marked "deleted on purpose".
+var _PHLOG_KEY='fb6_phlog', _phCounts={};
+function _phCountsOf(key,raw){
+  var out={}; var v; try{ v=JSON.parse(raw||'null'); }catch(e){ return out; }
+  function cnt(arr){ var n=0; if(Array.isArray(arr)){ for(var i=0;i<arr.length;i++){ var o=arr[i]; if(o&&Array.isArray(o.photos)) n+=o.photos.length; } } return n; }
+  if(key==='fb6_projs'){ if(Array.isArray(v)){ for(var i=0;i<v.length;i++){ var p=v[i]; if(p&&p.id) out[p.id]={n:cnt(p.areas)+cnt(p.estItems),name:p.name||p.id}; } } }
+  else { var cp=window.currentProj; out[key]={n:cnt(v),name:(cp&&cp.name?cp.name:'open project')+(key==='fb6_fa'?' (takeoff)':' (estimate)'),pid:cp&&cp.id}; }
+  return out;
+}
+function _phCallers(){
+  var st=''; try{ throw new Error('x'); }catch(e){ st=String(e.stack||''); }
+  var names=[], re=/at\s+([A-Za-z_$][\w$.]*)\s+\(/g, m;
+  while((m=re.exec(st))&&names.length<6){ var n=m[1]; if(/^(_phCallers|_phLogWrite|Storage\.|Object\.|setItem)/.test(n)) continue; if(/\.setItem$/.test(n)) continue; names.push(n.replace(/^(window|HTMLDocument|Object)\./,'')); }
+  return names.slice(0,4).join(' ← ')||'(unknown)';
+}
+function _phLogAppend(entry){
+  try{ var L=JSON.parse(localStorage.getItem(_PHLOG_KEY)||'[]'); if(!Array.isArray(L)) L=[]; L.push(entry); if(L.length>60) L=L.slice(L.length-60);
+       window.__phSet.call(localStorage,_PHLOG_KEY,JSON.stringify(L)); }catch(e){}
+}
+window._phLogAppend=_phLogAppend;
+(function(){
+  if(window.__phSet) return;
+  var _set=Storage.prototype.setItem; window.__phSet=_set;
+  Storage.prototype.setItem=function(k,v){
+    if(this===window.localStorage&&(k==='fb6_projs'||k==='fb6_fa'||k==='fb6_ei')){
+      var before=_phCounts[k]; if(!before){ try{ before=_phCountsOf(k,window.localStorage.getItem(k)); }catch(e){ before={}; } }
+      var r=_set.apply(this,arguments);                       // a failed write throws here, before logging
+      try{
+        var after=_phCountsOf(k,v), by=null;
+        for(var id in before){ if(!Object.prototype.hasOwnProperty.call(before,id)) continue;
+          var a=before[id].n, b=after[id]?after[id].n:null;
+          if(a>0&&b!==null&&b<a){
+            if(!by) by=_phCallers();
+            var pid=k==='fb6_projs'?id:before[id].pid, purpose=!!(pid&&window._phShrinkOk&&window._phShrinkOk(pid));
+            _phLogAppend({t:new Date().toISOString(),type:'loss',key:k,pid:pid||'',name:before[id].name,from:a,to:b,by:by,purpose:purpose,build:(String((document.body&&document.body.innerText||'').match(/build v[\d-]+/)||['']).replace('build ',''))});
+          }
+        }
+        _phCounts[k]=after;
+      }catch(e){}
+      return r;
+    }
+    return _set.apply(this,arguments);
+  };
+})();
+function _phBar(state,html){
+  var b=document.getElementById('phRestoreBar');
+  if(state==='hide'){ if(b) b.parentNode.removeChild(b); return; }
+  if(!b){ b=document.createElement('div'); b.id='phRestoreBar'; document.body.appendChild(b); }
+  b.className='ph-bar '+state; b.innerHTML=html;
+}
+function phRetryRestore(){
+  window._phRetry=0; window._phRestoreErr=0; window._phRestoreErrMsg='';
+  _phBar('busy','📷 Restoring photos…');
+  restoreMissingPhotos().then(function(n){
+    if(n>0){ try{ if(window.load) load(); }catch(e){} try{ if(window.renderFA) renderFA(); }catch(e){} try{ if(window.renderEst) renderEst(); }catch(e){} }
+  }).catch(function(){});
+}
+window.phRetryRestore=phRetryRestore;
+
 // ── PHOTO SAFETY (build v20261006) ─────────────────────────────────
 // 1) No photo upload of any kind before the restore has finished.
 // 2) Never shrink the cloud copy of an area/item that still exists here, unless
@@ -1844,6 +1913,12 @@ function restoreMissingPhotos(){
       need=need.slice(-8); // no index yet: keep startup reasonable
     }
     if(!need.length)return 0;
+    // How many of these projects are missing photos on this device right now?
+    var _miss=0; for(var _m=0;_m<need.length;_m++){ var _p=need[_m], _c=0, _h=0;
+      var _sc=function(arr){ if(!Array.isArray(arr)) return; for(var _i=0;_i<arr.length;_i++){ var _o=arr[_i]; if(!_o||typeof _o!=='object') continue; if(_o._phN) _c+=_o._phN; if(Array.isArray(_o.photos)) _h+=_o.photos.length; } };
+      _sc(_p.areas); _sc(_p.estItems); if(_c>0&&_h===0) _miss++; }
+    window._phBarTotal=need.length; window._phBarDone=0; window._phBarPhotos=0; window._phBarShow=_miss>0; window._phRestoreErr=0; window._phRestoreErrMsg='';
+    if(window._phBarShow) _phBar('busy','📷 Restoring photos… (0 of '+need.length+' projects)');
     return _doPhotoRestore(need, col, projs);
   }).catch(function(){
     if(!need.length)return 0;
@@ -1894,7 +1969,10 @@ function _doPhotoRestore(need, col, projs){
           }
           apply(proj.areas,'a'); apply(proj.estItems,'e');
         });
-      }).catch(function(e){ console.warn('photo restore failed for '+proj.id+':', e&&e.message); });
+      }).catch(function(e){ console.warn('photo restore failed for '+proj.id+':', e&&e.message); window._phRestoreErr=(window._phRestoreErr||0)+1; window._phRestoreErrMsg='could not reach the cloud'; }).then(function(){
+        window._phBarDone=(window._phBarDone||0)+1;
+        if(window._phBarShow) _phBar('busy','📷 Restoring photos… ('+window._phBarDone+' of '+(window._phBarTotal||need.length)+' projects)'+(restored?' · '+restored+' photos':''));
+      });
     });
   });
   return chain.then(function(){
@@ -1931,7 +2009,7 @@ function _doPhotoRestore(need, col, projs){
         try{
           localStorage.setItem('fb6_projs',JSON.stringify(_fresh));
           if(window.DBG)DBG('fotos gravadas no aparelho');
-        }catch(e){ if(window.DBG)DBG('ERRO ao gravar fotos: '+(e&&e.message||e)); }
+        }catch(e){ if(window.DBG)DBG('ERRO ao gravar fotos: '+(e&&e.message||e)); window._phRestoreErr=(window._phRestoreErr||0)+1; window._phRestoreErrMsg=(/quota/i.test(String(e&&(e.name||e.message)))?'not enough space on this phone':'could not save on this phone'); restored=0; }
       }
     }catch(e){ console.warn('photo persist skipped:', e); }
     window._phRestoreDone = true;
@@ -1951,6 +2029,9 @@ function _doPhotoRestore(need, col, projs){
       }
     }catch(e){}
     if(window.DBG)DBG('RESTAURACAO terminou: '+restored+' foto(s)');
+    try{ if(restored||window._phRestoreErr) _phLogAppend({t:new Date().toISOString(),type:'restore',restored:restored,errors:window._phRestoreErr||0,why:window._phRestoreErrMsg||''}); }catch(e){}
+    if(window._phRestoreErr){ _phBar('err','⚠ Some photos were not restored — '+(window._phRestoreErrMsg||'error')+'. <button type="button" onclick="phRetryRestore()">Try again</button>'); }
+    else _phBar('hide');
     try{ if(restored && typeof updateHomeStats==='function')updateHomeStats(); }catch(e){}
     if(restored){
       try{ if(typeof window._phRefreshOpen==='function') window._phRefreshOpen(); }catch(e){}
