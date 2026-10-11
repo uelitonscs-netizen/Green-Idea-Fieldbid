@@ -542,6 +542,14 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .ph-bar.busy{background:#0d419d;color:#fff;}
 .ph-bar.err{background:#9a6700;color:#fff;}
 .ph-bar button{border:none;border-radius:8px;padding:6px 10px;font-weight:800;background:#fff;color:#7a4a05;font-size:12.5px;}
+
+/* change material (Edit Item) */
+.ei-chg{border:1px solid #30363d;background:#161b22;color:#58a6ff;border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:700;}
+#ei_prod_pick{max-height:260px;overflow-y:auto;border:1px solid #30363d;border-radius:10px;padding:6px;margin:6px 0 4px;background:#0d1117;}
+.ei-pk-cat{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:#8b98a5;text-transform:uppercase;padding:8px 6px 4px;}
+.ei-pk{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;border:none;background:transparent;color:#e6edf3;padding:10px 8px;border-radius:8px;font-size:13.5px;text-align:left;}
+.ei-pk.on{background:#13233d;color:#58a6ff;font-weight:700;}
+.ei-pk-pr{font-size:12px;color:#8b98a5;white-space:nowrap;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -655,7 +663,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1300</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1500</span></div>
 </div>
 
 <div id="field-app">
@@ -1186,7 +1194,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <div class="mhandle"></div>
     <div class="mtitle" id="eiTitle">Add Item</div>
     <div class="fg"><label class="fl">Description</label><input class="fi" id="ei_name" type="text" placeholder="e.g. Exterior Walls – North Wing"></div>
-    <div class="fg" id="ei_prod_row" style="display:none"><label class="fl">Material</label><div id="ei_prod_label" style="font-size:13px;color:#58a6ff;padding:6px 0;font-weight:600"></div><div id="ei_spec_info" style="font-size:12px;color:#8b98a5;padding:0 0 4px;display:none"></div></div>
+    <div class="fg" id="ei_prod_row" style="display:none"><label class="fl">Material</label><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div id="ei_prod_label" style="font-size:13px;color:#58a6ff;padding:6px 0;font-weight:600"></div><button type="button" id="ei_prod_change" class="ei-chg">Change</button></div><div id="ei_prod_pick" style="display:none"></div><div id="ei_spec_info" style="font-size:12px;color:#8b98a5;padding:0 0 4px;display:none"></div></div>
     <div class="frow">
       <div class="fg"><label class="fl">Square Feet</label><input class="fi" id="ei_sf" type="number" inputmode="decimal" placeholder="0" min="0"></div>
       <div class="fg" id="ei_inch_wrap" style="display:none"><label class="fl">Thickness (in)</label><input class="fi" id="ei_inch" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0"></div>
@@ -4674,6 +4682,7 @@ function renderFA(){
   if(!fieldAreas.length){list.innerHTML='<div class="empty"><div class="empty-icon">📐</div><div class="empty-title">No areas yet</div><div class="empty-body">Tap + to measure your first area</div></div>';return;}
   var matEmoji={'cc':'🫧','oc':'💧','hybrid':'🔀','hybrid_foam_fg':'🔀','hybrid_foam_mw':'🔀','fg_r11':'🧶','fg_r13':'🧶','fg_r15':'🧶','fg_r19':'🧶','fg_r21':'🧶','fg_r25':'🧶','fg_r30':'🧶','fg_r38':'🧶','fg_r49':'🧶','fg_custom':'🧶','cel_blown':'📦','cel_dense':'📦','mw_r15':'🪨','mw_r23':'🪨','mw_r30':'🪨','mw_custom':'🪨','ign':'🔥','fb':'🧱','foam_cans':'🫙','insulation_removal':'🗑️','other':'📦'};
   var matLabel={'cc':'Closed Cell','oc':'Open Cell','hybrid':'Hybrid CC+OC','hybrid_foam_fg':'Hybrid Foam+Fiberglass','hybrid_foam_mw':'Hybrid Foam+Mineral Wool','fg_r11':'Fiberglass R-11','fg_r13':'Fiberglass R-13','fg_r15':'Fiberglass R-15','fg_r19':'Fiberglass R-19','fg_r21':'Fiberglass R-21','fg_r25':'Fiberglass R-25','fg_r30':'Fiberglass R-30','fg_r38':'Fiberglass R-38','fg_r49':'Fiberglass R-49','fg_custom':'Fiberglass','cel_blown':'Cellulose Blown','cel_dense':'Cellulose Dense Pack','mw_r15':'Mineral Wool R-15','mw_r23':'Mineral Wool R-23','mw_r30':'Mineral Wool R-30','mw_custom':'Mineral Wool','ign':'Ignition Barrier','fb':'Fire Blocking','foam_cans':'Foam Cans','insulation_removal':'Insulation Removal','other':'Other'};
+    window._faMatEmoji=matEmoji; window._faMatLabel=matLabel;   // shared with the field Work Order
   var h='';
   for(var i=0;i<fieldAreas.length;i++){
     var a=fieldAreas[i];var pr=getProd(a.productId);
@@ -5319,7 +5328,7 @@ function buildWOTask(idx,name,prod,sf,spec,notes,photos,checked,mode,t,dimsHtml)
 function renderFWO(){
   var t=WO[fwLang];var h=buildWOHd(t,fwLang,currentProj?currentProj.name:'',currentProj?currentProj.address||'':'',quoteNum);
   if(!fieldAreas.length)h+='<div class="empty"><div class="empty-body">'+t.none+'</div></div>';
-  else{h+='<div class="wo-tasks">';for(var i=0;i<fieldAreas.length;i++){var a=fieldAreas[i];var pr=getProd(a.productId);var woEm=a.matCat?(matEmoji[a.matCat]||(pr?pr.emoji:'📦')):pr?pr.emoji:'📦';var woType=a.matCat?(matLabel[a.matCat]||(pr?pr.name:'—')):pr?pr.name:'—';h+=buildWOTask(i,woEm+' '+esc(a.name),woType,fmtN(a.sf),a.spec,a.notes,phFor(a.photos,'wo'),woChecked['f'+i],'f',t,formatDimRows(a,{print:true}));}h+='</div>';}
+  else{h+='<div class="wo-tasks">';for(var i=0;i<fieldAreas.length;i++){var a=fieldAreas[i];var pr=getProd(a.productId);var _ME=window._faMatEmoji||{}, _ML=window._faMatLabel||{};var woEm=a.matCat?(_ME[a.matCat]||(pr?pr.emoji:'📦')):pr?pr.emoji:'📦';var woType=a.matCat?(_ML[a.matCat]||(pr?pr.name:'—')):pr?pr.name:'—';h+=buildWOTask(i,woEm+' '+esc(a.name),woType,fmtN(a.sf),a.spec,a.notes,phFor(a.photos,'wo'),woChecked['f'+i],'f',t,formatDimRows(a,{print:true}));}h+='</div>';}
   var fwo=document.getElementById('fieldWO');
   fwo.innerHTML=h;
   fwo.addEventListener('click',function(e){
@@ -6376,6 +6385,47 @@ function delFA(idx){appConfirm('Delete this area?',function(){fieldAreas.splice(
 
 // Derive material fields (matType + inches/R) from a product, so manually-created
 // estimator items carry the data WorkLog needs for matBudget — same as imported items.
+// ── Change material on an Estimator item ──
+function _eiProdShow(){
+  var row=document.getElementById('ei_prod_row'), lbl=document.getElementById('ei_prod_label'), btn=document.getElementById('ei_prod_change'), pk=document.getElementById('ei_prod_pick');
+  if(!row||!lbl) return;
+  var pr=null; try{ pr=eiProd?getProd(eiProd):null; }catch(e){}
+  row.style.display='block';
+  lbl.textContent=pr?((pr.emoji||'')+(pr.emoji?' ':'')+pr.name):'No material (custom item)';
+  lbl.style.color=pr?'#58a6ff':'#8b98a5';
+  if(btn) btn.textContent=pr?'Change':'Choose';
+  if(pk){ pk.style.display='none'; pk.innerHTML=''; }
+}
+function _eiPickToggle(){
+  var pk=document.getElementById('ei_prod_pick'); if(!pk) return;
+  if(pk.style.display!=='none'){ pk.style.display='none'; return; }
+  var cats={}, order=[];
+  for(var i=0;i<products.length;i++){ var p=products[i]; var c=p.cat||'Other'; if(!cats[c]){ cats[c]=[]; order.push(c); } cats[c].push(p); }
+  var h='';
+  for(var k=0;k<order.length;k++){ h+='<div class="ei-pk-cat">'+esc(order[k])+'</div>';
+    for(var j=0;j<cats[order[k]].length;j++){ var q=cats[order[k]][j], on=q.id===eiProd;
+      var lp=getLastPrice('prod_'+q.id, parseFloat(q.price)||0);
+      h+='<button type="button" class="ei-pk'+(on?' on':'')+'" data-pid="'+esc(q.id)+'"><span>'+(q.emoji||'')+' '+esc(q.name)+'</span><span class="ei-pk-pr">$'+(Number(lp)||0).toFixed(2)+(q.pricingType==='per_inch'?'/in':'/SF')+(on?' ✓':'')+'</span></button>'; } }
+  if(!products.length) h='<div style="padding:10px;color:#8b98a5;font-size:12px">No products yet.</div>';
+  pk.innerHTML=h; pk.style.display='block';
+}
+function _eiPick(pid){
+  var pr=null; try{ pr=getProd(pid); }catch(e){}
+  if(!pr) return;
+  var was=eiProd; eiProd=pid;
+  if(was!==pid){
+    var lp=getLastPrice('prod_'+pid, parseFloat(pr.price)||0);
+    document.getElementById('ei_price').value=lp?lp:'';
+    var si=document.getElementById('ei_spec_info'); if(si) si.style.display='none';
+  }
+  _eiProdShow(); updateEIPricingUI();
+  if(was!==pid) toast(String(window._eiProdOrig||'')!==String(pid)?'Material changed — check the price':'Material: '+pr.name);
+}
+(function(){
+  var b=document.getElementById('ei_prod_change'); if(b) b.addEventListener('click',_eiPickToggle);
+  var pk=document.getElementById('ei_prod_pick');
+  if(pk) pk.addEventListener('click',function(e){ var t=e.target; while(t&&t!==pk&&!(t.getAttribute&&t.getAttribute('data-pid'))) t=t.parentNode; if(t&&t!==pk) _eiPick(t.getAttribute('data-pid')); });
+})();
 function deriveMatFromProduct(productId, inches){
   var out={matType:'',matCat:'',ccInch:0,ocInch:0,fgR:0,celR:0,mwR:0};
   var prod=null;try{prod=productId?getProd(productId):null;}catch(e){}
@@ -6442,12 +6492,8 @@ function openEIModal(idx){
     var pr=getProd(eiProd);
     var prodRow=document.getElementById('ei_prod_row');
     var prodLbl=document.getElementById('ei_prod_label');
-    if(pr&&prodRow&&prodLbl){
-      prodRow.style.display='block';
-      prodLbl.textContent=(pr.emoji||'')+(pr.emoji?' ':'')+pr.name;
-    } else if(prodRow){
-      prodRow.style.display='none';
-    }
+    window._eiProdOrig=eiProd||null;
+    _eiProdShow();
     // Show thickness/spec as info text (esp. for Hybrid, which has no thickness field)
     var specInfo=document.getElementById('ei_spec_info');
     if(specInfo){
@@ -6473,9 +6519,8 @@ function openEIModal(idx){
     document.getElementById('ei_inch').value='';
     document.getElementById('ei_notes').value='';
     eiProd=null;
-    // Hide material label for new manual items
-    var prodRow=document.getElementById('ei_prod_row');
-    if(prodRow) prodRow.style.display='none';
+    window._eiProdOrig=null;
+    _eiProdShow();
     var _spi=document.getElementById('ei_spec_info');
     if(_spi)_spi.style.display='none';
   }
@@ -6558,6 +6603,10 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
   // Preserve any existing material data when editing an imported item.
   var _prevItem=(editEIIdx>=0&&window.estItems[editEIIdx])?window.estItems[editEIIdx]:null;
   var _mat=deriveMatFromProduct(eiProd, inch);
+  // Material changed in this sheet: the old material data no longer applies.
+  var _chg=!!(_prevItem&&String(_prevItem.productId||'')!==String(eiProd||''));
+  if(_chg){ _prevItem={photos:_prevItem.photos,matChanged:true,matFrom:_prevItem.matFrom||_prevItem.fromArea||_prevItem.name}; }
+  if(_prevItem&&_prevItem.matChanged){ item.matChanged=true; item.matFrom=_prevItem.matFrom||name; }
   item.matType=(_prevItem&&_prevItem.matType)?_prevItem.matType:_mat.matType;
   item.matCat =(_prevItem&&_prevItem.matCat) ?_prevItem.matCat :_mat.matCat;
   item.ccInch =(_prevItem&&_prevItem.ccInch) ?_prevItem.ccInch :_mat.ccInch;
@@ -6566,8 +6615,29 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
   item.celR   =(_prevItem&&_prevItem.celR)   ?_prevItem.celR   :_mat.celR;
   item.mwR    =(_prevItem&&_prevItem.mwR)    ?_prevItem.mwR    :_mat.mwR;
   if(_prevItem&&_prevItem.spec)item.spec=_prevItem.spec;
+  if(item.matChanged&&inch>0){ if(item.matType==='cc') item.ccInch=inch; else if(item.matType==='oc') item.ocInch=inch; }
   if(editEIIdx>=0)window.estItems[editEIIdx]=item;else window.estItems.push(item);
   estItems=window.estItems;
+  // Material changed in the Estimator: the matching TAKEOFF area follows it, so the
+  // field Work Order and the insulation certificate show the same material.
+  if(item.matChanged){
+    var _mf=String(item.matFrom||'').trim().toLowerCase();
+    var _syncArea=function(a){
+      if(!a||String(a.name||'').trim().toLowerCase()!==_mf) return false;
+      a.productId=item.productId; a.matType=item.matType||'';
+      a.matCat=(item.matType==='cc'||item.matType==='oc'||item.matType==='hybrid')?item.matType:'';
+      a.ccInch=item.ccInch||0; a.ocInch=item.ocInch||0; a.fgR=item.fgR||0; a.celR=item.celR||0; a.mwR=item.mwR||0;
+      var _in=parseFloat(item.inches)||0;
+      a._editedInches=(item.matType==='cc'||item.matType==='oc')?_in:0;
+      if(item.matType==='cc'&&_in>0) a.spec=_in+'" closed cell';
+      else if(item.matType==='oc'&&_in>0) a.spec=_in+'" open cell';
+      else if(item.matType==='hybrid'&&(item.ccInch||item.ocInch)) a.spec=(item.ccInch||0)+'" cc + '+(item.ocInch||0)+'" oc';
+      else { var _pp=null; try{ _pp=getProd(item.productId); }catch(_e){} a.spec=_pp?_pp.name:''; }
+      return true;
+    };
+    for(var _fa=0;_fa<fieldAreas.length;_fa++){ _syncArea(fieldAreas[_fa]); }
+    if(currentProj){ var _ps2=loadProjs(); for(var _q2=0;_q2<_ps2.length;_q2++){ if(_ps2[_q2].id===currentProj.id){ var _ar2=_ps2[_q2].areas||[]; for(var _r2=0;_r2<_ar2.length;_r2++) _syncArea(_ar2[_r2]); break; } } saveProjs(_ps2); }
+  }
   // Save price by area name (most reliable - works even without matType)
   if(eiProd) setLastPrice('prod_'+eiProd, price);
   setLastPrice('name_'+name.trim().toLowerCase().replace(/\s+/g,'_'), price);
@@ -8373,13 +8443,18 @@ function _wlBuildMatBudget(){
   var _projItems=(_sp&&Array.isArray(_sp.estItems))?_sp.estItems:((_cp&&Array.isArray(_cp.estItems))?_cp.estItems:null);
 
   if(_projAreas&&_projAreas.length>0){
-    all=all.concat(_projAreas);
+    // Items whose material was changed in the Estimator replace their takeoff area.
+    var _ovr={}, _ovrItems=[];
+    for(var _o=0;_projItems&&_o<_projItems.length;_o++){ var _oi=_projItems[_o]; if(_oi&&_oi.matChanged){ var _ok=String(_oi.matFrom||_oi.name||'').trim().toLowerCase(); if(_ok){ _ovr[_ok]=1; _ovrItems.push(_oi); } } }
+    for(var _pa=0;_pa<_projAreas.length;_pa++){ var _ar=_projAreas[_pa]; var _ak=String((_ar&&_ar.name)||'').trim().toLowerCase(); if(!_ovr[_ak]) all.push(_ar); }
+    if(_ovrItems.length) all=all.concat(_ovrItems);
     // + items created directly in the Estimator. Items imported from the takeoff
     // carry the area's name (or fromArea) and are already counted by their area.
     var _an={};
     for(var _a=0;_a<_projAreas.length;_a++){ var _nm=String((_projAreas[_a]&&_projAreas[_a].name)||'').trim().toLowerCase(); if(_nm) _an[_nm]=1; }
     var _extra=[];
     for(var _b=0;_projItems&&_b<_projItems.length;_b++){ var _it=_projItems[_b]; if(!_it||typeof _it!=='object') continue;
+      if(_it.matChanged) continue;
       if(_it.fromArea) continue;
       var _inm=String(_it.name||'').trim().toLowerCase(); if(_inm&&_an[_inm]) continue;
       _extra.push(_it); }
