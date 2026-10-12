@@ -611,6 +611,44 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .fa-cat-hint{font-size:12px;color:#8fb8ff;margin-top:6px;display:none;}
 .fa-cat-hint b{color:#e6edf3;}
 .fa-cat-hint button{margin-left:6px;border:1px solid #2a4a6a;background:#162338;color:#60a5fa;border-radius:7px;padding:4px 10px;font-size:12px;font-weight:700;}
+
+/* invoices */
+.jc-inv{display:block;width:100%;text-align:left;margin:-2px 0 10px;border:1px solid #6a4a1a;background:#2a1f0e;color:#f0b429;border-radius:9px;padding:7px 10px;font-size:12.5px;font-weight:700;}
+.jc-inv.paid{border-color:#2a6b35;background:#15291b;color:#4ade80;}
+.inv-m{max-height:92vh;overflow-y:auto;padding-bottom:24px;}
+.inv-num{color:#4ade80;}
+.inv-client{padding:0 20px 8px;color:#8b98a5;font-size:13px;}
+.inv-row3{display:grid;grid-template-columns:1fr 1.25fr;gap:8px;padding:0 20px;}
+.inv-row3 label:last-child{grid-column:1 / -1;}
+.inv-row3 label,.inv-lbl{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:#8b98a5;text-transform:uppercase;letter-spacing:.04em;flex:1;}
+.inv-lbl{padding:8px 20px 0;}
+.inv-lbl span{text-transform:none;font-weight:500;letter-spacing:0;}
+.inv-due{padding:6px 20px 0;font-size:12px;color:#94a3b8;}
+.inv-sec{display:flex;justify-content:space-between;align-items:center;padding:14px 20px 6px;font-size:11.5px;font-weight:800;color:#8b98a5;text-transform:uppercase;letter-spacing:.06em;}
+.inv-lnk{border:none;background:none;color:#60a5fa;font-size:12px;font-weight:700;text-transform:none;letter-spacing:0;}
+.inv-it{margin:0 20px 8px;padding:8px;border:1px solid #1e2530;border-radius:10px;background:#0d1117;}
+.inv-it2{display:flex;gap:6px;align-items:flex-end;margin-top:6px;}
+.inv-it2 label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:#8b98a5;font-weight:700;width:74px;}
+.inv-it .inv-n{width:100%;}
+.inv-it2 .inv-n{flex:1;}
+.inv-la{width:100px;}
+.inv-amt{flex:1;text-align:right;font-weight:800;color:#e6edf3;font-size:14px;padding-bottom:10px;}
+.inv-x{flex:none;width:34px;height:40px;border:1px solid #6a2a2a;background:#2a1515;color:#f87171;border-radius:8px;}
+.inv-add{margin:2px 20px 0;width:calc(100% - 40px);border:1px dashed #2a3340;background:transparent;color:#94a3b8;border-radius:10px;padding:10px;font-weight:700;}
+.inv-tot{margin:14px 20px 4px;border:1px solid #1e2530;border-radius:12px;background:#0d1117;padding:6px 12px;}
+.inv-tot div{display:flex;justify-content:space-between;padding:6px 0;font-size:13.5px;color:#94a3b8;}
+.inv-tot b{color:#e6edf3;} .inv-tot b.good{color:#4ade80;}
+.inv-tot .big{border-top:1px solid #1e2530;font-size:16px;} .inv-tot .big b{color:#f0b429;font-size:18px;}
+.inv-none{padding:0 20px;font-size:12.5px;color:#7d8590;}
+.inv-pay{display:flex;align-items:center;gap:8px;margin:0 20px 6px;padding:8px 10px;border-radius:9px;background:#15291b;font-size:13px;color:#cfe9d4;}
+.inv-pay span{flex:1;} .inv-pay b{color:#4ade80;}
+.inv-addpay{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 20px 0;}
+.inv-go2{grid-column:1 / -1;background:#14301c;border:1px solid #238636;color:#3fb950;border-radius:10px;padding:10px;font-weight:800;}
+.inv-btns{display:flex;gap:8px;padding:16px 20px 0;}
+.inv-save{flex:1.2;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:13px;font-weight:800;font-size:14px;}
+.inv-sec2{flex:1;background:#1e2530;border:1px solid #2a3340;color:#e6edf3;border-radius:10px;padding:13px;font-weight:700;font-size:13.5px;}
+.inv-sec2.em{border-color:#1b7a8c;color:#bdf1fb;}
+.inv-close{display:block;margin:10px 20px 0;width:calc(100% - 40px);background:transparent;border:1px solid #2a3340;color:#94a3b8;border-radius:10px;padding:11px;font-weight:700;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -724,7 +762,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261012-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261012-1300</span></div>
 </div>
 
 <div id="field-app">
@@ -5808,6 +5846,8 @@ function renderJobsList(){
     if(p.address){ h += '<div class="jc-addr">📍 '+esc(p.address)+'</div>'; }
     if(p.note && String(p.note).trim()){ var _np=String(p.note).trim(); if(_np.length>80)_np=_np.slice(0,80)+'…'; h += '<div class="jc-note">📝 '+esc(_np)+(p.noteInPdf?' <b>· on PDF</b>':'')+'</div>'; }
     h += '<div class="jc-stats"><span>'+fmtN(Math.round(totalSF))+' SF</span><span>'+areaCount+' area'+(areaCount!==1?'s':'')+'</span>'+(quoteTotal>0?'<span class="jc-tot">$'+quoteTotal.toLocaleString()+'</span>':'')+'<span class="jc-date">'+esc(p.created||'')+'</span></div>';
+    if(p.invoice){ var _T=invTotals(p.invoice), _paid=_T.balance<=0&&_T.total>0;
+      h += '<button type="button" class="jc-inv'+(_paid?' paid':'')+'" data-act="inv" data-pid="'+p.id+'">🧾 '+esc(p.invoice.num)+' · '+(_paid?'Paid':_invMoney(_T.balance)+' due')+(p.invoice.sentDate&&!_paid?' · sent':'')+'</button>'; }
     h += '<div class="jc-act"><button type="button" class="jc-open" data-act="open" data-pid="'+p.id+'">'+(isActive?'✓ Editing':'Open Job')+'</button>'+
          '<button type="button" class="jc-b" data-act="est" data-pid="'+p.id+'">📄 Estimate</button>'+
          '<button type="button" class="jc-b jc-em" data-act="email" data-pid="'+p.id+'">📧 Email</button>'+
@@ -5841,6 +5881,7 @@ function renderJobsList(){
 }
 // One place for every job action (card buttons and the ⋯ / status sheets).
 function _jobAct(act,pid,btn){
+    if(act === 'inv'){ openInvoice(pid); return; }
     if(act === 'open') openJobFromList(pid);
     else if(act === 'cert'){
       try{ generateProofPDF(pid); }
@@ -5897,7 +5938,8 @@ function _jobSheet(pid,kind){
     for(var k=0;k<opts.length;k++) h+='<button type="button" class="js-b st-'+opts[k][0]+(cur===opts[k][0]?' on':'')+'" data-js="st" data-v="'+opts[k][0]+'"><b>'+opts[k][1]+(cur===opts[k][0]?' ✓':'')+'</b><span>'+opts[k][2]+'</span></button>';
   } else {
     var hasNote=!!(p.note&&String(p.note).trim());
-    h+='<button type="button" class="js-b row" data-js="cert">📋 <b>Generate Certificate</b></button>'+
+    h+='<button type="button" class="js-b row" data-js="inv">🧾 <b>'+(p.invoice?'Open Invoice':'Create Invoice')+'</b></button>'+
+       '<button type="button" class="js-b row" data-js="cert">📋 <b>Generate Certificate</b></button>'+
        '<button type="button" class="js-b row" data-js="note">📝 <b>'+(hasNote?'Edit Note':'Add Note')+'</b></button>'+
        '<button type="button" class="js-b row" data-js="dup">⧉ <b>Duplicate</b></button>'+
        '<div class="js-sep"></div>'+
@@ -5940,6 +5982,160 @@ function renderJobHeader(){
   var eb=document.getElementById('jhEdit'); if(eb) eb.onclick=function(){ var t=document.getElementById('et2'); if(t) t.click(); };
 }
 window.renderJobHeader=renderJobHeader;
+// ══════ INVOICES (one per job) ══════
+// Built from the estimate (same math as the estimate total), editable lines,
+// payments (date / amount / method), balance due, PDF + email.
+function _invMoney(x){ var n=Number(x)||0, neg=n<0; n=Math.abs(n); return (neg?'−':'')+'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function _invR2(x){ return Math.round((Number(x)||0)*100)/100; }
+function _invToday(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); }
+function _invFmtDate(iso){ if(!iso) return ''; var p=String(iso).split('-'); if(p.length!==3) return iso; return p[1]+'/'+p[2]+'/'+p[0]; }
+function _invDue(inv){ if(!inv||!inv.date) return ''; var days=inv.terms==='net30'?30:(inv.terms==='net15'?15:0); var p=inv.date.split('-'); var d=new Date(+p[0],+p[1]-1,+p[2]); d.setDate(d.getDate()+days); return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); }
+function _invTermsLabel(t){ return t==='net30'?'Net 30':(t==='net15'?'Net 15':'Due on receipt'); }
+function invTotals(inv){
+  var t=0, pd=0, i; for(i=0;i<(inv.items||[]).length;i++) t+=Number(inv.items[i].amount)||0;
+  for(i=0;i<(inv.payments||[]).length;i++) pd+=Number(inv.payments[i].amount)||0;
+  t=_invR2(t); pd=_invR2(pd); return {total:t, paid:pd, balance:_invR2(t-pd)};
+}
+window.invTotals=invTotals;
+function invBuildFromEstimate(p){
+  var qi=p.quoteInfo||{}, items=[];
+  var hasMk=qi.markup!==undefined&&qi.markup!==null&&qi.markup!=='', mkVal=hasMk?(Number(qi.markup)||0):0, mkType=(qi.markupType==='usd')?'usd':'pct';
+  var hasDc=qi.discount!==undefined&&qi.discount!==null&&qi.discount!=='', dcVal=hasDc?(Number(qi.discount)||0):0, dcType=(qi.discountType==='usd')?'usd':'pct';
+  var ei=p.estItems||[], sub=0;
+  for(var i=0;i<ei.length;i++){ var it=ei[i], sf=Number(it.sf)||0, eff=Number(it.price)||0;
+    try{ var prod=it.productId?getProd(it.productId):null, inch=Number(it.inches)||0; if(prod&&prod.pricingType==='per_inch'&&prod.cat!=='Hybrid'&&inch>0&&(!it.pricePerInch||it.pricePerInch===0)) eff=parseFloat((eff*inch).toFixed(2)); }catch(e){}
+    var rate=eff*(1+((mkType==='pct')?mkVal:0)/100), amt=_invR2(sf*rate); sub+=amt;
+    items.push({kind:'item',name:it.name||'Item',sf:Math.round(sf*10)/10,rate:_invR2(rate),amount:amt}); }
+  if(mkType==='usd'&&mkVal){ items.push({kind:'line',name:'Additional',amount:_invR2(mkVal)}); sub+=mkVal; }
+  var tr=Number(cfg&&cfg.taxRate)||0; if(tr){ var tax=_invR2(sub*tr/100); items.push({kind:'line',name:'Sales tax ('+tr+'%)',amount:tax}); sub+=tax; }
+  if(hasDc&&dcVal){ var dc=(dcType==='usd')?dcVal:sub*dcVal/100; items.push({kind:'line',name:'Discount'+(dcType==='pct'?' ('+dcVal+'%)':''),amount:-_invR2(dc)}); }
+  return items;
+}
+function _invFind(pid){ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid) return {ps:ps,i:i,p:ps[i]}; } return null; }
+function openInvoice(pid){
+  var f=_invFind(pid); if(!f) return;
+  var inv=f.p.invoice?JSON.parse(JSON.stringify(f.p.invoice)):null, isNew=!inv;
+  if(!inv){ if(!(f.p.estItems||[]).length){ toast('This job has no estimate items yet','err'); return; }
+    inv={num:'INV-'+(Number(cfg.invNext)||1001),date:_invToday(),terms:cfg.invTerms||'receipt',items:invBuildFromEstimate(f.p),notes:'',dueNow:'',payments:[],created:new Date().toISOString()}; }
+  window._inv={pid:pid,inv:inv,isNew:isNew};
+  _invRender();
+}
+window.openInvoice=openInvoice;
+function _invRender(){
+  var S=window._inv; if(!S) return; var inv=S.inv, f=_invFind(S.pid); if(!f) return; var qi=f.p.quoteInfo||{}, T=invTotals(inv);
+  var ov=document.getElementById('invOverlay'); if(!ov){ ov=document.createElement('div'); ov.className='overlay'; ov.id='invOverlay'; document.body.appendChild(ov); }
+  var h='<div class="modal inv-m"><div class="mhandle"></div><div class="mtitle">🧾 Invoice <span class="inv-num">'+esc(inv.num)+'</span></div><div class="inv-client">'+esc(qi.client||f.p.name||'')+(qi.address?' · '+esc(qi.address):'')+'</div>';
+  h+='<div class="inv-row3"><label>Invoice #<input class="fi" id="inv_num" value="'+esc(inv.num)+'"></label><label>Date<input class="fi" id="inv_date" type="date" value="'+esc(inv.date)+'"></label><label>Terms<select class="fi" id="inv_terms">'+
+     ['receipt','net15','net30'].map(function(t){return '<option value="'+t+'"'+(inv.terms===t?' selected':'')+'>'+_invTermsLabel(t)+'</option>';}).join('')+'</select></label></div>';
+  h+='<div class="inv-due">Due '+_invFmtDate(_invDue(inv))+'</div>';
+  h+='<div class="inv-sec">Items <button type="button" class="inv-lnk" data-inv="reload">↻ Reload from estimate</button></div>';
+  for(var i=0;i<inv.items.length;i++){ var it=inv.items[i];
+    if(it.kind==='item') h+='<div class="inv-it"><input class="fi inv-n" data-i="'+i+'" data-f="name" value="'+esc(it.name)+'"><div class="inv-it2"><label>SF<input class="fi" data-i="'+i+'" data-f="sf" inputmode="decimal" value="'+it.sf+'"></label><label>$/SF<input class="fi" data-i="'+i+'" data-f="rate" inputmode="decimal" value="'+it.rate+'"></label><span class="inv-amt">'+_invMoney(it.amount)+'</span><button type="button" class="inv-x" data-inv="del" data-i="'+i+'">✕</button></div></div>';
+    else h+='<div class="inv-it"><div class="inv-it2"><input class="fi inv-n" data-i="'+i+'" data-f="name" value="'+esc(it.name)+'"><input class="fi inv-la" data-i="'+i+'" data-f="amount" inputmode="decimal" value="'+it.amount+'"><button type="button" class="inv-x" data-inv="del" data-i="'+i+'">✕</button></div></div>'; }
+  h+='<button type="button" class="inv-add" data-inv="addline">+ Add line</button>';
+  h+='<div class="inv-tot"><div><span>Total</span><b>'+_invMoney(T.total)+'</b></div><div><span>Paid</span><b class="good">'+_invMoney(T.paid)+'</b></div><div class="big"><span>Balance due</span><b>'+_invMoney(T.balance)+'</b></div></div>';
+  h+='<label class="inv-lbl">Amount due now (optional — e.g. a deposit)<input class="fi" id="inv_duenow" inputmode="decimal" placeholder="leave empty to ask for the balance" value="'+(inv.dueNow===''||inv.dueNow==null?'':inv.dueNow)+'"></label>';
+  h+='<div class="inv-sec">Payments received</div>';
+  if(!inv.payments.length) h+='<div class="inv-none">No payments yet.</div>';
+  for(var k=0;k<inv.payments.length;k++){ var pm=inv.payments[k]; h+='<div class="inv-pay"><span>'+_invFmtDate(pm.date)+' · '+esc(pm.method||'')+(pm.note?' · '+esc(pm.note):'')+'</span><b>'+_invMoney(pm.amount)+'</b><button type="button" class="inv-x" data-inv="delpay" data-i="'+k+'">✕</button></div>'; }
+  h+='<div class="inv-addpay"><input class="fi" id="inv_pdate" type="date" value="'+_invToday()+'"><input class="fi" id="inv_pamt" inputmode="decimal" placeholder="Amount" value=""><select class="fi" id="inv_pmeth">'+['Check','Zelle','Cash','Card','ACH / Transfer','Other'].map(function(m){return '<option>'+m+'</option>';}).join('')+'</select><input class="fi" id="inv_pnote" placeholder="Note (check #…)"><button type="button" class="inv-go2" data-inv="addpay">+ Add payment</button></div>';
+  h+='<label class="inv-lbl">Notes on the invoice<textarea class="fi" id="inv_notes" rows="2" placeholder="Optional">'+esc(inv.notes||'')+'</textarea></label>';
+  h+='<label class="inv-lbl">Payment instructions <span>(saved for all invoices)</span><textarea class="fi" id="inv_paytxt" rows="3">'+esc(cfg.invPay||'Check payable to Green Idea Insulation\nZelle: greenideainsulation@gmail.com')+'</textarea></label>';
+  h+='<div class="inv-btns"><button type="button" class="inv-save" data-inv="save">Save</button><button type="button" class="inv-sec2" data-inv="pdf">📄 PDF</button><button type="button" class="inv-sec2 em" data-inv="email">📧 Email</button></div>';
+  h+='<button type="button" class="inv-close" data-inv="close">Close</button></div>';
+  var st=ov.querySelector('.inv-m'), keep=st?st.scrollTop:0;
+  ov.innerHTML=h; ov.classList.add('on'); ov.style.display='flex';
+  var m=ov.querySelector('.inv-m'); if(m) m.scrollTop=keep;
+  ov.oninput=function(e){ var t=e.target, i=t.getAttribute&&t.getAttribute('data-i'), fld=t.getAttribute&&t.getAttribute('data-f'); if(i===null||!fld) return; var it=inv.items[+i]; if(!it) return;
+    if(fld==='name') it.name=t.value; else { var v=parseFloat(String(t.value).replace(',','.')); it[fld]=isNaN(v)?0:v; if(it.kind==='item') it.amount=_invR2((Number(it.sf)||0)*(Number(it.rate)||0)); _invRefreshTotals(); var row=t.closest('.inv-it'); var a=row&&row.querySelector('.inv-amt'); if(a) a.textContent=_invMoney(it.amount); } };
+  ov.onchange=function(e){ var id=e.target.id; if(id==='inv_terms'||id==='inv_date'){ _invReadHeader(); _invRender(); } };
+  ov.onclick=function(e){ var b=e.target; while(b&&b!==ov&&!(b.getAttribute&&b.getAttribute('data-inv'))) b=b.parentNode; if(!b||b===ov) return; _invAct(b.getAttribute('data-inv'),b.getAttribute('data-i')); };
+}
+function _invRefreshTotals(){ var T=invTotals(window._inv.inv), el=document.querySelectorAll('#invOverlay .inv-tot b'); if(el.length===3){ el[0].textContent=_invMoney(T.total); el[1].textContent=_invMoney(T.paid); el[2].textContent=_invMoney(T.balance); } }
+function _invReadHeader(){
+  var inv=window._inv.inv, g=function(id){ var e=document.getElementById(id); return e?e.value:null; };
+  if(g('inv_num')!==null) inv.num=String(g('inv_num')).trim()||inv.num; if(g('inv_date')) inv.date=g('inv_date'); if(g('inv_terms')) inv.terms=g('inv_terms');
+  var dn=g('inv_duenow'); inv.dueNow=(dn===null||String(dn).trim()==='')?'':_invR2(parseFloat(String(dn).replace(',','.'))||0);
+  if(g('inv_notes')!==null) inv.notes=g('inv_notes');
+  var pt=g('inv_paytxt'); if(pt!==null&&pt!==cfg.invPay){ cfg.invPay=pt; saveCfg(); }
+}
+function _invSave(silent){
+  _invReadHeader(); var S=window._inv, f=_invFind(S.pid); if(!f) return false;
+  f.ps[f.i].invoice=S.inv;
+  if(S.isNew){ var n=parseInt(String(S.inv.num).replace(/\D/g,''),10); cfg.invNext=Math.max(Number(cfg.invNext)||1001,(isNaN(n)?1000:n)+1); saveCfg(); S.isNew=false; }
+  saveProjs(f.ps); if(window.renderJobsList) renderJobsList(); if(!silent) toast('🧾 Invoice saved');
+  return true;
+}
+function _invAct(a,i){
+  var S=window._inv, inv=S.inv;
+  if(a==='close'){ var ov=document.getElementById('invOverlay'); ov.classList.remove('on'); ov.style.display='none'; return; }
+  if(a==='del'){ _invReadHeader(); inv.items.splice(+i,1); _invRender(); return; }
+  if(a==='addline'){ _invReadHeader(); inv.items.push({kind:'line',name:'Additional work',amount:0}); _invRender(); return; }
+  if(a==='reload'){ appConfirm('Replace the items with the current estimate? Payments stay.',function(){ _invReadHeader(); var f=_invFind(S.pid); inv.items=invBuildFromEstimate(f.p); _invRender(); },{confirmLabel:'↻ Reload'}); return; }
+  if(a==='addpay'){ _invReadHeader(); var amt=parseFloat(String(document.getElementById('inv_pamt').value).replace(',','.'));
+    if(!(amt>0)){ toast('Enter the amount received','err'); return; }
+    inv.payments.push({id:'pm'+Date.now(),date:document.getElementById('inv_pdate').value||_invToday(),amount:_invR2(amt),method:document.getElementById('inv_pmeth').value,note:document.getElementById('inv_pnote').value||''});
+    _invSave(true); _invRender(); var T=invTotals(inv); toast(T.balance<=0?'✅ Paid in full':'💵 Payment added · balance '+_invMoney(T.balance)); return; }
+  if(a==='delpay'){ appConfirm('Remove this payment?',function(){ inv.payments.splice(+i,1); _invSave(true); _invRender(); },{confirmLabel:'Remove'}); return; }
+  if(a==='save'){ _invSave(false); return; }
+  if(a==='pdf'||a==='email'){ if(!_invSave(true)) return; var r=generateInvoicePDF(S.pid,{returnBytes:true}); if(!r||!r.bytes) return;
+    if(a==='pdf') deliverPdf(r.bytes,r.filename,false);
+    else { var _ov=document.getElementById('invOverlay'); if(_ov){ _ov.classList.remove('on'); _ov.style.display='none'; } openEstimateEmail(r.bytes,r.filename,S.pid,'invoice'); } }
+}
+function generateInvoicePDF(pid,opts){
+  opts=opts||{}; if(!window.jspdf){ toast('PDF library loading, try again'); return null; }
+  var f=_invFind(pid); if(!f||!f.p.invoice){ toast('No invoice for this job','err'); return null; }
+  var p=f.p, inv=p.invoice, qi=p.quoteInfo||{}, T=invTotals(inv);
+  var doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'letter'}), W=215.9, H=279.4, M=16, y=14;
+  function sf(st,sz,c){ doc.setFont('helvetica',st||'normal'); doc.setFontSize(sz||10); if(c) doc.setTextColor(c[0],c[1],c[2]); else doc.setTextColor(30,30,30); }
+  function tx(s,x,yy,o){ if(!s&&s!==0) return; doc.text(String(s),x,yy,o||{}); }
+  function ln(x1,y1,x2,y2,c,w){ doc.setDrawColor(c?c[0]:200,c?c[1]:200,c?c[2]:200); doc.setLineWidth(w||0.3); doc.line(x1,y1,x2,y2); }
+  function room(n){ if(y+n>H-22){ doc.addPage(); y=20; } }
+  var LOGO=null; try{ LOGO=LOGO_B64; }catch(e){}
+  if(LOGO){ var lh=22,lw=lh*(750/1334); doc.setFillColor(0,0,0); doc.roundedRect(M,y-1,lw+2,lh+2,1.5,1.5,'F'); doc.addImage(LOGO,'JPEG',M+1,y,lw,lh); }
+  var cx=M+(LOGO?12.5+4:0);
+  sf('bold',12,[20,20,20]); tx('Green Idea Insulation',cx,y+5);
+  sf('normal',8,[100,100,100]); tx('238 Webster Street #3 · Worcester, Ma 01603',cx,y+10); tx('+7745787186 / 508-579-0762',cx,y+15); tx('greenideainsulation@gmail.com · www.greenideainsulation.com',cx,y+20);
+  var rx=W-M; sf('bold',16,[26,107,42]); tx('INVOICE',rx,y+4,{align:'right'});
+  sf('normal',8,[150,150,150]); tx('Invoice #',rx-30,y+10,{align:'right'}); tx('Date',rx-30,y+15,{align:'right'}); tx('Due',rx-30,y+20,{align:'right'});
+  sf('bold',8,[20,20,20]); tx(inv.num,rx,y+10,{align:'right'}); tx(_invFmtDate(inv.date),rx,y+15,{align:'right'}); tx(inv.terms==='receipt'?'Upon receipt':_invFmtDate(_invDue(inv)),rx,y+20,{align:'right'});
+  y+=28; doc.setFillColor(26,107,42); doc.rect(0,y,W,1.5,'F'); doc.setFillColor(74,222,128); doc.rect(60,y,80,1.5,'F'); doc.setFillColor(220,240,220); doc.rect(140,y,W-140,1.5,'F'); y+=6;
+  sf('normal',7.5,[150,150,150]); tx('BILL TO',M,y+4); y+=8;
+  sf('bold',12,[20,20,20]); tx(qi.client||p.name||'Client',M,y); y+=5; sf('normal',9,[100,100,100]);
+  if(qi.address){ tx(qi.address,M,y); y+=4; } var ct=[qi.phone,qi.email].filter(function(x){return x&&String(x).trim();}).join(' · '); if(ct){ tx(ct,M,y); y+=4; }
+  y+=5; ln(M,y,W-M,y,[220,220,220],0.4); y+=6;
+  // Scope of work: descriptions only — no square feet, rates or line amounts on the client PDF.
+  // Discount / tax lines stay inside the Total but are not listed.
+  sf('normal',8,[150,150,150]); tx('SCOPE OF WORK',M,y); y+=2; ln(M,y,W-M,y,[20,20,20],0.6); y+=6;
+  for(var i=0;i<inv.items.length;i++){ var it=inv.items[i], nm0=String(it.name||'').trim();
+    if(!nm0) continue;
+    if(it.kind!=='item'&&(Number(it.amount)<0||/^(sales\s*tax|tax|discount)\b/i.test(nm0))) continue;
+    var nm=doc.splitTextToSize(nm0,W-2*M-6);
+    for(var q=0;q<nm.length;q++){ room(6); sf(q===0?'bold':'normal',9.5,[25,25,25]); if(q===0) tx('•',M,y); tx(nm[q],M+5,y); y+=5; }
+    y+=1.5; }
+  y+=2; ln(M,y,W-M,y,[220,220,220],0.4); y+=6;
+  room(40); y+=2; var bx=W-M-80;
+  // Discount lines are shown here (Subtotal → Discount → Total); other line amounts stay off the PDF.
+  var _disc=[], _dsum=0;
+  for(var di=0;di<inv.items.length;di++){ var dI=inv.items[di]; if(dI.kind!=='item'&&(Number(dI.amount)<0||/^discount\b/i.test(String(dI.name||'').trim()))){ _disc.push(dI); _dsum+=Number(dI.amount)||0; } }
+  if(_disc.length){
+    sf('normal',10,[80,80,80]); tx('Subtotal',bx,y); sf('normal',10,[25,25,25]); tx(_invMoney(_invR2(T.total-_dsum)),W-M,y,{align:'right'}); y+=6;
+    for(var dj=0;dj<_disc.length;dj++){ room(6); sf('normal',10,[80,80,80]); tx(String(_disc[dj].name||'Discount'),bx,y); sf('normal',10,[160,40,40]); tx(_invMoney(_disc[dj].amount),W-M,y,{align:'right'}); y+=6; }
+  }
+  sf('normal',10,[80,80,80]); tx('Total',bx,y); sf('bold',10,[25,25,25]); tx(_invMoney(T.total),W-M,y,{align:'right'}); y+=6;
+  for(var k=0;k<inv.payments.length;k++){ var pm=inv.payments[k]; room(6); sf('normal',8.5,[90,90,90]); tx('Paid '+_invFmtDate(pm.date)+' · '+(pm.method||''),bx,y); sf('normal',8.5,[26,107,42]); tx('−'+_invMoney(pm.amount).replace('−',''),W-M,y,{align:'right'}); y+=5; }
+  y+=1; doc.setFillColor(232,245,233); doc.roundedRect(bx-4,y-5,W-M-bx+4,11,2,2,'F'); sf('bold',11,[26,107,42]); tx('Balance due',bx,y+2); tx(_invMoney(T.balance),W-M-2,y+2,{align:'right'}); y+=12;
+  if(inv.dueNow!==''&&inv.dueNow!=null&&Number(inv.dueNow)>0){ sf('bold',10,[160,100,0]); tx('Amount due now',bx,y); tx(_invMoney(inv.dueNow),W-M-2,y,{align:'right'}); y+=8; }
+  if(T.balance<=0&&T.total>0){ sf('bold',14,[26,107,42]); tx('PAID IN FULL — THANK YOU',M,y); y+=8; }
+  if(inv.notes&&String(inv.notes).trim()){ room(16); sf('bold',8,[120,120,120]); tx('NOTES',M,y); y+=4.5; sf('normal',9,[60,60,60]); var nl=doc.splitTextToSize(String(inv.notes),W-2*M); for(var a=0;a<nl.length;a++){ room(5); tx(nl[a],M,y); y+=4.5; } y+=2; }
+  var pay=String(cfg.invPay||'').trim(); if(pay){ room(22); sf('bold',8,[120,120,120]); tx('HOW TO PAY',M,y); y+=4.5; sf('normal',9,[60,60,60]); var pl=doc.splitTextToSize(pay,W-2*M); for(var b=0;b<pl.length;b++){ room(5); tx(pl[b],M,y); y+=4.5; } }
+  sf('normal',8,[150,150,150]); tx('Thank you for your business!',W/2,H-12,{align:'center'});
+  var fname='Invoice-'+String(inv.num).replace(/[^\w-]+/g,'')+'-'+String(qi.client||p.name||'').replace(/[^\w]+/g,'_').replace(/^_|_$/g,'')+'.pdf';
+  if(opts.returnBytes) return {bytes:doc.output('arraybuffer'),filename:fname};
+  doc.save(fname); return {filename:fname};
+}
+window.generateInvoicePDF=generateInvoicePDF;
+
 
 // Refresh the WorkLog summary whenever the Estimator is drawn (open or edit).
 (function(){ var _re=renderEst; renderEst=function(){ var r=_re.apply(this,arguments); try{ if(window._wlSyncSummary) window._wlSyncSummary(); }catch(e){} try{ renderJobHeader(); }catch(e){} return r; }; window.renderEst=renderEst; })();
@@ -8082,7 +8278,7 @@ function mergeBrochuresOnly(pdfs){
 // Android can't attach files through a mailto link, so the PDF goes through the
 // share sheet (Gmail opens with the PDF attached + subject + message). The share
 // sheet can't fill the recipient, so the client's email is copied to paste in "To".
-function openEstimateEmail(bytes, fname, pid){
+function openEstimateEmail(bytes, fname, pid, kind){
   var p=null, ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } }
   var cp=(typeof currentProj!=='undefined'&&currentProj)?currentProj:window.currentProj;
   if(!p&&cp){ for(var j=0;j<ps.length;j++){ if(ps[j].id===cp.id){ p=ps[j]; break; } } }
@@ -8090,14 +8286,23 @@ function openEstimateEmail(bytes, fname, pid){
   var to=String(qi.email||'').trim(), client=String(qi.client||(p&&p.name)||'').trim(), addr=String(qi.address||(p&&p.address)||'').trim();
   var first=client.split(/\s+/)[0]||'';
   var subject='Insulation estimate — '+(addr||client||'Green Idea Insulation');
+  var _isInv=(kind==='invoice'&&p&&p.invoice), _inv=_isInv?p.invoice:null, _IT=_isInv?invTotals(_inv):null;
+  if(_isInv) subject='Invoice '+_inv.num+' — '+(addr||client||'Green Idea Insulation');
   var _cf=(typeof cfg!=='undefined'&&cfg)?cfg:(window.cfg||{});
   var co=_cf.company||'Green Idea Insulation', contact=_cf.contact||'';
   var body='Hi'+(first?' '+first:'')+',\n\nPlease find attached the estimate'+(addr?' for '+addr:'')+'.\n\nLet me know if you have any questions — happy to go over it with you.\n\nThank you,\n'+co+(contact?'\n'+contact:'');
+  if(_isInv){
+    var _dn=(_inv.dueNow!==''&&_inv.dueNow!=null&&Number(_inv.dueNow)>0)?Number(_inv.dueNow):null;
+    body='Hi'+(first?' '+first:'')+',\n\nPlease find attached invoice '+_inv.num+(addr?' for the insulation work at '+addr:'')+'.\n\n'+
+      'Total: '+_invMoney(_IT.total)+(_IT.paid?'\nPaid: '+_invMoney(_IT.paid):'')+'\nBalance due: '+_invMoney(_IT.balance)+(_inv.terms==='receipt'?' (due upon receipt)':' (due '+_invFmtDate(_invDue(_inv))+')')+
+      (_dn?'\nAmount due now: '+_invMoney(_dn):'')+
+      (cfg.invPay?'\n\n'+cfg.invPay:'')+'\n\nThank you for your business,\n'+co+(contact?'\n'+contact:'');
+  }
   var file=null, canFiles=false;
   try{ file=new File([bytes],fname,{type:'application/pdf'}); canFiles=!!(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})); }catch(e){ canFiles=false; }
   var ov=document.getElementById('emailEstOverlay');
   if(!ov){ ov=document.createElement('div'); ov.className='overlay'; ov.id='emailEstOverlay'; document.body.appendChild(ov); }
-  ov.innerHTML='<div class="modal" style="padding-bottom:26px"><div class="mhandle"></div><div class="mtitle">Ready to email</div>'+
+  ov.innerHTML='<div class="modal" style="padding-bottom:26px"><div class="mhandle"></div><div class="mtitle">'+(_isInv?'Ready to email the invoice':'Ready to email')+'</div>'+
     '<div class="em-box"><div class="em-row"><span class="em-k">To</span><span class="em-v">'+(to?esc(to):'<span class="em-miss">No client email — add it in the Quote tab, or type it in the email app</span>')+'</span>'+(to?'<button type="button" class="em-copy" id="emCopy">Copy</button>':'')+'</div>'+
     '<div class="em-row"><span class="em-k">Subject</span><span class="em-v">'+esc(subject)+'</span></div>'+
     '<div class="em-row"><span class="em-k">File</span><span class="em-v">📄 '+esc(fname)+'</span></div></div>'+
@@ -8111,6 +8316,7 @@ function openEstimateEmail(bytes, fname, pid){
   function copyTo(){ if(!to) return; try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(to); }catch(e){} }
   function askSent(){
     if(!pid) return;
+    if(_isInv){ appConfirm('Mark this invoice as sent?',function(){ var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid&&pp[k].invoice){ pp[k].invoice.sentDate=new Date().toLocaleDateString('en-US'); break; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('🧾 Invoice marked as sent'); },{confirmLabel:'📨 Mark as Sent',confirmStyle:'accent'}); return; }
     appConfirm('Mark this estimate as sent?',function(){
       var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid){ pp[k].estStatus='sent'; pp[k].estSentDate=new Date().toLocaleDateString('en-US'); break; } }
       saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('📨 Marked as sent');
