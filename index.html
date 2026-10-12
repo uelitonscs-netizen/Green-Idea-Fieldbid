@@ -607,6 +607,10 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .jh-miss{font-size:12.5px;color:#8b98a5;font-style:italic;padding:3px 0;}
 .jh-ft{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:8px;border-top:1px solid #1e2530;font-size:12px;color:#7d8590;}
 .jh-edit{border:1px solid #2a3340;background:#1e2530;color:#e6edf3;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;}
+
+.fa-cat-hint{font-size:12px;color:#8fb8ff;margin-top:6px;display:none;}
+.fa-cat-hint b{color:#e6edf3;}
+.fa-cat-hint button{margin-left:6px;border:1px solid #2a4a6a;background:#162338;color:#60a5fa;border-radius:7px;padding:4px 10px;font-size:12px;font-weight:700;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -720,7 +724,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261011-1800</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261012-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -6181,6 +6185,7 @@ function openFAModal(idx){
     }
   } else {
     document.getElementById('fa_name').value='';
+    window._faCatAuto=true; window._faCatManual=false; try{ _faCatHint(''); }catch(_e){}
     var matCatEl=document.getElementById('fa_mat_cat');if(matCatEl)matCatEl.value='cc';
     onMatCatChange();
     // Reset multiplier
@@ -6306,6 +6311,55 @@ function onMatCatChange(){
   autofillFaPrice(false);
 }
 window.onMatCatChange=onMatCatChange;
+// ── Material category from the area name ──
+// New area: the category follows the name until you pick one by hand.
+// Existing area: never changed by itself — a "Use it" suggestion appears instead.
+function faCatFromName(name){
+  var t=' '+String(name||'').toLowerCase().replace(/[_\-]+/g,' ')+' ';
+  var rm=t.match(/\br\s?(\d{2})\b/), r=rm?parseInt(rm[1],10):0;
+  function has(re){ return re.test(t); }
+  var MW=/mineral\s*wool|roxul|rockwool|rock\s*wool|stone\s*wool|comfort\s*batt|\bmw\b/, FG=/fiberglass|fibreglass|\bfg\b|\bbatts?\b|owens|kraft\s*faced/;
+  if(has(/hybrid|flash\s*(and|&|\+)\s*batt|\bcc\s*\+\s*oc\b/)){ if(has(MW)) return 'hybrid_foam_mw'; if(has(FG)||has(/flash/)) return 'hybrid_foam_fg'; return 'hybrid'; }
+  if(has(/ignition|\bdc\s*315\b|intumescent|thermal\s*barrier/)) return 'ign';
+  if(has(/fire\s*block/)) return 'fb';
+  if(has(/foam\s*cans?\b|great\s*stuff|can\s*foam/)) return 'foam_cans';
+  if(has(/\bremoval\b|\bremove\b|tear\s*out|vacuum\s*out/)) return 'insulation_removal';
+  if(has(/closed\s*cell|\bcc\b|\bccsf\b/)) return 'cc';
+  if(has(/open\s*cell|\boc\b|\bocsf\b/)) return 'oc';
+  if(has(/cellulose|dense\s*pack|\bblown\b|\bblow\s*in\b/)) return (has(/dense|wall/)?'cel_dense':'cel_blown');
+  if(has(MW)){ if(r){ return [15,23,30].indexOf(r)>=0?'mw_r'+r:'mw_custom'; } return 'mw_r15'; }
+  if(has(FG)){ if(r){ return [11,13,15,19,21,25,30,38,49].indexOf(r)>=0?'fg_r'+r:'fg_custom'; } return 'fg_r13'; }
+  return null;
+}
+window.faCatFromName=faCatFromName;
+function _faCatLabel(v){ var el=document.getElementById('fa_mat_cat'); if(!el) return v; for(var i=0;i<el.options.length;i++){ if(el.options[i].value===v) return el.options[i].text; } return v; }
+function _faThickFromName(name,cat){
+  var m=String(name||'').match(/(\d+(?:\.\d+)?)\s*(?:"|''|”|in\b|inch)/i); if(!m) return;
+  var v=parseFloat(m[1]); if(!(v>0&&v<30)) return;
+  var id=cat==='cc'?'fa_cc_inch':(cat==='oc'?'fa_oc_inch':null); if(!id) return;
+  var f=document.getElementById(id); if(f&&!String(f.value||'').trim()) f.value=v;
+}
+function _faCatHint(html){
+  var h=document.getElementById('fa_cat_hint');
+  if(!h){ var sel=document.getElementById('fa_mat_cat'); if(!sel) return; h=document.createElement('div'); h.id='fa_cat_hint'; h.className='fa-cat-hint'; sel.parentNode.insertBefore(h,sel.nextSibling); }
+  h.innerHTML=html||''; h.style.display=html?'block':'none';
+}
+function faNameChanged(){
+  var nm=document.getElementById('fa_name'), sel=document.getElementById('fa_mat_cat'); if(!nm||!sel) return;
+  var cat=faCatFromName(nm.value);
+  if(window._faCatAuto&&!window._faCatManual){
+    if(cat&&sel.value!==cat){ sel.value=cat; onMatCatChange(); }
+    if(cat){ _faThickFromName(nm.value,cat); _faCatHint('✨ Picked from the name — change it if needed'); }
+    else _faCatHint('');
+  } else {
+    if(cat&&sel.value!==cat) _faCatHint('✨ Name says <b>'+esc(_faCatLabel(cat))+'</b> <button type="button" id="fa_cat_use">Use it</button>');
+    else _faCatHint('');
+    var u=document.getElementById('fa_cat_use');
+    if(u) u.onclick=function(){ sel.value=cat; onMatCatChange(); _faThickFromName(nm.value,cat); window._faCatManual=true; _faCatHint(''); };
+  }
+}
+window.faNameChanged=faNameChanged;
+
 
 function buildSpecFromMatCat(){
   var catEl=document.getElementById('fa_mat_cat');
@@ -6374,6 +6428,7 @@ function getMatCatData(){
 window.getMatCatData=getMatCatData;
 
 function restoreMatCatFields(area){
+  window._faCatAuto=false; window._faCatManual=false; try{ _faCatHint(''); }catch(_e){}
   var cat=area.matCat||'other';
   var el=document.getElementById('fa_mat_cat');
   if(el) el.value=cat;
@@ -6410,7 +6465,9 @@ document.getElementById('faCancelBtn').addEventListener('click',function(){
 });
   // Material category change listener
   var matCatSel=document.getElementById('fa_mat_cat');
-  if(matCatSel) matCatSel.addEventListener('change',function(){onMatCatChange();});
+  if(matCatSel) matCatSel.addEventListener('change',function(){ window._faCatManual=true; try{ _faCatHint(''); }catch(_e){} onMatCatChange(); });
+  var faNameEl=document.getElementById('fa_name');
+  if(faNameEl) faNameEl.addEventListener('input',function(){ faNameChanged(); });
   var faPriceEl=document.getElementById('fa_price');
   if(faPriceEl){
     // Any manual typing marks the price as an override for this area
