@@ -569,10 +569,10 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .jf span{opacity:.7;margin-left:2px;}
 .jf.on{background:#1a6b2a;border-color:#1a6b2a;color:#fff;}
 .jc{background:#131920;border:1px solid #1e2530;border-radius:14px;padding:12px 14px;margin-bottom:10px;cursor:pointer;}
-.jc.active{background:#14251a;border-color:#2a6b35;}
+.jc.active{background:#17432a;border:2px solid #4ade80;box-shadow:0 0 0 3px rgba(74,222,128,.22),0 6px 18px rgba(0,0,0,.35);padding:11px 13px;}
 .jc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
 .jc-name{font-size:16px;font-weight:800;color:#f0f0f0;line-height:1.25;}
-.jc-edit{font-size:9.5px;font-weight:800;letter-spacing:.06em;color:#4ade80;background:#1a3020;border-radius:5px;padding:2px 6px;vertical-align:middle;}
+.jc-edit{font-size:10px;font-weight:900;letter-spacing:.06em;color:#0b1a10;background:#4ade80;border-radius:5px;padding:2px 7px;vertical-align:middle;}
 .jc-st{flex:none;border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:800;border:1px solid;white-space:nowrap;}
 .st-none{background:#1e2530;border-color:#2a3340;color:#94a3b8;}
 .st-sent{background:#162338;border-color:#2a4a6a;color:#60a5fa;}
@@ -649,6 +649,25 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .inv-sec2{flex:1;background:#1e2530;border:1px solid #2a3340;color:#e6edf3;border-radius:10px;padding:13px;font-weight:700;font-size:13.5px;}
 .inv-sec2.em{border-color:#1b7a8c;color:#bdf1fb;}
 .inv-close{display:block;margin:10px 20px 0;width:calc(100% - 40px);background:transparent;border:1px solid #2a3340;color:#94a3b8;border-radius:10px;padding:11px;font-weight:700;}
+
+/* pipeline */
+.pp-row{display:flex;gap:6px;margin:0 0 10px;}
+.pp-t{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:#131920;border:1px solid #1e2530;border-radius:12px;padding:9px 10px;text-align:left;color:#94a3b8;}
+.pp-t b{font-size:18px;color:#e6edf3;line-height:1.1;}
+.pp-t span{font-size:11px;font-weight:700;}
+.pp-t i{font-style:normal;color:#f87171;}
+.pp-t.hot{border-color:#2a4a6a;} .pp-t.hot b{color:#60a5fa;}
+.pp-t.on{background:#162338;border-color:#3b82f6;}
+.pp-hd{display:flex;align-items:center;gap:10px;margin:2px 0 10px;font-size:13px;font-weight:800;color:#e6edf3;}
+.pp-back{border:1px solid #2a3340;background:#1e2530;color:#e6edf3;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;flex:none;}
+.pp-empty{padding:26px 16px;text-align:center;color:#7d8590;font-size:13px;}
+.pp-it{background:#131920;border:1px solid #1e2530;border-radius:12px;padding:11px 12px;margin-bottom:8px;}
+.pp-n{font-size:15px;font-weight:800;color:#f0f0f0;}
+.pp-a{font-size:12px;color:#7d8590;margin-top:2px;}
+.pp-i{font-size:12.5px;color:#94a3b8;margin-top:5px;} .pp-i b{color:#f0b429;} .pp-i .late{color:#f87171;font-weight:700;}
+.pp-bs{display:flex;gap:6px;margin-top:9px;}
+.pp-b{flex:1;background:#1e2530;border:1px solid #2a3340;color:#e6edf3;border-radius:9px;padding:9px 6px;font-size:12.5px;font-weight:700;}
+.pp-b.em{border-color:#1b7a8c;color:#bdf1fb;} .pp-b.go{background:#1a6b2a;border-color:#1a6b2a;color:#fff;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -762,7 +781,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261012-1400</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261012-1600</span></div>
 </div>
 
 <div id="field-app">
@@ -5819,6 +5838,9 @@ function renderJobsList(){
     container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#4d5560;font-size:13px">No estimator jobs yet.<br>Import areas from takeoff to create a job.</div>';
     return;
   }
+  // Pipeline (all jobs, ignores the search) — a tile shows only those jobs
+  var _pd=null; try{ _pd=_pipeData(); h+=_pipeStrip(_pd); }catch(_pe){ _pd=null; }
+  if(_pd&&window._pipeView){ container.innerHTML=h+_pipeList(window._pipeView,_pd); return; }
   // Status filter (counts follow the search)
   var _SF=window._jobStatusF||'all', _cnt={all:projs.length,none:0,sent:0,approved:0,rejected:0};
   for(var _c=0;_c<projs.length;_c++){ var _st=projs[_c].estStatus||'none'; if(_cnt[_st]!==undefined) _cnt[_st]++; }
@@ -5874,6 +5896,10 @@ function renderJobsList(){
     var act = btn.getAttribute('data-act');
     var pid = btn.getAttribute('data-pid');
     if(act === 'filter'){ window._jobStatusF=btn.getAttribute('data-st'); renderJobsList(); return; }
+    if(act === 'pipe'){ var _v=btn.getAttribute('data-v'); window._pipeView=(window._pipeView===_v)?'':_v; renderJobsList(); try{ newContainer.scrollIntoView({block:'start'}); }catch(_e){} return; }
+    if(act === 'pipeback'){ window._pipeView=''; renderJobsList(); return; }
+    if(act === 'fu'){ _pipeMail(pid,'fu'); return; }
+    if(act === 'remind'){ _pipeMail(pid,'remind'); return; }
     if(act === 'more'){ _jobSheet(pid,'more'); return; }
     if(act === 'stmenu'){ _jobSheet(pid,'status'); return; }
     _jobAct(act,pid,btn);
@@ -5982,6 +6008,61 @@ function renderJobHeader(){
   var eb=document.getElementById('jhEdit'); if(eb) eb.onclick=function(){ var t=document.getElementById('et2'); if(t) t.click(); };
 }
 window.renderJobHeader=renderJobHeader;
+// ══════ PIPELINE (top of the Jobs tab) ══════
+// Follow up (sent ≥7 days, no recent follow-up) · To invoice (approved, no invoice)
+// · To collect (invoice balance). Reads job data; the only write is the date of the
+// last follow-up / reminder, when you tap those buttons.
+function _pipeDays(d){ if(!d) return null; var t=(d instanceof Date)?d:null;
+  if(!t){ var s=String(d); if(/^\d{4}-\d{2}-\d{2}/.test(s)){ var a=s.slice(0,10).split('-'); t=new Date(+a[0],+a[1]-1,+a[2]); } else { var b=s.split('/'); if(b.length===3) t=new Date(+b[2],+b[0]-1,+b[1]); else t=new Date(s); } }
+  if(!t||isNaN(t.getTime())) return null; var n=new Date(); n.setHours(0,0,0,0); t.setHours(0,0,0,0); return Math.round((n-t)/864e5); }
+function _pipeData(){
+  var ps=loadProjs(), fu=[], ti=[], tc=[], due=0, overdue=0;
+  for(var i=0;i<ps.length;i++){ var p=ps[i]; if(!(p.estItems&&p.estItems.length)&&!p.invoice) continue;
+    var st=p.estStatus||'none';
+    if(st==='sent'){ var ds=_pipeDays(p.estSentDate), df=_pipeDays(p.lastFollowUp); if(ds!==null&&ds>=7&&(df===null||df>=7)) fu.push({p:p,days:ds,fdays:df}); }
+    if(st==='approved'&&!p.invoice) ti.push({p:p});
+    if(p.invoice){ var T=invTotals(p.invoice); if(T.balance>0.004){ var dd=_pipeDays(_invDue(p.invoice)); var od=(dd!==null&&dd>0)?dd:0; due+=T.balance; if(od) overdue++; tc.push({p:p,T:T,od:od,rd:_pipeDays(p.invoice.lastReminder)}); } }
+  }
+  fu.sort(function(a,b){return b.days-a.days;}); tc.sort(function(a,b){return b.od-a.od||b.T.balance-a.T.balance;});
+  return {fu:fu,ti:ti,tc:tc,due:due,overdue:overdue};
+}
+function _pipeStrip(d){
+  var v=window._pipeView||'';
+  return '<div class="pp-row">'+
+    '<button type="button" class="pp-t'+(v==='fu'?' on':'')+(d.fu.length?' hot':'')+'" data-act="pipe" data-v="fu"><b>'+d.fu.length+'</b><span>📨 Follow up</span></button>'+
+    '<button type="button" class="pp-t'+(v==='ti'?' on':'')+(d.ti.length?' hot':'')+'" data-act="pipe" data-v="ti"><b>'+d.ti.length+'</b><span>✅ To invoice</span></button>'+
+    '<button type="button" class="pp-t'+(v==='tc'?' on':'')+(d.tc.length?' hot':'')+'" data-act="pipe" data-v="tc"><b>'+(d.due>0?'$'+Math.round(d.due).toLocaleString('en-US'):'0')+'</b><span>💵 To collect'+(d.overdue?' · <i>'+d.overdue+' late</i>':'')+'</span></button></div>';
+}
+function _pipeList(v,d){
+  var T={fu:'📨 Estimates waiting for an answer',ti:'✅ Approved — ready to invoice',tc:'💵 Invoices with a balance'}[v]||'';
+  var rows=v==='fu'?d.fu:(v==='ti'?d.ti:d.tc), h='<div class="pp-hd"><button type="button" class="pp-back" data-act="pipeback">← All jobs</button><span>'+T+'</span></div>';
+  if(!rows.length) return h+'<div class="pp-empty">'+({fu:'Nothing to follow up — estimates sent less than 7 days ago or already followed up.',ti:'No approved job waiting for an invoice.',tc:'No open balance. 🎉'}[v])+'</div>';
+  for(var i=0;i<rows.length;i++){ var r=rows[i], p=r.p, qi=p.quoteInfo||{}, em=String(qi.email||'').trim(), info='', btns='';
+    if(v==='fu'){ info='Sent '+r.days+' days ago · $'+projectEstimateTotal(p).toLocaleString()+(r.fdays!==null?' · last follow-up '+r.fdays+'d ago':'');
+      btns='<button type="button" class="pp-b em" data-act="fu" data-pid="'+p.id+'">📧 Follow up</button><button type="button" class="pp-b" data-act="stmenu" data-pid="'+p.id+'">Status ▾</button>'; }
+    else if(v==='ti'){ info='Approved · $'+projectEstimateTotal(p).toLocaleString();
+      btns='<button type="button" class="pp-b go" data-act="inv" data-pid="'+p.id+'">🧾 Create invoice</button>'; }
+    else { info=esc(p.invoice.num)+' · <b>'+_invMoney(r.T.balance)+' due</b>'+(r.od?' · <span class="late">'+r.od+' days late</span>':'')+(r.rd!==null?' · reminded '+r.rd+'d ago':'');
+      btns='<button type="button" class="pp-b em" data-act="remind" data-pid="'+p.id+'">📧 Reminder</button><button type="button" class="pp-b go" data-act="inv" data-pid="'+p.id+'">💵 Add payment</button>'; }
+    h+='<div class="pp-it"><div class="pp-n">'+esc(qi.client||p.name||'')+'</div>'+((qi.address||p.address)?'<div class="pp-a">📍 '+esc(qi.address||p.address)+'</div>':'')+'<div class="pp-i">'+info+(em?'':' · <span class="late">no client email</span>')+'</div><div class="pp-bs">'+btns+'</div></div>'; }
+  return h;
+}
+function _pipeMail(pid,kind){
+  var ps=loadProjs(), p=null, k; for(k=0;k<ps.length;k++){ if(ps[k].id===pid){ p=ps[k]; break; } } if(!p) return;
+  var qi=p.quoteInfo||{}, to=String(qi.email||'').trim(), client=String(qi.client||p.name||'').trim(), first=client.split(/\s+/)[0]||'', addr=String(qi.address||p.address||'').trim();
+  var _cf=(typeof cfg!=='undefined'&&cfg)?cfg:{}, co=_cf.company||'Green Idea Insulation', contact=_cf.contact||'', subj, body;
+  if(kind==='fu'){ subj='Following up — insulation estimate'+(addr?' for '+addr:'');
+    body='Hi'+(first?' '+first:'')+',\n\nI wanted to follow up on the insulation estimate I sent'+(p.estSentDate?' on '+p.estSentDate:'')+(addr?' for '+addr:'')+'.\n\nDo you have any questions, or would you like to go over any part of it? We can also set a date for the work whenever you are ready.\n\nThank you,\n'+co+(contact?'\n'+contact:''); }
+  else { var inv=p.invoice, T=invTotals(inv); subj='Payment reminder — invoice '+inv.num+(addr?' · '+addr:'');
+    body='Hi'+(first?' '+first:'')+',\n\nThis is a friendly reminder about invoice '+inv.num+(addr?' for the insulation work at '+addr:'')+'.\n\nBalance due: '+_invMoney(T.balance)+(inv.terms==='receipt'?'':' (due '+_invFmtDate(_invDue(inv))+')')+(cfg.invPay?'\n\n'+cfg.invPay:'')+'\n\nThank you,\n'+co+(contact?'\n'+contact:''); }
+  if(kind==='fu') ps[k].lastFollowUp=_invToday(); else ps[k].invoice.lastReminder=_invToday();
+  saveProjs(ps);
+  if(!to) toast('No client email saved — type it in the email app','err');
+  location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+  setTimeout(function(){ renderJobsList(); },800);
+}
+window._pipeMail=_pipeMail;
+
 // ══════ INVOICES (one per job) ══════
 // Built from the estimate (same math as the estimate total), editable lines,
 // payments (date / amount / method), balance due, PDF + email.
