@@ -762,7 +762,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261012-1300</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261012-1400</span></div>
 </div>
 
 <div id="field-app">
@@ -6090,46 +6090,80 @@ function generateInvoicePDF(pid,opts){
   function sf(st,sz,c){ doc.setFont('helvetica',st||'normal'); doc.setFontSize(sz||10); if(c) doc.setTextColor(c[0],c[1],c[2]); else doc.setTextColor(30,30,30); }
   function tx(s,x,yy,o){ if(!s&&s!==0) return; doc.text(String(s),x,yy,o||{}); }
   function ln(x1,y1,x2,y2,c,w){ doc.setDrawColor(c?c[0]:200,c?c[1]:200,c?c[2]:200); doc.setLineWidth(w||0.3); doc.line(x1,y1,x2,y2); }
-  function room(n){ if(y+n>H-22){ doc.addPage(); y=20; } }
+  function room(n){ if(y+n>H-20){ doc.addPage(); y=20; } }
+  function money(x){ return '$'+(Number(x)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  // ── HEADER (same as the estimate) ──
   var LOGO=null; try{ LOGO=LOGO_B64; }catch(e){}
   if(LOGO){ var lh=22,lw=lh*(750/1334); doc.setFillColor(0,0,0); doc.roundedRect(M,y-1,lw+2,lh+2,1.5,1.5,'F'); doc.addImage(LOGO,'JPEG',M+1,y,lw,lh); }
   var cx=M+(LOGO?12.5+4:0);
   sf('bold',12,[20,20,20]); tx('Green Idea Insulation',cx,y+5);
   sf('normal',8,[100,100,100]); tx('238 Webster Street #3 · Worcester, Ma 01603',cx,y+10); tx('+7745787186 / 508-579-0762',cx,y+15); tx('greenideainsulation@gmail.com · www.greenideainsulation.com',cx,y+20);
-  var rx=W-M; sf('bold',16,[26,107,42]); tx('INVOICE',rx,y+4,{align:'right'});
-  sf('normal',8,[150,150,150]); tx('Invoice #',rx-30,y+10,{align:'right'}); tx('Date',rx-30,y+15,{align:'right'}); tx('Due',rx-30,y+20,{align:'right'});
+  var rx=W-M; sf('bold',15,[26,107,42]); tx('INVOICE',rx,y+3,{align:'right'});
+  sf('normal',8,[150,150,150]); tx('Invoice #',rx-38,y+10,{align:'right'}); tx('Date',rx-38,y+15,{align:'right'}); tx('Due',rx-38,y+20,{align:'right'});
   sf('bold',8,[20,20,20]); tx(inv.num,rx,y+10,{align:'right'}); tx(_invFmtDate(inv.date),rx,y+15,{align:'right'}); tx(inv.terms==='receipt'?'Upon receipt':_invFmtDate(_invDue(inv)),rx,y+20,{align:'right'});
   y+=28; doc.setFillColor(26,107,42); doc.rect(0,y,W,1.5,'F'); doc.setFillColor(74,222,128); doc.rect(60,y,80,1.5,'F'); doc.setFillColor(220,240,220); doc.rect(140,y,W-140,1.5,'F'); y+=6;
+  // ── BILL TO ──
   sf('normal',7.5,[150,150,150]); tx('BILL TO',M,y+4); y+=8;
-  sf('bold',12,[20,20,20]); tx(qi.client||p.name||'Client',M,y); y+=5; sf('normal',9,[100,100,100]);
-  if(qi.address){ tx(qi.address,M,y); y+=4; } var ct=[qi.phone,qi.email].filter(function(x){return x&&String(x).trim();}).join(' · '); if(ct){ tx(ct,M,y); y+=4; }
-  y+=5; ln(M,y,W-M,y,[220,220,220],0.4); y+=6;
-  // Scope of work: descriptions only — no square feet, rates or line amounts on the client PDF.
-  // Discount / tax lines stay inside the Total but are not listed.
-  sf('normal',8,[150,150,150]); tx('SCOPE OF WORK',M,y); y+=2; ln(M,y,W-M,y,[20,20,20],0.6); y+=6;
-  for(var i=0;i<inv.items.length;i++){ var it=inv.items[i], nm0=String(it.name||'').trim();
-    if(!nm0) continue;
-    if(it.kind!=='item'&&(Number(it.amount)<0||/^(sales\s*tax|tax|discount)\b/i.test(nm0))) continue;
-    var nm=doc.splitTextToSize(nm0,W-2*M-6);
-    for(var q=0;q<nm.length;q++){ room(6); sf(q===0?'bold':'normal',9.5,[25,25,25]); if(q===0) tx('•',M,y); tx(nm[q],M+5,y); y+=5; }
-    y+=1.5; }
-  y+=2; ln(M,y,W-M,y,[220,220,220],0.4); y+=6;
-  room(40); y+=2; var bx=W-M-80;
-  // Discount lines are shown here (Subtotal → Discount → Total); other line amounts stay off the PDF.
-  var _disc=[], _dsum=0;
-  for(var di=0;di<inv.items.length;di++){ var dI=inv.items[di]; if(dI.kind!=='item'&&(Number(dI.amount)<0||/^discount\b/i.test(String(dI.name||'').trim()))){ _disc.push(dI); _dsum+=Number(dI.amount)||0; } }
-  if(_disc.length){
-    sf('normal',10,[80,80,80]); tx('Subtotal',bx,y); sf('normal',10,[25,25,25]); tx(_invMoney(_invR2(T.total-_dsum)),W-M,y,{align:'right'}); y+=6;
-    for(var dj=0;dj<_disc.length;dj++){ room(6); sf('normal',10,[80,80,80]); tx(String(_disc[dj].name||'Discount'),bx,y); sf('normal',10,[160,40,40]); tx(_invMoney(_disc[dj].amount),W-M,y,{align:'right'}); y+=6; }
-  }
-  sf('normal',10,[80,80,80]); tx('Total',bx,y); sf('bold',10,[25,25,25]); tx(_invMoney(T.total),W-M,y,{align:'right'}); y+=6;
-  for(var k=0;k<inv.payments.length;k++){ var pm=inv.payments[k]; room(6); sf('normal',8.5,[90,90,90]); tx('Paid '+_invFmtDate(pm.date)+' · '+(pm.method||''),bx,y); sf('normal',8.5,[26,107,42]); tx('−'+_invMoney(pm.amount).replace('−',''),W-M,y,{align:'right'}); y+=5; }
-  y+=1; doc.setFillColor(232,245,233); doc.roundedRect(bx-4,y-5,W-M-bx+4,11,2,2,'F'); sf('bold',11,[26,107,42]); tx('Balance due',bx,y+2); tx(_invMoney(T.balance),W-M-2,y+2,{align:'right'}); y+=12;
-  if(inv.dueNow!==''&&inv.dueNow!=null&&Number(inv.dueNow)>0){ sf('bold',10,[160,100,0]); tx('Amount due now',bx,y); tx(_invMoney(inv.dueNow),W-M-2,y,{align:'right'}); y+=8; }
-  if(T.balance<=0&&T.total>0){ sf('bold',14,[26,107,42]); tx('PAID IN FULL — THANK YOU',M,y); y+=8; }
-  if(inv.notes&&String(inv.notes).trim()){ room(16); sf('bold',8,[120,120,120]); tx('NOTES',M,y); y+=4.5; sf('normal',9,[60,60,60]); var nl=doc.splitTextToSize(String(inv.notes),W-2*M); for(var a=0;a<nl.length;a++){ room(5); tx(nl[a],M,y); y+=4.5; } y+=2; }
-  var pay=String(cfg.invPay||'').trim(); if(pay){ room(22); sf('bold',8,[120,120,120]); tx('HOW TO PAY',M,y); y+=4.5; sf('normal',9,[60,60,60]); var pl=doc.splitTextToSize(pay,W-2*M); for(var b=0;b<pl.length;b++){ room(5); tx(pl[b],M,y); y+=4.5; } }
-  sf('normal',8,[150,150,150]); tx('Thank you for your business!',W/2,H-12,{align:'center'});
+  sf('bold',12,[20,20,20]); tx(qi.client||p.name||'Client',M,y); y+=5;
+  sf('normal',9,[100,100,100]); if(qi.address){ tx(qi.address,M,y); y+=4; }
+  var ct=[qi.phone,qi.email].filter(function(x){return x&&String(x).trim();}).join(' · '); if(ct){ tx(ct,M,y); y+=4; }
+  y+=6; ln(M,y,W-M,y,[220,220,220],0.4); y+=6;
+  // ── SCOPE OF WORK (sections + name / spec / description, like the estimate; no prices) ──
+  sf('normal',8,[150,150,150]); tx('SCOPE OF WORK',M,y); y+=2; ln(M,y,W-M,y,[20,20,20],0.6); y+=5;
+  var est=p.estItems||[], used={};
+  function matchEst(name,idx){ var n=String(name||'').trim().toLowerCase(), j;
+    for(j=0;j<est.length;j++){ if(!used[j]&&String(est[j].name||'').trim().toLowerCase()===n){ used[j]=1; return est[j]; } }
+    if(est[idx]&&!used[idx]){ used[idx]=1; return est[idx]; } return null; }
+  var order=[], groups={}, itIdx=0;
+  for(var i=0;i<inv.items.length;i++){ var it=inv.items[i], nm=String(it.name||'').trim(); if(!nm) continue;
+    var row=null;
+    if(it.kind==='item'){ var e=matchEst(nm,itIdx); itIdx++; var sec='Items'; try{ sec=e?sectionOf(e):'Items'; }catch(_e){} var sp=''; try{ sp=e?specFromData(e):''; }catch(_e2){}
+      row={sec:sec||'Items',name:nm,spec:sp||'',notes:e&&e.notes?String(e.notes):''}; }
+    else if(!(Number(it.amount)<0||/^(sales\s*tax|tax|discount)\b/i.test(nm))) row={sec:'Additional',name:nm,spec:'',notes:''};
+    if(!row) continue;
+    if(!groups[row.sec]){ groups[row.sec]=[]; order.push(row.sec); } groups[row.sec].push(row); }
+  for(var g=0;g<order.length;g++){ var rows=groups[order[g]];
+    room(12); y+=(g>0?3:0); sf('bold',10,[26,107,42]); tx(String(order[g]).toUpperCase(),M,y); y+=2; ln(M,y,W-M,y,[26,107,42],0.5); y+=5;
+    for(var r=0;r<rows.length;r++){ var R=rows[r];
+      var nL=doc.splitTextToSize(R.name,W-M*2-10), sL=R.spec?doc.splitTextToSize(R.spec,W-M*2-10):[], oL=R.notes?doc.splitTextToSize(R.notes,W-M*2-10):[];
+      var rh=nL.length*4.5+sL.length*3.8+oL.length*3.8+5; room(rh+4); var yy=y;
+      sf('bold',10,[20,20,20]); for(var a=0;a<nL.length;a++){ tx(nL[a],M,yy); yy+=4.5; }
+      sf('normal',8,[95,105,115]); for(var b=0;b<sL.length;b++){ tx(sL[b],M,yy); yy+=3.8; }
+      sf('normal',8,[130,130,130]); for(var c=0;c<oL.length;c++){ tx(oL[c],M,yy); yy+=3.8; }
+      y+=rh; ln(M,y,W-M,y,[240,237,232],0.3); y+=3; } }
+  // ── TOTALS (estimate style) ──
+  y+=4; room(40); var totX=W-M-50;
+  var disc=[], dsum=0, tax=[], tsum=0;
+  for(var d=0;d<inv.items.length;d++){ var dI=inv.items[d], dn=String(dI.name||'').trim();
+    if(dI.kind==='item') continue;
+    if(Number(dI.amount)<0||/^discount\b/i.test(dn)){ disc.push(dI); dsum+=Number(dI.amount)||0; }
+    else if(/^(sales\s*tax|tax)\b/i.test(dn)){ tax.push(dI); tsum+=Number(dI.amount)||0; } }
+  if(disc.length||tax.length){
+    sf('normal',9,[130,130,130]); tx('Subtotal',totX,y,{align:'right'}); sf('normal',10,[20,20,20]); tx(money(T.total-dsum-tsum),W-M,y,{align:'right'}); y+=5;
+    for(var t1=0;t1<tax.length;t1++){ sf('normal',9,[130,130,130]); tx(String(tax[t1].name),totX,y,{align:'right'}); sf('normal',10,[20,20,20]); tx(money(tax[t1].amount),W-M,y,{align:'right'}); y+=5; }
+    for(var d1=0;d1<disc.length;d1++){ sf('normal',9,[63,185,80]); tx(String(disc[d1].name||'Discount'),totX,y,{align:'right'}); sf('normal',10,[63,185,80]); tx('-'+money(Math.abs(Number(disc[d1].amount)||0)),W-M,y,{align:'right'}); y+=5; } }
+  ln(totX-10,y,W-M,y,[20,20,20],0.5); y+=4.5;
+  sf('bold',12,[20,20,20]); tx('Total',totX,y,{align:'right'}); sf('bold',12,[26,107,42]); tx(money(T.total),W-M,y,{align:'right'}); y+=7;
+  for(var k=0;k<inv.payments.length;k++){ var pm=inv.payments[k]; room(6);
+    sf('normal',9,[130,130,130]); tx('Paid '+_invFmtDate(pm.date)+' · '+(pm.method||''),totX,y,{align:'right'}); sf('normal',10,[26,107,42]); tx('-'+money(pm.amount),W-M,y,{align:'right'}); y+=5; }
+  y+=2; room(14); doc.setFillColor(232,245,233); doc.roundedRect(totX-48,y-5.5,W-M-(totX-48)+2,10,2,2,'F');
+  sf('bold',11,[26,107,42]); tx('Balance due',totX,y+1,{align:'right'}); tx(money(T.balance),W-M,y+1,{align:'right'}); y+=10;
+  if(inv.dueNow!==''&&inv.dueNow!=null&&Number(inv.dueNow)>0&&T.balance>0){ sf('bold',10,[160,100,0]); tx('Amount due now',totX,y,{align:'right'}); tx(money(inv.dueNow),W-M,y,{align:'right'}); y+=8; }
+  if(T.balance<=0&&T.total>0){ y+=2; sf('bold',13,[26,107,42]); tx('PAID IN FULL — THANK YOU',W-M,y,{align:'right'}); y+=8; }
+  y+=4;
+  // ── NOTES ──
+  if(inv.notes&&String(inv.notes).trim()){ var nl=doc.splitTextToSize(String(inv.notes),W-2*M-8); room(14+nl.length*4.5); y+=2;
+    sf('bold',8,[26,107,42]); tx('NOTES',M,y); y+=1.5; ln(M,y,W-M,y,[26,107,42],0.4); y+=5;
+    sf('normal',9,[60,60,60]); for(var a2=0;a2<nl.length;a2++){ room(6); tx(nl[a2],M,y); y+=4.5; } y+=3; }
+  // ── HOW TO PAY (grey band, like the estimate's Terms) ──
+  var pay=String(cfg.invPay||'').trim();
+  if(pay){ var pl=[], _paras=pay.split(/\r?\n/); for(var _pp=0;_pp<_paras.length;_pp++){ var _w=_paras[_pp].trim()?doc.splitTextToSize(_paras[_pp],W-2*M):['']; for(var _pw=0;_pw<_w.length;_pw++) pl.push(_w[_pw]); } room(18+pl.length*4.2);
+    doc.setFillColor(249,247,244); doc.rect(0,y,W,8,'F'); y+=2; sf('normal',7.5,[150,150,150]); tx('HOW TO PAY',M,y+4); y+=10;
+    var top=y; doc.setFillColor(249,247,244); doc.rect(0,top-4,W,pl.length*4.2+6,'F');
+    sf('normal',9,[60,60,60]); for(var b2=0;b2<pl.length;b2++){ tx(pl[b2],M,y); y+=4.2; } y+=4; }
+  // ── FOOTER ──
+  var pages=doc.getNumberOfPages?doc.getNumberOfPages():1;
+  for(var pg=1;pg<=pages;pg++){ try{ doc.setPage(pg); }catch(e){} sf('normal',8,[150,150,150]); tx('Thank you for your business!',W/2,H-12,{align:'center'}); if(pages>1) tx(pg+'/'+pages,W-M,H-12,{align:'right'}); }
   var fname='Invoice-'+String(inv.num).replace(/[^\w-]+/g,'')+'-'+String(qi.client||p.name||'').replace(/[^\w]+/g,'_').replace(/^_|_$/g,'')+'.pdf';
   if(opts.returnBytes) return {bytes:doc.output('arraybuffer'),filename:fname};
   doc.save(fname); return {filename:fname};
