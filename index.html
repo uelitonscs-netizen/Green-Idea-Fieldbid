@@ -668,6 +668,31 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .pp-bs{display:flex;gap:6px;margin-top:9px;}
 .pp-b{flex:1;background:#1e2530;border:1px solid #2a3340;color:#e6edf3;border-radius:9px;padding:9px 6px;font-size:12.5px;font-weight:700;}
 .pp-b.em{border-color:#1b7a8c;color:#bdf1fb;} .pp-b.go{background:#1a6b2a;border-color:#1a6b2a;color:#fff;}
+
+/* signatures */
+.sig-m{max-height:94vh;overflow-y:auto;padding-bottom:22px;}
+.sig-sum{margin:0 20px 10px;padding:10px 12px;border:1px solid #1e2530;border-radius:12px;background:#0d1117;font-size:13px;color:#cbd5e1;}
+.sig-sum b{font-size:15px;color:#f0f0f0;} .sig-sum span{display:block;color:#8b98a5;font-size:12px;margin-top:2px;}
+.sig-sum ul{margin:8px 0 6px 18px;padding:0;} .sig-sum li{margin:2px 0;}
+.sig-tot{display:flex;justify-content:space-between;border-top:1px solid #1e2530;padding-top:6px;margin-top:4px;} .sig-tot b{color:#4ade80;}
+.sig-terms{margin:0 20px;max-height:120px;overflow-y:auto;border:1px solid #1e2530;border-radius:10px;padding:8px 10px;font-size:11px;color:#94a3b8;background:#0d1117;}
+.sig-terms p{margin:0 0 6px;}
+.sig-agree{display:flex;gap:8px;align-items:flex-start;margin:10px 20px 4px;font-size:13px;color:#e6edf3;}
+.sig-agree input{width:20px;height:20px;flex:none;margin-top:1px;}
+.sig-lbl{display:flex;flex-direction:column;gap:5px;margin:8px 20px 0;font-size:11px;font-weight:700;color:#8b98a5;text-transform:uppercase;letter-spacing:.04em;}
+.sig-pad-w{position:relative;border:2px dashed #3b4656;border-radius:12px;background:#fff;}
+.sig-pad{display:block;width:100%;height:150px;touch-action:none;border-radius:10px;}
+.sig-x{position:absolute;left:12px;bottom:10px;font-size:12px;color:#9aa3ad;pointer-events:none;text-transform:none;letter-spacing:0;font-weight:600;}
+.sig-row{display:flex;gap:8px;margin:10px 20px 0;}
+.sig-sec{flex:1;background:#1e2530;border:1px solid #2a3340;color:#e6edf3;border-radius:10px;padding:11px;font-weight:700;}
+.sig-go{display:block;width:calc(100% - 40px);margin:12px 20px 0;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:14px;font-weight:800;font-size:15px;}
+.sig-go[disabled]{opacity:.4;}
+.mysig-img{background:#fff;border-radius:10px;padding:8px;display:flex;justify-content:center;} .mysig-img img{max-height:70px;max-width:100%;}
+.mysig-n{font-size:12.5px;color:#cbd5e1;margin:6px 2px 0;}
+.mysig-empty{font-size:12.5px;color:#8b98a5;line-height:1.45;}
+#mySigBox .sig-row{margin:10px 0 0;} #mySigBox .sig-go{width:100%;margin:8px 0 0;}
+.jc-sigchg{font-size:12px;color:#f0b429;font-weight:700;margin-top:5px;}
+.jh-signed{font-size:12.5px;color:#4ade80;font-weight:700;margin-top:4px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -781,7 +806,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261012-1600</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261013-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -993,6 +1018,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <div id="productList"></div>
   </div>
   <div id="ep-settings" class="page">
+    <div class="st-g"><div class="st-t" style="color:#93c5fd">✍️ Your signature (Green Idea)</div><div id="mySigBox" style="padding:4px 14px 12px"></div></div>
     <div style="padding:12px 14px 0">
       <button id="btnShowContract" class="nav-pill-btn">
         <div class="inner"><span class="ico">📄</span><span class="lbl">Contract</span><span class="arr">›</span></div>
@@ -4024,6 +4050,18 @@ function saveJobNote(){
 }
 window.openJobNoteModal=openJobNoteModal;
 
+var ESTIMATE_TERMS=[
+    '-Price includes all material and labor for project as listed above. Price is guaranteed for 30 days from the day of the estimate was done.',
+    '-Work Place needs to be safe, clean, a bathroom for employees.',
+    '-All exposed Foam needs to be covered by an approved Thermal Barrier, i.e. drywall. Unless clearly stated above, this is not included in the bid. If required by local code official, we can install an intumescent paint covering at a cost of $1.2 per square foot.',
+    '-All subcontractors on job site when spray foam is being installed are required to wear Personal Protection Equipment.',
+    '-Manufacture recommends customers should not be in home during spraying process. Chemical sensitive customers should not be in the house at least 24 to 48 hours after work is completed.',
+    '-Open Cell foam will offgas for 24-48 hours, it is just the smell of the spray foam, there are no toxins being put into the air at that point.',
+    '-If customer chooses not to remove any existing insulation in the area, and there is a smell issue, the next suggestion by manufacturer would be to remove it.',
+    '-Terms of payment are 1/2 upon agreement and 1/2 upon completion. If final payment is not received within 30 days after completion, an interest of 5% will be added monthly. Forms of payment: Cash, check or credit card. If credit card is chosen add 4% charge fee.',
+    'By signing this document, the customer agrees to the services and conditions outlined in this document.'
+  ];
+window.ESTIMATE_TERMS=ESTIMATE_TERMS;
 function generateEstimatePDF(pid, totalOnly, opts){
   opts=opts||{};
   if(!window.jspdf){toast('PDF library loading, try again');return;}
@@ -4329,17 +4367,7 @@ function generateEstimatePDF(pid, totalOnly, opts){
   txt('TERMS & CONDITIONS',margin,y+4);
   y+=10;
 
-  var terms=[
-    '-Price includes all material and labor for project as listed above. Price is guaranteed for 30 days from the day of the estimate was done.',
-    '-Work Place needs to be safe, clean, a bathroom for employees.',
-    '-All exposed Foam needs to be covered by an approved Thermal Barrier, i.e. drywall. Unless clearly stated above, this is not included in the bid. If required by local code official, we can install an intumescent paint covering at a cost of $1.2 per square foot.',
-    '-All subcontractors on job site when spray foam is being installed are required to wear Personal Protection Equipment.',
-    '-Manufacture recommends customers should not be in home during spraying process. Chemical sensitive customers should not be in the house at least 24 to 48 hours after work is completed.',
-    '-Open Cell foam will offgas for 24-48 hours, it is just the smell of the spray foam, there are no toxins being put into the air at that point.',
-    '-If customer chooses not to remove any existing insulation in the area, and there is a smell issue, the next suggestion by manufacturer would be to remove it.',
-    '-Terms of payment are 1/2 upon agreement and 1/2 upon completion. If final payment is not received within 30 days after completion, an interest of 5% will be added monthly. Forms of payment: Cash, check or credit card. If credit card is chosen add 4% charge fee.',
-    'By signing this document, the customer agrees to the services and conditions outlined in this document.'
-  ];
+  var terms=ESTIMATE_TERMS;
 
   doc.setFillColor(249,247,244);
   for(var ti=0;ti<terms.length;ti++){
@@ -4356,15 +4384,24 @@ function generateEstimatePDF(pid, totalOnly, opts){
     y+=2;
   }
 
-  // ── SIGNATURE ──
-  checkNewPage(30);
+  // ── SIGNATURES (client left, Green Idea right) ──
+  checkNewPage(34);
   y+=6;
+  var _sg=proj&&proj.signed, _sgImg=_sg?(function(){ try{ return localStorage.getItem('fb6_sig_'+proj.id)||''; }catch(e){ return ''; } })():'';
+  function _sigImg(src,x,yb,maxW,maxH){ try{ var pr=doc.getImageProperties?doc.getImageProperties(src):null; var r=pr&&pr.width?pr.width/pr.height:3; var w=Math.min(maxW,maxH*r), h=w/r; doc.addImage(src,'PNG',x,yb-h-0.5,w,h); }catch(e){} }
+  if(_sgImg) _sigImg(_sgImg,margin+1,y+18,66,15);
   line(margin,y+18,margin+70,y+18,[20,20,20],0.5);
   setFont('normal',8,[150,150,150]);
   txt('Customer Signature',margin,y+23);
   setFont('normal',9,[20,20,20]);
-  txt(clientName,margin,y+28);
-  y+=34;
+  txt(_sg&&_sg.name?_sg.name:clientName,margin,y+28);
+  if(_sg){ setFont('normal',7.5,[110,110,110]); txt((_sgImg?'Signed ':'Signed electronically · ')+(_sg.dateUS||''),margin,y+32); }
+  var _rx=W-margin-70, _my=(typeof cfg!=='undefined'&&cfg&&cfg.mySig)?cfg.mySig:'';
+  if(_my){ _sigImg(_my,_rx+1,y+18,66,15);
+    line(_rx,y+18,W-margin,y+18,[20,20,20],0.5);
+    setFont('normal',8,[150,150,150]); txt('Green Idea Insulation',_rx,y+23);
+    setFont('normal',9,[20,20,20]); txt(cfg.mySigName||'',_rx,y+28); }
+  y+=(_sg?38:34);
 
   // ── FOOTER ──
   var footerY=Math.max(y+6,H-14);
@@ -5838,6 +5875,7 @@ function renderJobsList(){
     container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#4d5560;font-size:13px">No estimator jobs yet.<br>Import areas from takeoff to create a job.</div>';
     return;
   }
+  try{ _sigFetchMissing(); }catch(_sf){}
   // Pipeline (all jobs, ignores the search) — a tile shows only those jobs
   var _pd=null; try{ _pd=_pipeData(); h+=_pipeStrip(_pd); }catch(_pe){ _pd=null; }
   if(_pd&&window._pipeView){ container.innerHTML=h+_pipeList(window._pipeView,_pd); return; }
@@ -5863,9 +5901,11 @@ function renderJobsList(){
     var stTxt = _STL[estStatus]||'Draft';
     if(estStatus==='sent'&&p.estSentDate){ var _sd=String(p.estSentDate).split('/'); stTxt+=' · '+(_sd.length>=2?_sd[0]+'/'+_sd[1]:p.estSentDate); }
     h += '<div class="jc'+(isActive?' active':'')+'" data-pid="'+p.id+'">';
+    if(p.signed) stTxt+=' ✍️';
     h += '<div class="jc-top"><div class="jc-name">'+esc(p.name)+(isActive?' <span class="jc-edit">EDITING</span>':'')+'</div>'+
          '<button type="button" class="jc-st st-'+estStatus+'" data-act="stmenu" data-pid="'+p.id+'">'+stTxt+' ▾</button></div>';
     if(p.address){ h += '<div class="jc-addr">📍 '+esc(p.address)+'</div>'; }
+    if(_sigChanged(p)) h += '<div class="jc-sigchg">⚠ Estimate changed after the client signed ($'+Number(p.signed.total||0).toLocaleString('en-US')+' signed)</div>';
     if(p.note && String(p.note).trim()){ var _np=String(p.note).trim(); if(_np.length>80)_np=_np.slice(0,80)+'…'; h += '<div class="jc-note">📝 '+esc(_np)+(p.noteInPdf?' <b>· on PDF</b>':'')+'</div>'; }
     h += '<div class="jc-stats"><span>'+fmtN(Math.round(totalSF))+' SF</span><span>'+areaCount+' area'+(areaCount!==1?'s':'')+'</span>'+(quoteTotal>0?'<span class="jc-tot">$'+quoteTotal.toLocaleString()+'</span>':'')+'<span class="jc-date">'+esc(p.created||'')+'</span></div>';
     if(p.invoice){ var _T=invTotals(p.invoice), _paid=_T.balance<=0&&_T.total>0;
@@ -5908,6 +5948,8 @@ function renderJobsList(){
 // One place for every job action (card buttons and the ⋯ / status sheets).
 function _jobAct(act,pid,btn){
     if(act === 'inv'){ openInvoice(pid); return; }
+    if(act === 'sign'){ openClientSign(pid); return; }
+    if(act === 'unsign'){ removeClientSign(pid); return; }
     if(act === 'open') openJobFromList(pid);
     else if(act === 'cert'){
       try{ generateProofPDF(pid); }
@@ -5964,7 +6006,8 @@ function _jobSheet(pid,kind){
     for(var k=0;k<opts.length;k++) h+='<button type="button" class="js-b st-'+opts[k][0]+(cur===opts[k][0]?' on':'')+'" data-js="st" data-v="'+opts[k][0]+'"><b>'+opts[k][1]+(cur===opts[k][0]?' ✓':'')+'</b><span>'+opts[k][2]+'</span></button>';
   } else {
     var hasNote=!!(p.note&&String(p.note).trim());
-    h+='<button type="button" class="js-b row" data-js="inv">🧾 <b>'+(p.invoice?'Open Invoice':'Create Invoice')+'</b></button>'+
+    h+=(p.signed?'<button type="button" class="js-b row" data-js="unsign">✍️ <b>Signed by '+esc(p.signed.name||'')+' · '+esc(p.signed.dateUS||'')+'</b><span style="margin-left:auto;font-size:11.5px;color:#f87171">Remove</span></button>':'<button type="button" class="js-b row" data-js="sign">✍️ <b>Get signature (in person)</b></button>')+
+       '<button type="button" class="js-b row" data-js="inv">🧾 <b>'+(p.invoice?'Open Invoice':'Create Invoice')+'</b></button>'+
        '<button type="button" class="js-b row" data-js="cert">📋 <b>Generate Certificate</b></button>'+
        '<button type="button" class="js-b row" data-js="note">📝 <b>'+(hasNote?'Edit Note':'Add Note')+'</b></button>'+
        '<button type="button" class="js-b row" data-js="dup">⧉ <b>Duplicate</b></button>'+
@@ -6002,12 +6045,124 @@ function renderJobHeader(){
     if(email) h+='<a class="jh-l" href="mailto:'+esc(email)+'">✉ '+esc(email)+'</a>';
     h+='</div>'; }
   if(!addr&&!phone&&!email) h+='<div class="jh-miss">No address or contact yet</div>';
+  if(p.signed) h+='<div class="'+(_sigChanged(p)?'jc-sigchg':'jh-signed')+'">'+(_sigChanged(p)?'⚠ Changed after the client signed ($'+Number(p.signed.total||0).toLocaleString('en-US')+' signed on '+esc(p.signed.dateUS||'')+')':'✍️ Signed by '+esc(p.signed.name||'')+' on '+esc(p.signed.dateUS||''))+'</div>';
   h+='<div class="jh-ft"><span>Quote #'+esc(String(window.quoteNum||quoteNum||''))+(p.created?' · '+esc(p.created):'')+'</span><button type="button" class="jh-edit" id="jhEdit">Edit ›</button></div></div>';
   box.innerHTML=h; box.style.display='block';
   var sb=document.getElementById('jhSt'); if(sb) sb.onclick=function(){ _jobSheet(cp.id,'status'); };
   var eb=document.getElementById('jhEdit'); if(eb) eb.onclick=function(){ var t=document.getElementById('et2'); if(t) t.click(); };
 }
 window.renderJobHeader=renderJobHeader;
+// ══════ SIGNATURES (stage A: in person + your own) ══════
+// Client signs on this phone → job Approved, signed PDF, optional email.
+// Your signature is saved once (Settings) and goes on every estimate.
+// The signature image is stored in its own cloud doc (sig__<job>), never inside
+// the projects data, and cached on this device.
+function sigPad(cv){
+  var ctx=cv.getContext('2d'), drawing=false, empty=true, last=null, dpr=window.devicePixelRatio||1;
+  function size(){ var r=cv.getBoundingClientRect(); cv.width=Math.max(10,Math.round(r.width*dpr)); cv.height=Math.max(10,Math.round(r.height*dpr)); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#111'; }
+  size();
+  function pt(e){ var r=cv.getBoundingClientRect(), t=(e.touches&&e.touches[0])||e; return {x:t.clientX-r.left,y:t.clientY-r.top}; }
+  function down(e){ e.preventDefault(); drawing=true; last=pt(e); ctx.beginPath(); ctx.arc(last.x,last.y,1.1,0,6.3); ctx.fillStyle='#111'; ctx.fill(); empty=false; }
+  function move(e){ if(!drawing) return; e.preventDefault(); var p=pt(e); ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; empty=false; if(api.onchange) api.onchange(); }
+  function up(){ if(!drawing) return; drawing=false; if(api.onchange) api.onchange(); }
+  cv.addEventListener('mousedown',down); cv.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  cv.addEventListener('touchstart',down,{passive:false}); cv.addEventListener('touchmove',move,{passive:false}); cv.addEventListener('touchend',up);
+  var api={ clear:function(){ ctx.clearRect(0,0,cv.width,cv.height); empty=true; if(api.onchange) api.onchange(); }, isEmpty:function(){ return empty; },
+    png:function(){ // crop to the drawing, max 600px wide
+      var w=cv.width,h=cv.height,d=ctx.getImageData(0,0,w,h).data,x0=w,y0=h,x1=0,y1=0;
+      for(var y=0;y<h;y+=2){ for(var x=0;x<w;x+=2){ if(d[(y*w+x)*4+3]>10){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } } }
+      if(x1<=x0||y1<=y0) return cv.toDataURL('image/png');
+      x0=Math.max(0,x0-8); y0=Math.max(0,y0-8); x1=Math.min(w,x1+8); y1=Math.min(h,y1+8);
+      var sc=Math.min(1,600/(x1-x0)), o=document.createElement('canvas'); o.width=Math.round((x1-x0)*sc); o.height=Math.round((y1-y0)*sc);
+      o.getContext('2d').drawImage(cv,x0,y0,x1-x0,y1-y0,0,0,o.width,o.height); return o.toDataURL('image/png'); } };
+  return api;
+}
+function _estHash(p){
+  var qi=p.quoteInfo||{}, a=[qi.markup,qi.markupType,qi.discount,qi.discountType], ei=p.estItems||[];
+  for(var i=0;i<ei.length;i++){ var it=ei[i]; a.push(it.name,it.sf,it.price,it.inches,it.pricePerInch,it.productId); }
+  var s=JSON.stringify(a), h=2166136261; for(var k=0;k<s.length;k++){ h^=s.charCodeAt(k); h=(h*16777619)>>>0; } return h.toString(36);
+}
+window._estHash=_estHash;
+function _sigChanged(p){ return !!(p&&p.signed&&p.signed.hash&&p.signed.hash!==_estHash(p)); }
+window._sigChanged=_sigChanged;
+function _sigLocal(pid){ try{ return localStorage.getItem('fb6_sig_'+pid)||''; }catch(e){ return ''; } }
+function _sigFetchMissing(){
+  if(window._sigFetching) return; window._sigFetching=true;
+  try{ var ps=loadProjs(), n=0;
+    for(var i=0;i<ps.length;i++){ (function(p){ if(!p.signed||_sigLocal(p.id)) return; n++;
+      db.collection('fieldbid').doc('sig__'+p.id).get().then(function(d){ var v=d&&d.exists&&d.data(); if(v&&v.img){ try{ localStorage.setItem('fb6_sig_'+p.id,v.img); }catch(e){} } }).catch(function(){}); })(ps[i]); }
+  }catch(e){}
+}
+function _sigSheet(html){
+  var ov=document.getElementById('sigOverlay'); if(!ov){ ov=document.createElement('div'); ov.className='overlay'; ov.id='sigOverlay'; document.body.appendChild(ov); }
+  ov.innerHTML='<div class="modal sig-m">'+html+'</div>'; ov.classList.add('on'); ov.style.display='flex'; return ov;
+}
+function _sigClose(){ var ov=document.getElementById('sigOverlay'); if(ov){ ov.classList.remove('on'); ov.style.display='none'; } }
+// ── Client signs (in person) ──
+function openClientSign(pid){
+  var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } } if(!p) return;
+  if(!(p.estItems&&p.estItems.length)){ toast('This job has no estimate items yet','err'); return; }
+  var qi=p.quoteInfo||{}, tot=projectEstimateTotal(p), items='';
+  for(var k=0;k<p.estItems.length;k++) items+='<li>'+esc(p.estItems[k].name||'Item')+'</li>';
+  var terms=''; for(var t=0;t<ESTIMATE_TERMS.length;t++) terms+='<p>'+esc(ESTIMATE_TERMS[t])+'</p>';
+  _sigSheet('<div class="mhandle"></div><div class="mtitle">✍️ Approve &amp; sign</div>'+
+    '<div class="sig-sum"><b>'+esc(qi.client||p.name||'')+'</b>'+(qi.address?'<span>📍 '+esc(qi.address)+'</span>':'')+'<ul>'+items+'</ul><div class="sig-tot">Total <b>$'+tot.toLocaleString('en-US')+'</b></div></div>'+
+    '<div class="sig-terms">'+terms+'</div>'+
+    '<label class="sig-agree"><input type="checkbox" id="csAgree"> I agree to the services, price and terms above.</label>'+
+    '<label class="sig-lbl">Name<input class="fi" id="csName" value="'+esc(qi.client||'')+'" placeholder="Full name"></label>'+
+    '<div class="sig-lbl">Signature<div class="sig-pad-w"><canvas id="csPad" class="sig-pad"></canvas><span class="sig-x">✕ sign here</span></div></div>'+
+    '<div class="sig-row"><button type="button" class="sig-sec" id="csClear">Clear</button><button type="button" class="sig-sec" id="csCancel">Cancel</button></div>'+
+    '<button type="button" class="sig-go" id="csOk" disabled>✍️ Approve &amp; sign</button>');
+  var pad=sigPad(document.getElementById('csPad'));
+  function ready(){ if(!document.getElementById('csOk')) return; document.getElementById('csOk').disabled=!(document.getElementById('csAgree').checked&&String(document.getElementById('csName').value).trim()&&!pad.isEmpty()); }
+  pad.onchange=ready; document.getElementById('csAgree').onchange=ready; document.getElementById('csName').oninput=ready;
+  document.getElementById('csClear').onclick=function(){ pad.clear(); };
+  document.getElementById('csCancel').onclick=_sigClose;
+  document.getElementById('csOk').onclick=function(){
+    var img=pad.png(), name=String(document.getElementById('csName').value).trim(), now=new Date();
+    var rec={name:name,date:now.toISOString(),dateUS:now.toLocaleDateString('en-US'),total:tot,hash:_estHash(p),via:'in person'};
+    try{ localStorage.setItem('fb6_sig_'+pid,img); }catch(e){}
+    try{ db.collection('fieldbid').doc('sig__'+pid).set({img:img,name:name,date:rec.date,total:tot,via:rec.via}); }catch(e){}
+    var ps2=loadProjs(); for(var j=0;j<ps2.length;j++){ if(ps2[j].id===pid){ ps2[j].signed=rec; ps2[j].estStatus='approved'; break; } }
+    saveProjs(ps2); _sigClose(); if(window.renderJobsList) renderJobsList(); try{ renderJobHeader(); }catch(e){}
+    toast('✍️ Signed by '+name+' — job approved');
+    setTimeout(function(){ appConfirm('Email the signed copy to '+(qi.client||'the client')+'?',function(){
+      var r=null; try{ r=generateEstimatePDF(pid,false,{returnBytes:true}); }catch(e){}
+      if(r&&r.bytes) openEstimateEmail(r.bytes,r.filename.replace(/^Estimate/,'Signed-Estimate'),pid,'signed');
+    },{confirmLabel:'📧 Email signed copy',confirmStyle:'accent'}); },400);
+  };
+}
+window.openClientSign=openClientSign;
+function removeClientSign(pid){
+  appConfirm('Remove the client signature from this estimate? The job stays Approved.',function(){
+    var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ delete ps[i].signed; break; } }
+    saveProjs(ps); try{ localStorage.removeItem('fb6_sig_'+pid); }catch(e){} try{ db.collection('fieldbid').doc('sig__'+pid).delete(); }catch(e){}
+    if(window.renderJobsList) renderJobsList(); toast('Signature removed');
+  },{confirmLabel:'Remove',confirmStyle:'danger'});
+}
+// ── Your signature (Settings) ──
+function renderMySig(){
+  var box=document.getElementById('mySigBox'); if(!box) return;
+  box.innerHTML=cfg.mySig?'<div class="mysig-img"><img src="'+cfg.mySig+'" alt="your signature"></div><div class="mysig-n">'+esc(cfg.mySigName||'')+'</div><div class="sig-row"><button type="button" class="sig-sec" id="mySigRe">Sign again</button><button type="button" class="sig-sec" id="mySigDel">Remove</button></div>'
+    :'<div class="mysig-empty">No signature saved yet. It goes on every estimate, next to the client signature.</div><button type="button" class="sig-go" id="mySigRe" style="margin:8px 0 0">✍️ Add my signature</button>';
+  var re=document.getElementById('mySigRe'); if(re) re.onclick=openMySign;
+  var de=document.getElementById('mySigDel'); if(de) de.onclick=function(){ appConfirm('Remove your saved signature?',function(){ delete cfg.mySig; saveCfg(); renderMySig(); },{confirmLabel:'Remove',confirmStyle:'danger'}); };
+}
+window.renderMySig=renderMySig;
+try{ renderMySig(); }catch(e){}
+function openMySign(){
+  _sigSheet('<div class="mhandle"></div><div class="mtitle">✍️ Your signature</div>'+
+    '<label class="sig-lbl">Name / title<input class="fi" id="mySigName" value="'+esc(cfg.mySigName||cfg.contact||'')+'" placeholder="e.g. Ueliton Silva — Green Idea Insulation"></label>'+
+    '<div class="sig-lbl">Signature<div class="sig-pad-w"><canvas id="mySigPad" class="sig-pad"></canvas><span class="sig-x">✕ sign here</span></div></div>'+
+    '<div class="sig-row"><button type="button" class="sig-sec" id="mySigClear">Clear</button><button type="button" class="sig-sec" id="mySigCancel">Cancel</button></div>'+
+    '<button type="button" class="sig-go" id="mySigOk" disabled>Save my signature</button>');
+  var pad=sigPad(document.getElementById('mySigPad'));
+  pad.onchange=function(){ var b=document.getElementById('mySigOk'); if(b) b.disabled=pad.isEmpty(); };
+  document.getElementById('mySigClear').onclick=function(){ pad.clear(); };
+  document.getElementById('mySigCancel').onclick=_sigClose;
+  document.getElementById('mySigOk').onclick=function(){ cfg.mySig=pad.png(); cfg.mySigName=String(document.getElementById('mySigName').value).trim(); saveCfg(); _sigClose(); renderMySig(); toast('✍️ Your signature is saved'); };
+}
+
 // ══════ PIPELINE (top of the Jobs tab) ══════
 // Follow up (sent ≥7 days, no recent follow-up) · To invoice (approved, no invoice)
 // · To collect (invoice balance). Reads job data; the only write is the date of the
@@ -8403,9 +8558,12 @@ function openEstimateEmail(bytes, fname, pid, kind){
   var subject='Insulation estimate — '+(addr||client||'Green Idea Insulation');
   var _isInv=(kind==='invoice'&&p&&p.invoice), _inv=_isInv?p.invoice:null, _IT=_isInv?invTotals(_inv):null;
   if(_isInv) subject='Invoice '+_inv.num+' — '+(addr||client||'Green Idea Insulation');
+  var _isSigned=(kind==='signed');
+  if(_isSigned) subject='Signed estimate — '+(addr||client||'Green Idea Insulation');
   var _cf=(typeof cfg!=='undefined'&&cfg)?cfg:(window.cfg||{});
   var co=_cf.company||'Green Idea Insulation', contact=_cf.contact||'';
   var body='Hi'+(first?' '+first:'')+',\n\nPlease find attached the estimate'+(addr?' for '+addr:'')+'.\n\nLet me know if you have any questions — happy to go over it with you.\n\nThank you,\n'+co+(contact?'\n'+contact:'');
+  if(_isSigned) body='Hi'+(first?' '+first:'')+',\n\nThank you for approving the estimate'+(addr?' for '+addr:'')+'. Attached is your signed copy for your records.\n\nWe will be in touch to schedule the work.\n\nThank you,\n'+co+(contact?'\n'+contact:'');
   if(_isInv){
     var _dn=(_inv.dueNow!==''&&_inv.dueNow!=null&&Number(_inv.dueNow)>0)?Number(_inv.dueNow):null;
     body='Hi'+(first?' '+first:'')+',\n\nPlease find attached invoice '+_inv.num+(addr?' for the insulation work at '+addr:'')+'.\n\n'+
@@ -8430,7 +8588,7 @@ function openEstimateEmail(bytes, fname, pid, kind){
   function close(){ ov.classList.remove('on'); ov.style.display='none'; }
   function copyTo(){ if(!to) return; try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(to); }catch(e){} }
   function askSent(){
-    if(!pid) return;
+    if(!pid||_isSigned) return;
     if(_isInv){ appConfirm('Mark this invoice as sent?',function(){ var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid&&pp[k].invoice){ pp[k].invoice.sentDate=new Date().toLocaleDateString('en-US'); break; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('🧾 Invoice marked as sent'); },{confirmLabel:'📨 Mark as Sent',confirmStyle:'accent'}); return; }
     appConfirm('Mark this estimate as sent?',function(){
       var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid){ pp[k].estStatus='sent'; pp[k].estSentDate=new Date().toLocaleDateString('en-US'); break; } }
