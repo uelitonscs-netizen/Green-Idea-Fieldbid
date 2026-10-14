@@ -718,6 +718,22 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .fav-c{flex:none;border:1px solid #6a4a1a;background:#2a1f0e;color:#f0b429;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:700;white-space:nowrap;-webkit-user-select:none;user-select:none;}
 .fav-c.on{background:#f0b429;color:#1a1205;}
 .ca.fav{color:#f0b429;}
+
+/* estimate options */
+#optBar{margin:0 0 12px;}
+.ob-t{font-size:11px;font-weight:800;color:#93c5fd;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.ob-t span{color:#7d8590;font-weight:600;text-transform:none;letter-spacing:0;margin-left:6px;}
+.ob-r{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;}
+.ob-c{flex:none;min-width:96px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:#131920;border:1px solid #2a3340;border-radius:11px;padding:8px 12px;color:#94a3b8;-webkit-user-select:none;user-select:none;}
+.ob-c b{font-size:13.5px;color:#e6edf3;} .ob-c span{font-size:12.5px;font-weight:700;color:#4ade80;}
+.ob-c.on{border-color:#3b82f6;background:#162338;}
+.ob-c.ch{box-shadow:inset 0 0 0 1px #4ade80;}
+.ob-add{flex:none;border:1px dashed #3b4656;background:transparent;color:#93c5fd;border-radius:11px;padding:8px 14px;font-weight:800;font-size:13px;}
+.ob-n{font-size:11.5px;color:#f0b429;margin-top:6px;}
+.jc-opt{font-size:12px;color:#93c5fd;margin-top:5px;} .jc-opt b{color:#4ade80;}
+
+.ob-mini{display:flex;justify-content:flex-end;margin:-4px 0 0;}
+.ob-add.sm{padding:5px 12px;font-size:12px;border-radius:999px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -831,7 +847,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261015-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261015-1200</span></div>
 </div>
 
 <div id="field-app">
@@ -1444,6 +1460,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
     <div style="padding:0 20px;display:flex;flex-direction:column;gap:10px">
       <button id="estModeLineItems" style="width:100%;background:#1a6b2a;color:#fff;border:none;border-radius:10px;padding:15px 14px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;line-height:1.35">📋 Line Items + Total<br><span style="font-size:11.5px;font-weight:500;opacity:.85">Shows every item with its own price</span></button>
       <button id="estModeTotalOnly" style="width:100%;background:#1e2530;border:1px solid #3a3340;color:#f0f0f0;border-radius:10px;padding:15px 14px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;line-height:1.35">💰 Total Only<br><span style="font-size:11.5px;font-weight:500;color:#94a3b8">Lists the work without per-item prices — one total at the end</span></button>
+      <button id="estModeCompare" style="display:none;width:100%;background:#162338;border:1px solid #2a4a6a;color:#e6f0ff;border-radius:10px;padding:15px 14px;font-size:15px;font-weight:800;cursor:pointer;text-align:left;line-height:1.35">📊 Compare options<br><span style="font-size:11.5px;font-weight:500;color:#93c5fd">All options side by side, each with its total</span></button>
     </div>
   </div>
 </div>
@@ -5947,9 +5964,11 @@ function renderJobsList(){
     if(estStatus==='sent'&&p.estSentDate){ var _sd=String(p.estSentDate).split('/'); stTxt+=' · '+(_sd.length>=2?_sd[0]+'/'+_sd[1]:p.estSentDate); }
     h += '<div class="jc'+(isActive?' active':'')+'" data-pid="'+p.id+'">';
     if(p.signed) stTxt+=' ✍️';
+    var _oc=null; if(p.estOptions&&p.estOptions.list){ for(var _oi=0;_oi<p.estOptions.list.length;_oi++){ if(p.estOptions.list[_oi].id===p.estOptions.chosen) _oc=p.estOptions.list[_oi].label; } }
     h += '<div class="jc-top"><div class="jc-name">'+esc(p.name)+(isActive?' <span class="jc-edit">EDITING</span>':'')+'</div>'+
          '<button type="button" class="jc-st st-'+estStatus+'" data-act="stmenu" data-pid="'+p.id+'">'+stTxt+' ▾</button></div>';
     if(p.address){ h += '<div class="jc-addr">📍 '+esc(p.address)+'</div>'; }
+    if(p.estOptions&&p.estOptions.list&&p.estOptions.list.length>1) h += '<div class="jc-opt">📊 '+p.estOptions.list.length+' options'+(_oc?' · chosen: <b>'+esc(_oc)+'</b>':' · none chosen yet')+'</div>';
     if(!p.signed&&p.signReq&&p.signReq.status==='pending') h += '<div class="jc-wait">🔗 Waiting for signature · sent '+esc(p.signReq.sentUS||'')+'</div>';
     if(_sigChanged(p)) h += '<div class="jc-sigchg">⚠ Estimate changed after the client signed ($'+Number(p.signed.total||0).toLocaleString('en-US')+' signed)</div>';
     if(p.note && String(p.note).trim()){ var _np=String(p.note).trim(); if(_np.length>80)_np=_np.slice(0,80)+'…'; h += '<div class="jc-note">📝 '+esc(_np)+(p.noteInPdf?' <b>· on PDF</b>':'')+'</div>'; }
@@ -6006,13 +6025,13 @@ function _jobAct(act,pid,btn){
       window._estEmailMode = true;
       window._estPendingPid = pid;
       var elm=document.getElementById('estModeOverlay');
-      if(elm){elm.classList.add('on');elm.style.display='flex';}
+      if(elm){elm.classList.add('on');elm.style.display='flex';} try{ _optPrepCompare(); }catch(_oc){}
     }
     else if(act === 'est'){
       window._estEmailMode = false;
       window._estPendingPid = pid;
       var el=document.getElementById('estModeOverlay');
-      if(el){el.classList.add('on');el.style.display='flex';}
+      if(el){el.classList.add('on');el.style.display='flex';} try{ _optPrepCompare(); }catch(_oc){}
     }
     else if(act === 'note'){ openJobNoteModal(pid); }
     else if(act === 'dup'){
@@ -6100,6 +6119,185 @@ function renderJobHeader(){
   var eb=document.getElementById('jhEdit'); if(eb) eb.onclick=function(){ var t=document.getElementById('et2'); if(t) t.click(); };
 }
 window.renderJobHeader=renderJobHeader;
+// ══════ ESTIMATE OPTIONS (Good / Better / Best) ══════
+// p.estOptions = {list:[{id,label,items}], active:id, chosen:id|null}
+// estItems is ALWAYS the active option (so everything else keeps working).
+// Photos live once: switching moves an item's photos to the same-named item of the
+// option being opened; items that only exist in one option keep their own photos.
+function _optProj(){ if(!currentProj) return null; var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===currentProj.id) return {ps:ps,i:i,p:ps[i]}; } return null; }
+function _optKeys(items){ var seen={}, k=[]; for(var i=0;i<items.length;i++){ var n=String(items[i].name||'').trim().toLowerCase(); seen[n]=(seen[n]||0)+1; k.push(n+'#'+seen[n]); } return k; }
+function _optTotal(items){ try{ return projectEstimateTotal({estItems:items,quoteInfo:quoteInfo}); }catch(e){ return 0; } }
+function _optStrip(items){ var c=JSON.parse(JSON.stringify(items||[])); for(var i=0;i<c.length;i++) c[i].photos=[]; return c; }
+function _optMovePhotos(from,to){
+  var kf=_optKeys(from), kt=_optKeys(to), at={};
+  for(var j=0;j<kt.length;j++) at[kt[j]]=j;
+  for(var i=0;i<from.length;i++){ var j2=at[kf[i]]; if(j2===undefined) continue;
+    if(from[i].photos&&from[i].photos.length&&!(to[j2].photos&&to[j2].photos.length)){ to[j2].photos=from[i].photos; from[i].photos=[]; } }
+}
+function _optSave(O){ saveEI(); var f=_optProj(); if(!f) return; if(O) f.ps[f.i].estOptions=O; else delete f.ps[f.i].estOptions; saveProjs(f.ps); currentProj.estOptions=O||undefined; }
+function optSwitch(toId){
+  var f=_optProj(); if(!f||!f.p.estOptions) return; var O=JSON.parse(JSON.stringify(f.p.estOptions));
+  if(O.active===toId){ renderOptBar(); return; }
+  var cur=null, tgt=null; for(var i=0;i<O.list.length;i++){ if(O.list[i].id===O.active) cur=O.list[i]; if(O.list[i].id===toId) tgt=O.list[i]; }
+  if(!tgt) return;
+  var leaving=JSON.parse(JSON.stringify(estItems)), coming=JSON.parse(JSON.stringify(tgt.items||[]));
+  _optMovePhotos(leaving,coming);
+  if(cur) cur.items=leaving; tgt.items=[]; O.active=toId;
+  estItems=coming; window.estItems=estItems;
+  _optSave(O); renderEst();
+}
+window.optSwitch=optSwitch;
+function optAdd(){
+  var f=_optProj(); if(!f) return;
+  if(!(estItems&&estItems.length)){ toast('Add items to this estimate first','err'); return; }
+  var O=f.p.estOptions?JSON.parse(JSON.stringify(f.p.estOptions)):null, names=['Good','Better','Best'];
+  if(!O){ O={list:[{id:'o'+Date.now(),label:'Good',items:[]}],chosen:null}; O.active=O.list[0].id; }
+  if(O.list.length>=3){ toast('Up to 3 options','err'); return; }
+  var nid='o'+(Date.now()+1), lbl=names[O.list.length]||('Option '+(O.list.length+1));
+  O.list.push({id:nid,label:lbl,items:_optStrip(estItems)});
+  for(var i=0;i<O.list.length;i++){ if(O.list[i].id===O.active) O.list[i].items=[]; }
+  _optSave(O); optSwitch(nid);
+  toast('➕ '+lbl+' — a copy of the previous option. Change what is different.');
+}
+window.optAdd=optAdd;
+function optMenu(id){
+  var f=_optProj(); if(!f||!f.p.estOptions) return; var O=f.p.estOptions, o=null; for(var i=0;i<O.list.length;i++){ if(O.list[i].id===id) o=O.list[i]; } if(!o) return;
+  var ov=document.getElementById('sigOverlay'); if(!ov){ ov=document.createElement('div'); ov.className='overlay'; ov.id='sigOverlay'; document.body.appendChild(ov); }
+  ov.innerHTML='<div class="modal sig-m"><div class="mhandle"></div><div class="mtitle">Option: '+esc(o.label)+'</div><div class="js-list">'+
+    '<button type="button" class="js-b row" id="omChoose">✓ <b>'+(O.chosen===id?'Chosen option':'Choose this option')+'</b><span style="margin-left:auto">used for signature, invoice, WorkLog</span></button>'+
+    '<button type="button" class="js-b row" id="omRename">✏️ <b>Rename</b></button>'+
+    '<div class="js-sep"></div><button type="button" class="js-b row js-del" id="omDel">🗑 <b>Delete option</b></button></div>'+
+    '<div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="omClose">Cancel</button></div></div>';
+  ov.classList.add('on'); ov.style.display='flex';
+  function close(){ ov.classList.remove('on'); ov.style.display='none'; }
+  document.getElementById('omClose').onclick=close;
+  document.getElementById('omChoose').onclick=function(){ close(); if(O.active!==id) optSwitch(id); var g=_optProj(); var O2=JSON.parse(JSON.stringify(g.p.estOptions)); O2.chosen=id; _optSave(O2); renderEst(); try{ renderJobsList(); }catch(e){} toast('✓ '+o.label+' is the chosen option'); };
+  document.getElementById('omRename').onclick=function(){ var n=prompt('Option name',o.label); if(n===null) return; n=String(n).trim().slice(0,24); if(!n) return; close(); var g=_optProj(); var O2=JSON.parse(JSON.stringify(g.p.estOptions)); for(var k=0;k<O2.list.length;k++){ if(O2.list[k].id===id) O2.list[k].label=n; } _optSave(O2); renderEst(); };
+  document.getElementById('omDel').onclick=function(){ close(); var _co=document.getElementById('confirmOverlay'); if(_co) _co.style.zIndex='400';
+    appConfirm('Delete the option “'+o.label+'”? Its items (and photos only in this option) will be removed.',function(){
+      var g=_optProj(); var O2=JSON.parse(JSON.stringify(g.p.estOptions));
+      if(O2.active===id){ var other=null; for(var k=0;k<O2.list.length;k++){ if(O2.list[k].id!==id){ other=O2.list[k].id; break; } } if(other) optSwitch(other); g=_optProj(); O2=JSON.parse(JSON.stringify(g.p.estOptions)); }
+      O2.list=O2.list.filter(function(x){ return x.id!==id; }); if(O2.chosen===id) O2.chosen=null;
+      if(O2.list.length<=1){ var keepLabel=O2.list[0]&&O2.list[0].label; _optSave(null); toast('Only one option left — back to a single estimate'); }
+      else _optSave(O2);
+      renderEst(); try{ renderJobsList(); }catch(e){}
+    },{confirmLabel:'Delete option',confirmStyle:'danger'}); };
+}
+function renderOptBar(){
+  var box=document.getElementById('optBar');
+  if(!box){ var hdr=document.getElementById('jobHdr'); if(!hdr) return; box=document.createElement('div'); box.id='optBar'; hdr.parentNode.insertBefore(box,hdr.nextSibling); }
+  var f=_optProj(); if(!f||!(estItems&&estItems.length)&&!(f&&f.p.estOptions)){ box.style.display='none'; return; }
+  var O=f.p.estOptions;
+  if(!O){ box.innerHTML='<div class="ob-mini"><button type="button" class="ob-add sm" id="obAdd">+ Option</button></div>'; box.style.display='block'; document.getElementById('obAdd').onclick=optAdd; return; }
+  var h='<div class="ob-t">Options <span>hold an option for more</span></div><div class="ob-r">';
+  if(O){ for(var i=0;i<O.list.length;i++){ var o=O.list[i], act=o.id===O.active, items=act?estItems:o.items, tot=_optTotal(items);
+      h+='<button type="button" class="ob-c'+(act?' on':'')+(O.chosen===o.id?' ch':'')+'" data-opt="'+esc(o.id)+'"><b>'+esc(o.label)+(O.chosen===o.id?' ✓':'')+'</b><span>$'+Math.round(tot).toLocaleString('en-US')+'</span></button>'; } }
+  else h+='<button type="button" class="ob-c on" disabled><b>This estimate</b><span>$'+Math.round(_optTotal(estItems)).toLocaleString('en-US')+'</span></button>';
+  if(!O||O.list.length<3) h+='<button type="button" class="ob-add" id="obAdd">+ Option</button>';
+  box.innerHTML=h+'</div>'+(O&&!O.chosen?'<div class="ob-n">Choose the option the client takes (hold it → ✓ Choose) before signature or invoice.</div>':''); box.style.display='block';
+  var add=document.getElementById('obAdd'); if(add) add.onclick=optAdd;
+  var bs=box.querySelectorAll('.ob-c[data-opt]');
+  for(var j=0;j<bs.length;j++){ (function(btn){ var tm=null, held=false, id=btn.getAttribute('data-opt');
+    function start(){ held=false; tm=setTimeout(function(){ held=true; optMenu(id); },600); } function end(){ if(tm){ clearTimeout(tm); tm=null; } }
+    btn.addEventListener('touchstart',start,{passive:true}); btn.addEventListener('touchend',end); btn.addEventListener('touchmove',end);
+    btn.addEventListener('mousedown',start); btn.addEventListener('mouseup',end); btn.addEventListener('mouseleave',end);
+    btn.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+    btn.addEventListener('click',function(){ if(held){ held=false; return; } optSwitch(id); });
+  })(bs[j]); }
+}
+window.renderOptBar=renderOptBar;
+// ── PDF: options side by side ──
+function generateOptionsPDF(pid,opts){
+  opts=opts||{}; if(!window.jspdf){ toast('PDF library loading, try again'); return null; }
+  var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===(pid||(currentProj&&currentProj.id))){ p=ps[i]; break; } }
+  if(!p||!p.estOptions||p.estOptions.list.length<2){ toast('This job has no options','err'); return null; }
+  var O=p.estOptions, qi=p.quoteInfo||{}, cols=[];
+  for(var c=0;c<O.list.length;c++){ var o=O.list[c], items=(o.id===O.active)?(p.estItems||[]):(o.items||[]); cols.push({label:o.label,items:items,total:projectEstimateTotal({estItems:items,quoteInfo:qi}),chosen:O.chosen===o.id}); }
+  var doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'letter'}), W=215.9, H=279.4, M=14, y=14;
+  function sf(st,sz,col){ doc.setFont('helvetica',st||'normal'); doc.setFontSize(sz||10); if(col) doc.setTextColor(col[0],col[1],col[2]); else doc.setTextColor(30,30,30); }
+  function tx(s,x,yy,o2){ if(!s&&s!==0) return; doc.text(String(s),x,yy,o2||{}); }
+  var LOGO=null; try{ LOGO=LOGO_B64; }catch(e){}
+  if(LOGO){ var lh=22,lw=lh*(750/1334); doc.setFillColor(0,0,0); doc.roundedRect(M,y-1,lw+2,lh+2,1.5,1.5,'F'); doc.addImage(LOGO,'JPEG',M+1,y,lw,lh); }
+  var cx=M+(LOGO?12.5+4:0); sf('bold',12,[20,20,20]); tx('Green Idea Insulation',cx,y+5);
+  sf('normal',8,[100,100,100]); tx('238 Webster Street #3 · Worcester, Ma 01603',cx,y+10); tx('+7745787186 / 508-579-0762',cx,y+15); tx('greenideainsulation@gmail.com · www.greenideainsulation.com',cx,y+20);
+  var rx=W-M; sf('bold',13,[26,107,42]); tx('ESTIMATE OPTIONS',rx,y+3,{align:'right'});
+  sf('normal',8,[150,150,150]); tx('Estimate #',rx-30,y+10,{align:'right'}); tx('Date',rx-30,y+15,{align:'right'});
+  sf('bold',8,[20,20,20]); tx(String(qi.quoteNum||(typeof quoteNum!=='undefined'?quoteNum:'')||''),rx,y+10,{align:'right'}); tx(new Date().toLocaleDateString('en-US'),rx,y+15,{align:'right'});
+  y+=28; doc.setFillColor(26,107,42); doc.rect(0,y,W,1.5,'F'); doc.setFillColor(74,222,128); doc.rect(60,y,80,1.5,'F'); doc.setFillColor(220,240,220); doc.rect(140,y,W-140,1.5,'F'); y+=6;
+  sf('normal',7.5,[150,150,150]); tx('PREPARED FOR',M,y+4); y+=8; sf('bold',12,[20,20,20]); tx(qi.client||p.name||'Client',M,y); y+=5;
+  if(qi.address){ sf('normal',9,[100,100,100]); tx(qi.address,M,y); y+=4; }
+  y+=3; sf('normal',8.5,[110,110,110]); tx('Compare the options below and let us know which one you would like. Prices include material and labor.',M,y); y+=7;
+  var n=cols.length, gap=5, cw=(W-2*M-gap*(n-1))/n, top=y, colEnd=[], maxPage=1, startPage=doc.getNumberOfPages?doc.getNumberOfPages():1;
+  for(var k=0;k<n;k++){
+    var col=cols[k], x=M+k*(cw+gap), yy=top, pg=startPage;
+    try{ doc.setPage(pg); }catch(e){}
+    doc.setFillColor(col.chosen?232:244,col.chosen?245:247,col.chosen?233:244); doc.roundedRect(x,yy,cw,20,2,2,'F');
+    sf('bold',11,[20,20,20]); tx(col.label+(col.chosen?'  ✓':''),x+4,yy+7); sf('bold',15,[26,107,42]); tx('$'+Number(col.total).toLocaleString('en-US'),x+4,yy+16);
+    yy+=26;
+    var secs={}, order=[]; for(var it=0;it<col.items.length;it++){ var e=col.items[it], sec='Items'; try{ sec=sectionOf(e)||'Items'; }catch(x1){} if(!secs[sec]){ secs[sec]=[]; order.push(sec); } secs[sec].push(e); }
+    for(var s2=0;s2<order.length;s2++){
+      if(yy>H-24){ pg++; if(pg>(doc.getNumberOfPages?doc.getNumberOfPages():pg)) doc.addPage(); try{ doc.setPage(pg); }catch(e){} yy=20; }
+      sf('bold',8.5,[26,107,42]); tx(String(order[s2]).toUpperCase(),x,yy); doc.setDrawColor(26,107,42); doc.setLineWidth(0.4); doc.line(x,yy+1.2,x+cw,yy+1.2); yy+=5.5;
+      var L=secs[order[s2]];
+      for(var q=0;q<L.length;q++){ var e2=L[q], sp=''; try{ sp=specFromData(e2)||''; }catch(x2){}
+        var nl=doc.splitTextToSize(String(e2.name||'Item'),cw), sl=sp?doc.splitTextToSize(sp,cw):[], hh=nl.length*4.2+sl.length*3.6+2.5;
+        if(yy+hh>H-18){ pg++; if(pg>(doc.getNumberOfPages?doc.getNumberOfPages():pg)) doc.addPage(); try{ doc.setPage(pg); }catch(e){} yy=20; }
+        sf('bold',9,[20,20,20]); for(var a=0;a<nl.length;a++){ tx(nl[a],x,yy); yy+=4.2; }
+        sf('normal',7.8,[95,105,115]); for(var b2=0;b2<sl.length;b2++){ tx(sl[b2],x,yy); yy+=3.6; }
+        yy+=2.5; }
+      yy+=2; }
+    colEnd.push({page:pg,y:yy}); if(pg>maxPage) maxPage=pg;
+  }
+  try{ doc.setPage(maxPage); }catch(e){}
+  var endY=0; for(var z=0;z<colEnd.length;z++){ if(colEnd[z].page===maxPage&&colEnd[z].y>endY) endY=colEnd[z].y; } y=Math.max(endY,maxPage===startPage?top+30:20)+4;
+  var T=ESTIMATE_TERMS||[], tl=[]; for(var t=0;t<T.length;t++){ var w=doc.splitTextToSize(String(T[t]),W-2*M); for(var u=0;u<w.length;u++) tl.push(w[u]); tl.push(''); }
+  if(tl.length){ if(y+14>H-16){ doc.addPage(); y=20; } doc.setFillColor(249,247,244); doc.rect(0,y,W,8,'F'); sf('normal',7.5,[150,150,150]); tx('TERMS & CONDITIONS',M,y+5); y+=11;
+    sf('normal',7.5,[90,90,90]); for(var r=0;r<tl.length;r++){ if(y>H-14){ doc.addPage(); y=20; } if(tl[r]) tx(tl[r],M,y); y+=tl[r]?3.4:1.6; } }
+  var pages=doc.getNumberOfPages?doc.getNumberOfPages():1;
+  for(var pgn=1;pgn<=pages;pgn++){ try{ doc.setPage(pgn); }catch(e){} sf('normal',7.5,[150,150,150]); tx('Green Idea Insulation · Estimate options'+(pages>1?' · '+pgn+'/'+pages:''),W/2,H-8,{align:'center'}); }
+  var fname='Estimate-Options-'+String(qi.client||p.name||'').replace(/[^\w]+/g,'_').replace(/^_|_$/g,'')+'.pdf';
+  if(opts.returnBytes) return {bytes:doc.output('arraybuffer'),filename:fname};
+  doc.save(fname); return {filename:fname};
+}
+window.generateOptionsPDF=generateOptionsPDF;
+function _optPrepCompare(){
+  var b=document.getElementById('estModeCompare'); if(!b) return;
+  var pid=window._estPendingPid||(currentProj&&currentProj.id), ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } }
+  b.style.display=(p&&p.estOptions&&p.estOptions.list.length>=2)?'block':'none';
+}
+window._optPrepCompare=_optPrepCompare;
+// ── Options: signature, link, invoice, WorkLog and the estimate PDF always use the
+// CHOSEN option. If another option is open, it is opened first; if none is chosen, stop.
+function _optSwitchStored(pid,toId){
+  if(currentProj&&currentProj.id===pid){ optSwitch(toId); return; }
+  var ps=loadProjs(), k=-1; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ k=i; break; } } if(k<0) return;
+  var p=ps[k], O=JSON.parse(JSON.stringify(p.estOptions)), cur=null, tgt=null;
+  for(var j=0;j<O.list.length;j++){ if(O.list[j].id===O.active) cur=O.list[j]; if(O.list[j].id===toId) tgt=O.list[j]; }
+  if(!tgt) return;
+  var leaving=JSON.parse(JSON.stringify(p.estItems||[])), coming=JSON.parse(JSON.stringify(tgt.items||[]));
+  _optMovePhotos(leaving,coming); if(cur) cur.items=leaving; tgt.items=[]; O.active=toId;
+  ps[k].estItems=coming; ps[k].estOptions=O; saveProjs(ps);
+}
+function _optEnsureChosen(pid,cb){
+  var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } }
+  var O=p&&p.estOptions;
+  if(!O||!O.list||O.list.length<2){ cb(); return; }
+  if(!O.chosen){ window._estEmailMode=false; toast('This job has options — choose one first (hold it → ✓ Choose)','err'); return; }
+  if(O.active!==O.chosen){
+    var lbl=''; for(var j=0;j<O.list.length;j++){ if(O.list[j].id===O.chosen) lbl=O.list[j].label; }
+    _optSwitchStored(pid,O.chosen); toast('✓ Using the chosen option: '+lbl);
+  }
+  cb();
+}
+window._optEnsureChosen=_optEnsureChosen;
+(function(){
+  var _cs=openClientSign; openClientSign=function(pid){ _optEnsureChosen(pid,function(){ _cs(pid); }); }; window.openClientSign=openClientSign;
+  var _sf=sendForSignature; sendForSignature=function(pid){ _optEnsureChosen(pid,function(){ _sf(pid); }); }; window.sendForSignature=sendForSignature;
+  var _oi=openInvoice; openInvoice=function(pid){ var f=_invFind(pid); if(f&&f.p.invoice){ _oi(pid); return; } _optEnsureChosen(pid,function(){ _oi(pid); }); }; window.openInvoice=openInvoice;
+  var _pb=proceedToBrochureStep; proceedToBrochureStep=function(t){ var pid=window._estPendingPid||(currentProj&&currentProj.id); if(!pid){ _pb(t); return; } _optEnsureChosen(pid,function(){ _pb(t); }); };
+})();
+
+
 // ══════ SIGNATURES (stage A: in person + your own) ══════
 // Client signs on this phone → job Approved, signed PDF, optional email.
 // Your signature is saved once (Settings) and goes on every estimate.
@@ -6540,7 +6738,7 @@ window.generateInvoicePDF=generateInvoicePDF;
 
 
 // Refresh the WorkLog summary whenever the Estimator is drawn (open or edit).
-(function(){ var _re=renderEst; renderEst=function(){ var r=_re.apply(this,arguments); try{ if(window._wlSyncSummary) window._wlSyncSummary(); }catch(e){} try{ renderJobHeader(); }catch(e){} return r; }; window.renderEst=renderEst; })();
+(function(){ var _re=renderEst; renderEst=function(){ var r=_re.apply(this,arguments); try{ if(window._wlSyncSummary) window._wlSyncSummary(); }catch(e){} try{ renderJobHeader(); }catch(e){} try{ renderOptBar(); }catch(e){} return r; }; window.renderEst=renderEst; })();
 
 function openJobFromList(pid){
   if(currentProj && currentProj.id === pid){
@@ -8538,7 +8736,7 @@ document.getElementById('printQuoteBtn').addEventListener('click',function(){
   window._estEmailMode=false;
   window._estPendingPid=null;
   var el=document.getElementById('estModeOverlay');
-  if(el){el.classList.add('on');el.style.display='flex';}
+  if(el){el.classList.add('on');el.style.display='flex';} try{ _optPrepCompare(); }catch(_oc){}
 });
 document.getElementById('copyCtBtn').addEventListener('click',function(){
   var el=document.getElementById('ctDoc');var t=el?el.innerText:'';
@@ -8595,6 +8793,12 @@ document.getElementById('estModeLineItems').addEventListener('click', function()
   if(el){el.classList.remove('on');el.style.display='none';}
   toast('📋 Line items + total');
   proceedToBrochureStep(false);
+});
+document.getElementById('estModeCompare').addEventListener('click', function(){
+  var el=document.getElementById('estModeOverlay'); if(el){el.classList.remove('on');el.style.display='none';}
+  var pid=window._estPendingPid||(currentProj&&currentProj.id); var em=!!window._estEmailMode; window._estEmailMode=false; window._estPendingPid=null;
+  var r=generateOptionsPDF(pid,{returnBytes:true}); if(!r||!r.bytes) return;
+  if(em) openEstimateEmail(r.bytes,r.filename,pid,'options'); else { deliverPdf(r.bytes,r.filename,false); toast('📊 Options PDF ready'); }
 });
 document.getElementById('estModeTotalOnly').addEventListener('click', function(){
   var el=document.getElementById('estModeOverlay');
@@ -8751,10 +8955,12 @@ function openEstimateEmail(bytes, fname, pid, kind){
   var _isInv=(kind==='invoice'&&p&&p.invoice), _inv=_isInv?p.invoice:null, _IT=_isInv?invTotals(_inv):null;
   if(_isInv) subject='Invoice '+_inv.num+' — '+(addr||client||'Green Idea Insulation');
   var _isSigned=(kind==='signed');
+  if(kind==='options'){ subject='Insulation estimate options — '+(addr||client||'Green Idea Insulation'); }
   if(_isSigned) subject='Signed estimate — '+(addr||client||'Green Idea Insulation');
   var _cf=(typeof cfg!=='undefined'&&cfg)?cfg:(window.cfg||{});
   var co=_cf.company||'Green Idea Insulation', contact=_cf.contact||'';
   var body='Hi'+(first?' '+first:'')+',\n\nPlease find attached the estimate'+(addr?' for '+addr:'')+'.\n\nLet me know if you have any questions — happy to go over it with you.\n\nThank you,\n'+co+(contact?'\n'+contact:'');
+  if(kind==='options') body='Hi'+(first?' '+first:'')+',\n\nPlease find attached the insulation options'+(addr?' for '+addr:'')+', side by side with the price of each.\n\nLet me know which option you prefer and I will send the estimate for your approval.\n\nThank you,\n'+co+(contact?'\n'+contact:'');
   if(_isSigned) body='Hi'+(first?' '+first:'')+',\n\nThank you for approving the estimate'+(addr?' for '+addr:'')+'. Attached is your signed copy for your records.\n\nWe will be in touch to schedule the work.\n\nThank you,\n'+co+(contact?'\n'+contact:'');
   if(_isInv){
     var _dn=(_inv.dueNow!==''&&_inv.dueNow!=null&&Number(_inv.dueNow)>0)?Number(_inv.dueNow):null;
@@ -8781,6 +8987,7 @@ function openEstimateEmail(bytes, fname, pid, kind){
   function copyTo(){ if(!to) return; try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(to); }catch(e){} }
   function askSent(){
     if(!pid||_isSigned) return;
+    if(kind==='options'){ appConfirm('Mark this estimate as sent?',function(){ var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid){ pp[k].estStatus='sent'; pp[k].estSentDate=new Date().toLocaleDateString('en-US'); break; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('📨 Marked as sent'); },{confirmLabel:'📨 Mark as Sent',confirmStyle:'accent'}); return; }
     if(_isInv){ appConfirm('Mark this invoice as sent?',function(){ var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid&&pp[k].invoice){ pp[k].invoice.sentDate=new Date().toLocaleDateString('en-US'); break; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('🧾 Invoice marked as sent'); },{confirmLabel:'📨 Mark as Sent',confirmStyle:'accent'}); return; }
     appConfirm('Mark this estimate as sent?',function(){
       var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid){ pp[k].estStatus='sent'; pp[k].estSentDate=new Date().toLocaleDateString('en-US'); break; } }
@@ -9265,6 +9472,10 @@ function _wlSyncSummary(){
   _wlSumTimer=setTimeout(function(){
     try{
       if(typeof db==='undefined'||!db||!firebase.auth().currentUser) return;
+      try{ var _cp=window.currentProj, _ps=JSON.parse(localStorage.getItem('fb6_projs')||'[]'), _O=null;
+        for(var _q=0;_q<_ps.length;_q++){ if(_cp&&_ps[_q].id===_cp.id){ _O=_ps[_q].estOptions; break; } }
+        if(_O&&_O.list&&_O.list.length>1&&(!_O.chosen||_O.active!==_O.chosen)) return;   // options: only the chosen one goes to WorkLog
+      }catch(_oe){}
       var sm=_wlSummaryNow(); if(!sm||!(sm.budget>0)) return;
       var _chk=JSON.parse(JSON.stringify(sm)); if(_chk.estimate) delete _chk.estimate.savedAt;   // timestamp alone is not a change
       var js=JSON.stringify(sm), hs=_wlHash(JSON.stringify(_chk)), last={};
@@ -9514,6 +9725,8 @@ function _wlBuildMatBudget(){
 }
 
 function sendToWorkLog(){
+  if(window._optEnsureChosen&&!window._optOkOnce){ var _pidS=window.currentProj&&window.currentProj.id;
+    if(_pidS){ window._optEnsureChosen(_pidS,function(){ window._optOkOnce=true; try{ sendToWorkLog(); } finally{ window._optOkOnce=false; } }); return; } }
   // ── GUARD CHECKS ──
   var cEl=document.getElementById('qClient');
   var aEl=document.getElementById('qAddress');
