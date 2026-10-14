@@ -108,7 +108,7 @@ try{
   var db=firebase.firestore(); try{ db.settings({experimentalAutoDetectLongPolling:true,merge:true}); }catch(e){}
   var started=false;
   firebase.auth().onAuthStateChanged(function(u){
-    if(!u){ setH('s3','Entrando…'); firebase.auth().signInAnonymously().catch(function(e){ setH('s3','<span class="bad">Não conectou: '+esc(e.message)+'</span>'); }); return; }
+    if(!u||u.isAnonymous){ setH('s3','<span class="bad">Abra o FieldBid e entre com a sua conta (Sign in) — depois volte aqui.</span>'); return; }
     if(started) return; started=true;
     var col=db.collection('fieldbid');
     col.doc('ph__index').get().then(function(d){
