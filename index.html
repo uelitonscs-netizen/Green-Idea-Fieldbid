@@ -709,6 +709,15 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
 .jc-wait{font-size:12px;color:#93c5fd;font-weight:700;margin-top:5px;}
 .sl-url{margin-top:8px;font-size:11.5px;color:#93c5fd;word-break:break-all;background:#0b1220;border-radius:8px;padding:6px 8px;}
+
+/* takeoff favorites */
+.fav-row{margin:0 0 10px;}
+.fav-t{font-size:11px;font-weight:800;color:#f0b429;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.fav-t span{color:#7d8590;font-weight:600;text-transform:none;letter-spacing:0;margin-left:6px;}
+.fav-s{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;}
+.fav-c{flex:none;border:1px solid #6a4a1a;background:#2a1f0e;color:#f0b429;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:700;white-space:nowrap;-webkit-user-select:none;user-select:none;}
+.fav-c.on{background:#f0b429;color:#1a1205;}
+.ca.fav{color:#f0b429;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -822,7 +831,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261014-1300</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261015-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -4880,7 +4889,7 @@ function renderFA(){
     h+='<div class="card">';
     if(a.photos&&a.photos.length){h+='<div class="card-photos">';for(var p=0;p<a.photos.length;p++)h+='<span class="ph-w'+phCls(a.photos[p])+'"><img class="card-photo" src="'+a.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" data-cap="'+esc(a.name||'')+'" onclick="openLB(this)" alt=""><i class="ph-b ph-wo">WO</i><i class="ph-b ph-est">EST</i></span>';h+='</div>';}
     h+='<div class="card-body"><div class="card-em f">'+em+'</div><div class="card-info"><div class="card-name">'+esc(a.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(a.sf)+' SF'+(a.spec?' · '+esc(a.spec):'')+'</div>'+formatDimRows(a)+(a.notes?'<div class="card-note">📋 '+esc(a.notes)+'</div>':'')+(a.photos&&a.photos.length?'<div class="card-ph">📷 '+a.photos.length+' photo'+(a.photos.length>1?'s':'')+'</div>':'')+'</div></div>';
-    h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑 Del</button></div></div>';
+    h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca" data-idx="'+i+'" data-act="dup">⧉ Copy</button><button class="ca fav" data-idx="'+i+'" data-act="fav" aria-label="Save as favorite">☆</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑</button></div></div>';
   }
   list.innerHTML=h;
   var newList=list.cloneNode(true);list.parentNode.replaceChild(newList,list);
@@ -4895,6 +4904,8 @@ function renderFA(){
     var act=btn.getAttribute('data-act');
     if(act==='ph')qkPH('field',btn);
     else if(act==='edit')openFAModal(idx);
+    else if(act==='dup')dupFA(idx);
+    else if(act==='fav')favFromArea(idx);
     else if(act==='del')delFA(idx);
   });
 }
@@ -6691,10 +6702,70 @@ document.getElementById('fa_sf_m').addEventListener('input',recalcSF);
 // Row input/click handled via oninput/onclick in renderRows
 
 // FIELD AREA MODAL
+// ══════ TAKEOFF: duplicate area + favorite areas ══════
+// Copy: same material, thickness, measurements and notes — no photos — then opens Edit.
+// Favorites: name, measurement mode, material, thickness, notes and price (no
+// measurements, no photos). Kept in Settings (cfg.areaFavs), synced like the other settings.
+var _FAV_KEYS=['matCat','matType','productId','ccInch','ocInch','fgR','celR','mwR','_editedInches','spec','calcMode','notes','lastPrice'];
+function dupFA(idx){
+  var a=fieldAreas[idx]; if(!a) return;
+  var c=JSON.parse(JSON.stringify(a)); c.photos=[]; c.name=String(a.name||'Area')+' (copy)';
+  delete c.id; delete c.wlId; delete c._ts;
+  fieldAreas.splice(idx+1,0,c);
+  try{ saveProjAreas(); }catch(e){} try{ renderFA(); }catch(e){}
+  toast('⧉ Copied — adjust the measurements');
+  setTimeout(function(){ openFAModal(idx+1); },150);
+}
+window.dupFA=dupFA;
+function favFromArea(idx){
+  var a=fieldAreas[idx]; if(!a) return;
+  var label=prompt('Favorite name (shown on the button):', String(a.name||'').trim()); if(label===null) return;
+  label=String(label).trim()||String(a.name||'Area');
+  var f={id:'f'+Date.now(),label:label.slice(0,40),name:String(a.name||'')};
+  for(var i=0;i<_FAV_KEYS.length;i++){ var k=_FAV_KEYS[i]; if(a[k]!==undefined&&a[k]!==null&&a[k]!=='') f[k]=a[k]; }
+  cfg.areaFavs=(cfg.areaFavs||[]).filter(function(x){ return x.label!==f.label; }); cfg.areaFavs.unshift(f); cfg.areaFavs=cfg.areaFavs.slice(0,24);
+  saveCfg(); toast('★ Saved as favorite: '+f.label);
+}
+window.favFromArea=favFromArea;
+function applyFav(id){
+  var f=null, L=cfg.areaFavs||[]; for(var i=0;i<L.length;i++){ if(L[i].id===id){ f=L[i]; break; } } if(!f) return;
+  document.getElementById('fa_name').value=f.name||f.label||'';
+  window._faCatAuto=false; window._faCatManual=true;
+  try{ restoreMatCatFields(f); }catch(e){}
+  try{ _faCatHint(''); }catch(e){}
+  document.getElementById('fa_notes').value=f.notes||'';
+  var mm={walls:'mm1',floor:'mm2',roof:'mm4',manual:'mm3'}[f.calcMode||'']; if(mm){ try{ setMMode(f.calcMode,document.getElementById(mm)); }catch(e){} }
+  var fp=document.getElementById('fa_price');
+  if(fp){ if(f.lastPrice>0){ fp.value=Number(f.lastPrice).toFixed(2); _faPriceEdited=true; } else { _faPriceEdited=false; try{ autofillFaPrice(true); }catch(e){} } }
+  var bs=document.querySelectorAll('#faFavs .fav-c'); for(var b=0;b<bs.length;b++) bs[b].classList.toggle('on',bs[b].getAttribute('data-fav')===id);
+  toast('★ '+(f.label||'Favorite')+' — now measure');
+}
+function renderFavChips(show){
+  var box=document.getElementById('faFavs');
+  if(!box){ var t=document.getElementById('faTitle'); if(!t) return; box=document.createElement('div'); box.id='faFavs'; box.className='fav-row'; t.parentNode.insertBefore(box,t.nextSibling); }
+  var L=cfg.areaFavs||[];
+  if(!show||!L.length){ box.style.display='none'; box.innerHTML=''; return; }
+  var h='<div class="fav-t">★ Favorites <span>tap to fill · hold to remove</span></div><div class="fav-s">';
+  for(var i=0;i<L.length;i++) h+='<button type="button" class="fav-c" data-fav="'+esc(L[i].id)+'">'+esc(L[i].label)+'</button>';
+  box.innerHTML=h+'</div>'; box.style.display='block';
+  var bs=box.querySelectorAll('.fav-c');
+  for(var j=0;j<bs.length;j++){ (function(btn){
+    var tm=null, held=false;
+    function start(){ held=false; tm=setTimeout(function(){ held=true; var id=btn.getAttribute('data-fav'); var _co=document.getElementById('confirmOverlay'); if(_co) _co.style.zIndex='400'; appConfirm('Remove the favorite “'+btn.textContent+'”?',function(){ cfg.areaFavs=(cfg.areaFavs||[]).filter(function(x){ return x.id!==id; }); saveCfg(); renderFavChips(true); },{confirmLabel:'Remove',confirmStyle:'danger'}); },650); }
+    function end(){ if(tm){ clearTimeout(tm); tm=null; } }
+    btn.addEventListener('touchstart',start,{passive:true}); btn.addEventListener('touchend',end); btn.addEventListener('touchmove',end);
+    btn.addEventListener('mousedown',start); btn.addEventListener('mouseup',end); btn.addEventListener('mouseleave',end);
+    btn.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+    btn.addEventListener('click',function(){ if(held){ held=false; return; } applyFav(btn.getAttribute('data-fav')); });
+  })(bs[j]); }
+}
+window.renderFavChips=renderFavChips;
+
 function openFAModal(idx){
   editFAIdx=idx;
   document.getElementById('faTitle').textContent=idx>=0?'Edit Area':'Add Area';
   document.getElementById('faSaveBtn').textContent=idx>=0?'Update':'Add Area';
+  try{ renderFavChips(idx<0); }catch(_fe){}
   faPendPh=[];
   // Explicitly clear photo grid DOM immediately
   var faGrid=document.getElementById('faPhotoGrid');
