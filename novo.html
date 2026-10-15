@@ -781,6 +781,51 @@ body.nv-hide #fieldFab,body.nv-hide #estFab{bottom:24px!important;}
 .nvm{padding-bottom:22px;} .nvm-g{display:grid;grid-template-columns:1fr;gap:6px;padding:4px 20px 6px;}
 .nvm-i{display:flex;align-items:center;gap:12px;text-align:left;background:#1e2530;border:1px solid #2a3340;color:#e6edf3;border-radius:12px;padding:11px 12px;}
 .nvm-ic{font-size:20px;width:28px;text-align:center;} .nvm-i b{display:block;font-size:14px;} .nvm-i small{display:block;font-size:11.5px;color:#8b98a5;}
+/* ══ NOVO stage 2: Takeoff ══ */
+:root{--n-c-cc:#1f8a4c;--n-c-oc:#2f6fd6;--n-c-fg:#d49a12;--n-c-cel:#8a5a2b;--n-c-mw:#7b5ab8;--n-seg:#e7ebe4;}
+@media (prefers-color-scheme:dark){:root{--n-c-cc:#4ade80;--n-c-oc:#7aa7ff;--n-c-fg:#f0b429;--n-c-cel:#d7a26f;--n-c-mw:#b59cf0;--n-seg:#1b2520;}}
+#field-app{background:var(--n-bg)!important;color:var(--n-text);font-family:var(--n-font-m);min-height:100vh;}
+#field-app .app-hd{background:transparent!important;border:none!important;padding:16px 16px 10px!important;gap:8px;}
+#backField,#field-app .app-hd > .back-btn,#btnOpenProj,#field-app .tabs{display:none!important;}
+#fieldProjName{margin:0!important;background:var(--n-surface)!important;border:1px solid var(--n-border)!important;border-radius:14px!important;padding:10px 12px!important;box-shadow:var(--n-shadow);}
+#fieldProjTitle{color:var(--n-text)!important;font-family:var(--n-font-d)!important;font-size:17px!important;}
+#fieldProjSub{color:var(--n-muted)!important;font-size:12.5px!important;}
+#fb-sync-lbl{display:none!important;}
+#fieldProjName span[style*="color:#4ade80"]{color:var(--n-muted)!important;}
+.n2-jm{flex:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-text);font-size:20px;font-weight:800;box-shadow:var(--n-shadow);}
+#fp-areas .stat-row,#fp-areas .sec{display:none!important;}
+#fp-areas,#fp-wo{padding:0 0 10px;}
+#n2Sum{margin:2px 16px 12px;background:var(--n-surface);border:1px solid var(--n-border);border-radius:14px;padding:12px 14px;box-shadow:var(--n-shadow);}
+#n2Sum .l1{font-family:var(--n-font-d);font-weight:800;font-size:15px;} #n2Sum .l1 em{font-style:normal;color:var(--n-green-ink);}
+#n2Sum .mats{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px;font-size:12.5px;color:var(--n-muted);}
+#n2Sum .mats i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px;}
+#fieldAreaList{padding:0 16px!important;display:flex;flex-direction:column;gap:8px;}
+.n2a{background:var(--n-surface);border:1px solid var(--n-border);border-radius:14px;box-shadow:var(--n-shadow);padding:10px;}
+.n2row{display:flex;gap:12px;align-items:center;}
+.n2th{width:58px;height:58px;border-radius:10px;flex:none;border:none;background-size:cover;background-position:center;position:relative;padding:0;}
+.n2th b{position:absolute;right:3px;bottom:3px;font-size:9.5px;background:#000a;color:#fff;border-radius:5px;padding:1px 4px;}
+.n2th.n{background:var(--n-surface2);color:var(--n-muted);font-size:20px;border:1px dashed var(--n-border);}
+.n2mid{flex:1;min-width:0;}
+.n2mid b{font-family:var(--n-font-d);font-size:15px;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--n-text);}
+.n2mid .m{font-size:12.5px;color:var(--n-muted);margin-top:2px;display:flex;align-items:center;gap:6px;}
+.n2mid .m i{width:8px;height:8px;border-radius:50%;flex:none;}
+.n2mid .nt{font-size:12px;color:var(--n-amber);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.n2rt{text-align:right;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.n2rt .sf{font-family:var(--n-font-d);font-weight:800;font-size:17px;color:var(--n-text);} .n2rt .sf small{font-size:11px;color:var(--n-muted);font-weight:700;}
+.n2rt .ib{display:flex;gap:4px;}
+.n2rt .ib button{width:34px;height:30px;border-radius:9px;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);font-size:14px;padding:0;}
+.n2strip{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;}
+.n2strip .card-photo{width:84px;height:84px;object-fit:cover;border-radius:9px;}
+.n2-empty{margin:24px 0 0;text-align:center;color:var(--n-muted);font-size:14px;}
+.n2-empty .ic{font-size:40px;} .n2-empty b{display:block;font-family:var(--n-font-d);font-size:18px;color:var(--n-text);margin:8px 0 4px;}
+.n2-empty .eb{display:grid;gap:8px;margin-top:16px;}
+.n2-empty .eb button{border:none;border-radius:14px;padding:14px;font-weight:800;font-size:15px;font-family:var(--n-font-d);}
+.n2-empty .eb .g{background:var(--n-green);color:#fff;} .n2-empty .eb .w{background:var(--n-surface);color:var(--n-text);border:1px solid var(--n-border);}
+.n2-send{display:block;margin:14px 16px 0;width:calc(100% - 32px);border-radius:14px;background:var(--n-surface);color:var(--n-green-ink);border:1px solid var(--n-border);padding:14px;font-weight:800;font-size:15px;font-family:var(--n-font-d);box-shadow:var(--n-shadow);}
+.n2-woback{margin:4px 16px 10px;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-text);border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;}
+#fieldFab{height:54px!important;width:auto!important;padding:0 20px 0 16px!important;border-radius:18px!important;background:var(--n-green)!important;color:#fff!important;font-size:15px!important;font-weight:800!important;font-family:var(--n-font-d)!important;gap:8px;box-shadow:0 8px 20px rgba(30,99,52,.35)!important;}
+#fieldFab span{font-size:24px;line-height:1;}
+.n2-del b{color:#f87171;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -896,7 +941,7 @@ body.nv-hide #fieldFab,body.nv-hide #estFab{bottom:24px!important;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">novo v20261015-1300</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">novo v20261015-1400</span></div>
 </div>
 
 <div id="field-app">
@@ -6260,6 +6305,75 @@ function renderNHome(){
   var dc=box.querySelectorAll('.nh-m'); for(var c=0;c<dc.length;c++){ dc[c].onclick=function(){ var hb=document.getElementById(this.getAttribute('data-hb')); if(hb) hb.click(); }; }
 }
 window.renderNHome=renderNHome;
+// ══════ NOVO stage 2 — Takeoff ══════
+// Same functions underneath: the cards use the same buttons (data-act ph/edit) and
+// the ⋯ sheet calls dupFA / favFromArea / delFA. Work Order moved to the job ⋯ menu.
+function _n2Color(cat){ cat=String(cat||''); if(cat==='cc') return 'var(--n-c-cc)'; if(cat==='oc'||cat.indexOf('hybrid')===0) return 'var(--n-c-oc)'; if(cat.indexOf('fg')===0) return 'var(--n-c-fg)'; if(cat.indexOf('cel')===0) return 'var(--n-c-cel)'; if(cat.indexOf('mw')===0) return 'var(--n-c-mw)'; return 'var(--n-muted)'; }
+function _n2Label(a){ var L=window._faMatLabel||{}, pr=null; try{ pr=getProd(a.productId); }catch(e){} return a.matCat?(L[a.matCat]||(pr?pr.name:'Other')):(pr?pr.name:'Other'); }
+function _n2Sheet(title,items){
+  var ov=document.getElementById('n2Ov'); if(!ov){ ov=document.createElement('div'); ov.id='n2Ov'; ov.className='overlay'; document.body.appendChild(ov); }
+  var h='<div class="modal nvm"><div class="mhandle"></div><div class="mtitle">'+esc(title)+'</div><div class="nvm-g">';
+  for(var i=0;i<items.length;i++) h+='<button type="button" class="nvm-i'+(items[i].danger?' n2-del':'')+'" data-k="'+i+'"><span class="nvm-ic">'+items[i].ic+'</span><span><b>'+items[i].t+'</b>'+(items[i].s?'<small>'+items[i].s+'</small>':'')+'</span></button>';
+  ov.innerHTML=h+'</div><div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="n2Close">Close</button></div></div>';
+  ov.classList.add('on'); ov.style.display='flex';
+  function close(){ ov.classList.remove('on'); ov.style.display='none'; }
+  document.getElementById('n2Close').onclick=close;
+  ov.onclick=function(e){ if(e.target===ov){ close(); return; } var b=e.target; while(b&&b!==ov&&!(b.getAttribute&&b.getAttribute('data-k'))) b=b.parentNode; if(!b||b===ov) return; close(); var f=items[+b.getAttribute('data-k')].fn; setTimeout(f,60); };
+}
+function n2JobMenu(){
+  _n2Sheet(currentProj?currentProj.name:'Takeoff',[
+    {ic:'🔄',t:'Switch job',s:'open another project',fn:function(){ try{ openProjList(); }catch(e){} }},
+    {ic:'➕',t:'New project',s:'start a new takeoff',fn:function(){ try{ openNewProjOnly(); }catch(e){} }},
+    {ic:'📤',t:'Export',s:'share the measured areas',fn:function(){ var b=document.getElementById('exportFieldBtn'); if(b) b.click(); else toast('Add areas first'); }},
+    {ic:'🔧',t:'Work Order',s:'field instructions (EN / PT)',fn:function(){ try{ showFP('wo',document.getElementById('ft2')); renderFWO(); }catch(e){} }},
+    {ic:'↺',t:'Refresh',s:'reload the app',fn:function(){ location.reload(); }}
+  ]);
+}
+function n2Takeoff(){
+  var fa=document.getElementById('fp-areas'), list=document.getElementById('fieldAreaList'); if(!fa||!list) return;
+  var A=fieldAreas||[], sf=0, ph=0, mats={}, order=[];
+  for(var i=0;i<A.length;i++){ var a=A[i]; sf+=Number(a.sf)||0; ph+=(a.photos||[]).length; var lb=_n2Label(a), k=_n2Color(a.matCat)+'|'+lb; if(!mats[k]){ mats[k]=0; order.push(k); } mats[k]+=Number(a.sf)||0; }
+  var sum=document.getElementById('n2Sum'); if(!sum){ sum=document.createElement('div'); sum.id='n2Sum'; fa.insertBefore(sum,fa.firstChild); }
+  if(A.length){ var m=''; for(var j=0;j<order.length;j++){ var parts=order[j].split('|'); m+='<span><i style="background:'+parts[0]+'"></i>'+esc(parts[1])+' '+fmtN(Math.round(mats[order[j]]))+' SF</span>'; }
+    sum.innerHTML='<div class="l1">'+A.length+' area'+(A.length!==1?'s':'')+' · <em>'+fmtN(Math.round(sf))+' SF</em>'+(ph?' · '+ph+' photo'+(ph!==1?'s':''):'')+'</div><div class="mats">'+m+'</div>'; sum.style.display='block'; }
+  else sum.style.display='none';
+  if(!A.length){
+    list.innerHTML='<div class="n2-empty"><div class="ic">📐</div><b>No areas yet</b>Measure the first area of this job.<div class="eb"><button type="button" class="g" id="n2Add">+ Add area</button><button type="button" class="w" id="n2Fav">★ From a favorite</button></div></div>';
+    document.getElementById('n2Add').onclick=function(){ var f=document.getElementById('fieldFab'); if(f) f.click(); };
+    document.getElementById('n2Fav').onclick=function(){ if(!((cfg.areaFavs||[]).length)){ toast('No favorites yet — tap ⋯ → ☆ Favorite on an area to save one'); return; } var f=document.getElementById('fieldFab'); if(f) f.click(); };
+  } else {
+    var h='';
+    for(var i2=0;i2<A.length;i2++){ var a2=A[i2], ps=a2.photos||[], lb2=_n2Label(a2), spec=a2.spec?String(a2.spec):'';
+      var _ti=0; if(a2.matCat==='cc') _ti=Number(a2.ccInch)||Number(a2._editedInches)||0; else if(a2.matCat==='oc') _ti=Number(a2.ocInch)||Number(a2._editedInches)||0;
+      var thk=_ti>0?(_ti+'"'):((a2.matCat==='hybrid'&&(a2.ccInch||a2.ocInch))?((a2.ccInch||0)+'" cc + '+(a2.ocInch||0)+'" oc'):'');
+      h+='<div class="n2a"><div class="n2row">';
+      h+=ps.length?'<button type="button" class="n2th" data-n2="photos" data-i="'+i2+'" style="background-image:url(\''+ps[0]+'\')"><b>📷 '+ps.length+'</b></button>':'<button type="button" class="n2th n" data-act="ph" data-idx="'+i2+'">📷</button>';
+      h+='<div class="n2mid"><b>'+esc(a2.name||'Area')+'</b><div class="m"><i style="background:'+_n2Color(a2.matCat)+'"></i>'+esc(lb2)+(thk?' · '+esc(thk):(spec&&spec.toLowerCase().indexOf(lb2.toLowerCase())<0?' · '+esc(spec):''))+'</div>'+(a2.notes?'<div class="nt">📋 '+esc(a2.notes)+'</div>':'')+'</div>';
+      h+='<div class="n2rt"><div class="sf">'+fmtN(Math.round(Number(a2.sf)||0))+' <small>SF</small></div><div class="ib"><button type="button" data-act="ph" data-idx="'+i2+'" aria-label="Add photo">📷</button><button type="button" data-act="edit" data-idx="'+i2+'" aria-label="Edit">✏️</button><button type="button" data-n2="more" data-i="'+i2+'" aria-label="More">⋯</button></div></div></div>';
+      if(ps.length){ h+='<div class="n2strip" id="n2s'+i2+'" style="display:none">'; for(var p=0;p<ps.length;p++) h+='<span class="ph-w'+phCls(ps[p])+'"><img class="card-photo" src="'+ps[p]+'" data-ii="'+i2+'" data-pi="'+p+'" data-cap="'+esc(a2.name||'')+'" onclick="openLB(this)" alt=""><i class="ph-b ph-wo">WO</i><i class="ph-b ph-est">EST</i></span>'; h+='</div>'; }
+      h+='</div>'; }
+    list.innerHTML=h;
+  }
+  list.addEventListener('click',function(e){ var b=e.target; while(b&&b!==list&&!(b.getAttribute&&b.getAttribute('data-n2'))) b=b.parentNode; if(!b||b===list) return;
+    var i3=+b.getAttribute('data-i'), w=b.getAttribute('data-n2');
+    if(w==='photos'){ var st=document.getElementById('n2s'+i3); if(st) st.style.display=st.style.display==='none'?'flex':'none'; }
+    if(w==='more'){ var nm=(fieldAreas[i3]&&fieldAreas[i3].name)||'Area';
+      _n2Sheet(nm,[{ic:'⧉',t:'Copy',s:'same material and measurements, no photos',fn:function(){ dupFA(i3); }},{ic:'☆',t:'Save as favorite',s:'reuse this area on other jobs',fn:function(){ favFromArea(i3); }},{ic:'🗑',t:'Delete',danger:true,fn:function(){ delFA(i3); }}]); } });
+  var send=document.getElementById('n2Send'); if(!send){ send=document.createElement('button'); send.type='button'; send.id='n2Send'; send.className='n2-send'; send.textContent='Send to Estimator →'; list.parentNode.appendChild(send); send.onclick=function(){ var b2=document.getElementById('toEstBtn'); if(b2) b2.click(); }; }
+  else if(send.parentNode!==list.parentNode||send.previousSibling!==list){ list.parentNode.appendChild(send); }
+  send.style.display=(A.length&&currentProj)?'block':'none';
+}
+(function(){
+  var _rfa=renderFA; renderFA=function(){ var r=_rfa.apply(this,arguments); try{ n2Takeoff(); }catch(e){ if(window.console) console.warn('n2',e); } return r; };
+  window.renderFA=renderFA;
+  // header: job ⋯, hide Back / refresh / + Project / tabs
+  var hd=document.querySelector('#field-app .app-hd');
+  if(hd&&!document.getElementById('n2JobMore')){ var b=document.createElement('button'); b.type='button'; b.id='n2JobMore'; b.className='n2-jm'; b.textContent='⋯'; b.onclick=n2JobMenu; hd.appendChild(b); }
+  var wo=document.getElementById('fp-wo');
+  if(wo&&!document.getElementById('n2WoBack')){ var bk=document.createElement('button'); bk.type='button'; bk.id='n2WoBack'; bk.className='n2-woback'; bk.textContent='← Back to areas'; bk.onclick=function(){ showFP('areas',document.getElementById('ft1')); }; wo.insertBefore(bk,wo.firstChild); }
+  var fab=document.getElementById('fieldFab'); if(fab) fab.innerHTML='<span>+</span>Area';
+})();
+
 (function(){
   var H=document.getElementById('home'); if(H&&!document.getElementById('nhome')){ var d=document.createElement('div'); d.id='nhome'; H.insertBefore(d,H.firstChild); }
   var bar=document.createElement('nav'); bar.id='nvBar';
