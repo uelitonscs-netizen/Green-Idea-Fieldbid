@@ -826,6 +826,85 @@ body.nv-hide #fieldFab,body.nv-hide #estFab{bottom:24px!important;}
 #fieldFab{height:54px!important;width:auto!important;padding:0 20px 0 16px!important;border-radius:18px!important;background:var(--n-green)!important;color:#fff!important;font-size:15px!important;font-weight:800!important;font-family:var(--n-font-d)!important;gap:8px;box-shadow:0 8px 20px rgba(30,99,52,.35)!important;}
 #fieldFab span{font-size:24px;line-height:1;}
 .n2-del b{color:#f87171;}
+/* ══ NOVO stage 3: Estimator (Items, Jobs) — visual only, same structure ══ */
+#est-app{background:var(--n-bg)!important;color:var(--n-text);font-family:var(--n-font-m);min-height:100vh;}
+#est-app .app-hd{background:var(--n-bg)!important;border:none!important;padding:16px 16px 6px!important;}
+#backEst,#est-app .app-hd button[title="Refresh"]{display:none!important;}
+#est-app .app-hd > div div:first-child{color:var(--n-text)!important;font-family:var(--n-font-d)!important;font-size:20px!important;}
+#est-app .app-hd > div div:last-child{color:var(--n-muted)!important;font-size:12px!important;}
+#newEstBtn{background:var(--n-surface)!important;border:1px solid var(--n-border)!important;color:var(--n-green-ink)!important;border-radius:999px!important;padding:7px 14px!important;font-weight:800!important;}
+#est-app .tabs{background:var(--n-seg)!important;border:none!important;margin:4px 16px 4px;border-radius:12px;padding:4px;display:grid!important;grid-template-columns:1fr 1fr;overflow:hidden;}
+#est-app .tabs .tab{height:38px;border:none!important;border-radius:9px;justify-content:center;color:var(--n-muted)!important;font-size:13.5px;}
+#est-app .tabs .tab.on{background:var(--n-surface)!important;color:var(--n-text)!important;box-shadow:var(--n-shadow);}
+#et3,#et4,#et5{display:none!important;}
+body.nv-jobs #est-app .tabs{display:none!important;}
+body.nv-jobs #estFab{display:none!important;}
+#est-app .page{padding:12px 16px 100px;}
+#est-app .stat-row .stat{background:var(--n-surface)!important;border:1px solid var(--n-border)!important;box-shadow:var(--n-shadow);border-radius:14px;}
+#est-app .stat-lbl,#est-app .stat-note{color:var(--n-muted)!important;} #est-app .stat-val{color:var(--n-text)!important;font-family:var(--n-font-d)!important;}
+#est-app .total-bar{background:var(--n-surface)!important;border:1px solid var(--n-border)!important;box-shadow:var(--n-shadow);border-radius:14px;}
+#est-app .total-lbl{color:var(--n-muted)!important;} #est-app .total-note{color:var(--n-muted)!important;}
+#est-app .total-val{color:var(--n-green-ink)!important;font-family:var(--n-font-d)!important;font-weight:800!important;}
+#est-app .sec-lbl{color:var(--n-muted)!important;font-family:var(--n-font-d)!important;} #est-app .sec-ct{color:var(--n-muted)!important;}
+#est-app .import-bar{background:var(--n-blue-soft)!important;border:1px solid var(--n-border)!important;}
+#est-app .import-title{color:var(--n-blue)!important;} #est-app .import-sub{color:var(--n-muted)!important;}
+#est-app .import-btn{background:var(--n-blue)!important;color:#fff!important;border-radius:10px!important;}
+#est-app .card{background:var(--n-surface)!important;border:1px solid var(--n-border)!important;border-radius:14px!important;box-shadow:var(--n-shadow);}
+#est-app .card-photos{padding:10px 12px 0!important;}
+#est-app .card-photo{width:56px!important;height:56px!important;border:none!important;border-radius:10px!important;}
+#est-app .card-em{background:var(--n-surface2)!important;border-radius:10px;}
+#est-app .card-name{color:var(--n-text)!important;font-family:var(--n-font-d)!important;font-weight:800!important;font-size:15px!important;}
+#est-app .card-type,#est-app .card-sf{color:var(--n-muted)!important;} #est-app .card-note{color:var(--n-amber)!important;}
+#est-app .card-ph{color:var(--n-blue)!important;}
+#est-app .card-cost{color:var(--n-green-ink)!important;font-family:var(--n-font-d)!important;font-weight:800!important;}
+#est-app .card-acts{border-top:1px solid var(--n-border)!important;}
+#est-app .ca{color:var(--n-muted)!important;} #est-app .ca:not(:last-child){border-right:1px solid var(--n-border)!important;}
+#est-app .ca.ph{color:var(--n-blue)!important;} #est-app .ca.del{color:var(--n-red)!important;}
+#est-app .sec-rename{color:var(--n-amber)!important;font-family:var(--n-font-d)!important;}
+#est-app .sec-hd span{color:var(--n-muted)!important;}
+#addSectionBtn,#reorderToggleBtn{background:var(--n-surface)!important;border:1px solid var(--n-border)!important;color:var(--n-text)!important;border-radius:12px!important;box-shadow:var(--n-shadow);}
+#sendToTakeoffBtn{background:var(--n-surface)!important;border:1px solid var(--n-border)!important;color:var(--n-blue)!important;border-radius:14px!important;}
+#est-app .empty-title{color:var(--n-text)!important;} #est-app .empty-body{color:var(--n-muted)!important;}
+/* job header + options */
+#est-app .jh{background:var(--n-surface)!important;border:1px solid var(--n-border)!important;box-shadow:var(--n-shadow);}
+#est-app .jh-name{color:var(--n-text)!important;font-family:var(--n-font-d)!important;}
+#est-app .jh-l{color:var(--n-blue)!important;} #est-app .jh-ft{border-top-color:var(--n-border)!important;color:var(--n-muted)!important;}
+#est-app .jh-edit{background:var(--n-surface2)!important;border-color:var(--n-border)!important;color:var(--n-text)!important;}
+#est-app .ob-t{color:var(--n-blue)!important;}
+#est-app .ob-c{background:var(--n-surface)!important;border-color:var(--n-border)!important;} #est-app .ob-c b{color:var(--n-text)!important;} #est-app .ob-c span{color:var(--n-green-ink)!important;}
+#est-app .ob-c.on{border-color:var(--n-blue)!important;background:var(--n-blue-soft)!important;}
+#est-app .ob-add{color:var(--n-blue)!important;border-color:var(--n-border)!important;background:var(--n-surface)!important;}
+/* jobs page */
+#ep-jobs > div > div:first-child > div{color:var(--n-muted)!important;font-family:var(--n-font-d)!important;}
+#newJobBtn{background:var(--n-green)!important;}
+#jobSearch{background:var(--n-surface)!important;border:1px solid var(--n-border)!important;color:var(--n-text)!important;border-radius:12px!important;}
+#est-app .jf{background:var(--n-surface)!important;border-color:var(--n-border)!important;color:var(--n-muted)!important;}
+#est-app .jf.on{background:var(--n-green)!important;border-color:var(--n-green)!important;color:#fff!important;}
+#est-app .pp-t{background:var(--n-surface)!important;border-color:var(--n-border)!important;box-shadow:var(--n-shadow);color:var(--n-muted)!important;}
+#est-app .pp-t b{color:var(--n-text)!important;font-family:var(--n-font-d)!important;} #est-app .pp-t.hot b{color:var(--n-blue)!important;}
+#est-app .pp-t.on{background:var(--n-blue-soft)!important;border-color:var(--n-blue)!important;}
+#est-app .pp-it{background:var(--n-surface)!important;border-color:var(--n-border)!important;} #est-app .pp-n{color:var(--n-text)!important;}
+#est-app .pp-hd{color:var(--n-text)!important;} #est-app .pp-back,#est-app .pp-b{background:var(--n-surface2)!important;border-color:var(--n-border)!important;color:var(--n-text)!important;}
+#est-app .pp-b.go{background:var(--n-green)!important;color:#fff!important;}
+#est-app .jc{background:var(--n-surface)!important;border:1px solid var(--n-border)!important;border-left:5px solid #a7aea8!important;box-shadow:var(--n-shadow);}
+#est-app .jc.active{border:2px solid var(--n-green)!important;border-left:6px solid var(--n-green)!important;background:var(--n-green-soft)!important;box-shadow:0 0 0 3px rgba(74,222,128,.18);}
+#est-app .jc-name{color:var(--n-text)!important;font-family:var(--n-font-d)!important;}
+#est-app .jc-addr,#est-app .jc-stats,#est-app .jc-date{color:var(--n-muted)!important;} #est-app .jc-tot{color:var(--n-green-ink)!important;}
+#est-app .jc-open{background:var(--n-green)!important;}
+#est-app .jc-b,#est-app .jc-more{background:var(--n-surface2)!important;border-color:var(--n-border)!important;color:var(--n-text)!important;}
+#est-app .jc-em{border-color:var(--n-blue)!important;color:var(--n-blue)!important;}
+#est-app .jc-inv{background:var(--n-surface2)!important;color:var(--n-amber)!important;border-color:var(--n-border)!important;}
+#est-app .jc-inv.paid{color:var(--n-green-ink)!important;}
+#estFab{height:54px!important;width:auto!important;padding:0 20px 0 16px!important;border-radius:18px!important;background:var(--n-green)!important;color:#fff!important;font-size:15px!important;font-weight:800!important;font-family:var(--n-font-d)!important;gap:8px;box-shadow:0 8px 20px rgba(30,99,52,.35)!important;}
+#estFab span{font-size:24px;line-height:1;}
+
+/* status pills follow the theme */
+#est-app .jc-st.st-none{background:var(--n-surface2)!important;border-color:var(--n-border)!important;color:var(--n-muted)!important;}
+#est-app .jc-st.st-sent{background:var(--n-blue-soft)!important;border-color:transparent!important;color:var(--n-blue)!important;}
+#est-app .jc-st.st-approved{background:var(--n-green-soft)!important;border-color:transparent!important;color:var(--n-green-ink)!important;}
+#est-app .jc-st.st-rejected{background:var(--n-surface2)!important;border-color:var(--n-border)!important;color:var(--n-red)!important;}
+#est-app .jc-wait{color:var(--n-blue)!important;} #est-app .jc-opt{color:var(--n-blue)!important;} #est-app .jc-sigchg{color:var(--n-amber)!important;} #est-app .jh-signed{color:var(--n-green-ink)!important;}
+#est-app .jc-edit{background:var(--n-green)!important;color:#fff!important;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -941,7 +1020,7 @@ body.nv-hide #fieldFab,body.nv-hide #estFab{bottom:24px!important;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">novo v20261015-1400</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">novo v20261015-1500</span></div>
 </div>
 
 <div id="field-app">
@@ -6238,6 +6317,7 @@ function nvMark(){
   if(F&&F.style.display==='block') on='field';
   else if(E&&E.style.display==='block'){ var j=document.getElementById('et5'); on=(j&&/\bon\b/.test(j.className))?'jobs':'est'; }
   var bs=document.querySelectorAll('#nvBar .nb'); for(var i=0;i<bs.length;i++) bs[i].classList.toggle('on',bs[i].getAttribute('data-nv')===on);
+  document.body.classList.toggle('nv-jobs',on==='jobs');
 }
 function nvMore(){
   var ov=document.getElementById('nvMoreOv'); if(!ov){ ov=document.createElement('div'); ov.id='nvMoreOv'; ov.className='overlay'; document.body.appendChild(ov); }
@@ -6372,6 +6452,7 @@ function n2Takeoff(){
   var wo=document.getElementById('fp-wo');
   if(wo&&!document.getElementById('n2WoBack')){ var bk=document.createElement('button'); bk.type='button'; bk.id='n2WoBack'; bk.className='n2-woback'; bk.textContent='← Back to areas'; bk.onclick=function(){ showFP('areas',document.getElementById('ft1')); }; wo.insertBefore(bk,wo.firstChild); }
   var fab=document.getElementById('fieldFab'); if(fab) fab.innerHTML='<span>+</span>Area';
+  var efab=document.getElementById('estFab'); if(efab) efab.innerHTML='<span>+</span>Item';
 })();
 
 (function(){
