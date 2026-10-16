@@ -1052,6 +1052,9 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .n6-hd{width:100%;display:flex;justify-content:space-between;align-items:center;background:transparent;border:none;padding:12px 14px;color:var(--n-text);font-size:13.5px;font-family:var(--n-font-m);text-align:left;}
 .n6-hd b{font-family:var(--n-font-d);} .n6-hd i{font-style:normal;color:var(--n-muted);}
 .n6-bd{padding:0 14px 12px;border-top:1px solid var(--n-border);padding-top:8px;}
+
+.ei-auto{font-size:12px;font-weight:600;color:var(--n-blue,#58a6ff);margin:-4px 0 12px;}
+.ei-auto button{margin-left:6px;border:1px solid var(--n-border,#2a3340);background:var(--n-blue-soft,#18233a);color:var(--n-blue,#58a6ff);border-radius:8px;padding:3px 9px;font-weight:800;font-size:12px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1167,7 +1170,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261016-1200</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261016-1500</span></div>
 </div>
 
 <div id="field-app">
@@ -5350,10 +5353,12 @@ function initEstDragDrop(container){
     dragging=null;dragIdx=-1;lastTarget=null;
     document.removeEventListener('pointermove',pmMove);
     document.removeEventListener('pointerup',pmUp);
+    document.removeEventListener('pointercancel',pmCancel);
   }
 
-  function pmMove(e){ e.preventDefault(); onMove(e.clientY, e.clientX); }
+  function pmMove(e){ if(!dragging){ document.removeEventListener('pointermove',pmMove); return; } e.preventDefault(); onMove(e.clientY, e.clientX); }
   function pmUp(e){ finishDrag(); }
+  function pmCancel(e){ lastTarget=null; finishDrag(); }
 
   handles.forEach(function(h){
     h.addEventListener('pointerdown',function(e){
@@ -5368,6 +5373,7 @@ function initEstDragDrop(container){
       lastTarget=null;
       document.addEventListener('pointermove',pmMove,{passive:false});
       document.addEventListener('pointerup',pmUp);
+      document.addEventListener('pointercancel',pmCancel);
     });
   });
 }
@@ -8119,6 +8125,44 @@ function deriveMatFromProduct(productId, inches){
   return out;
 }
 window.deriveMatFromProduct=deriveMatFromProduct;
+// ── Add Item: pick the product from the description (same detector as Add Area) ──
+var _EI_MT={'cc':'p2','oc':'p1','hybrid':'p3','hybrid_foam_fg':'p3','hybrid_foam_mw':'p14','cel_blown':'p4','cel':'p4','cel_dense':'p4','fg':'p6','fg_r11':'p6','fg_r13':'p6','fg_r15':'p6','fg_r19':'p7','fg_r21':'p8','fg_r25':'p8','fg_r30':'p9','fg_r38':'p9','fg_r49':'p10','fg_custom':'p6','mw':'p11','mw_r15':'p11','mw_r21':'p12','mw_r23':'p12','mw_r30':'p12','mw_custom':'p11','ign':'p13','fb':'p13'};
+function _eiProdFromText(txt){
+  window._eiApprox='';
+  var cat=null; try{ cat=faCatFromName(txt); }catch(e){} if(!cat) return null;
+  // batts / mineral wool with an R-value: a product with that exact R in its name wins
+  var rm=String(txt||'').toLowerCase().match(/\br\s?-?\s?(\d{2})\b/), r=rm?rm[1]:'';
+  if(r&&(cat.indexOf('fg')===0||cat.indexOf('mw')===0)){
+    var fam=cat.indexOf('mw')===0?/mineral|roxul|rock|stone/i:/fiberglass|batt/i, rr=new RegExp('\\bR\\s?-?\\s?'+r+'\\b','i');
+    for(var i0=0;i0<products.length;i0++){ var q=products[i0]; if(fam.test(q.name||'')&&rr.test(q.name||'')&&!/blown/i.test(q.name||'')) return q.id; }
+  }
+  var pid=_EI_MT[cat]||null, pr=null; try{ pr=pid?getProd(pid):null; }catch(e){}
+  if(pr){ if(r&&(cat.indexOf('fg')===0||cat.indexOf('mw')===0)&&!new RegExp('R\\s?-?\\s?'+r+'\\b','i').test(pr.name||'')) window._eiApprox='R-'+r; return pr.id; }
+  // categories without a fixed product: look for a product whose name says it
+  var kw={foam_cans:/foam\s*can|great\s*stuff/i,insulation_removal:/remov/i,fb:/fire\s*block/i,ign:/ignition|dc\s*315|intumescent|thermal/i}[cat];
+  if(kw){ for(var i=0;i<products.length;i++){ if(kw.test(products[i].name||'')) return products[i].id; } }
+  return null;
+}
+function _eiAutoHint(html){ var h=document.getElementById('eiAutoHint'); if(!h){ var row=document.getElementById('ei_prod_row'); if(!row) return; h=document.createElement('div'); h.id='eiAutoHint'; h.className='ei-auto'; row.parentNode.insertBefore(h,row.nextSibling); } h.innerHTML=html||''; h.style.display=html?'block':'none'; }
+function _eiOnName(){
+  var pid=_eiProdFromText(document.getElementById('ei_name').value);
+  if(editEIIdx<0){
+    if(window._eiProdManual) return;
+    if(pid&&pid!==eiProd){ _eiPick(pid); window._eiAutoPid=pid; var pk=document.getElementById('ei_prod_pick'); if(pk) pk.style.display='none'; }
+    if(pid&&pid===eiProd){ var _pn=(getProd(pid)||{}).name||''; _eiAutoHint(window._eiApprox?('✨ Closest material: <b>'+esc(_pn)+'</b> (no '+window._eiApprox+' product)'):'✨ Material picked from the description'); }
+    if(!pid&&window._eiAutoPid&&eiProd===window._eiAutoPid){ eiProd=''; var _ep=document.getElementById('ei_price'); if(_ep) _ep.value=''; _eiProdShow(); try{ updateEIPricingUI(); }catch(e){} window._eiAutoPid=null; _eiAutoHint(''); }
+  } else {
+    if(pid&&pid!==eiProd){ var pr=getProd(pid); _eiAutoHint('💡 The description suggests <b>'+esc(pr?pr.name:'')+'</b> <button type="button" id="eiUseProd">Use it</button>');
+      var u=document.getElementById('eiUseProd'); if(u) u.onclick=function(){ _eiPick(pid); _eiAutoHint(''); }; }
+    else _eiAutoHint('');
+  }
+}
+(function(){
+  var nm=document.getElementById('ei_name'); if(nm) nm.addEventListener('input',_eiOnName);
+  var pk=document.getElementById('ei_prod_pick'); if(pk) pk.addEventListener('click',function(e){ if(e.isTrusted){ window._eiProdManual=true; _eiAutoHint(''); } },true);
+  var _oe=openEIModal; openEIModal=function(idx){ window._eiProdManual=false; window._eiAutoPid=null; var r=_oe.apply(this,arguments); try{ _eiAutoHint(''); }catch(e){} return r; }; window.openEIModal=openEIModal;
+})();
+
 
 function openEIModal(idx){
   editEIIdx=idx;
