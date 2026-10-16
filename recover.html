@@ -1,0 +1,117 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FieldBid · Recuperação (somente leitura)</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f3f4f1;margin:0;padding:14px;color:#1d2a20}
+.c{max-width:680px;margin:0 auto}
+h1{font-size:20px;color:#1e6334;margin:4px 0 2px} .s{font-size:13px;color:#5c6862;margin-bottom:12px}
+.box{background:#fff;border:1px solid #dde2da;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.box h2{font-size:15px;margin:0 0 6px;display:flex;justify-content:space-between;gap:8px}
+.ok{color:#1e6334}.bad{color:#b93229}.warn{color:#b86e07}.mut{color:#6b7570;font-size:12.5px}
+.big{font-size:22px;font-weight:800}
+.names{font-size:12.5px;color:#333;margin-top:6px;line-height:1.5;max-height:180px;overflow:auto;background:#f6f8f4;border-radius:8px;padding:6px 8px}
+button{width:100%;padding:14px;border:none;border-radius:12px;background:#1e6334;color:#fff;font-size:15px;font-weight:800;margin-top:8px}
+button.w{background:#fff;color:#1e6334;border:1px solid #cfd6cc}
+input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #cfd6cc;border-radius:10px;font-size:16px;margin-top:6px}
+#log{font-family:ui-monospace,monospace;font-size:11.5px;color:#555;white-space:pre-wrap;margin-top:6px}
+</style></head><body><div class="c">
+<h1>FieldBid · Recuperação</h1>
+<div class="s"><b>Somente leitura</b>: esta página não grava nada no app nem na nuvem. Ela só procura os seus projetos em todos os lugares e deixa baixar uma cópia.</div>
+<div class="box" id="loginBox" style="display:none"><h2>Entrar</h2><div class="mut">Use a mesma conta do FieldBid.</div>
+<input id="em" type="email" placeholder="email" autocomplete="username"><input id="pw" type="password" placeholder="senha" autocomplete="current-password"><button id="loginBtn">Entrar e procurar</button><div id="loginMsg" class="bad"></div></div>
+<div id="out"></div>
+<div class="box"><h2>Cópia de segurança</h2><div class="mut">Baixe antes de qualquer tentativa de restaurar. Vai para a pasta Downloads.</div>
+<button id="dlData">⬇️ Baixar tudo o que foi encontrado (sem fotos)</button>
+<button class="w" id="dlAll">⬇️ Baixar tudo, incluindo fotos (arquivo grande)</button>
+<div id="dlMsg" class="mut"></div></div>
+<div class="box"><h2>Detalhes técnicos</h2><div id="log"></div></div>
+</div>
+<script>
+firebase.initializeApp({apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"});
+var db=firebase.firestore(), BK={when:new Date().toISOString(),local:{},cloud:{}}, PH={};
+function L(t){ var l=document.getElementById('log'); l.textContent+=t+'\n'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function card(title,html){ var d=document.createElement('div'); d.className='box'; d.innerHTML='<h2>'+title+'</h2>'+html; document.getElementById('out').appendChild(d); return d; }
+function projSummary(arr){
+  if(!Array.isArray(arr)) return null;
+  var withItems=0, withAreas=0, inv=0, names=[];
+  for(var i=0;i<arr.length;i++){ var p=arr[i]||{}; if((p.estItems||[]).length) withItems++; if((p.areas||[]).length) withAreas++; if(p.invoice) inv++;
+    names.push(esc((p.quoteInfo&&p.quoteInfo.client)||p.name||'?')+' <span class="mut">('+(p.areas||[]).length+'a · '+(p.estItems||[]).length+'i'+(p.estStatus?' · '+esc(p.estStatus):'')+(p.created?' · '+esc(p.created):'')+')</span>'); }
+  return {n:arr.length,withItems:withItems,withAreas:withAreas,inv:inv,names:names};
+}
+function sumHtml(S,extra){
+  if(!S) return '<div class="bad">não é uma lista de projetos</div>';
+  var cls=S.n>3?'ok':(S.n>0?'warn':'bad');
+  return '<div class="big '+cls+'">'+S.n+' projetos</div><div class="mut">'+S.withItems+' com itens de estimate · '+S.withAreas+' com áreas · '+S.inv+' com invoice'+(extra?' · '+extra:'')+'</div><div class="names">'+S.names.join('<br>')+'</div>';
+}
+function tryParse(v){ if(typeof v!=='string') return v; try{ return JSON.parse(v); }catch(e){ return null; } }
+function findProjArrays(obj,path,out){
+  if(!obj||typeof obj!=='object'||out.length>20) return;
+  if(Array.isArray(obj)){ if(obj.length&&obj[0]&&typeof obj[0]==='object'&&('estItems' in obj[0]||'areas' in obj[0])&&('name' in obj[0]||'id' in obj[0])) out.push({path:path,arr:obj}); return; }
+  for(var k in obj){ var v=obj[k]; if(typeof v==='string'&&v.length>2&&(v.charAt(0)==='['||v.charAt(0)==='{')){ var pv=tryParse(v); if(pv) findProjArrays(pv,path+'.'+k,out); } else if(v&&typeof v==='object') findProjArrays(v,path+'.'+k,out); }
+}
+// 1) this phone
+function scanLocal(){
+  var keys=[]; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('fb6_')===0) keys.push(k); }
+  keys.sort(); for(var j=0;j<keys.length;j++) BK.local[keys[j]]=localStorage.getItem(keys[j]);
+  var P=tryParse(BK.local.fb6_projs||'[]');
+  card('📱 Neste celular (fb6_projs)', sumHtml(projSummary(P),'última mudança: '+esc(BK.local.fb6_localTs||'?')));
+  L('local keys: '+keys.join(', '));
+}
+// 2) cloud
+function scanCloud(){
+  var steps=[];
+  steps.push(db.collection('fieldbid').get().then(function(qs){
+    var c={}, ph=[]; qs.forEach(function(d){ var x=d.data(); if(d.id.indexOf('ph__')===0){ ph.push(d.id); PH[d.id]=x; } else c[d.id]=x; });
+    BK.cloud.fieldbid=c; BK.cloud.fieldbid_photo_doc_ids=ph;
+    var pj=c.projs, P=pj?tryParse(pj.data):null;
+    card('☁️ Nuvem · fieldbid / projs', pj?sumHtml(projSummary(P),'gravado na nuvem: '+esc(pj.updatedAt||'?')):'<div class="bad">documento projs não existe</div>');
+    var ids={}; for(var i=0;i<ph.length;i++){ var m=ph[i].replace(/^ph__/,'').replace(/__\d+$/,''); ids[m]=1; }
+    card('🖼️ Nuvem · fotos por projeto (ph__)','<div class="big '+(ph.length?'ok':'warn')+'">'+Object.keys(ids).length+' projetos com fotos</div><div class="mut">'+ph.length+' documentos de fotos</div><div class="names">'+esc(Object.keys(ids).join(', '))+'</div>');
+    L('fieldbid docs: '+Object.keys(c).join(', ')+' | photo docs: '+ph.length);
+  }).catch(function(e){ card('☁️ Nuvem · fieldbid','<div class="bad">erro: '+esc(e.message)+'</div>'); }));
+  ['fieldbid_data','fieldbid_photos'].forEach(function(col){
+    steps.push(db.collection(col).get().then(function(qs){
+      var docs={}, n=0, found=[]; qs.forEach(function(d){ n++; var x=d.data(); docs[d.id]=x; findProjArrays(x,d.id,found); });
+      BK.cloud[col]=(col==='fieldbid_photos')?{_ids:Object.keys(docs)}:docs; if(col==='fieldbid_photos') PH[col]=docs;
+      var h='<div class="mut">'+n+' documentos: '+esc(Object.keys(docs).slice(0,30).join(', '))+(n>30?'…':'')+'</div>';
+      for(var i=0;i<found.length&&i<5;i++) h+='<div style="margin-top:8px"><b>'+esc(found[i].path)+'</b>'+sumHtml(projSummary(found[i].arr))+'</div>';
+      if(!found.length&&n) h+='<div class="warn" style="margin-top:6px">nenhuma lista de projetos reconhecida aqui</div>';
+      card('🗄️ Nuvem · '+col+' (versão antiga)', n?h:'<div class="mut">vazia ou inexistente</div>');
+      L(col+': '+n+' docs');
+    }).catch(function(e){ card('🗄️ Nuvem · '+col,'<div class="bad">erro: '+esc(e.message)+'</div>'); }));
+  });
+  steps.push(db.collection('projects').get().then(function(qs){
+    var docs={}, n=0, fb=[]; qs.forEach(function(d){ n++; var x=d.data(); docs[d.id]=x; if(x&&(x.fieldbidId||x.fbId||x.fromFieldBid||x.source==='fieldbid'||x.estimate||x.fbEstimate)) fb.push(esc(x.name||x.client||d.id)+(x.contract?' <span class="mut">($'+Math.round(x.contract)+')</span>':'')); });
+    BK.cloud.worklog_projects=docs;
+    card('🧰 WorkLog · projects','<div class="big ok">'+n+' projetos no WorkLog</div><div class="mut">'+fb.length+' vieram do FieldBid</div><div class="names">'+fb.join('<br>')+'</div>');
+  }).catch(function(e){ card('🧰 WorkLog · projects','<div class="bad">erro: '+esc(e.message)+'</div>'); }));
+  steps.push(db.collection('sign_requests').get().then(function(qs){
+    var docs={}, n=0, names=[]; qs.forEach(function(d){ n++; var x=d.data(); docs[d.id]=x; names.push(esc((x.client&&(x.client.name||x.client))||x.clientName||d.id)+' <span class="mut">('+esc(x.status||'')+')</span>'); });
+    BK.cloud.sign_requests=docs;
+    card('✍️ Nuvem · sign_requests','<div class="big '+(n?'ok':'mut')+'">'+n+' estimates enviados por link</div><div class="names">'+names.join('<br>')+'</div>');
+  }).catch(function(e){ card('✍️ Nuvem · sign_requests','<div class="bad">erro: '+esc(e.message)+'</div>'); }));
+  return Promise.all(steps).then(function(){ L('scan complete '+new Date().toLocaleTimeString()); });
+}
+function dl(withPhotos){
+  var o=JSON.parse(JSON.stringify(BK)); if(withPhotos) o.photos=PH;
+  var blob=new Blob([JSON.stringify(o)],{type:'application/json'}), a=document.createElement('a'), d=new Date();
+  a.href=URL.createObjectURL(blob); a.download='fieldbid-recuperacao-'+d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'-'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2)+(withPhotos?'-com-fotos':'')+'.json';
+  document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },3000);
+  document.getElementById('dlMsg').textContent='Arquivo gerado: '+a.download+' ('+Math.round(blob.size/1024)+' KB). Confira na pasta Downloads.';
+}
+document.getElementById('dlData').onclick=function(){ dl(false); };
+document.getElementById('dlAll').onclick=function(){ dl(true); };
+scanLocal();
+var started=false;
+firebase.auth().onAuthStateChanged(function(u){
+  if(u&&!u.isAnonymous){ document.getElementById('loginBox').style.display='none'; if(!started){ started=true; L('signed in as '+(u.email||u.uid)); scanCloud(); } }
+  else document.getElementById('loginBox').style.display='block';
+});
+document.getElementById('loginBtn').onclick=function(){
+  var m=document.getElementById('loginMsg'); m.textContent='';
+  firebase.auth().signInWithEmailAndPassword(document.getElementById('em').value.trim(),document.getElementById('pw').value).catch(function(e){ m.textContent=e.message; });
+};
+</script></body></html>
