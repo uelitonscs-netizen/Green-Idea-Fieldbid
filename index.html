@@ -1174,7 +1174,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261016-1700</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261016-2100</span></div>
 </div>
 
 <div id="field-app">
@@ -2582,6 +2582,7 @@ function _doPhotoRestore(need, col, projs){
 window.restoreMissingPhotos=restoreMissingPhotos;
 
 function save() {
+  if (window._fbHalt) return;   // reloading from the cloud — never write in between
   // Fresh device: hold back (no timestamp, no cloud push) until the cloud copy is pulled.
   if (window._fbFresh && !window._fbCloudReady) { window._fbSavePending=true; if(window.DBG)DBG('save adiado: aparelho limpo, aguardando nuvem'); return; }
   // Stamp the moment local data changed, so cloud-load can avoid clobbering newer local edits.
@@ -2594,6 +2595,16 @@ function save() {
       return;
     }
     _saveRetry = 0;
+    // Learn how many projects the cloud has before ever overwriting it.
+    if (typeof window._fbCloudProjCount !== 'number') {
+      if (window._fbCountFetching) { _saveTimer = setTimeout(save, 600); return; }
+      window._fbCountFetching = true;
+      db.collection('fieldbid').doc('projs').get().then(function(d){
+        var n=0; try{ n=d.exists?JSON.parse((d.data()||{}).data||'[]').length:0; }catch(e){ n=0; }
+        window._fbCloudProjCount=n; window._fbCountFetching=false; save();
+      }).catch(function(){ window._fbCountFetching=false; _saveTimer=setTimeout(save,3000); });
+      return;
+    }
     var ts = new Date().toISOString();
     var col = db.collection('fieldbid');
     var ls = window.localStorage;
@@ -2607,6 +2618,11 @@ function save() {
         // Photos stay on the device; never send them to the cloud.
         if (_PHOTO_KEYS[k]) v = _stripPhotosFromJson(v);
         if (v.length > 1000000) { oversized = k; continue; }
+        if (k === 'projs') {
+          var _np=0; try{ _np=JSON.parse(v).length; }catch(e){ _np=-1; }
+          if (_np<0 || (window._fbMassLoss&&window._fbMassLoss(_np))) { if(window._fbProtectAlert) window._fbProtectAlert(_np<0?0:_np); continue; }
+          window._fbPendingProjCount=_np; window._fbPendingProjJson=v;
+        }
         batch.set(col.doc(k), { data: v, updatedAt: ts });
         wrote++;
       }
@@ -2630,11 +2646,29 @@ function save() {
       .then(function() {
         clearTimeout(_stuck);
         if(!oversized) setFbStatus('connected');
+        if(typeof window._fbPendingProjCount==='number'){ window._fbCloudProjCount=window._fbPendingProjCount; try{ _fbDailySnapshot(window._fbPendingProjJson,window._fbPendingProjCount); }catch(e){} window._fbPendingProjCount=null; window._fbPendingProjJson=null; }
         // Back up photos separately (own collection, chunked, only when changed)
         if(typeof backupPhotos==='function'){ try{ backupPhotos(); }catch(e){} }
       })
       .catch(function(e) { clearTimeout(_stuck); setFbStatus('error'); console.warn('Save error:', e && e.message); });
   }, 1000);
+}
+
+// Daily copy of the project list (bk__YYYY-MM-DD), last 14 days kept. Normal sync never touches these.
+function _fbDailySnapshot(json,n){
+  if(!json||!(n>0)) return; var d=new Date(), day=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  try{ if(localStorage.getItem('fb6_lastSnap')===day) return; }catch(e){}
+  var col=db.collection('fieldbid');
+  col.doc('bk__'+day).set({data:json,count:n,savedAt:new Date().toISOString()}).then(function(){
+    try{ localStorage.setItem('fb6_lastSnap',day); }catch(e){}
+    return col.doc('bk__index').get().then(function(ix){
+      var ids=[]; try{ ids=JSON.parse((ix.exists&&ix.data().ids)||'[]'); }catch(e){}
+      if(ids.indexOf(day)<0) ids.push(day); ids.sort(); var old=ids.length>14?ids.slice(0,ids.length-14):[]; ids=ids.slice(-14);
+      var b=db.batch(); b.set(col.doc('bk__index'),{ids:JSON.stringify(ids),updatedAt:new Date().toISOString()});
+      for(var i=0;i<old.length;i++) b.delete(col.doc('bk__'+old[i]));
+      return b.commit();
+    });
+  }).catch(function(e){ console.warn('daily snapshot failed',e&&e.message); });
 }
 
 // Flush to the cloud immediately (no debounce). Use after critical actions like
@@ -2743,13 +2777,16 @@ function fbLoad() {
       // Newest cloud timestamp across docs, to compare against local edits.
       var localTs = localStorage.getItem('fb6_localTs');
       var newestCloud = null;
+      window._fbCloudProjCount=0;
       snap.forEach(function(doc){
         var dd=doc.data();
         if(dd&&dd.updatedAt&&(!newestCloud||dd.updatedAt>newestCloud))newestCloud=dd.updatedAt;
+        if(doc.id==='projs'){ try{ window._fbCloudProjCount=JSON.parse((dd&&dd.data)||'[]').length; }catch(e){} }
       });
       // If local edits are NEWER than everything in the cloud, don't overwrite —
       // the last save may not have reached the cloud (e.g. oversized doc). Push local up instead.
-      if (!window._fbFresh && localTs && newestCloud && localTs > newestCloud) {
+      var _forceCloud=false; try{ _forceCloud=sessionStorage.getItem('fb6_forceCloud')==='1'; sessionStorage.removeItem('fb6_forceCloud'); }catch(e){}
+      if (!_forceCloud && !window._fbFresh && localTs && newestCloud && localTs > newestCloud) {
         console.warn('FieldBid: local newer than cloud, keeping local and re-saving.');
         setFbStatus('connected');
         if (typeof save === 'function') save();
@@ -3158,8 +3195,19 @@ function saveQI(){
 function savePR(){localStorage.setItem('fb6_pr',JSON.stringify(products)); save();}
 function saveCfg(){localStorage.setItem('fb6_cfg',JSON.stringify(cfg)); save();}
 
-function loadProjs(){try{var p=localStorage.getItem('fb6_projs');return p?JSON.parse(p):[]}catch(e){return [];}}
-function saveProjs(p){localStorage.setItem('fb6_projs',JSON.stringify(p)); if(window.schedulePhotoBackup)window.schedulePhotoBackup(); save();}
+function loadProjs(){try{var p=localStorage.getItem('fb6_projs');var a=p?JSON.parse(p):[]; if(a.length>(window._fbLocalProjMax||0)) window._fbLocalProjMax=a.length; return a;}catch(e){ window._fbLoadProjsFailed=true; return [];}}
+window._fbMassLoss=_fbMassLoss; window._fbProtectAlert=_fbProtectAlert;
+function _fbMassLoss(n){ var known=Math.max(window._fbLocalProjMax||0, (typeof window._fbCloudProjCount==='number')?window._fbCloudProjCount:0); return known>=5 && n<Math.ceil(known*0.5) && !window._fbAllowMass; }
+function saveProjs(p){
+  if(Array.isArray(p)&&(_fbMassLoss(p.length)||(window._fbLoadProjsFailed&&p.length<=1))){ _fbProtectAlert(p.length); return; }
+  localStorage.setItem('fb6_projs',JSON.stringify(p)); if(p&&p.length>(window._fbLocalProjMax||0)) window._fbLocalProjMax=p.length; if(window.schedulePhotoBackup)window.schedulePhotoBackup(); save();}
+function _fbProtectAlert(n){
+  var known=Math.max(window._fbLocalProjMax||0,(typeof window._fbCloudProjCount==='number')?window._fbCloudProjCount:0);
+  try{ setFbStatus('error'); }catch(e){}
+  if(window._fbProtectShown) return; window._fbProtectShown=true;
+  var msg='⚠️ Data protection: this change would leave '+n+' project'+(n!==1?'s':'')+' where there were '+known+'. Nothing was saved and sync is paused.\n\nOK = reload your projects from the cloud (recommended)\nCancel = I deleted them on purpose';
+  setTimeout(function(){ if(confirm(msg)){ window._fbHalt=true; try{ sessionStorage.setItem('fb6_forceCloud','1'); localStorage.removeItem('fb6_localTs'); }catch(e){} location.reload(); } else { if(confirm('Really keep only '+n+' project'+(n!==1?'s':'')+' and remove the others from the cloud too?')){ window._fbAllowMass=true; window._fbProtectShown=false; } else window._fbProtectShown=false; } },50);
+}
 function _phKeepStored(live,stored){
   if(!Array.isArray(live)||!Array.isArray(stored)) return 0;
   var n=0;
