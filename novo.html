@@ -1032,6 +1032,21 @@ body.n5-bar #n5Bar{display:flex;} body.n5-bar.nv-hide #n5Bar{display:none;}
 body.n5-bar #estFab{bottom:158px!important;}
 body.n5-bar #ep-items .stat-row,body.n5-bar #ep-items .total-bar{display:none!important;}
 body.n5-bar #est-app .page{padding-bottom:170px;}
+
+/* measurements on the takeoff card + all photos of an item */
+.n2dims{margin-top:8px;padding-top:8px;border-top:1px dashed var(--n-border);}
+.n2dims .card-dims{background:transparent!important;border:none!important;padding:0!important;margin:0!important;}
+.n2dims .card-dims-hd{color:var(--n-muted)!important;font-size:10.5px!important;font-weight:800!important;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px;}
+.n2dims .card-dim-row{color:var(--n-text)!important;font-size:12.5px!important;font-family:ui-monospace,Menlo,monospace;}
+.n2dims .card-dim-row strong{color:var(--n-green-ink)!important;}
+.n2dims [style*="color"]{color:var(--n-muted)!important;}
+#estItemList .n5-card .card-photos .ph-w:first-child{position:relative;}
+.n5-phn{position:absolute;right:2px;bottom:2px;border:none;background:#000b;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:2px 5px;}
+#estItemList .n5-card.n5-allph{grid-template-columns:1fr!important;}
+#estItemList .n5-card.n5-allph .card-photos{grid-column:1 / -1!important;display:flex!important;gap:6px;overflow-x:auto;padding:10px 12px 0!important;}
+#estItemList .n5-card.n5-allph .card-photos .ph-w{display:inline-block!important;}
+#estItemList .n5-card.n5-allph .card-body{grid-column:1 / -1!important;}
+#estItemList .n5-card.n5-allph .card-photos + .card-body .card-em{display:flex!important;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -6455,7 +6470,7 @@ function nvMore(){
   ov.innerHTML='<div class="modal nvm"><div class="mhandle"></div><div class="mtitle">More</div><div class="nvm-g">'+
     it('quote','💰','Quote','client, markup, discount')+it('prods','🗄️','Products','prices and coverage')+it('settings','⚙️','Settings','company, costs, signature')+
     it('broch','📄','Brochures','')+it('ds','📋','Data sheets','')+it('ct','✍️','Contract','')+
-    it('wl','🧰','WorkLog','open the WorkLog app')+it('diag','🩺','Diagnostics','photos and sync check')+it('classic','↩️','Classic version','the FieldBid as before')+
+    it('wl','🧰','WorkLog','open the WorkLog app')+it('diag','🩺','Diagnostics','photos and sync check')+it('refresh','↺','Refresh','reload the app')+it('classic','↩️','Classic version','the FieldBid as before')+
     '</div><div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="nvmClose">Close</button></div></div>';
   ov.classList.add('on'); ov.style.display='flex';
   function close(){ ov.classList.remove('on'); ov.style.display='none'; }
@@ -6468,6 +6483,7 @@ function nvMore(){
     if(hb){ var h=document.getElementById(hb); if(h) h.click(); return; }
     if(m==='diag'){ location.href='diag.html'; return; }
     if(m==='classic'){ location.href='index.html'; return; }
+    if(m==='refresh'){ location.reload(); return; }
   };
 }
 function _nvMoney(n){ return '$'+Math.round(Number(n)||0).toLocaleString('en-US'); }
@@ -6560,6 +6576,8 @@ function n2Takeoff(){
       h+=ps.length?'<button type="button" class="n2th" data-n2="photos" data-i="'+i2+'" style="background-image:url(\''+ps[0]+'\')"><b>📷 '+ps.length+'</b></button>':'<button type="button" class="n2th n" data-act="ph" data-idx="'+i2+'">📷</button>';
       h+='<div class="n2mid"><b>'+esc(a2.name||'Area')+'</b><div class="m"><i style="background:'+_n2Color(a2.matCat)+'"></i>'+esc(lb2)+(thk?' · '+esc(thk):(spec&&spec.toLowerCase().indexOf(lb2.toLowerCase())<0?' · '+esc(spec):''))+'</div>'+(a2.notes?'<div class="nt">📋 '+esc(a2.notes)+'</div>':'')+'</div>';
       h+='<div class="n2rt"><div class="sf">'+fmtN(Math.round(Number(a2.sf)||0))+' <small>SF</small></div><div class="ib"><button type="button" data-act="ph" data-idx="'+i2+'" aria-label="Add photo">📷</button><button type="button" data-act="edit" data-idx="'+i2+'" aria-label="Edit">✏️</button><button type="button" data-n2="more" data-i="'+i2+'" aria-label="More">⋯</button></div></div></div>';
+      var _dims=''; try{ _dims=formatDimRows(a2)||''; }catch(_de){}
+      if(_dims) h+='<div class="n2dims">'+_dims+'</div>';
       if(ps.length){ h+='<div class="n2strip" id="n2s'+i2+'" style="display:none">'; for(var p=0;p<ps.length;p++) h+='<span class="ph-w'+phCls(ps[p])+'"><img class="card-photo" src="'+ps[p]+'" data-ii="'+i2+'" data-pi="'+p+'" data-cap="'+esc(a2.name||'')+'" onclick="openLB(this)" alt=""><i class="ph-b ph-wo">WO</i><i class="ph-b ph-est">EST</i></span>'; h+='</div>'; }
       h+='</div>'; }
     list.innerHTML=h;
@@ -6597,18 +6615,21 @@ function _n5Hold(el,onTap,onHold){
 }
 function _n5ModeFromName(n){
   n=' '+String(n||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ')+' ';
-  if(/ (roof|roofs|rafter|rafters|cathedral|vaulted|slope|slopes|sloped) /.test(n)) return 'roof';
+  // roof names use the flat L × W mode; the Roof shapes (gable, hip…) are picked by hand
+  if(/ (roof|roofs|rafter|rafters|cathedral|vaulted|slope|slopes|sloped) /.test(n)) return 'floor';
   if(/ (wall|walls|rim|rims|band joist|knee wall|kneewall|kneewalls|partition|partitions|foundation) /.test(n)) return 'walls';
   if(/ (floor|floors|ceiling|ceilings|slab|overhang|overhangs|cantilever|cantilevers|crawl space|crawlspace) /.test(n)) return 'floor';
   return null;
 }
 var _N5_MODE_BTN={walls:'mm1',floor:'mm2',manual:'mm3',roof:'mm4'}, _N5_MODE_LBL={walls:'Walls',floor:'Floor/Ceiling',roof:'Roof',manual:'Manual'};
 function _n5ModeHint(html){ var h=document.getElementById('n5ModeHint'); if(!h) return; h.innerHTML=html||''; h.style.display=html?'block':'none'; }
+function _n5IsRoofName(){ var n=' '+String((document.getElementById('fa_name')||{}).value||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ')+' '; return / (roof|roofs|rafter|rafters|cathedral|vaulted|slope|slopes|sloped) /.test(n); }
 function _n5OnName(){
   var m=_n5ModeFromName(document.getElementById('fa_name').value);
   if(editFAIdx<0){
     if(window._n5ModeManual) return;
-    if(m&&m!==calcMode){ setMMode(m,document.getElementById(_N5_MODE_BTN[m])); _n5ModeHint('✨ Mode picked from the name'); }
+    if(m&&m!==calcMode){ setMMode(m,document.getElementById(_N5_MODE_BTN[m])); _n5ModeHint(_n5IsRoofName()?'✨ L × W picked from the name · tap 🏠 Roof for gable / hip':'✨ Mode picked from the name'); }
+    else if(m&&m===calcMode&&_n5IsRoofName()) _n5ModeHint('✨ L × W picked from the name · tap 🏠 Roof for gable / hip');
     else if(!m) _n5ModeHint('');
   } else {
     if(m&&m!==calcMode) _n5ModeHint('💡 The name suggests <b>'+_N5_MODE_LBL[m]+'</b> <button type="button" id="n5UseMode">Use it</button>'); else _n5ModeHint('');
@@ -6676,6 +6697,8 @@ function n5EstCards(){
     box.innerHTML='<button type="button" data-act="edit" data-idx="'+idx+'" aria-label="Edit">✏️</button><button type="button" data-n5="more" data-idx="'+idx+'" aria-label="More">⋯</button>';
     var cost=c.querySelector('.card-cost'); if(cost) cost.appendChild(box); else c.appendChild(box);
     c.classList.add('n5-card');
+    var phs=c.querySelectorAll('.card-photos .ph-w'); if(phs.length>1){ var bd=document.createElement('button'); bd.type='button'; bd.className='n5-phn'; bd.textContent='📷 '+phs.length; bd.setAttribute('aria-label','Show all photos');
+      phs[0].appendChild(bd); bd.addEventListener('click',function(ev){ ev.stopPropagation(); var cc=this; while(cc&&!(cc.classList&&cc.classList.contains('n5-card'))) cc=cc.parentNode; if(cc) cc.classList.toggle('n5-allph'); }); }
   }
   list.addEventListener('click',function(e){ var b=e.target; while(b&&b!==list&&!(b.getAttribute&&b.getAttribute('data-n5'))) b=b.parentNode; if(!b||b===list) return;
     var ix=b.getAttribute('data-idx'), it=estItems[+ix];
