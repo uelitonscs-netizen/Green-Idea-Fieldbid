@@ -1047,6 +1047,11 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 #estItemList .n5-card.n5-allph .card-photos .ph-w{display:inline-block!important;}
 #estItemList .n5-card.n5-allph .card-body{grid-column:1 / -1!important;}
 #estItemList .n5-card.n5-allph .card-photos + .card-body .card-em{display:flex!important;}
+
+.n6-bring{margin:0 0 12px;background:var(--n-surface);border:1px solid var(--n-border);border-radius:14px;box-shadow:var(--n-shadow);overflow:hidden;}
+.n6-hd{width:100%;display:flex;justify-content:space-between;align-items:center;background:transparent;border:none;padding:12px 14px;color:var(--n-text);font-size:13.5px;font-family:var(--n-font-m);text-align:left;}
+.n6-hd b{font-family:var(--n-font-d);} .n6-hd i{font-style:normal;color:var(--n-muted);}
+.n6-bd{padding:0 14px 12px;border-top:1px solid var(--n-border);padding-top:8px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -6682,10 +6687,23 @@ function _n5MultLabels(){
 }
 // Material to bring (same calculation as the WorkLog material budget)
 function _n5Bring(){
-  var rows=[]; try{ rows=computeMaterialUsage(fieldAreas||[]).rows||[]; }catch(e){ rows=[]; }
+  var rows=[]; try{ rows=computeMaterialUsage(estItems||[]).rows||[]; }catch(e){ rows=[]; }
   var h=''; for(var i=0;i<rows.length;i++){ var r=rows[i]; if(!(r.qty>0)) continue;
     var q=Math.round(r.qty*10)/10; h+='<div class="n5b"><span>'+esc(r.label)+'</span><b>≈ '+q+' '+esc(r.unit||'')+'</b></div>'; }
-  return h?'<div class="n5b-t">Material to bring</div>'+h+'<div class="n5b-n">From your Coverage settings · round up on site</div>':'';
+  return h?h+'<div class="n5b-n">From your Coverage settings · round up on site</div>':'';
+}
+function n6Bring(){
+  var it=document.getElementById('ep-items'); if(!it) return;
+  var box=document.getElementById('n6Bring');
+  if(!box){ box=document.createElement('div'); box.id='n6Bring'; box.className='n6-bring';
+    var after=document.getElementById('optBar')||document.getElementById('jobHdr');
+    if(after&&after.parentNode) after.parentNode.insertBefore(box,after.nextSibling); else it.insertBefore(box,it.firstChild); }
+  var body=_n5Bring(), n=(body.match(/class="n5b"/g)||[]).length;
+  if(!n){ box.style.display='none'; return; }
+  var open=false; try{ open=localStorage.getItem('n6_bring_open')==='1'; }catch(e){}
+  box.style.display='block';
+  box.innerHTML='<button type="button" class="n6-hd" id="n6BringHd"><span>📦 <b>Material to bring</b> · '+n+' line'+(n!==1?'s':'')+'</span><i>'+(open?'▴':'▾')+'</i></button>'+(open?'<div class="n6-bd">'+body+'</div>':'');
+  document.getElementById('n6BringHd').onclick=function(){ try{ localStorage.setItem('n6_bring_open',open?'0':'1'); }catch(e){} n6Bring(); };
 }
 // compact Estimator cards
 function n5EstCards(){
@@ -6738,9 +6756,8 @@ function n5Bar(){
   // price: only in the Estimator now (still auto-filled underneath)
   var fp=document.getElementById('fa_price'); if(fp){ var g=fp.parentNode; while(g&&!(g.classList&&g.classList.contains('fg'))) g=g.parentNode; if(g) g.classList.add('n5-hide'); }
   // Takeoff summary: Material to bring
-  var _n2=n2Takeoff; n2Takeoff=function(){ var r=_n2.apply(this,arguments); try{ var sm=document.getElementById('n2Sum'); if(sm&&sm.style.display!=='none'&&!sm.querySelector('.n5b-t')){ var x=_n5Bring(); if(x){ var d2=document.createElement('div'); d2.className='n5bring'; d2.innerHTML=x; sm.appendChild(d2); } } }catch(e){} return r; };
   // Estimator: compact cards + total bar
-  var _re=renderEst; renderEst=function(){ var r=_re.apply(this,arguments); try{ n5EstCards(); n5Bar(); }catch(e){} return r; }; window.renderEst=renderEst;
+  var _re=renderEst; renderEst=function(){ var r=_re.apply(this,arguments); try{ n5EstCards(); n5Bar(); n6Bring(); }catch(e){} return r; }; window.renderEst=renderEst;
   setInterval(function(){ try{ n5Bar(); }catch(e){} },700);
 })();
 
