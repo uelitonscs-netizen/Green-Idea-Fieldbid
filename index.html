@@ -1059,6 +1059,9 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .pp-bs{flex-wrap:wrap;}
 .pp-b.ok{background:var(--n-green-soft,#15291b)!important;color:var(--n-green-ink,#4ade80)!important;border-color:var(--n-border,#2a6b35)!important;}
 .jc-inv.closed{background:var(--n-surface2,#1b2520)!important;color:var(--n-muted,#8b98a5)!important;border-color:var(--n-border,#2a3340)!important;}
+
+.nh-bk{display:flex;justify-content:space-between;align-items:center;gap:8px;width:calc(100% - 40px);margin:12px 20px 0;padding:12px 14px;border-radius:14px;border:1px solid var(--n-border);background:var(--n-amber-soft,#fbf1df);color:var(--n-text);font-size:13.5px;font-family:var(--n-font-m);text-align:left;}
+.nh-bk span{color:var(--n-muted);font-size:12px;white-space:nowrap;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1174,7 +1177,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261016-2100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261016-2300</span></div>
 </div>
 
 <div id="field-app">
@@ -2655,21 +2658,113 @@ function save() {
 }
 
 // Daily copy of the project list (bk__YYYY-MM-DD), last 14 days kept. Normal sync never touches these.
-function _fbDailySnapshot(json,n){
-  if(!json||!(n>0)) return; var d=new Date(), day=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-  try{ if(localStorage.getItem('fb6_lastSnap')===day) return; }catch(e){}
-  var col=db.collection('fieldbid');
-  col.doc('bk__'+day).set({data:json,count:n,savedAt:new Date().toISOString()}).then(function(){
+function _fbDailySnapshot(json,n,force){
+  if(!json||!(n>0)) return Promise.resolve(); var d=new Date(), day=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  try{ if(!force&&localStorage.getItem('fb6_lastSnap')===day) return Promise.resolve(); }catch(e){}
+  var col=db.collection('fieldbid'), _sv=new Date().toISOString();
+  return col.doc('bk__'+day).set({data:json,count:n,savedAt:new Date().toISOString()}).then(function(){
     try{ localStorage.setItem('fb6_lastSnap',day); }catch(e){}
     return col.doc('bk__index').get().then(function(ix){
-      var ids=[]; try{ ids=JSON.parse((ix.exists&&ix.data().ids)||'[]'); }catch(e){}
+      var ids=[], meta={}; try{ ids=JSON.parse((ix.exists&&ix.data().ids)||'[]'); meta=JSON.parse((ix.exists&&ix.data().meta)||'{}'); }catch(e){}
+      meta[day]={count:n,savedAt:_sv};
       if(ids.indexOf(day)<0) ids.push(day); ids.sort(); var old=ids.length>14?ids.slice(0,ids.length-14):[]; ids=ids.slice(-14);
-      var b=db.batch(); b.set(col.doc('bk__index'),{ids:JSON.stringify(ids),updatedAt:new Date().toISOString()});
+      for(var q=0;q<old.length;q++) delete meta[old[q]];
+      var b=db.batch(); b.set(col.doc('bk__index'),{ids:JSON.stringify(ids),meta:JSON.stringify(meta),updatedAt:new Date().toISOString()});
       for(var i=0;i<old.length;i++) b.delete(col.doc('bk__'+old[i]));
       return b.commit();
     });
   }).catch(function(e){ console.warn('daily snapshot failed',e&&e.message); });
 }
+
+// ══════ Backups: list / restore any day, save now, download a file, restore from a file ══════
+function _bkToast(m,t){ try{ if(typeof window.toast==='function'){ window.toast(m,t); return; } }catch(e){} var el=document.getElementById('toast'); if(el){ el.textContent=m; el.className='toast on'+(t?' '+t:''); setTimeout(function(){ el.className='toast'; },2600); } }
+function _bkDay(d){ d=d||new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function _bkEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function _bkSheet(html){
+  var ov=document.getElementById('bkOv'); if(!ov){ ov=document.createElement('div'); ov.id='bkOv'; ov.className='overlay'; document.body.appendChild(ov); }
+  ov.innerHTML='<div class="modal nvm" style="max-height:88vh;overflow:auto"><div class="mhandle"></div><div class="mtitle">🗄️ Backups</div>'+html+'<div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="bkClose">Close</button></div></div>';
+  ov.classList.add('on'); ov.style.display='flex';
+  document.getElementById('bkClose').onclick=function(){ ov.classList.remove('on'); ov.style.display='none'; };
+  ov.onclick=function(e){ if(e.target===ov){ ov.classList.remove('on'); ov.style.display='none'; } };
+  return ov;
+}
+function _bkProjsJson(){ var raw=localStorage.getItem('fb6_projs')||'[]'; try{ return _stripPhotosFromJson(raw); }catch(e){ return raw; } }
+// Save today's copy now (also used by the daily copy)
+function fbBkSaveNow(){
+  var json=_bkProjsJson(), n=0; try{ n=JSON.parse(json).length; }catch(e){}
+  if(!(n>0)){ _bkToast('Nothing to save yet','err'); return Promise.resolve(); }
+  try{ localStorage.removeItem('fb6_lastSnap'); }catch(e){}
+  return _fbDailySnapshot(json,n,true);
+}
+// Replace the project list with a copy (cloud + this phone). The current state is saved first.
+function _bkRestoreData(data,label){
+  var n=0; try{ n=JSON.parse(data).length; }catch(e){ _bkToast('That copy cannot be read','err'); return; }
+  var curN=0; try{ curN=JSON.parse(localStorage.getItem('fb6_projs')||'[]').length; }catch(e){}
+  if(!confirm('Restore '+label+'?\n\nYour projects now: '+curN+'\nIn this copy: '+n+'\n\nYour current projects are saved first, so this can be undone.')) return;
+  var ts=new Date().toISOString(), tag=ts.replace(/[:.]/g,'-'), col=db.collection('fieldbid');
+  window._fbHalt=true; _bkToast('Restoring…');
+  col.doc('bk__before-restore-'+tag).set({data:_bkProjsJson(),savedAt:ts,note:'before restoring '+label}).then(function(){
+    var b=db.batch();
+    b.set(col.doc('projs'),{data:data,updatedAt:ts});
+    b.set(col.doc('ei'),{data:'[]',updatedAt:ts}); b.set(col.doc('fa'),{data:'[]',updatedAt:ts}); b.set(col.doc('qi'),{data:'{}',updatedAt:ts});
+    return b.commit();
+  }).then(function(){
+    localStorage.setItem('fb6_projs',data); localStorage.setItem('fb6_ei','[]'); localStorage.setItem('fb6_fa','[]'); localStorage.setItem('fb6_qi','{}'); localStorage.setItem('fb6_localTs',ts);
+    alert('✓ Restored '+n+' projects ('+label+'). The app will reload now; photos come back from the cloud in a few seconds.');
+    location.reload();
+  }).catch(function(e){ window._fbHalt=false; alert('Restore failed: '+(e&&e.message)+'\nNothing was changed.'); });
+}
+function fbBkRestoreDay(day){
+  db.collection('fieldbid').doc('bk__'+day).get().then(function(d){
+    if(!d.exists){ alert('That copy was not found.'); return; }
+    _bkRestoreData((d.data()||{}).data||'[]','the copy from '+day);
+  }).catch(function(e){ alert('Could not read the copy: '+(e&&e.message)); });
+}
+// Download a file with all FieldBid data (no photos — they stay in the cloud)
+function fbBkDownload(){
+  var o={app:'FieldBid',format:'fb-backup-v1',createdAt:new Date().toISOString(),data:{}};
+  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('fb6_')===0&&k!=='fb6_phlog') o.data[k]=(k==='fb6_projs')?_bkProjsJson():localStorage.getItem(k); }
+  var n=0; try{ n=JSON.parse(o.data.fb6_projs||'[]').length; }catch(e){} o.count=n;
+  var blob=new Blob([JSON.stringify(o)],{type:'application/json'}), a=document.createElement('a'), d=new Date();
+  a.href=URL.createObjectURL(blob); a.download='fieldbid-backup-'+_bkDay(d)+'-'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2)+'.json';
+  document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },4000);
+  try{ localStorage.setItem('fb6_lastDownload',new Date().toISOString()); }catch(e){}
+  _bkToast('⬇️ Backup file saved to Downloads ('+n+' projects)');
+  try{ if(window.renderNHome) window.renderNHome(); }catch(e){}
+}
+// Restore from a file: FieldBid backup or WorkLog backup
+function fbBkFromFile(){
+  var inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
+  inp.onchange=function(){ var f=inp.files&&inp.files[0]; if(!f) return; var r=new FileReader();
+    r.onload=function(){ var o=null; try{ o=JSON.parse(r.result); }catch(e){ alert('This file is not a backup.'); return; }
+      var data=null, label='';
+      if(o&&o.format==='fb-backup-v1'&&o.data&&o.data.fb6_projs){ data=o.data.fb6_projs; label='the file from '+String(o.createdAt||'').slice(0,10); }
+      else if(o&&o.collections&&o.collections.fieldbid){ var L=o.collections.fieldbid; for(var i=0;i<L.length;i++){ if(L[i].id==='projs'){ data=(L[i].data||{}).data; break; } } label='the WorkLog backup from '+String(o.createdAt||'').slice(0,10); }
+      if(!data){ alert('No FieldBid projects were found in this file.'); return; }
+      _bkRestoreData(data,label); };
+    r.readAsText(f); };
+  inp.click();
+}
+function fbBackups(){
+  var last=null; try{ last=localStorage.getItem('fb6_lastDownload'); }catch(e){}
+  var dl=last?Math.floor((Date.now()-Date.parse(last))/86400000):null;
+  var ov=_bkSheet('<div style="padding:0 20px"><div class="mut" style="font-size:12.5px;margin-bottom:8px">A copy of your projects is saved in the cloud every day (last 14 days). Tap a day to restore it.</div><div id="bkList" class="nvm-g" style="padding:0">Loading…</div>'+
+    '<div class="nvm-g" style="padding:10px 0 0"><button type="button" class="nvm-i" id="bkNow"><span class="nvm-ic">💾</span><span><b>Save a copy now</b><small>replaces today\'s copy</small></span></button>'+
+    '<button type="button" class="nvm-i" id="bkDl"><span class="nvm-ic">⬇️</span><span><b>Download backup</b><small>file to this phone · last: '+(dl===null?'never':(dl===0?'today':dl+' day'+(dl!==1?'s':'')+' ago'))+'</small></span></button>'+
+    '<button type="button" class="nvm-i" id="bkFile"><span class="nvm-ic">📂</span><span><b>Restore from a file</b><small>FieldBid or WorkLog backup</small></span></button></div></div>');
+  document.getElementById('bkNow').onclick=function(){ fbBkSaveNow().then(function(){ _bkToast('💾 Copy saved'); fbBackups(); }); };
+  document.getElementById('bkDl').onclick=fbBkDownload;
+  document.getElementById('bkFile').onclick=fbBkFromFile;
+  db.collection('fieldbid').doc('bk__index').get().then(function(ix){
+    var ids=[], meta={}; try{ ids=JSON.parse((ix.exists&&ix.data().ids)||'[]'); meta=JSON.parse((ix.exists&&ix.data().meta)||'{}'); }catch(e){}
+    ids.sort(); ids.reverse();
+    var h=''; for(var i=0;i<ids.length;i++){ var m=meta[ids[i]]||{}; h+='<button type="button" class="nvm-i" data-day="'+_bkEsc(ids[i])+'"><span class="nvm-ic">📅</span><span><b>'+_bkEsc(ids[i])+(i===0?' · latest':'')+'</b><small>'+(m.count?m.count+' projects':'tap to restore')+(m.savedAt?' · saved '+_bkEsc(new Date(m.savedAt).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})):'')+'</small></span></button>'; }
+    var L=document.getElementById('bkList'); if(!L) return;
+    L.innerHTML=h||'<div class="mut">No daily copies yet — the first one is made today.</div>';
+    var bs=L.querySelectorAll('[data-day]'); for(var j=0;j<bs.length;j++) bs[j].onclick=function(){ fbBkRestoreDay(this.getAttribute('data-day')); };
+  }).catch(function(e){ var L=document.getElementById('bkList'); if(L) L.innerHTML='<div class="bad">Could not read the copies: '+_bkEsc(e&&e.message)+'</div>'; });
+}
+window.fbBackups=fbBackups; window.fbBkDownload=fbBkDownload; window.fbBkSaveNow=fbBkSaveNow;
 
 // Flush to the cloud immediately (no debounce). Use after critical actions like
 // duplicating a job, so a fast refresh can't lose the change.
@@ -3099,6 +3194,7 @@ function calcTotals(){
   return{sub:s,tax:t,discount:disc,total:total};
 }
 function toast(msg,type){var t=document.getElementById('toast')||(function(){var el=document.createElement('div');el.id='toast';el.className='toast';document.body.appendChild(el);return el;})();t.className='toast on'+(type?' '+type:'');t.textContent=msg;clearTimeout(t._h);t._h=setTimeout(function(){t.className='toast'+(type?' '+type:'');},2400);}
+window.toast=toast;
 function openOv(id){
   var el=document.getElementById(id);
   if(!el) return;
@@ -6538,7 +6634,7 @@ function nvMore(){
   ov.innerHTML='<div class="modal nvm"><div class="mhandle"></div><div class="mtitle">More</div><div class="nvm-g">'+
     it('quote','💰','Quote','client, markup, discount')+it('prods','🗄️','Products','prices and coverage')+it('settings','⚙️','Settings','company, costs, signature')+
     it('broch','📄','Brochures','')+it('ds','📋','Data sheets','')+it('ct','✍️','Contract','')+
-    it('wl','🧰','WorkLog','open the WorkLog app')+it('diag','🩺','Diagnostics','photos and sync check')+it('refresh','↺','Refresh','reload the app')+it('classic','↩️','Classic version','the FieldBid as before')+
+    it('wl','🧰','WorkLog','open the WorkLog app')+it('diag','🩺','Diagnostics','photos and sync check')+it('backups','🗄️','Backups','daily copies · download · restore')+it('refresh','↺','Refresh','reload the app')+it('classic','↩️','Classic version','the FieldBid as before')+
     '</div><div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="nvmClose">Close</button></div></div>';
   ov.classList.add('on'); ov.style.display='flex';
   function close(){ ov.classList.remove('on'); ov.style.display='none'; }
@@ -6552,6 +6648,7 @@ function nvMore(){
     if(m==='diag'){ location.href='diag.html'; return; }
     if(m==='classic'){ location.href='classico.html'; return; }
     if(m==='refresh'){ location.reload(); return; }
+    if(m==='backups'){ if(window.fbBackups) window.fbBackups(); return; }
   };
 }
 function _nvMoney(n){ return '$'+Math.round(Number(n)||0).toLocaleString('en-US'); }
@@ -6573,6 +6670,9 @@ function renderNHome(){
     if(d.ti.length) tiles+='<button type="button" class="nh-tile b" data-pv="ti"><b>'+d.ti.length+'</b><span>✅ To invoice</span></button>';
     if(d.tc.length) tiles+='<button type="button" class="nh-tile c" data-pv="tc"><b>'+_nvMoney(d.due)+'</b><span>💵 To collect'+(d.overdue?' · <i>'+d.overdue+' late</i>':'')+'</span></button>'; }
   h+=tiles?'<div class="nh-tiles">'+tiles+'</div>':'<div class="nh-ok">✓ Nothing pending today</div>';
+  var _ld=null; try{ _ld=localStorage.getItem('fb6_lastDownload'); }catch(e){}
+  var _dd=_ld?Math.floor((Date.now()-Date.parse(_ld))/86400000):null;
+  if(_dd===null||_dd>=7) h+='<button type="button" class="nh-bk" id="nhBk">🗄️ <b>Download a backup copy</b><span>last: '+(_dd===null?'never':_dd+' days ago')+' ›</span></button>';
   h+='<div class="nh-sec"><span>Start</span></div><div class="nh-qa"><button type="button" class="nh-q g" id="nhNewT"><span class="ic">📐</span>New takeoff<small>Measure areas on site</small></button><button type="button" class="nh-q w" id="nhNewE"><span class="ic">🧮</span>New estimate<small>Price a job</small></button></div>';
   // Recent jobs
   var ps=[]; try{ ps=loadProjs(); }catch(e){}
@@ -6591,6 +6691,7 @@ function renderNHome(){
   h+='</div><div class="nh-sec"><span>Documents</span></div><div class="nh-docs"><button type="button" class="nh-m" data-hb="btnBrochures"><div>📄</div>Brochures</button><button type="button" class="nh-m" data-hb="btnDatasheets"><div>📋</div>Data sheets</button><button type="button" class="nh-m" data-hb="btnContracts"><div>✍️</div>Contract</button></div><div style="height:24px"></div>';
   box.innerHTML=h;
   var sy=document.getElementById('nhSync'); if(sy&&(!u||u.isAnonymous)) sy.onclick=function(){ window._fbLoginLater=false; try{ fbLoginShow(!!u); }catch(e){} };
+  var _bkb=document.getElementById('nhBk'); if(_bkb) _bkb.onclick=function(){ if(window.fbBkDownload) window.fbBkDownload(); };
   document.getElementById('nhNewT').onclick=function(){ var b=document.getElementById('btnField'); if(b) b.click(); nvMark(); };
   document.getElementById('nhNewE').onclick=function(){ nvGo('est'); var b=document.getElementById('newEstBtn'); if(b) b.click(); };
   document.getElementById('nhAll').onclick=function(){ nvGo('jobs'); };
