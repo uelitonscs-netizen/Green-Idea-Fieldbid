@@ -1062,6 +1062,13 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
 .nh-bk{display:flex;justify-content:space-between;align-items:center;gap:8px;width:calc(100% - 40px);margin:12px 20px 0;padding:12px 14px;border-radius:14px;border:1px solid var(--n-border);background:var(--n-amber-soft,#fbf1df);color:var(--n-text);font-size:13.5px;font-family:var(--n-font-m);text-align:left;}
 .nh-bk span{color:var(--n-muted);font-size:12px;white-space:nowrap;}
+
+.bk-ph{font-size:13px;font-weight:700;border-radius:12px;padding:10px 12px;margin:0 0 10px;background:var(--n-surface2,#1b2520);color:var(--n-muted,#8b98a5);}
+.bk-ph.ok{background:var(--n-green-soft,#183022);color:var(--n-green-ink,#6fdc8c);}
+.bk-ph.warn{background:var(--n-amber-soft,#2c2414);color:var(--n-amber,#f0b429);}
+.bk-ph button{margin-left:8px;border:none;border-radius:8px;padding:5px 10px;font-weight:800;background:var(--n-amber,#f0b429);color:#1a1205;}
+.bk-h{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--n-muted,#8b98a5);margin:12px 0 6px;}
+.bk-h span{text-transform:none;letter-spacing:0;font-weight:600;margin-left:6px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1177,7 +1184,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-0100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-0300</span></div>
 </div>
 
 <div id="field-app">
@@ -2654,7 +2661,7 @@ function save() {
       .then(function() {
         clearTimeout(_stuck);
         if(!oversized) setFbStatus('connected');
-        if(typeof window._fbPendingProjCount==='number'){ window._fbCloudProjCount=window._fbPendingProjCount; try{ _fbDailySnapshot(window._fbPendingProjJson,window._fbPendingProjCount); }catch(e){} window._fbPendingProjCount=null; window._fbPendingProjJson=null; }
+        if(typeof window._fbPendingProjCount==='number'){ window._fbCloudProjCount=window._fbPendingProjCount; try{ _fbDailySnapshot(window._fbPendingProjJson,window._fbPendingProjCount); }catch(e){} try{ _fbHourSnapshot(window._fbPendingProjJson,window._fbPendingProjCount); }catch(e){} window._fbPendingProjCount=null; window._fbPendingProjJson=null; }
         // Back up photos separately (own collection, chunked, only when changed)
         if(typeof backupPhotos==='function'){ try{ backupPhotos(); }catch(e){} }
       })
@@ -2663,6 +2670,23 @@ function save() {
 }
 
 // Daily copy of the project list (bk__YYYY-MM-DD), last 14 days kept. Normal sync never touches these.
+function _fbHourSnapshot(json,n){
+  if(!json||!(n>0)) return Promise.resolve();
+  var now=Date.now(), last=0; try{ last=Number(localStorage.getItem('fb6_lastHourSnap'))||0; }catch(e){}
+  if(now-last<2*3600*1000) return Promise.resolve();
+  var d=new Date(), id='bk__h__'+d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+'T'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2), col=db.collection('fieldbid'), sv=d.toISOString();
+  try{ localStorage.setItem('fb6_lastHourSnap',String(now)); }catch(e){}
+  return col.doc(id).set({data:json,count:n,savedAt:sv}).then(function(){
+    return col.doc('bk__hindex').get().then(function(ix){
+      var items=[]; try{ items=JSON.parse((ix.exists&&ix.data().items)||'[]'); }catch(e){}
+      items.push({id:id,count:n,savedAt:sv});
+      var keep=[], old=[]; for(var i=0;i<items.length;i++){ if(now-Date.parse(items[i].savedAt)<=24*3600*1000) keep.push(items[i]); else old.push(items[i]); }
+      var b=db.batch(); b.set(col.doc('bk__hindex'),{items:JSON.stringify(keep),updatedAt:sv});
+      for(var j=0;j<old.length;j++) b.delete(col.doc(old[j].id));
+      return b.commit();
+    });
+  }).catch(function(e){ try{ localStorage.removeItem('fb6_lastHourSnap'); }catch(x){} console.warn('2-hour copy failed',e&&e.message); });
+}
 function _fbDailySnapshot(json,n,force){
   if(!json||!(n>0)) return Promise.resolve(); var d=new Date(), day=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
   try{ if(!force&&localStorage.getItem('fb6_lastSnap')===day) return Promise.resolve(); }catch(e){}
@@ -2710,7 +2734,7 @@ function _bkRestoreData(data,label){
   window._fbHalt=true; _bkToast('Restoring…');
   col.doc('bk__before-restore-'+tag).set({data:_bkProjsJson(),savedAt:ts,note:'before restoring '+label}).then(function(){
     var b=db.batch();
-    b.set(col.doc('projs'),{data:data,updatedAt:ts});
+    b.set(col.doc('projs'),{data:_stripPhotosFromJson(data),updatedAt:ts});
     b.set(col.doc('ei'),{data:'[]',updatedAt:ts}); b.set(col.doc('fa'),{data:'[]',updatedAt:ts}); b.set(col.doc('qi'),{data:'{}',updatedAt:ts});
     return b.commit();
   }).then(function(){
@@ -2719,6 +2743,26 @@ function _bkRestoreData(data,label){
     location.reload();
   }).catch(function(e){ window._fbHalt=false; alert('Restore failed: '+(e&&e.message)+'\nNothing was changed.'); });
 }
+function fbBkRestoreDoc(id,label){
+  db.collection('fieldbid').doc(id).get().then(function(d){
+    if(!d.exists){ alert('That copy was not found.'); return; }
+    _bkRestoreData((d.data()||{}).data||'[]',label);
+  }).catch(function(e){ alert('Could not read the copy: '+(e&&e.message)); });
+}
+// 3) Are all photos on this phone also in the cloud? (same check the photo upload uses)
+function _bkPhotoStatus(){
+  var P=[]; try{ P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
+  var sigs=_loadPhSigs(), total=0, missing=0, jobs=0;
+  for(var i=0;i<P.length;i++){ var m=_photoMapForProj(P[i]), c=0; for(var k in m) c+=m[k].length; if(!c) continue; total+=c;
+    if(sigs[P[i].id]!==_photoSig(m)){ missing+=c; jobs++; } }
+  return {total:total,missing:missing,jobs:jobs};
+}
+function _bkPhotoHtml(){
+  var S=_bkPhotoStatus();
+  if(!S.total) return '<div class="bk-ph">📷 No photos on this phone yet</div>';
+  if(!S.missing) return '<div class="bk-ph ok">✓ All '+S.total+' photos on this phone are backed up in the cloud</div>';
+  return '<div class="bk-ph warn">⚠️ '+S.missing+' of '+S.total+' photos ('+S.jobs+' job'+(S.jobs!==1?'s':'')+') are not in the cloud yet <button type="button" id="bkPhNow">Back up now</button></div>';
+}
 function fbBkRestoreDay(day){
   db.collection('fieldbid').doc('bk__'+day).get().then(function(d){
     if(!d.exists){ alert('That copy was not found.'); return; }
@@ -2726,12 +2770,33 @@ function fbBkRestoreDay(day){
   }).catch(function(e){ alert('Could not read the copy: '+(e&&e.message)); });
 }
 // Download a file with all FieldBid data (no photos — they stay in the cloud)
-function fbBkDownload(){
-  var o={app:'FieldBid',format:'fb-backup-v1',createdAt:new Date().toISOString(),data:{}};
-  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('fb6_')===0&&k!=='fb6_phlog') o.data[k]=(k==='fb6_projs')?_bkProjsJson():localStorage.getItem(k); }
+function _bkBuild(){
+  // Complete copy: data AND photos (photos only live on the phone + one cloud copy).
+  var o={app:'FieldBid',format:'fb-backup-v1',withPhotos:true,createdAt:new Date().toISOString(),data:{}};
+  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('fb6_')===0&&k!=='fb6_phlog'&&k!=='fb6_phSig') o.data[k]=localStorage.getItem(k); }
+  try{ var _pp=JSON.parse(o.data.fb6_projs||'[]'), _np=0; for(var q=0;q<_pp.length;q++){ var _m=_photoMapForProj(_pp[q]); for(var mk in _m) _np+=_m[mk].length; } o.photos=_np; }catch(e){}
   var n=0; try{ n=JSON.parse(o.data.fb6_projs||'[]').length; }catch(e){} o.count=n;
-  var blob=new Blob([JSON.stringify(o)],{type:'application/json'}), a=document.createElement('a'), d=new Date();
-  a.href=URL.createObjectURL(blob); a.download='fieldbid-backup-'+_bkDay(d)+'-'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2)+'.json';
+  var d=new Date();
+  return {n:n,photos:o.photos||0,blob:new Blob([JSON.stringify(o)],{type:'application/json'}),name:'fieldbid-backup-'+_bkDay(d)+'-'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2)+'.json'};
+}
+// Save to Google Drive: opens Android's Share sheet with the backup file -> tap Drive -> Save.
+function fbBkDrive(){
+  var B=_bkBuild(), f=null;
+  try{ f=new File([B.blob],B.name,{type:'application/json'}); }catch(e){ f=null; }
+  if(f&&navigator.canShare&&navigator.share&&navigator.canShare({files:[f]})){
+    navigator.share({files:[f],title:'FieldBid backup',text:'FieldBid backup · '+B.n+' projects · '+B.photos+' photos · '+new Date().toLocaleDateString('en-US')}).then(function(){
+      try{ localStorage.setItem('fb6_lastDownload',new Date().toISOString()); }catch(e){}
+      _bkToast('☁️ Backup shared ('+B.n+' projects, '+B.photos+' photos, '+Math.round(B.blob.size/1024)+' KB) — check that Drive says "Uploaded"');
+      try{ if(window.renderNHome) window.renderNHome(); }catch(e){}
+    }).catch(function(e){ if(e&&e.name==='AbortError') return; _bkToast('Sharing did not work — the file was downloaded instead','err'); fbBkDownload(); });
+    return;
+  }
+  _bkToast('This phone cannot share files from here — downloading it instead','err'); fbBkDownload();
+}
+window.fbBkDrive=fbBkDrive;
+function fbBkDownload(){
+  var B=_bkBuild(), n=B.n, blob=B.blob, a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=B.name;
   document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },4000);
   try{ localStorage.setItem('fb6_lastDownload',new Date().toISOString()); }catch(e){}
   _bkToast('⬇️ Backup file saved to Downloads ('+n+' projects)');
@@ -2753,12 +2818,24 @@ function fbBkFromFile(){
 function fbBackups(){
   var last=null; try{ last=localStorage.getItem('fb6_lastDownload'); }catch(e){}
   var dl=last?Math.floor((Date.now()-Date.parse(last))/86400000):null;
-  var ov=_bkSheet('<div style="padding:0 20px"><div class="mut" style="font-size:12.5px;margin-bottom:8px">A copy of your projects is saved in the cloud every day (last 14 days). Tap a day to restore it.</div><div id="bkList" class="nvm-g" style="padding:0">Loading…</div>'+
+  var ov=_bkSheet('<div style="padding:0 20px"><div id="bkPh">'+_bkPhotoHtml()+'</div><div class="bk-h">Last 24 hours <span>a copy every 2 hours when something changed</span></div><div id="bkHList" class="nvm-g" style="padding:0">Loading…</div><div class="bk-h">Daily copies <span>last 14 days · tap to restore</span></div><div id="bkList" class="nvm-g" style="padding:0">Loading…</div>'+
     '<div class="nvm-g" style="padding:10px 0 0"><button type="button" class="nvm-i" id="bkNow"><span class="nvm-ic">💾</span><span><b>Save a copy now</b><small>replaces today\'s copy</small></span></button>'+
+    '<button type="button" class="nvm-i" id="bkDrive"><span class="nvm-ic">☁️</span><span><b>Save to Google Drive</b><small>opens Share → tap Drive → Save</small></span></button>'+
     '<button type="button" class="nvm-i" id="bkDl"><span class="nvm-ic">⬇️</span><span><b>Download backup</b><small>file to this phone · last: '+(dl===null?'never':(dl===0?'today':dl+' day'+(dl!==1?'s':'')+' ago'))+'</small></span></button>'+
     '<button type="button" class="nvm-i" id="bkFile"><span class="nvm-ic">📂</span><span><b>Restore from a file</b><small>FieldBid or WorkLog backup</small></span></button></div></div>');
   document.getElementById('bkNow').onclick=function(){ fbBkSaveNow().then(function(){ _bkToast('💾 Copy saved'); fbBackups(); }); };
   document.getElementById('bkDl').onclick=fbBkDownload;
+  document.getElementById('bkDrive').onclick=fbBkDrive;
+  function _wirePh(){ var b=document.getElementById('bkPhNow'); if(b) b.onclick=function(){ b.disabled=true; b.textContent='Backing up…'; try{ if(window.schedulePhotoBackup) window.schedulePhotoBackup(); else backupPhotos(); }catch(e){} setTimeout(function(){ var h=document.getElementById('bkPh'); if(h){ h.innerHTML=_bkPhotoHtml(); _wirePh(); } },6000); }; }
+  _wirePh();
+  db.collection('fieldbid').doc('bk__hindex').get().then(function(ix){
+    var items=[]; try{ items=JSON.parse((ix.exists&&ix.data().items)||'[]'); }catch(e){}
+    items.sort(function(a,b){ return a.savedAt<b.savedAt?1:-1; });
+    var h=''; for(var i=0;i<items.length;i++){ var it=items[i], t=new Date(it.savedAt); h+='<button type="button" class="nvm-i" data-hid="'+_bkEsc(it.id)+'" data-lbl="'+_bkEsc(t.toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+'"><span class="nvm-ic">🕑</span><span><b>'+_bkEsc(t.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))+(i===0?' · latest':'')+'</b><small>'+(it.count||'?')+' projects · '+_bkEsc(t.toLocaleDateString('en-US'))+'</small></span></button>'; }
+    var L=document.getElementById('bkHList'); if(!L) return;
+    L.innerHTML=h||'<div class="mut">No copies in the last 24 hours yet — the next one is made when you change something.</div>';
+    var bs=L.querySelectorAll('[data-hid]'); for(var j=0;j<bs.length;j++) bs[j].onclick=function(){ fbBkRestoreDoc(this.getAttribute('data-hid'),'the copy from '+this.getAttribute('data-lbl')); };
+  }).catch(function(){ var L=document.getElementById('bkHList'); if(L) L.innerHTML='<div class="mut">Could not read the 2-hour copies.</div>'; });
   document.getElementById('bkFile').onclick=fbBkFromFile;
   db.collection('fieldbid').doc('bk__index').get().then(function(ix){
     var ids=[], meta={}; try{ ids=JSON.parse((ix.exists&&ix.data().ids)||'[]'); meta=JSON.parse((ix.exists&&ix.data().meta)||'{}'); }catch(e){}
@@ -6688,7 +6765,7 @@ function renderNHome(){
   h+=tiles?'<div class="nh-tiles">'+tiles+'</div>':'<div class="nh-ok">✓ Nothing pending today</div>';
   var _ld=null; try{ _ld=localStorage.getItem('fb6_lastDownload'); }catch(e){}
   var _dd=_ld?Math.floor((Date.now()-Date.parse(_ld))/86400000):null;
-  if(_dd===null||_dd>=7) h+='<button type="button" class="nh-bk" id="nhBk">🗄️ <b>Download a backup copy</b><span>last: '+(_dd===null?'never':_dd+' days ago')+' ›</span></button>';
+  if(_dd===null||_dd>=7) h+='<button type="button" class="nh-bk" id="nhBk">☁️ <b>Back up to Google Drive</b><span>last: '+(_dd===null?'never':_dd+' days ago')+' ›</span></button>';
   h+='<div class="nh-sec"><span>Start</span></div><div class="nh-qa"><button type="button" class="nh-q g" id="nhNewT"><span class="ic">📐</span>New takeoff<small>Measure areas on site</small></button><button type="button" class="nh-q w" id="nhNewE"><span class="ic">🧮</span>New estimate<small>Price a job</small></button></div>';
   // Recent jobs
   var ps=[]; try{ ps=loadProjs(); }catch(e){}
@@ -6707,7 +6784,7 @@ function renderNHome(){
   h+='</div><div class="nh-sec"><span>Documents</span></div><div class="nh-docs"><button type="button" class="nh-m" data-hb="btnBrochures"><div>📄</div>Brochures</button><button type="button" class="nh-m" data-hb="btnDatasheets"><div>📋</div>Data sheets</button><button type="button" class="nh-m" data-hb="btnContracts"><div>✍️</div>Contract</button></div><div style="height:24px"></div>';
   box.innerHTML=h;
   var sy=document.getElementById('nhSync'); if(sy&&(!u||u.isAnonymous)) sy.onclick=function(){ window._fbLoginLater=false; try{ fbLoginShow(!!u); }catch(e){} };
-  var _bkb=document.getElementById('nhBk'); if(_bkb) _bkb.onclick=function(){ if(window.fbBkDownload) window.fbBkDownload(); };
+  var _bkb=document.getElementById('nhBk'); if(_bkb) _bkb.onclick=function(){ if(window.fbBkDrive) window.fbBkDrive(); else if(window.fbBkDownload) window.fbBkDownload(); };
   document.getElementById('nhNewT').onclick=function(){ var b=document.getElementById('btnField'); if(b) b.click(); nvMark(); };
   document.getElementById('nhNewE').onclick=function(){ nvGo('est'); var b=document.getElementById('newEstBtn'); if(b) b.click(); };
   document.getElementById('nhAll').onclick=function(){ nvGo('jobs'); };
