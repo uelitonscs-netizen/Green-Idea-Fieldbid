@@ -1184,7 +1184,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-1200</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-1300</span></div>
 </div>
 
 <div id="field-app">
@@ -6888,15 +6888,17 @@ function _n5ModeFromName(n){
   if(/ (floor|floors|ceiling|ceilings|slab|overhang|overhangs|cantilever|cantilevers|crawl space|crawlspace) /.test(n)) return 'floor';
   return null;
 }
-var _N5_MODE_BTN={walls:'mm1',floor:'mm2',manual:'mm3',roof:'mm4'}, _N5_MODE_LBL={walls:'Walls',floor:'Floor/Ceiling',roof:'Roof',manual:'Manual'};
+var _N5_MODE_BTN={walls:'mm1',floor:'mm2',manual:'mm3',roof:'mm4'}, _N5_MODE_LBL={walls:'Walls',floor:'Floor / Roof (L × W)',roof:'Gable/Hip',manual:'Manual'};
 function _n5ModeHint(html){ var h=document.getElementById('n5ModeHint'); if(!h) return; h.innerHTML=html||''; h.style.display=html?'block':'none'; }
 function _n5IsRoofName(){ var n=' '+String((document.getElementById('fa_name')||{}).value||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ')+' '; return / (roof|roofs|rafter|rafters|cathedral|vaulted|slope|slopes|sloped) /.test(n); }
+function _n5ModeLabels(){ var m2=document.getElementById('mm2'); if(m2&&m2.firstChild&&m2.firstChild.nodeType===3) m2.firstChild.nodeValue=_n5IsRoofName()?'⬜ Roof':'⬜ Floor'; }
 function _n5OnName(){
+  _n5ModeLabels();
   var m=_n5ModeFromName(document.getElementById('fa_name').value);
   if(editFAIdx<0){
     if(window._n5ModeManual) return;
-    if(m&&m!==calcMode){ setMMode(m,document.getElementById(_N5_MODE_BTN[m])); _n5ModeHint(_n5IsRoofName()?'✨ L × W picked from the name · tap 🏠 Roof for gable / hip':'✨ Mode picked from the name'); }
-    else if(m&&m===calcMode&&_n5IsRoofName()) _n5ModeHint('✨ L × W picked from the name · tap 🏠 Roof for gable / hip');
+    if(m&&m!==calcMode){ setMMode(m,document.getElementById(_N5_MODE_BTN[m])); _n5ModeHint(_n5IsRoofName()?'✨ Roof (length × width) picked from the name · tap 🏠 Gable/Hip only for roof shapes':'✨ Mode picked from the name'); }
+    else if(m&&m===calcMode&&_n5IsRoofName()) _n5ModeHint('✨ Roof (length × width) picked from the name · tap 🏠 Gable/Hip only for roof shapes');
     else if(!m) _n5ModeHint('');
   } else {
     if(m&&m!==calcMode) _n5ModeHint('💡 The name suggests <b>'+_N5_MODE_LBL[m]+'</b> <button type="button" id="n5UseMode">Use it</button>'); else _n5ModeHint('');
@@ -7000,11 +7002,12 @@ function n5Bar(){
   var _rr=renderRows; renderRows=function(mode){ var r=_rr.apply(this,arguments); try{ _n5RowsQty(mode); }catch(e){} return r; }; window.renderRows=renderRows;
   var _rrf=renderRoofRows; renderRoofRows=function(){ var r=_rrf.apply(this,arguments); try{ _n5RoofQty(); }catch(e){} return r; }; window.renderRoofRows=renderRoofRows;
   var _rc=recalcSF; recalcSF=function(){ var r=_rc.apply(this,arguments); try{ var b=document.getElementById('faSaveBtn'), v=Number(document.getElementById('fa_sf').value)||0; if(b) b.textContent=(editFAIdx>=0?'Update':'Add Area')+(v>0?' · '+fmtN(Math.round(v*10)/10)+' SF':''); }catch(e){} return r; }; window.recalcSF=recalcSF;
-  var _of=openFAModal; openFAModal=function(idx){ window._n5ModeManual=false; window._n5ChipPick=''; var r=_of.apply(this,arguments); try{ _n5ModeHint(''); n5SyncChips(); _n5MultLabels(); _n5RowsQty('wall'); _n5RowsQty('floor'); recalcSF(); }catch(e){} return r; }; window.openFAModal=openFAModal;
+  var _of=openFAModal; openFAModal=function(idx){ window._n5ModeManual=false; window._n5ChipPick=''; var r=_of.apply(this,arguments); try{ _n5ModeLabels(); _n5ModeHint(''); n5SyncChips(); _n5MultLabels(); _n5RowsQty('wall'); _n5RowsQty('floor'); recalcSF(); }catch(e){} return r; }; window.openFAModal=openFAModal;
   var _tm=window.toggleMultiplier; if(_tm){ window.toggleMultiplier=function(){ var r=_tm.apply(this,arguments); _n5MultLabels(); return r; }; }
   var mb=document.getElementById('multToggleBtn'); if(mb) mb.addEventListener('click',function(){ setTimeout(_n5MultLabels,0); });
   // mode hint + manual flag
   var _m2=document.getElementById('mm2'); if(_m2&&_m2.firstChild&&_m2.firstChild.nodeType===3) _m2.firstChild.nodeValue='⬜ Floor';
+  var _m4=document.getElementById('mm4'); if(_m4&&_m4.firstChild&&_m4.firstChild.nodeType===3) _m4.firstChild.nodeValue='🏠 Gable/Hip';
   var mr=document.querySelector('#faOverlay .mmode-row'); if(mr&&!document.getElementById('n5ModeHint')){ var hn=document.createElement('div'); hn.id='n5ModeHint'; hn.style.display='none'; mr.parentNode.insertBefore(hn,mr.nextSibling);
     var mbs=mr.querySelectorAll('.mmode'); for(var i=0;i<mbs.length;i++) mbs[i].addEventListener('click',function(e){ if(e.isTrusted){ window._n5ModeManual=true; _n5ModeHint(''); } }); }
   var nm=document.getElementById('fa_name'); if(nm) nm.addEventListener('input',function(){ _n5OnName(); setTimeout(n5SyncChips,40); });
