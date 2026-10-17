@@ -1237,7 +1237,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-2100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-2200</span></div>
 </div>
 
 <div id="field-app">
@@ -2840,7 +2840,7 @@ function fbBkDrive(){
   // Chrome on Android only shares certain file types (.json is not one of them) — same content as .txt
   try{ f=new File([B.blob],B.name.replace(/\.json$/,'.txt'),{type:'text/plain'}); }catch(e){ f=null; }
   if(f&&navigator.canShare&&navigator.share&&navigator.canShare({files:[f]})){
-    navigator.share({files:[f],title:'FieldBid backup',text:'FieldBid backup · '+B.n+' projects · '+B.photos+' photos · '+new Date().toLocaleDateString('en-US')}).then(function(){
+    navigator.share({files:[f]}).then(function(){
       try{ localStorage.setItem('fb6_lastDownload',new Date().toISOString()); }catch(e){}
       _bkToast('☁️ Backup shared ('+B.n+' projects, '+B.photos+' photos, '+Math.round(B.blob.size/1024)+' KB) — check that Drive says "Uploaded"');
       try{ if(window.renderNHome) window.renderNHome(); }catch(e){}
