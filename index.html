@@ -1185,7 +1185,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-1400</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-1500</span></div>
 </div>
 
 <div id="field-app">
@@ -3418,6 +3418,13 @@ window._phRefreshOpen=function(){
     window.fieldAreas=fieldAreas; window.estItems=estItems; break; } }
   if(got){ try{ saveFA(); }catch(e){} try{ saveEI(); }catch(e){} try{ renderFA(); }catch(e){} try{ renderEst(); }catch(e){} try{ renderFWO(); }catch(e){} try{ renderEWO(); }catch(e){} }
 };
+// "Recent jobs" = the jobs you opened or changed last.
+function _fbTouch(pid){
+  setTimeout(function(){ try{ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){
+    var last=Date.parse(ps[i].touchedAt||'')||0; if(Date.now()-last<60000) return;   // at most once a minute
+    ps[i].touchedAt=new Date().toISOString(); if(currentProj&&currentProj.id===pid) currentProj.touchedAt=ps[i].touchedAt; saveProjs(ps); return; } } }catch(e){} },300);
+}
+window._fbTouch=_fbTouch;
 function saveProjAreas(){
   if(!currentProj) return;
   var projs=loadProjs();
@@ -3437,11 +3444,13 @@ function saveProjAreas(){
       if(!(window._phShrinkOk&&window._phShrinkOk(currentProj.id))){
         _phKeepStored(fieldAreas, projs[i].areas); _phKeepStored(estItems, projs[i].estItems);
       }
+      var _before=JSON.stringify([inTakeoff?projs[i].areas:null,projs[i].estItems,projs[i].quoteInfo]);
       if(inTakeoff){
         projs[i].areas=JSON.parse(JSON.stringify(fieldAreas));
       }
       projs[i].estItems=JSON.parse(JSON.stringify(estItems));
       projs[i].quoteInfo=JSON.parse(JSON.stringify(quoteInfo));
+      if(JSON.stringify([inTakeoff?projs[i].areas:null,projs[i].estItems,projs[i].quoteInfo])!==_before) projs[i].touchedAt=new Date().toISOString();
       break;
     }
   }
@@ -3768,6 +3777,7 @@ function duplicateJobById(pid){
 window.duplicateJobById=duplicateJobById;
 
 function switchProjById(pid){
+  _fbTouch(pid);
   // Close modal immediately for instant visual feedback
   closeOv('projOverlay');
   setTimeout(function(){
@@ -3971,7 +3981,7 @@ function createProj(){
   toast('✅ Project "'+name+'" created');
 }
 function switchProj(btn){
-  var pid=btn.getAttribute('data-pid');
+  var pid=btn.getAttribute('data-pid'); _fbTouch(pid);
   if(currentProj)saveProjAreas();
   var projs=loadProjs();
   for(var i=0;i<projs.length;i++){
@@ -6776,7 +6786,7 @@ function renderNHome(){
   // Recent jobs
   var ps=[]; try{ ps=loadProjs(); }catch(e){}
   var jobs=ps.filter(function(p){ return (p.estItems&&p.estItems.length)||p.invoice; });
-  jobs.sort(function(a,b){ var ta=Math.max(_nvDate(a.created),Date.parse((a.signReq&&a.signReq.sentAt)||'')||0,_nvDate(a.estSentDate)), tb=Math.max(_nvDate(b.created),Date.parse((b.signReq&&b.signReq.sentAt)||'')||0,_nvDate(b.estSentDate)); return tb-ta; });
+  jobs.sort(function(a,b){ var ta=Math.max(Date.parse(a.touchedAt||'')||0,_nvDate(a.created),Date.parse((a.signReq&&a.signReq.sentAt)||'')||0,_nvDate(a.estSentDate)), tb=Math.max(Date.parse(b.touchedAt||'')||0,_nvDate(b.created),Date.parse((b.signReq&&b.signReq.sentAt)||'')||0,_nvDate(b.estSentDate)); return tb-ta; });
   h+='<div class="nh-sec"><span>Recent jobs</span><a id="nhAll">All jobs ›</a></div><div class="nh-list">';
   if(!jobs.length) h+='<div class="nh-ok" style="margin:0">No jobs yet — start with a takeoff or an estimate.</div>';
   var L={none:'Draft',sent:'Sent',approved:'Approved',rejected:'Rejected'};
@@ -7677,6 +7687,7 @@ window.generateInvoicePDF=generateInvoicePDF;
 (function(){ var _re=renderEst; renderEst=function(){ var r=_re.apply(this,arguments); try{ if(window._wlSyncSummary) window._wlSyncSummary(); }catch(e){} try{ renderJobHeader(); }catch(e){} try{ renderOptBar(); }catch(e){} return r; }; window.renderEst=renderEst; })();
 
 function openJobFromList(pid){
+  _fbTouch(pid);
   if(currentProj && currentProj.id === pid){
     // Already active - just go to items tab
     showEP('items', document.getElementById('et1'));
