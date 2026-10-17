@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#3fb950">
+<script>try{var _t=localStorage.getItem('fb6_theme');if(_t==='light'||_t==='dark')document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="FieldBid">
@@ -736,7 +737,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 .ob-add.sm{padding:5px 12px;font-size:12px;border-radius:999px;}
 /* ══ NOVO stage 1: tokens (follow the phone's light/dark mode), new home, bottom nav ══ */
 :root{--n-bg:#f1f3ee;--n-surface:#fff;--n-surface2:#f6f8f4;--n-border:#e1e6de;--n-text:#14201a;--n-muted:#5c6862;--n-green:#1e6334;--n-green-ink:#1e6334;--n-green-soft:#e6f0e6;--n-amber:#b86e07;--n-blue:#2453b8;--n-blue-soft:#e8eefb;--n-red:#b93229;--n-shadow:0 1px 0 rgba(20,32,26,.05),0 6px 16px rgba(20,32,26,.06);--n-nav:#ffffffee;--n-font-d:'Archivo','Inter',-apple-system,sans-serif;--n-font-m:'Inter',-apple-system,sans-serif;}
-@media (prefers-color-scheme:dark){:root{--n-bg:#0e1411;--n-surface:#161e1a;--n-surface2:#1b2520;--n-border:#263129;--n-text:#e8efe9;--n-muted:#93a19a;--n-green:#2f8f4c;--n-green-ink:#6fdc8c;--n-green-soft:#183022;--n-amber:#f0b429;--n-blue:#7aa7ff;--n-blue-soft:#18233a;--n-red:#f87171;--n-shadow:none;--n-nav:#121a16f2;}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--n-bg:#0e1411;--n-surface:#161e1a;--n-surface2:#1b2520;--n-border:#263129;--n-text:#e8efe9;--n-muted:#93a19a;--n-green:#2f8f4c;--n-green-ink:#6fdc8c;--n-green-soft:#183022;--n-amber:#f0b429;--n-blue:#7aa7ff;--n-blue-soft:#18233a;--n-red:#f87171;--n-shadow:none;--n-nav:#121a16f2;}} :root[data-theme="dark"]{--n-bg:#0e1411;--n-surface:#161e1a;--n-surface2:#1b2520;--n-border:#263129;--n-text:#e8efe9;--n-muted:#93a19a;--n-green:#2f8f4c;--n-green-ink:#6fdc8c;--n-green-soft:#183022;--n-amber:#f0b429;--n-blue:#7aa7ff;--n-blue-soft:#18233a;--n-red:#f87171;--n-shadow:none;--n-nav:#121a16f2;}
 #home{background:var(--n-bg)!important;font-family:var(--n-font-m)!important;}
 #home > :not(#nhome){display:none!important;}
 #nhome{color:var(--n-text);padding-bottom:96px;}
@@ -783,7 +784,7 @@ body.nv-hide #fieldFab,body.nv-hide #estFab{bottom:24px!important;}
 .nvm-ic{font-size:20px;width:28px;text-align:center;} .nvm-i b{display:block;font-size:14px;} .nvm-i small{display:block;font-size:11.5px;color:#8b98a5;}
 /* ══ NOVO stage 2: Takeoff ══ */
 :root{--n-c-cc:#1f8a4c;--n-c-oc:#2f6fd6;--n-c-fg:#d49a12;--n-c-cel:#8a5a2b;--n-c-mw:#7b5ab8;--n-seg:#e7ebe4;}
-@media (prefers-color-scheme:dark){:root{--n-c-cc:#4ade80;--n-c-oc:#7aa7ff;--n-c-fg:#f0b429;--n-c-cel:#d7a26f;--n-c-mw:#b59cf0;--n-seg:#1b2520;}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--n-c-cc:#4ade80;--n-c-oc:#7aa7ff;--n-c-fg:#f0b429;--n-c-cel:#d7a26f;--n-c-mw:#b59cf0;--n-seg:#1b2520;}} :root[data-theme="dark"]{--n-c-cc:#4ade80;--n-c-oc:#7aa7ff;--n-c-fg:#f0b429;--n-c-cel:#d7a26f;--n-c-mw:#b59cf0;--n-seg:#1b2520;}
 #field-app{background:var(--n-bg)!important;color:var(--n-text);font-family:var(--n-font-m);min-height:100vh;}
 #field-app .app-hd{background:transparent!important;border:none!important;padding:16px 16px 10px!important;gap:8px;}
 #backField,#field-app .app-hd > .back-btn,#btnOpenProj,#field-app .tabs{display:none!important;}
@@ -964,7 +965,7 @@ body.nv-jobs #estFab{display:none!important;}
 .toast{background:var(--n-green)!important;color:#fff!important;}
 
 /* stage 4 fixes: Settings blocks, Material cost box, quote table, photo/change buttons, invoice amounts */
-:root{--n-amber-soft:#fbf1df;} @media (prefers-color-scheme:dark){:root{--n-amber-soft:#2c2414;}}
+:root{--n-amber-soft:#fbf1df;} @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--n-amber-soft:#2c2414;}} :root[data-theme="dark"]{--n-amber-soft:#2c2414;}
 #ep-settings .st-g,#ep-products .st-g,.st-row{background:var(--n-surface)!important;border-color:var(--n-border)!important;box-shadow:var(--n-shadow);}
 .st-lbl{color:var(--n-text)!important;}
 .st-inp{background:var(--n-surface2)!important;border-color:var(--n-border)!important;color:var(--n-text)!important;}
@@ -1070,6 +1071,18 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .bk-h{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--n-muted,#8b98a5);margin:12px 0 6px;}
 .bk-h span{text-transform:none;letter-spacing:0;font-weight:600;margin-left:6px;}
 .n5b-a{font-size:11.5px;color:var(--n-amber);margin-top:4px;}
+
+.js-sort{align-items:center;margin-top:-2px;}
+.js-lbl{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--n-muted,#7d8590);margin-right:2px;}
+.nh-sort{display:flex;gap:6px;padding:0 20px 8px;}
+.nh-sort button{border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-muted);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;font-family:var(--n-font-m);}
+.nh-sort button.on{background:var(--n-green-soft);border-color:var(--n-green);color:var(--n-green-ink);}
+:root[data-theme="light"]{color-scheme:light;} :root[data-theme="dark"]{color-scheme:dark;}
+
+.th-seg{display:flex;gap:6px;padding:4px 14px 14px;}
+.th-seg button{flex:1;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:10px 6px;font-size:14px;font-weight:800;font-family:var(--n-font-m);display:flex;flex-direction:column;align-items:center;gap:2px;}
+.th-seg button small{font-size:10.5px;font-weight:600;color:var(--n-muted);}
+.th-seg button.on{background:var(--n-green-soft);border-color:var(--n-green);color:var(--n-green-ink);}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1185,7 +1198,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-1500</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-1700</span></div>
 </div>
 
 <div id="field-app">
@@ -1397,6 +1410,8 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
     <div id="productList"></div>
   </div>
   <div id="ep-settings" class="page">
+<div class="st-g"><div class="st-t" style="color:var(--n-green-ink,#6fdc8c)">🌓 Appearance</div>
+<div class="th-seg" id="themeSeg"><button type="button" data-th="auto">Auto<small>like the phone</small></button><button type="button" data-th="light">☀️ Light</button><button type="button" data-th="dark">🌙 Dark</button></div></div>
     <div class="st-g"><div class="st-t" style="color:#93c5fd">✍️ Your signature (Green Idea)</div><div id="mySigBox" style="padding:4px 14px 12px"></div></div>
     <div style="padding:12px 14px 0">
       <button id="btnShowContract" class="nav-pill-btn">
@@ -3419,6 +3434,15 @@ window._phRefreshOpen=function(){
   if(got){ try{ saveFA(); }catch(e){} try{ saveEI(); }catch(e){} try{ renderFA(); }catch(e){} try{ renderEst(); }catch(e){} try{ renderFWO(); }catch(e){} try{ renderEWO(); }catch(e){} }
 };
 // "Recent jobs" = the jobs you opened or changed last.
+function _jobDate(s){ var p=String(s||'').split('/'); if(p.length===3){ var d=new Date(+p[2],+p[0]-1,+p[1]); if(!isNaN(d)) return d.getTime(); } var t=Date.parse(s||''); return isNaN(t)?0:t; }
+function _sortJobs(list,mode){
+  var idx={}; for(var i=0;i<list.length;i++) idx[list[i].id]=i;
+  function created(p){ var c=_jobDate(p.created); if(!c){ var m=String(p.id||'').match(/(\d{13})/); if(m) c=Number(m[1]); } return c; }
+  function worked(p){ return Math.max(Date.parse(p.touchedAt||'')||0, created(p), Date.parse((p.signReq&&p.signReq.sentAt)||'')||0, _jobDate(p.estSentDate)); }
+  var key=mode==='created'?created:worked;
+  return list.slice().sort(function(a,b){ var d=key(b)-key(a); return d!==0?d:(idx[a.id]-idx[b.id]); });
+}
+window._sortJobs=_sortJobs;
 function _fbTouch(pid){
   setTimeout(function(){ try{ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){
     var last=Date.parse(ps[i].touchedAt||'')||0; if(Date.now()-last<60000) return;   // at most once a minute
@@ -6531,7 +6555,10 @@ function renderJobsList(){
   for(var _k=0;_k<_chips.length;_k++){ var _ck=_chips[_k][0]; if(_ck!=='all'&&!_cnt[_ck]&&_SF!==_ck) continue;
     h+='<button type="button" class="jf'+(_SF===_ck?' on':'')+'" data-act="filter" data-st="'+_ck+'">'+_chips[_k][1]+' <span>'+_cnt[_ck]+'</span></button>'; }
   h+='</div>';
+  var _JS='worked'; try{ _JS=localStorage.getItem('fb6_jobsSort')||'worked'; }catch(e){}
+  h+='<div class="jf-row js-sort"><span class="js-lbl">Sort</span><button type="button" class="jf'+(_JS==='worked'?' on':'')+'" data-act="jsort" data-v="worked">↻ Last worked</button><button type="button" class="jf'+(_JS==='created'?' on':'')+'" data-act="jsort" data-v="created">📅 Created</button></div>';
   if(_SF!=='all') projs=projs.filter(function(p){ return (p.estStatus||'none')===_SF; });
+  projs=_sortJobs(projs,_JS);
   if(!projs.length) h+='<div style="text-align:center;padding:30px 20px;color:#4d5560;font-size:13px">No jobs with this status.</div>';
   var _STL={none:'Draft',sent:'Sent',approved:'Approved',rejected:'Rejected'};
   for(var i=0; i<projs.length; i++){
@@ -6587,6 +6614,7 @@ function _bindJobsList(container){
     var act = btn.getAttribute('data-act');
     var pid = btn.getAttribute('data-pid');
     if(act === 'filter'){ window._jobStatusF=btn.getAttribute('data-st'); renderJobsList(); return; }
+    if(act === 'jsort'){ try{ localStorage.setItem('fb6_jobsSort',btn.getAttribute('data-v')); }catch(_e){} renderJobsList(); return; }
     if(act === 'pipe'){ var _v=btn.getAttribute('data-v'); window._pipeView=(window._pipeView===_v)?'':_v; renderJobsList(); try{ newContainer.scrollIntoView({block:'start'}); }catch(_e){} return; }
     if(act === 'pipeback'){ window._pipeView=''; renderJobsList(); return; }
     if(act === 'fu'){ _pipeMail(pid,'fu'); return; }
@@ -6786,8 +6814,9 @@ function renderNHome(){
   // Recent jobs
   var ps=[]; try{ ps=loadProjs(); }catch(e){}
   var jobs=ps.filter(function(p){ return (p.estItems&&p.estItems.length)||p.invoice; });
-  jobs.sort(function(a,b){ var ta=Math.max(Date.parse(a.touchedAt||'')||0,_nvDate(a.created),Date.parse((a.signReq&&a.signReq.sentAt)||'')||0,_nvDate(a.estSentDate)), tb=Math.max(Date.parse(b.touchedAt||'')||0,_nvDate(b.created),Date.parse((b.signReq&&b.signReq.sentAt)||'')||0,_nvDate(b.estSentDate)); return tb-ta; });
-  h+='<div class="nh-sec"><span>Recent jobs</span><a id="nhAll">All jobs ›</a></div><div class="nh-list">';
+  var _HS='worked'; try{ _HS=localStorage.getItem('fb6_homeSort')||'worked'; }catch(e){}
+  jobs=_sortJobs(jobs,_HS);
+  h+='<div class="nh-sec"><span>Recent jobs</span><a id="nhAll">All jobs ›</a></div><div class="nh-sort"><button type="button" data-hs="worked" class="'+(_HS==='worked'?'on':'')+'">↻ Last worked</button><button type="button" data-hs="created" class="'+(_HS==='created'?'on':'')+'">📅 Created</button></div><div class="nh-list">';
   if(!jobs.length) h+='<div class="nh-ok" style="margin:0">No jobs yet — start with a takeoff or an estimate.</div>';
   var L={none:'Draft',sent:'Sent',approved:'Approved',rejected:'Rejected'};
   for(var i=0;i<Math.min(3,jobs.length);i++){ var p=jobs[i], s=p.estStatus||'none', qi=p.quoteInfo||{}, t=L[s]||'Draft';
@@ -6804,6 +6833,7 @@ function renderNHome(){
   document.getElementById('nhNewT').onclick=function(){ var b=document.getElementById('btnField'); if(b) b.click(); nvMark(); };
   document.getElementById('nhNewE').onclick=function(){ nvGo('est'); var b=document.getElementById('newEstBtn'); if(b) b.click(); };
   document.getElementById('nhAll').onclick=function(){ nvGo('jobs'); };
+  var _hsb=box.querySelectorAll('.nh-sort [data-hs]'); for(var _q=0;_q<_hsb.length;_q++){ _hsb[_q].onclick=function(){ try{ localStorage.setItem('fb6_homeSort',this.getAttribute('data-hs')); }catch(e){} renderNHome(); }; }
   var tl=box.querySelectorAll('.nh-tile'); for(var a=0;a<tl.length;a++){ tl[a].onclick=function(){ window._pipeView=this.getAttribute('data-pv'); nvGo('jobs'); try{ renderJobsList(); }catch(e){} }; }
   var jb=box.querySelectorAll('.nh-job'); for(var b2=0;b2<jb.length;b2++){ jb[b2].onclick=function(){ var pid=this.getAttribute('data-pid'); nvShow('est'); try{ openJobFromList(pid); }catch(e){} nvMark(); }; }
   var dc=box.querySelectorAll('.nh-m'); for(var c=0;c<dc.length;c++){ dc[c].onclick=function(){ var hb=document.getElementById(this.getAttribute('data-hb')); if(hb) hb.click(); }; }
@@ -11002,6 +11032,20 @@ document.addEventListener('click', function(ev){
     }
   },{passive:false});
 })();
+
+// Appearance: Auto (follows the phone) / Light / Dark — saved on this phone only.
+function fbThemeSet(v){
+  try{ if(v==='light'||v==='dark') localStorage.setItem('fb6_theme',v); else localStorage.removeItem('fb6_theme'); }catch(e){}
+  if(v==='light'||v==='dark') document.documentElement.setAttribute('data-theme',v); else document.documentElement.removeAttribute('data-theme');
+  fbThemeMark();
+}
+function fbThemeMark(){
+  var cur='auto'; try{ cur=localStorage.getItem('fb6_theme')||'auto'; }catch(e){}
+  var bs=document.querySelectorAll('#themeSeg [data-th]'); for(var i=0;i<bs.length;i++) bs[i].className=(bs[i].getAttribute('data-th')===cur)?'on':'';
+}
+(function(){ var seg=document.getElementById('themeSeg'); if(!seg) return;
+  seg.addEventListener('click',function(e){ var b=e.target.closest('[data-th]'); if(b) fbThemeSet(b.getAttribute('data-th')); });
+  fbThemeMark(); })();
 </script>
 </body>
 </html>
