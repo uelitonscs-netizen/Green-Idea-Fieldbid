@@ -1083,6 +1083,32 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .th-seg button{flex:1;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:10px 6px;font-size:14px;font-weight:800;font-family:var(--n-font-m);display:flex;flex-direction:column;align-items:center;gap:2px;}
 .th-seg button small{font-size:10.5px;font-weight:600;color:var(--n-muted);}
 .th-seg button.on{background:var(--n-green-soft);border-color:var(--n-green);color:var(--n-green-ink);}
+
+#importOverlay .modal p#importDesc{color:var(--n-muted)!important;}
+#importOverlay .imp-row{border-bottom-color:var(--n-border)!important;}
+#importOverlay .imp-name{color:var(--n-text)!important;font-size:14px;}
+#importOverlay .imp-meta{color:var(--n-muted)!important;}
+#importOverlay .imp-chk{border-color:var(--n-border)!important;color:#fff;}
+#importOverlay .imp-chk.on{background:var(--n-green)!important;border-color:var(--n-green)!important;}
+#importOverlay .imp-replace{background:var(--n-amber-soft,#fbf1df)!important;border-color:var(--n-amber)!important;}
+#importOverlay .imp-replace-txt{color:var(--n-text)!important;}
+#importOverlay .imp-replace-txt strong{color:var(--n-amber)!important;}
+#importOverlay .imp-replace .imp-chk.on{background:var(--n-amber)!important;border-color:var(--n-amber)!important;}
+#importOverlay .imp-proj{background:var(--n-surface2)!important;border-color:var(--n-border)!important;}
+#importOverlay .imp-proj-name{color:var(--n-text)!important;}
+#importOverlay .imp-proj-meta{color:var(--n-muted)!important;}
+.n7-st{font-size:11.5px;font-weight:700;margin-top:3px;color:var(--n-muted);}
+.n7-st.new{color:var(--n-green-ink);} .n7-st.upd{color:var(--n-amber);} .n7-st.same{color:var(--n-muted);}
+.n7-to{color:var(--n-blue);font-weight:700;}
+#n7Dest{margin:0 0 12px;}
+.n7-h{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--n-muted);margin-bottom:6px;}
+.n7-opts{display:flex;gap:8px;}
+.n7-opt{flex:1;text-align:left;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;font-family:var(--n-font-m);}
+.n7-opt b{font-size:14px;} .n7-opt small{font-size:11.5px;color:var(--n-muted);}
+.n7-opt.on{border-color:var(--n-green);background:var(--n-green-soft);}
+.n7-opt.on b{color:var(--n-green-ink);}
+.n7-lbl{display:block;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--n-muted);margin:10px 0 4px;}
+.n7-name{width:100%;box-sizing:border-box;border:1.5px solid var(--n-green);background:var(--n-surface);color:var(--n-text);border-radius:10px;padding:11px 12px;font-size:16px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1198,7 +1224,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-1700</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-1800</span></div>
 </div>
 
 <div id="field-app">
@@ -1791,7 +1817,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
     <div class="mhandle"></div>
     <div class="mtitle" id="importTitle">Import from Field Takeoff</div>
     <p style="font-size:13px;color:#7d8590;margin-bottom:14px" id="importDesc">Choose a project to import.</p>
-    <div class="imp-replace" id="importReplaceWrap" style="display:none"><button class="imp-chk on" id="importReplaceChk" type="button">✓</button><div class="imp-replace-txt"><strong>Replace current items</strong> (<span id="importReplaceCount">0</span> in estimator)<br>Uncheck to add to existing items instead.</div></div>
+    <div class="imp-replace" id="importReplaceWrap" style="display:none"><button class="imp-chk on" id="importReplaceChk" type="button">✓</button><div class="imp-replace-txt"><strong>Start over</strong> — delete the <span id="importReplaceCount">0</span> items now in this estimate first<br>Leave unchecked to keep them (recommended)</div></div>
     <div id="importDestWrap" style="display:none;background:#0f1c2e;border:1px solid #2a4a6a;border-radius:10px;padding:11px 13px;margin-bottom:12px">
       <div style="font-size:11px;color:#60a5fa;font-weight:700;letter-spacing:.05em;margin-bottom:8px">IMPORTAR PARA</div>
       <div style="display:flex;gap:8px">
@@ -9285,6 +9311,7 @@ function doImport(){
   var replaceChk=document.getElementById('importReplaceChk');
   var doReplace=replaceChk&&replaceChk.classList.contains('on')&&estItems.length>0;
   if(doReplace){estItems=[];window.estItems=estItems;}
+  var _n7used={};
   for(var i=0;i<src.length;i++){
     if(!importSel[i])continue;
     var a=src[i];
@@ -9335,20 +9362,8 @@ function doImport(){
     else if(a.celInch>0) _importInch=parseFloat(a.celInch);
     var _newProdId=_useProd?_useProd.id:(pr?pr.id:a.productId);
     // Check if item with same name AND same product AND same SF exists → UPDATE, else ADD new
-    var _existIdx=-1;
-    var _aMtype=a.matType||a.matCat||'';
-    var _aNewProdId=_newProdId||'';
-    var _aSF=parseFloat(a.sf)||0;
-    for(var _ei2=0;_ei2<estItems.length;_ei2++){
-      var _eiProd=estItems[_ei2].productId||'';
-      var _eiMtype=estItems[_ei2].matType||estItems[_ei2].matCat||'';
-      var _eiSF=parseFloat(estItems[_ei2].sf)||0;
-      // Match name + product + SF — same name same product different SF = different item
-      var _nameMatch=estItems[_ei2].name===a.name;
-      var _matMatch=(_aNewProdId&&_eiProd)?(_eiProd===_aNewProdId):(_eiMtype===_aMtype);
-      var _sfMatch=Math.abs(_eiSF-_aSF)<0.5;
-      if(_nameMatch && _matMatch && _sfMatch){_existIdx=_ei2;break;}
-    }
+    // Same area = same NAME (each item is used once; same SF first). Never duplicates an item.
+    var _existIdx=_n7Match(estItems,a,_n7used); if(_existIdx>=0) _n7used[_existIdx]=1;
     // Determine if this product is priced per-inch; if so store pricePerInch and compute line price
     var _prodForCalc=_newProdId?getProd(_newProdId):null;
     var _isPerInchImport=_prodForCalc&&_prodForCalc.pricingType==='per_inch';
@@ -9365,14 +9380,12 @@ function doImport(){
       matType:a.matType||a.matCat||'',matCat:a.matCat||'',ccInch:a.ccInch||0,ocInch:a.ocInch||0,fgR:a.fgR||0,celR:a.celR||0,mwR:a.mwR||0,
       spec:a.spec||'',fromArea:a.name||''};
     if(_existIdx>=0){
-      // Update existing: keep user-edited price if set
-      var _old=estItems[_existIdx];
-      if(_old.price&&_old.price>0){
-        _newItem.price=_old.price;
-        _newItem.pricePerInch=_old.pricePerInch||0;
-      }
-      _newItem.photos=_old.photos&&_old.photos.length?_old.photos:_newItem.photos;
-      estItems[_existIdx]=_newItem;
+      // Update: only the size and the measurements change. The estimator's price, material,
+      // notes and photos are kept (they may have been adjusted for the client).
+      var _old=estItems[_existIdx], _upd=JSON.parse(JSON.stringify(_old));
+      _upd.sf=a.sf; _upd.calcMode=_newItem.calcMode; _upd.wallRows=_newItem.wallRows; _upd.floorRows=_newItem.floorRows; _upd.fromArea=a.name||_upd.fromArea;
+      if(!(_upd.photos&&_upd.photos.length)) _upd.photos=_newItem.photos;
+      estItems[_existIdx]=_upd;
     } else {
       estItems.push(_newItem);
     }
@@ -9439,6 +9452,100 @@ function doImport(){
   closeOv('importOverlay');
   toast('✅ '+added+' area'+(added>1?'s':'')+' imported');
 }
+
+// ══ Send to Estimator: destination (this estimate / a NEW estimate) + what happens to each area ══
+var _n7={send:false,dest:'current',name:''};
+function _n7Norm(x){ return String(x||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function _n7Match(items,a,used){
+  var nm=_n7Norm(a.name), c=[];
+  for(var i=0;i<items.length;i++){ if(used&&used[i]) continue; if(_n7Norm(items[i].name)===nm||_n7Norm(items[i].fromArea)===nm) c.push(i); }
+  if(!c.length) return -1;
+  var sf=parseFloat(a.sf)||0;
+  for(var k=0;k<c.length;k++){ if(Math.abs((parseFloat(items[c[k]].sf)||0)-sf)<0.5) return c[k]; }
+  return c[0];
+}
+function _n7Mat(a){
+  var pr=null; try{ pr=a.productId?getProd(a.productId):null; }catch(e){}
+  if(pr) return pr.name;
+  var t=String(a.matType||a.matCat||'').toLowerCase(), m;
+  if(t==='hybrid') return 'Hybrid'+(a.ccInch?' '+a.ccInch+'" cc + '+(a.ocInch||'?')+'" oc':'');
+  if(t==='cc') return 'Closed cell'+(a.ccInch?' '+a.ccInch+'"':'');
+  if(t==='oc') return 'Open cell'+(a.ocInch?' '+a.ocInch+'"':'');
+  if(/^fg/.test(t)){ m=t.match(/r(\d+)/); return 'Fiberglass'+((a.fgR||m)?' R-'+(a.fgR||m[1]):''); }
+  if(/^mw/.test(t)){ m=t.match(/r(\d+)/); return 'Roxul'+((a.mwR||m)?' R-'+(a.mwR||m[1]):''); }
+  if(/^cel/.test(t)) return 'Cellulose'; if(t==='ign'||t==='ignition') return 'Ignition barrier';
+  if(t==='insulation_removal') return 'Insulation removal';
+  return a.spec||'No material set';
+}
+function _n7Base(n){ return String(n||'').replace(/\s+—\s+.*$/,'').trim()||String(n||''); }
+function _n7NextName(n){ var base=_n7Base(n), ps=loadProjs(), names={}, k=2; for(var i=0;i<ps.length;i++) names[_n7Norm(ps[i].name)]=1; while(names[_n7Norm(base+' — '+k)]) k++; return base+' — '+k; }
+function _n7Rows(){
+  var L=document.getElementById('importList'); if(!L||!_importAreas||!_importAreas.length) return;
+  var used={}, h='', cur=_n7Norm(currentProj&&currentProj.name);
+  for(var i=0;i<_importAreas.length;i++){
+    var a=_importAreas[i], st, cls, idx=_n7Match(estItems,a,used); if(idx>=0) used[idx]=1;
+    var toNew=_n7.send&&_n7.dest==='new';
+    if(toNew||idx<0){ st='+ New'; cls='new'; }
+    else { var it=estItems[idx], o=parseFloat(it.sf)||0, n=parseFloat(a.sf)||0;
+      if(Math.round(o)===Math.round(n)){ st='= Same'; cls='same'; } else { st='↻ Update · '+fmtN(o)+' → '+fmtN(n)+' SF · keeps $'+(Number(it.price)||0).toFixed(2)+'/SF'; cls='upd'; } }
+    var elsewhere=!!(a.sentTo&&(toNew||_n7Norm(a.sentTo)!==cur));
+    var def=!_n7.send?true:(toNew?(!a.sentTo&&idx<0):!elsewhere);
+    importSel[i]=def;
+    h+='<div class="imp-row"><button class="imp-chk'+(def?' on':'')+'" data-idx="'+i+'" id="ic'+i+'" data-act="imp">'+(def?'✓':'')+'</button><div style="flex:1;min-width:0"><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+esc(_n7Mat(a))+'</div><div class="n7-st '+cls+'">'+esc(st)+(a.sentTo?' <span class="n7-to">→ in '+esc(a.sentTo)+'</span>':'')+'</div></div></div>';
+  }
+  L.innerHTML=h;
+}
+function _n7DestUI(){
+  var box=document.getElementById('n7Dest'), rw=document.getElementById('importReplaceWrap');
+  if(!box&&rw){ box=document.createElement('div'); box.id='n7Dest'; rw.parentNode.insertBefore(box,rw);
+    box.addEventListener('click',function(e){ var b=e.target.closest('[data-n7d]'); if(!b) return; _n7.dest=b.getAttribute('data-n7d'); _n7DestUI(); _n7Rows(); if(_n7.dest==='new'){ var inp=document.getElementById('n7Name'); if(inp) setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(x){} },60); } });
+    box.addEventListener('input',function(e){ if(e.target&&e.target.id==='n7Name') _n7.name=e.target.value; }); }
+  if(!box) return;
+  if(!_n7.send){ box.style.display='none'; return; }
+  var nm=(currentProj&&currentProj.name)||'Job', cnt=(estItems||[]).length;
+  if(!_n7.name) _n7.name=_n7NextName(nm);
+  box.style.display='block';
+  box.innerHTML='<div class="n7-h">Send to</div><div class="n7-opts"><button type="button" class="n7-opt'+(_n7.dest==='current'?' on':'')+'" data-n7d="current"><b>'+esc(nm)+'</b><small>this estimate · '+cnt+' item'+(cnt!==1?'s':'')+'</small></button><button type="button" class="n7-opt'+(_n7.dest==='new'?' on':'')+'" data-n7d="new"><b>+ New estimate</b><small>separate job · same client</small></button></div>'+
+    (_n7.dest==='new'?'<label class="n7-lbl">Name of the new estimate</label><input id="n7Name" class="n7-name" value="'+esc(_n7.name)+'" autocomplete="off">':'');
+  if(rw) rw.style.display=(_n7.dest==='new'||!cnt)?'none':'flex';
+  var ds=document.getElementById('importDesc');
+  if(ds) ds.textContent=_n7.dest==='new'?'The checked areas become a separate estimate for the same client. This job keeps all its areas.':'Items already in this estimate are updated (your price, material and notes are kept). Nothing is duplicated.';
+}
+var _n7SA=showImportAreas; showImportAreas=function(pid){ var r=_n7SA.apply(this,arguments); try{ _n7DestUI(); _n7Rows(); }catch(e){ console.warn('n7',e&&e.message); } return r; };
+var _n7SP=showImportProjects; showImportProjects=function(){ _n7.send=false; var b=document.getElementById('n7Dest'); if(b) b.style.display='none'; return _n7SP.apply(this,arguments); };
+var _n7ST=sendTakeoffToEstimate; sendTakeoffToEstimate=function(){ _n7.send=true; _n7.dest='current'; _n7.name=''; var r=_n7ST.apply(this,arguments); try{ _n7DestUI(); }catch(e){} return r; };
+window.sendTakeoffToEstimate=sendTakeoffToEstimate;
+var _n7DI=doImport; doImport=function(){
+  if(!(_n7.send&&_n7.dest==='new')) return _n7DI.apply(this,arguments);
+  var sel=[]; for(var i=0;i<_importAreas.length;i++) if(importSel[i]) sel.push(i);
+  if(!sel.length){ toast('Check at least one area','err'); return; }
+  var name=String((document.getElementById('n7Name')||{}).value||_n7.name||'').trim();
+  if(!name){ toast('Give the new estimate a name','err'); return; }
+  try{ saveProjAreas(); }catch(e){}
+  var ps=loadProjs(), src=null, si=-1;
+  for(var j=0;j<ps.length;j++){ if(ps[j].id===_importProjId){ src=ps[j]; si=j; break; } }
+  if(!src){ toast('Project not found','err'); return; }
+  var q=src.quoteInfo||{}, now=new Date();
+  var nj={id:'p_'+now.getTime(), name:name, address:src.address||q.address||'', created:now.toLocaleDateString('en-US'), areas:[], estItems:[], estStatus:'none',
+          quoteInfo:{client:name,address:q.address||src.address||'',phone:q.phone||'',email:q.email||''}, splitFrom:src.name||'', touchedAt:now.toISOString()};
+  for(var k=0;k<sel.length;k++){ var ar=JSON.parse(JSON.stringify(_importAreas[sel[k]])); delete ar.sentTo; nj.areas.push(ar); }
+  for(k=0;k<sel.length;k++){ if(src.areas&&src.areas[sel[k]]) src.areas[sel[k]].sentTo=name; }
+  ps.splice(si+1,0,nj); saveProjs(ps);
+  // The new job becomes the open one; its areas are priced the usual way.
+  currentProj=nj; window.currentProj=nj; estItems=[]; window.estItems=estItems;
+  quoteInfo=JSON.parse(JSON.stringify(nj.quoteInfo)); window.quoteInfo=quoteInfo;
+  fieldAreas=JSON.parse(JSON.stringify(nj.areas)); window.fieldAreas=fieldAreas;
+  try{ localStorage.setItem('fb6_ei','[]'); localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); localStorage.setItem('fb6_fa',JSON.stringify(fieldAreas)); }catch(e){}
+  _importProjId=nj.id; _importProjName=name; _importProjAddress=nj.address;
+  _importAreas=JSON.parse(JSON.stringify(nj.areas)); importSel={}; for(k=0;k<_importAreas.length;k++) importSel[k]=true;
+  var rchk=document.getElementById('importReplaceChk'); if(rchk){ rchk.classList.remove('on'); rchk.textContent=''; }
+  window._impDest='current'; _n7.send=false;
+  var r=_n7DI.apply(this,arguments);
+  try{ quoteInfo.client=name; currentProj.name=name; var p2=loadProjs(); for(var z=0;z<p2.length;z++){ if(p2[z].id===nj.id){ p2[z].name=name; p2[z].quoteInfo=JSON.parse(JSON.stringify(quoteInfo)); break; } } saveProjs(p2); }catch(e){}
+  try{ updateProjHeader(); }catch(e){} try{ renderEst(); renderQuote(); }catch(e){}
+  toast('📋 New estimate "'+name+'" · '+sel.length+' item'+(sel.length!==1?'s':''));
+  return r;
+};
 function showImportProjects(){
   _importProjId=null;_importAreas=[];
   var titleEl=document.getElementById('importTitle');
@@ -9504,7 +9611,7 @@ function showImportAreas(pid){
     if(estItems.length>0){
       rw.style.display='flex';
       if(rc)rc.textContent=estItems.length;
-      if(rchk){rchk.classList.add('on');rchk.textContent='✓';}
+      if(rchk){rchk.classList.remove('on');rchk.textContent='';}   // never wipe the estimate by default
     } else {
       rw.style.display='none';
     }
