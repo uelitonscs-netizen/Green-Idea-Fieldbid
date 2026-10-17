@@ -1111,6 +1111,17 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .n7-name{width:100%;box-sizing:border-box;border:1.5px solid var(--n-green);background:var(--n-surface);color:var(--n-text);border-radius:10px;padding:11px 12px;font-size:16px;}
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]) #matCostBox [style*="color:#fde68a"]{color:#6b4a12!important;}:root:not([data-theme="dark"]) #matCostBox [style*="color:#fbbf24"]{color:#9a5800!important;}:root:not([data-theme="dark"]) #matCostBox [style*="color:#a16207"]{color:#86682f!important;}:root:not([data-theme="dark"]) #matCostBox [style*="color:#4ade80"]{color:#1d7a3a!important;}:root:not([data-theme="dark"]) #matCostBox input{color:#7a4300!important;background:#fffdf7!important;border-color:#e2c48c!important;}:root:not([data-theme="dark"]) #matCostBox [style*="background:#0f0a03"]{background:#fbf3e2!important;}:root:not([data-theme="dark"]) #matCostBox [style*="border-top:1px solid #78350f"]{border-top-color:#ead9b8!important;}:root:not([data-theme="dark"]) #matCostBox [style*="border-top:2px solid #78350f"]{border-top-color:#d9b77a!important;}:root:not([data-theme="dark"]) #matCostBox #matCostEditBtn{color:#9a5800!important;background:#fff6e5!important;border-color:#e2c48c!important;}:root:not([data-theme="dark"]) .act-btn{background:var(--n-surface)!important;color:var(--n-text)!important;border:1px solid var(--n-border)!important;}:root:not([data-theme="dark"]) #btnShowWO{color:var(--n-blue)!important;}:root:not([data-theme="dark"]) #sendWLBtn{background:var(--n-green)!important;color:#fff!important;}}
 :root[data-theme="light"] #matCostBox [style*="color:#fde68a"]{color:#6b4a12!important;}:root[data-theme="light"] #matCostBox [style*="color:#fbbf24"]{color:#9a5800!important;}:root[data-theme="light"] #matCostBox [style*="color:#a16207"]{color:#86682f!important;}:root[data-theme="light"] #matCostBox [style*="color:#4ade80"]{color:#1d7a3a!important;}:root[data-theme="light"] #matCostBox input{color:#7a4300!important;background:#fffdf7!important;border-color:#e2c48c!important;}:root[data-theme="light"] #matCostBox [style*="background:#0f0a03"]{background:#fbf3e2!important;}:root[data-theme="light"] #matCostBox [style*="border-top:1px solid #78350f"]{border-top-color:#ead9b8!important;}:root[data-theme="light"] #matCostBox [style*="border-top:2px solid #78350f"]{border-top-color:#d9b77a!important;}:root[data-theme="light"] #matCostBox #matCostEditBtn{color:#9a5800!important;background:#fff6e5!important;border-color:#e2c48c!important;}:root[data-theme="light"] .act-btn{background:var(--n-surface)!important;color:var(--n-text)!important;border:1px solid var(--n-border)!important;}:root[data-theme="light"] #btnShowWO{color:var(--n-blue)!important;}:root[data-theme="light"] #sendWLBtn{background:var(--n-green)!important;color:#fff!important;}
+
+.fb-auto-cancel{padding:12px 20px 4px;}
+.fb-auto-cancel button{width:100%;padding:13px;border-radius:12px;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);font-size:15px;font-weight:800;font-family:var(--n-font-m);}
+
+#qtyPickOv .modal{max-width:520px;}
+.qp-info{font-size:13px;color:var(--n-muted);padding:0 20px 10px;font-family:ui-monospace,monospace;}
+.qp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 20px;}
+.qp-b{padding:14px 0;border-radius:12px;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);font-size:18px;font-weight:800;font-family:var(--n-font-m);}
+.qp-b.on{border-color:var(--n-green);background:var(--n-green-soft);color:var(--n-green-ink);}
+.qp-o{grid-column:span 2;font-size:15px;}
+.qp-cancel{width:100%;padding:13px;border-radius:12px;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-text);font-size:15px;font-weight:800;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1226,7 +1237,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-1900</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-2100</span></div>
 </div>
 
 <div id="field-app">
@@ -6428,6 +6439,9 @@ function renderRoofRows(){
     (function(b){
       b.addEventListener('click',function(){
         var i=parseInt(b.getAttribute('data-rdel'),10);
+        var _rr=roofRows[i]||{}, _has=String(_rr.a||'').trim()||String(_rr.l||'').trim()||String(_rr.c||'').trim();
+        if(_has&&!b._ok){ appConfirm('Remove this roof section?\n'+String(_rr.type||'').replace(/^./,function(c){return c.toUpperCase();})+(_rr.a?' · A '+_rr.a:'')+(_rr.l?' · L '+_rr.l:'')+(_rr.c?' · C '+_rr.c:''), function(){ b._ok=true; b.click(); }, {confirmLabel:'Remove'}); return; }
+        b._ok=false;
         roofRows.splice(i,1);
         if(!roofRows.length)roofRows=[{type:'gable',a:'',l:'',c:'',pitch:'6-12'}];
         renderRoofRows();updateRoofHelp();recalcSF();
@@ -6941,6 +6955,18 @@ function n2Takeoff(){
 // ══════ NOVO stage 5 — Add Area (qty per row, mode from name, material chips), Material to bring, compact Estimator ══════
 function _n5Q(v){ return Math.max(1,Math.round(Number(v)||1)); }
 function _n5AskQty(cur,cb){ var v=prompt('Quantity (how many times this line repeats):',String(cur)); if(v===null) return; var n=Math.round(Number(String(v).replace(',','.'))); if(n>=1&&n<=999) cb(n); }
+function _n5QtyPick(cur,info,cb){
+  var ov=document.getElementById('qtyPickOv');
+  if(!ov){ ov=document.createElement('div'); ov.id='qtyPickOv'; ov.className='overlay'; ov.style.zIndex='430'; document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){ if(e.target===ov){ ov.classList.remove('on'); ov.style.display='none'; } }); }
+  var h='<div class="modal" style="padding-bottom:22px"><div class="mhandle"></div><div class="mtitle">How many times?</div>'+(info?'<div class="qp-info">'+esc(info)+'</div>':'')+'<div class="qp-grid">';
+  for(var n=1;n<=6;n++) h+='<button type="button" class="qp-b'+(n===cur?' on':'')+'" data-n="'+n+'">×'+n+'</button>';
+  h+='<button type="button" class="qp-b qp-o'+(cur>6?' on':'')+'" data-n="other">'+(cur>6?'×'+cur:'Other…')+'</button></div><div style="padding:12px 20px 0"><button type="button" class="qp-cancel" id="qtyPickCancel">Cancel</button></div></div>';
+  ov.innerHTML=h; ov.classList.add('on'); ov.style.display='flex';
+  function close(){ ov.classList.remove('on'); ov.style.display='none'; }
+  document.getElementById('qtyPickCancel').onclick=close;
+  var bs=ov.querySelectorAll('.qp-b'); for(var i=0;i<bs.length;i++) bs[i].onclick=function(){ var v=this.getAttribute('data-n'); close(); if(v==='other') _n5AskQty(cur,cb); else cb(Number(v)); };
+}
 function _n5Hold(el,onTap,onHold){
   var tm=null, held=false;
   function start(){ held=false; tm=setTimeout(function(){ held=true; onHold(); },600); } function end(){ if(tm){ clearTimeout(tm); tm=null; } }
@@ -7000,7 +7026,7 @@ function _n5RowsQty(mode){
     var w=document.createElement('div'); w.className='mrow-qw'; var q=_n5Q(rows[idx]&&rows[idx].q);
     w.innerHTML='<div class="mrow-lbl">'+(idx===0?'Qty':'')+'</div><button type="button" class="mrow-q'+(q>1?' on':'')+'" data-row="'+idx+'" data-mode="'+mode+'">×'+q+'</button>';
     var del=r.querySelector('.mrow-del'); if(del) r.insertBefore(w,del); else r.appendChild(w);
-    (function(btn,ix){ _n5Hold(btn,function(){ var R=mode==='wall'?wallRows:floorRows; var q2=_n5Q(R[ix].q); R[ix].q=q2>=9?1:q2+1; btn.textContent='×'+R[ix].q; btn.classList.toggle('on',R[ix].q>1); recalcSF(); },
+    (function(btn,ix){ _n5Hold(btn,function(){ var R=mode==='wall'?wallRows:floorRows; var r=R[ix]||{}, one=Math.round(parseSum(String(r.l||''))*(parseFloat(r.h)||0)*10)/10; _n5QtyPick(_n5Q(r.q),(r.l||r.h)?(r.l||'?')+' × '+(r.h||'?')+' = '+one.toLocaleString('en-US')+' SF each':'',function(n){ R[ix].q=n; btn.textContent='×'+n; btn.classList.toggle('on',n>1); recalcSF(); }); },
       function(){ var R=mode==='wall'?wallRows:floorRows; _n5AskQty(_n5Q(R[ix].q),function(n){ R[ix].q=n; btn.textContent='×'+n; btn.classList.toggle('on',n>1); recalcSF(); }); }); })(w.querySelector('.mrow-q'),idx);
   }
 }
@@ -7009,7 +7035,7 @@ function _n5RoofQty(){
   var blocks=cont.children; for(var i=0;i<blocks.length&&i<roofRows.length;i++){ var hd=blocks[i].firstElementChild; if(!hd||hd.querySelector('.rq')) continue;
     var q=_n5Q(roofRows[i].q), b=document.createElement('button'); b.type='button'; b.className='mrow-q rq'+(q>1?' on':''); b.textContent='×'+q; b.title='How many equal sections';
     var del=hd.querySelector('.mrow-del'); if(del) hd.insertBefore(b,del); else hd.appendChild(b);
-    (function(btn,ix){ _n5Hold(btn,function(){ var q2=_n5Q(roofRows[ix].q); roofRows[ix].q=q2>=9?1:q2+1; renderRoofRows(); recalcSF(); },
+    (function(btn,ix){ _n5Hold(btn,function(){ _n5QtyPick(_n5Q(roofRows[ix].q),'How many equal roof sections',function(n){ roofRows[ix].q=n; renderRoofRows(); recalcSF(); }); },
       function(){ _n5AskQty(_n5Q(roofRows[ix].q),function(n){ roofRows[ix].q=n; renderRoofRows(); recalcSF(); }); }); })(b,i);
   }
 }
@@ -7783,9 +7809,15 @@ var _rowClickHandler = function(e){
   var row=parseInt(btn.getAttribute('data-row'));
   var mode=btn.getAttribute('data-mode');
   if(isNaN(row)||!mode) return;
-  if(mode==='wall'){wallRows.splice(row,1);if(!wallRows.length)wallRows=[{l:'',h:''}];renderRows('wall');}
-  else{floorRows.splice(row,1);if(!floorRows.length)floorRows=[{l:'',h:''}];renderRows('floor');}
-  recalcSF();
+  function _doDel(){
+    if(mode==='wall'){wallRows.splice(row,1);if(!wallRows.length)wallRows=[{l:'',h:''}];renderRows('wall');}
+    else{floorRows.splice(row,1);if(!floorRows.length)floorRows=[{l:'',h:''}];renderRows('floor');}
+    recalcSF();
+  }
+  var _R=(mode==='wall'?wallRows:floorRows)[row]||{};
+  if(!String(_R.l||'').trim()&&!String(_R.h||'').trim()){ _doDel(); return; }   // empty line: no question
+  var _q=Math.max(1,Math.round(Number(_R.q)||1)), _sf=Math.round(parseSum(String(_R.l||''))*(parseFloat(_R.h)||0)*_q*10)/10;
+  appConfirm('Remove this line?\n'+(_R.l||'?')+' × '+(_R.h||'?')+(_q>1?' ×'+_q:'')+' = '+_sf.toLocaleString('en-US')+' SF', _doDel, {confirmLabel:'Remove'});
 };
 
 var _rowInputHandler = function(e){
@@ -11156,6 +11188,59 @@ function fbThemeMark(){
 (function(){ var seg=document.getElementById('themeSeg'); if(!seg) return;
   seg.addEventListener('click',function(e){ var b=e.target.closest('[data-th]'); if(b) fbThemeSet(b.getAttribute('data-th')); });
   fbThemeMark(); })();
+</script>
+<script>
+// ══ Every sheet can be closed: a Cancel button where none exists, and Android "back" closes the top sheet ══
+(function(){
+  var CLOSE_RE=/(^|\s|←)(cancel|close|back|fechar|cancelar|voltar|no|not now|later)(\s|$)|^\s*[✕×✖]\s*$/i;
+  function isSheet(el){ return el&&el.nodeType===1&&el.classList&&(el.classList.contains('overlay')||el.id==='lb'); }
+  function isOpen(el){ try{ return el.classList.contains('on')||getComputedStyle(el).display!=='none'; }catch(e){ return false; } }
+  function hasClose(m){
+    if(m.querySelector('.js-cancel,.fb-auto-cancel,[id$="Cancel"],[id$="CancelBtn"],[id$="Close"],[id$="CloseBtn"],[id$="No"],.lb-x')) return true;
+    var bs=m.querySelectorAll('button,a,[role="button"]');
+    for(var i=0;i<bs.length;i++){ var t=(bs[i].textContent||'').replace(/\s+/g,' ').trim(); if(t.length<=24&&CLOSE_RE.test(t)) return true; }
+    return false;
+  }
+  function closeIt(ov){ ov.classList.remove('on'); ov.style.display='none'; }
+  function ensureCancel(ov){
+    if(ov.id==='lb') return;
+    var m=ov.querySelector('.modal')||ov.firstElementChild; if(!m||hasClose(m)) return;
+    var w=document.createElement('div'); w.className='fb-auto-cancel'; w.innerHTML='<button type="button">Cancel</button>';
+    w.firstChild.addEventListener('click',function(e){ e.stopPropagation(); closeIt(ov); });
+    m.appendChild(w);
+  }
+  function dirty(ov){
+    var f=ov.querySelectorAll('input[type="text"],input[type="number"],input:not([type]),textarea');
+    for(var i=0;i<f.length;i++){ if(f[i].offsetParent!==null&&String(f[i].value||'').trim()&&f[i].defaultValue!==f[i].value) return true; }
+    return false;
+  }
+  // spare = history steps left by sheets closed with their own button; the next sheet reuses one.
+  var stack=[], spare=0;
+  function onOpen(ov){
+    if(stack.indexOf(ov)>=0) return; stack.push(ov);
+    if(spare>0) spare--; else { try{ history.pushState({fbSheet:1},''); }catch(e){} }
+    ensureCancel(ov); setTimeout(function(){ if(isOpen(ov)) ensureCancel(ov); },80);   // sheets that redraw themselves
+  }
+  function onClose(ov){
+    var i=stack.indexOf(ov); if(i<0) return; stack.splice(i,1);
+    if(ov._byBack){ ov._byBack=false; return; }
+    spare++;
+  }
+  window.addEventListener('popstate',function(){
+    var ov=stack[stack.length-1];
+    while(ov&&!isOpen(ov)){ stack.pop(); ov=stack[stack.length-1]; }
+    if(!ov){ if(spare>0) spare--; return; }
+    if(dirty(ov)&&!confirm('Discard what you typed?')){ try{ history.pushState({fbSheet:stack.length},''); }catch(e){} return; }
+    ov._byBack=true; closeIt(ov);
+  });
+  function check(el){ if(!isSheet(el)) return; var o=isOpen(el); if(o&&!el._fbOpen){ el._fbOpen=true; onOpen(el); } else if(!o&&el._fbOpen){ el._fbOpen=false; onClose(el); } }
+  new MutationObserver(function(list){
+    for(var i=0;i<list.length;i++){ var r=list[i];
+      if(r.type==='attributes') check(r.target);
+      else for(var j=0;j<r.addedNodes.length;j++) check(r.addedNodes[j]);
+    }
+  }).observe(document.body,{attributes:true,attributeFilter:['class','style'],subtree:true,childList:true});
+})();
 </script>
 </body>
 </html>
