@@ -722,7 +722,7 @@ button{transition:transform .12s ease,opacity .12s ease,background .15s ease,bor
 
 /* estimate options */
 #optBar{margin:0 0 12px;}
-.ob-t{font-size:11px;font-weight:800;color:#93c5fd;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.ob-t{font-size:11px;font-weight:800;color:var(--n-blue,#93c5fd);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
 .ob-t span{color:#7d8590;font-weight:600;text-transform:none;letter-spacing:0;margin-left:6px;}
 .ob-r{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;}
 .ob-c{flex:none;min-width:96px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:#131920;border:1px solid #2a3340;border-radius:11px;padding:8px 12px;color:#94a3b8;-webkit-user-select:none;user-select:none;}
@@ -1122,6 +1122,43 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .qp-b.on{border-color:var(--n-green);background:var(--n-green-soft);color:var(--n-green-ink);}
 .qp-o{grid-column:span 2;font-size:15px;}
 .qp-cancel{width:100%;padding:13px;border-radius:12px;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-text);font-size:15px;font-weight:800;}
+
+.jc-tog{display:block;margin:6px 0 2px;padding:6px 10px;border-radius:10px;border:1px dashed var(--n-blue);background:transparent;color:var(--n-blue);font-size:12.5px;font-weight:600;text-align:left;font-family:var(--n-font-m);}
+.jc-tog b{font-weight:800;}
+#etOv .modal{max-height:90vh;overflow:auto;}
+.et-sub{font-size:13px;color:var(--n-muted);padding:0 20px 10px;}
+.et-list{padding:0 16px;display:flex;flex-direction:column;gap:8px;}
+.et-row{display:flex;align-items:center;gap:10px;text-align:left;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:10px 12px;font-family:var(--n-font-m);}
+.et-row.on{border-color:var(--n-green);background:var(--n-green-soft);}
+.et-chk{width:24px;height:24px;flex:none;border-radius:7px;border:2px solid var(--n-border);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;}
+.et-row.on .et-chk{background:var(--n-green);border-color:var(--n-green);}
+.et-n{flex:1;min-width:0;display:flex;flex-direction:column;} .et-n b{font-size:14.5px;} .et-n small{font-size:11.5px;color:var(--n-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.et-t{font-weight:800;color:var(--n-green-ink);font-size:14px;}
+.et-more{border:1px dashed var(--n-border);background:transparent;color:var(--n-blue);border-radius:12px;padding:10px;font-weight:700;font-size:13px;}
+.et-h{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--n-muted);padding:12px 20px 6px;}
+.et-list .et-h{padding:8px 4px 0;}
+.et-fmt{display:flex;gap:8px;padding:0 16px;}
+.et-fmt button{flex:1;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:11px 6px;font-weight:700;font-size:13px;font-family:var(--n-font-m);}
+.et-fmt button.on{border-color:var(--n-green);background:var(--n-green-soft);color:var(--n-green-ink);}
+.et-btns{display:flex;gap:10px;padding:16px 16px 0;}
+.et-cancel{flex:1;padding:13px;border-radius:12px;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-text);font-weight:800;font-size:15px;}
+.et-go{flex:2;padding:13px;border-radius:12px;border:none;background:var(--n-green);color:#fff;font-weight:800;font-size:15px;}
+.et-go[disabled]{opacity:.45;}
+
+.ob-t span{color:var(--n-muted)!important;}
+.ob-c{background:var(--n-surface2)!important;border:1.5px solid var(--n-border)!important;color:var(--n-muted)!important;}
+.ob-c b{color:var(--n-text)!important;} .ob-c span{color:var(--n-green-ink)!important;}
+.ob-c.on{border-color:var(--n-blue)!important;background:var(--n-blue-soft)!important;}
+.ob-c.ch{box-shadow:inset 0 0 0 1.5px var(--n-green)!important;}
+.ob-add{border-color:var(--n-border)!important;color:var(--n-blue)!important;}
+.ob-n{color:var(--n-amber)!important;}
+.ob-edit{margin-top:8px;font-size:12.5px;color:var(--n-blue);background:var(--n-blue-soft);border-radius:10px;padding:7px 10px;}
+.ob-same{margin-top:6px;font-size:12.5px;color:var(--n-amber);background:var(--n-amber-soft,#fbf1df);border-radius:10px;padding:7px 10px;}
+.on-sub{font-size:13px;color:var(--n-muted);padding:0 20px 8px;}
+.on-list{display:flex;flex-direction:column;gap:8px;padding:0 16px;}
+.on-b{display:flex;flex-direction:column;gap:3px;text-align:left;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:12px 14px;font-family:var(--n-font-m);}
+.on-b b{font-size:15px;} .on-b small{font-size:12px;color:var(--n-muted);}
+.jc-opt{color:var(--n-blue)!important;} .jc-opt b{color:var(--n-green-ink)!important;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1237,7 +1274,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261017-2200</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261018-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -5175,6 +5212,7 @@ function generateEstimatePDF(pid, totalOnly, opts){
   doc.save(_fname);
   toast('📄 Estimate generated!');
 }
+window.generateEstimatePDF=generateEstimatePDF;
 
 // Detect material category from text keywords
 function detectMatCatFromText(text){
@@ -6619,6 +6657,7 @@ function renderJobsList(){
     h += '<div class="jc-top"><div class="jc-name">'+esc(p.name)+(isActive?' <span class="jc-edit">EDITING</span>':'')+'</div>'+
          '<button type="button" class="jc-st st-'+estStatus+'" data-act="stmenu" data-pid="'+p.id+'">'+stTxt+' ▾</button></div>';
     if(p.address){ h += '<div class="jc-addr">📍 '+esc(p.address)+'</div>'; }
+      var _eg=_etGroup(p); if(_eg.length) h += '<button type="button" class="jc-tog" data-act="emailtog" data-pid="'+p.id+'">🔗 '+(_eg.length+1)+' estimates for this client · <b>Email together</b></button>';
     if(p.estOptions&&p.estOptions.list&&p.estOptions.list.length>1) h += '<div class="jc-opt">📊 '+p.estOptions.list.length+' options'+(_oc?' · chosen: <b>'+esc(_oc)+'</b>':' · none chosen yet')+'</div>';
     if(!p.signed&&p.signReq&&p.signReq.status==='pending') h += '<div class="jc-wait">🔗 Waiting for signature · sent '+esc(p.signReq.sentUS||'')+'</div>';
     if(_sigChanged(p)) h += '<div class="jc-sigchg">⚠ Estimate changed after the client signed ($'+Number(p.signed.total||0).toLocaleString('en-US')+' signed)</div>';
@@ -6738,6 +6777,7 @@ function _jobSheet(pid,kind){
        '<button type="button" class="js-b row" data-js="cert">📋 <b>Generate Certificate</b></button>'+
        '<button type="button" class="js-b row" data-js="note">📝 <b>'+(hasNote?'Edit Note':'Add Note')+'</b></button>'+
        '<button type="button" class="js-b row" data-js="dup">⧉ <b>Duplicate</b></button>'+
+    '<button type="button" class="js-b row" data-js="emailtog">📧 <b>Email together with other estimates</b></button>'+
        '<div class="js-sep"></div>'+
        (p.invoice?'<button type="button" class="js-b row js-del" data-js="invdel">🗑 <b>Delete invoice '+esc(p.invoice.num||'')+'</b><span style="margin-left:auto">keeps the estimate</span></button>':'')+
        '<button type="button" class="js-b row js-del" data-js="del">🗑 <b>Delete job</b></button>';
@@ -6755,6 +6795,101 @@ function _jobSheet(pid,kind){
   };
 }
 window.renderJobsList = renderJobsList;
+
+// ══ Email together: several estimates of the same client in ONE email / ONE PDF (no combined total) ══
+var _etCache={t:0,list:[]};
+function _etAll(){ if(Date.now()-_etCache.t>1500){ _etCache.list=loadProjs(); _etCache.t=Date.now(); } return _etCache.list; }
+function _etName(x){ return String(x||'').toLowerCase().replace(/\(.*?\)/g,' ').replace(/\s+—\s+.*$/,' ').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
+function _etSame(a,b){
+  if(!a||!b||a.id===b.id) return false;
+  var na=_etName(a.name), nb=_etName(b.name);
+  if(na&&nb&&(na===nb||na.indexOf(nb+' ')===0||nb.indexOf(na+' ')===0)) return true;
+  var qa=a.quoteInfo||{}, qb=b.quoteInfo||{};
+  var pa=String(qa.phone||'').replace(/\D/g,''), pb=String(qb.phone||'').replace(/\D/g,''); if(pa.length>=7&&pa===pb) return true;
+  var ea=String(qa.email||'').trim().toLowerCase(), eb=String(qb.email||'').trim().toLowerCase(); if(ea&&ea===eb) return true;
+  var aa=String(qa.address||a.address||'').toLowerCase().replace(/[^a-z0-9]/g,''), ab=String(qb.address||b.address||'').toLowerCase().replace(/[^a-z0-9]/g,''); if(aa.length>=10&&aa===ab) return true;
+  if((a.splitFrom&&_etName(a.splitFrom)===nb)||(b.splitFrom&&_etName(b.splitFrom)===na)) return true;
+  return false;
+}
+function _etGroup(p){ var L=_etAll(), out=[]; for(var i=0;i<L.length;i++){ var q=L[i]; if(q.id!==p.id&&(q.estItems||[]).length&&_etSame(p,q)) out.push(q); } return out; }
+function _etMoney(n){ return '$'+Math.round(Number(n)||0).toLocaleString('en-US'); }
+function openEmailTogether(pid){
+  _etCache.t=0;
+  var L=_etAll(), me=null; for(var i=0;i<L.length;i++) if(L[i].id===pid){ me=L[i]; break; }
+  if(!me){ toast('Job not found','err'); return; }
+  var grp=_etGroup(me), sel={}; sel[me.id]=true; for(var g=0;g<grp.length;g++) sel[grp[g].id]=true;
+  var showAll=false, totalOnly=false;
+  var ov=document.getElementById('etOv'); if(!ov){ ov=document.createElement('div'); ov.id='etOv'; ov.className='overlay'; document.body.appendChild(ov); }
+  function row(p){ var on=!!sel[p.id], t=window.projectEstimateTotal?projectEstimateTotal(p):0, q=(p.quoteInfo&&p.quoteInfo.quoteNum)?' · #'+p.quoteInfo.quoteNum:'';
+    return '<button type="button" class="et-row'+(on?' on':'')+'" data-pid="'+p.id+'"><span class="et-chk">'+(on?'✓':'')+'</span><span class="et-n"><b>'+esc(p.name)+'</b><small>'+esc((p.estStatus&&p.estStatus!=='none')?p.estStatus[0].toUpperCase()+p.estStatus.slice(1):'Draft')+q+(p.address?' · '+esc(p.address):'')+'</small></span><span class="et-t">'+_etMoney(t)+'</span></button>'; }
+  function draw(){
+    var n=0; for(var k in sel) if(sel[k]) n++;
+    var h='<div class="modal" style="padding-bottom:22px"><div class="mhandle"></div><div class="mtitle">📧 Email together</div><div class="et-sub">One email and one PDF. Each estimate stays separate — no combined total.</div><div class="et-list">'+row(me);
+    for(var a=0;a<grp.length;a++) h+=row(grp[a]);
+    if(showAll){ h+='<div class="et-h">Other jobs</div>'; for(var b=0;b<L.length;b++){ var q=L[b]; if(q.id===me.id||!(q.estItems||[]).length) continue; var inG=false; for(var c=0;c<grp.length;c++) if(grp[c].id===q.id) inG=true; if(!inG) h+=row(q); } }
+    else h+='<button type="button" class="et-more" id="etMore">+ Add another job</button>';
+    h+='</div><div class="et-h">Format</div><div class="et-fmt"><button type="button" data-f="items" class="'+(!totalOnly?'on':'')+'">📋 Line items + total</button><button type="button" data-f="total" class="'+(totalOnly?'on':'')+'">💰 Total only</button></div>'+
+      '<div class="et-btns"><button type="button" class="et-cancel" id="etCancel">Cancel</button><button type="button" class="et-go" id="etGo"'+(n<1?' disabled':'')+'>Create email ('+n+')</button></div></div>';
+    ov.innerHTML=h;
+  }
+  ov.onclick=function(e){
+    var t=e.target; if(t===ov){ close(); return; }
+    var r=t.closest('.et-row'); if(r){ var id=r.getAttribute('data-pid'); sel[id]=!sel[id]; draw(); return; }
+    if(t.closest('#etMore')){ showAll=true; draw(); return; }
+    var f=t.closest('[data-f]'); if(f){ totalOnly=f.getAttribute('data-f')==='total'; draw(); return; }
+    if(t.closest('#etCancel')){ close(); return; }
+    if(t.closest('#etGo')){ var ids=[]; var order=[me].concat(grp).concat(L); var seen={}; for(var z=0;z<order.length;z++){ var id2=order[z].id; if(sel[id2]&&!seen[id2]){ ids.push(id2); seen[id2]=1; } } close(); _etBuild(ids,totalOnly); }
+  };
+  function close(){ ov.classList.remove('on'); ov.style.display='none'; }
+  draw(); ov.classList.add('on'); ov.style.display='flex';
+}
+window.openEmailTogether=openEmailTogether;
+function _etBuild(ids,totalOnly){
+  if(!ids.length) return;
+  if(!window.PDFLib||!window.jspdf||!window.generateEstimatePDF){ toast('PDF tools still loading — try again in a moment','err'); return; }
+  var L=loadProjs(), jobs=[];
+  for(var i=0;i<ids.length;i++){ for(var j=0;j<L.length;j++){ if(L[j].id===ids[i]){ jobs.push(L[j]); break; } } }
+  for(var k=0;k<jobs.length;k++){ var O=jobs[k].estOptions;
+    if(O&&O.list&&O.list.length>1){ if(!O.chosen){ toast('"'+jobs[k].name+'" has options — choose one first','err'); return; }
+      if(O.active!==O.chosen){ try{ _optSwitchStored(jobs[k].id,O.chosen); }catch(e){} } } }
+  L=loadProjs(); for(k=0;k<jobs.length;k++){ for(j=0;j<L.length;j++){ if(L[j].id===jobs[k].id){ jobs[k]=L[j]; break; } } }
+  toast('Building the PDF…');
+  var parts=[];
+  for(k=0;k<jobs.length;k++){ var r=null; try{ r=generateEstimatePDF(jobs[k].id,!!totalOnly,{returnBytes:true}); }catch(e){ r=null; }
+    if(!r||!r.bytes){ toast('Could not build the estimate for "'+jobs[k].name+'"','err'); return; } parts.push(r.bytes); }
+  // Summary page: each estimate with its own total — no combined total.
+  var jsPDF=window.jspdf.jsPDF, d=new jsPDF({orientation:'portrait',unit:'mm',format:'letter'}), W=215.9, m=18, y=24;
+  var cf=(typeof cfg!=='undefined'&&cfg)?cfg:(window.cfg||{}), co=cf.company||'Green Idea Insulation';
+  var q0=jobs[0].quoteInfo||{}, client=String(q0.client||jobs[0].name||'').replace(/\s+(—|-)\s+.*$/,'').trim(), addr=String(q0.address||jobs[0].address||'');
+  d.setFont('helvetica','bold'); d.setFontSize(17); d.setTextColor(30,99,52); d.text(co,m,y);
+  d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(110,110,110); d.text(new Date().toLocaleDateString('en-US'),W-m,y,{align:'right'});
+  y+=16; d.setFont('helvetica','bold'); d.setFontSize(20); d.setTextColor(25,25,25); d.text(jobs.length+' Estimates',m,y);
+  y+=8; d.setFont('helvetica','normal'); d.setFontSize(12); d.setTextColor(60,60,60); if(client){ d.text('Prepared for '+client,m,y); y+=6; } if(addr){ d.text(addr,m,y); y+=6; }
+  y+=6; d.setDrawColor(30,99,52); d.setLineWidth(0.6); d.line(m,y,W-m,y); y+=10;
+  for(k=0;k<jobs.length;k++){ var p=jobs[k], qi=p.quoteInfo||{}, t=window.projectEstimateTotal?projectEstimateTotal(p):0;
+    d.setFont('helvetica','bold'); d.setFontSize(13); d.setTextColor(25,25,25); d.text(String(k+1)+'.  '+String(p.name||''),m,y);
+    d.text('$'+(Number(t)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),W-m,y,{align:'right'});
+    y+=5.5; d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(110,110,110); d.text((qi.quoteNum?'Estimate #'+qi.quoteNum+'  ·  ':'')+(p.estItems||[]).length+' item'+((p.estItems||[]).length!==1?'s':''),m+7,y);
+    y+=5; d.setDrawColor(225,225,225); d.setLineWidth(0.3); d.line(m,y,W-m,y); y+=9; }
+  y+=2; d.setFont('helvetica','italic'); d.setFontSize(10.5); d.setTextColor(80,80,80);
+  var note=d.splitTextToSize('Each estimate is separate and can be approved on its own. The full details of each estimate follow on the next pages.',W-2*m); d.text(note,m,y);
+  parts.unshift(d.output('arraybuffer'));
+  var PD=window.PDFLib.PDFDocument;
+  PD.create().then(function(out){
+    var chain=Promise.resolve();
+    function add(i){ return PD.load(parts[i]).then(function(src){ return out.copyPages(src,src.getPageIndices()).then(function(pgs){ for(var x=0;x<pgs.length;x++) out.addPage(pgs[x]); }); }); }
+    for(var i2=0;i2<parts.length;i2++){ (function(ix){ chain=chain.then(function(){ return add(ix); }); })(i2); }
+    return chain.then(function(){ return out.save(); });
+  }).then(function(bytes){
+    var lines=[]; for(var z=0;z<jobs.length;z++){ var tt=window.projectEstimateTotal?projectEstimateTotal(jobs[z]):0; lines.push('• '+jobs[z].name+' — $'+(Number(tt)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})); }
+    var first=jobs[0]; for(var e2=0;e2<jobs.length;e2++){ if(String((jobs[e2].quoteInfo||{}).email||'').trim()){ first=jobs[e2]; break; } }
+    window._etInfo={pids:ids.slice(),lines:lines,count:jobs.length};
+    var fn='Estimates-'+(client||'Client').replace(/[^a-zA-Z0-9]+/g,'_')+'-'+new Date().toLocaleDateString('en-US').replace(/\//g,'')+'.pdf';
+    openEstimateEmail(bytes,fn,first.id,'combined');
+  }).catch(function(e){ toast('Could not build the combined PDF: '+(e&&e.message||e),'err'); });
+}
+var _etJA=_jobAct; _jobAct=function(a,pid,btn){ if(a==='emailtog'){ openEmailTogether(pid); return; } return _etJA.apply(this,arguments); };
+
 // ── Job header on the Items tab (client, address, phone, email, status, quote #) ──
 function renderJobHeader(){
   var box=document.getElementById('jobHdr'); if(!box) return;
@@ -7177,6 +7312,47 @@ function optSwitch(toId){
   _optSave(O); renderEst();
 }
 window.optSwitch=optSwitch;
+
+// ══ Options made clear: which one you are editing, identical-option warning, copy or start empty ══
+function _optSig(items){ var a=[]; for(var i=0;i<(items||[]).length;i++){ var x=items[i]; a.push([String(x.name||'').trim().toLowerCase(),Math.round((Number(x.sf)||0)*10),Math.round((Number(x.price)||0)*1000),x.productId||'',Number(x.inches)||0,Number(x.ccInch)||0,Number(x.ocInch)||0].join('|')); } return a.join('#'); }
+var _n9ROB=renderOptBar; renderOptBar=function(){
+  var r=_n9ROB.apply(this,arguments);
+  try{
+    var box=document.getElementById('optBar'), f=_optProj(); if(!box||!f||!f.p.estOptions||box.style.display==='none') return r;
+    var O=f.p.estOptions, cur=null, sig={}, same=[];
+    for(var i=0;i<O.list.length;i++){ var o=O.list[i], it=(o.id===O.active)?estItems:o.items; if(o.id===O.active) cur=o; sig[o.id]=_optSig(it); }
+    for(var a=0;a<O.list.length;a++) for(var b=a+1;b<O.list.length;b++) if(sig[O.list[a].id]&&sig[O.list[a].id]===sig[O.list[b].id]) same.push([O.list[a].label,O.list[b].label]);
+    var h='';
+    if(cur) h+='<div class="ob-edit">✏️ Editing <b>'+esc(cur.label)+'</b> — changes here only affect '+esc(cur.label)+'</div>';
+    for(var k=0;k<same.length;k++) h+='<div class="ob-same">⚠ <b>'+esc(same[k][1])+'</b> is the same as <b>'+esc(same[k][0])+'</b> — open it and change its items (material, thickness or price)</div>';
+    if(h){ var d=document.createElement('div'); d.innerHTML=h; box.appendChild(d); }
+  }catch(e){}
+  return r;
+};
+window.renderOptBar=renderOptBar;
+var _n9Add=optAdd; optAdd=function(){
+  var f=_optProj(); if(!f) return;
+  if(!(estItems&&estItems.length)){ toast('Add items to this estimate first','err'); return; }
+  var O=f.p.estOptions, names=['Good','Better','Best'], n=O?O.list.length:1;
+  if(O&&O.list.length>=3){ toast('Up to 3 options','err'); return; }
+  var curLbl='Good'; if(O){ for(var i=0;i<O.list.length;i++) if(O.list[i].id===O.active) curLbl=O.list[i].label; }
+  var nextLbl=names[n]||('Option '+(n+1));
+  var ov=document.getElementById('optNewOv'); if(!ov){ ov=document.createElement('div'); ov.id='optNewOv'; ov.className='overlay'; document.body.appendChild(ov); }
+  ov.innerHTML='<div class="modal" style="padding-bottom:22px"><div class="mhandle"></div><div class="mtitle">New option: '+esc(nextLbl)+'</div>'+
+    (O?'':'<div class="on-sub">Your current items become <b>Good</b>.</div>')+
+    '<div class="on-list"><button type="button" class="on-b" data-on="copy"><b>📋 Copy '+esc(curLbl)+' and change it</b><small>Same items — then change the material, thickness or price that is different</small></button>'+
+    '<button type="button" class="on-b" data-on="empty"><b>➕ Start empty</b><small>Add the items of '+esc(nextLbl)+' one by one</small></button></div>'+
+    '<div style="padding:12px 20px 0"><button type="button" class="qp-cancel" data-on="cancel">Cancel</button></div></div>';
+  ov.classList.add('on'); ov.style.display='flex';
+  ov.onclick=function(e){ var b=e.target.closest('[data-on]'); if(e.target===ov||(b&&b.getAttribute('data-on')==='cancel')){ ov.classList.remove('on'); ov.style.display='none'; return; } if(!b) return;
+    var how=b.getAttribute('data-on'); ov.classList.remove('on'); ov.style.display='none';
+    _n9Add();
+    if(how==='empty'){ estItems=[]; window.estItems=estItems; try{ saveEI(); }catch(x){} renderEst(); toast('➕ '+nextLbl+' — empty. Add its items with + Item.'); }
+    else toast('📋 '+nextLbl+' — a copy of '+curLbl+'. Now change what is different.');
+  };
+};
+window.optAdd=optAdd;
+
 function optAdd(){
   var f=_optProj(); if(!f) return;
   if(!(estItems&&estItems.length)){ toast('Add items to this estimate first','err'); return; }
@@ -10157,6 +10333,9 @@ function openEstimateEmail(bytes, fname, pid, kind){
   var co=_cf.company||'Green Idea Insulation', contact=_cf.contact||'';
   var body='Hi'+(first?' '+first:'')+',\n\nPlease find attached the estimate'+(addr?' for '+addr:'')+'.\n\nLet me know if you have any questions — happy to go over it with you.\n\nThank you,\n'+co+(contact?'\n'+contact:'');
   if(kind==='options') body='Hi'+(first?' '+first:'')+',\n\nPlease find attached the insulation options'+(addr?' for '+addr:'')+', side by side with the price of each.\n\nLet me know which option you prefer and I will send the estimate for your approval.\n\nThank you,\n'+co+(contact?'\n'+contact:'');
+  var _isComb=(kind==='combined'&&window._etInfo);
+  if(_isComb){ subject='Insulation estimates — '+(addr||client||'Green Idea Insulation');
+    body='Hi'+(first?' '+first:'')+',\n\nPlease find attached '+window._etInfo.count+' separate estimates'+(addr?' for '+addr:'')+':\n\n'+window._etInfo.lines.join('\n')+'\n\nEach estimate can be approved on its own — let me know which work you would like to go ahead with, and if you have any questions.\n\nThank you,\n'+co+(contact?'\n'+contact:''); }
   if(_isSigned) body='Hi'+(first?' '+first:'')+',\n\nThank you for approving the estimate'+(addr?' for '+addr:'')+'. Attached is your signed copy for your records.\n\nWe will be in touch to schedule the work.\n\nThank you,\n'+co+(contact?'\n'+contact:'');
   if(_isInv){
     var _dn=(_inv.dueNow!==''&&_inv.dueNow!=null&&Number(_inv.dueNow)>0)?Number(_inv.dueNow):null;
@@ -10183,6 +10362,7 @@ function openEstimateEmail(bytes, fname, pid, kind){
   function copyTo(){ if(!to) return; try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(to); }catch(e){} }
   function askSent(){
     if(!pid||_isSigned) return;
+    if(_isComb){ var _ids=window._etInfo.pids||[]; appConfirm('Mark these '+_ids.length+' estimates as sent?',function(){ var pp=loadProjs(), dd=new Date().toLocaleDateString('en-US'); for(var k=0;k<pp.length;k++){ if(_ids.indexOf(pp[k].id)>=0&&pp[k].estStatus!=='approved'){ pp[k].estStatus='sent'; pp[k].estSentDate=dd; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('📨 '+_ids.length+' estimates marked as sent'); },{confirmLabel:'📨 Mark all as Sent',confirmStyle:'accent'}); return; }
     if(kind==='options'){ appConfirm('Mark this estimate as sent?',function(){ var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid){ pp[k].estStatus='sent'; pp[k].estSentDate=new Date().toLocaleDateString('en-US'); break; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('📨 Marked as sent'); },{confirmLabel:'📨 Mark as Sent',confirmStyle:'accent'}); return; }
     if(_isInv){ appConfirm('Mark this invoice as sent?',function(){ var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid&&pp[k].invoice){ pp[k].invoice.sentDate=new Date().toLocaleDateString('en-US'); break; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('🧾 Invoice marked as sent'); },{confirmLabel:'📨 Mark as Sent',confirmStyle:'accent'}); return; }
     appConfirm('Mark this estimate as sent?',function(){
