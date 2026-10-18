@@ -42,6 +42,11 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
 .err{color:#b42318;font-weight:700;font-size:13.5px;min-height:18px;margin-top:8px}
 .done img{max-height:70px;max-width:260px;display:block;margin:6px auto}
 .foot{text-align:center;font-size:11.5px;color:#9aa39d;margin:10px 0 24px}
+.it.wp{display:flex;gap:12px;align-items:flex-start} .itx{flex:1;min-width:0} .pr{font-weight:800;white-space:nowrap;font-size:14.5px}
+.acts{position:sticky;bottom:0;display:flex;gap:8px;padding:10px 0 12px;background:linear-gradient(rgba(243,244,241,0),#f3f4f1 30%)}
+.acts button{flex:1;padding:14px 8px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer}
+.acts .dl{background:#fff;border:1px solid #cfd6cc;color:#1d2a20} .acts .ap{background:#1a6b2a;border:none;color:#fff}
+@media print{ .acts,.foot{display:none!important} }
 </style>
 </head>
 <body>
@@ -71,7 +76,7 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
     h+='<div class="lbl">Prepared for</div><div class="cl"><b>'+esc(d.client&&d.client.name||'')+'</b>'+(d.client&&d.client.address?'<div style="font-size:13px;color:#6b7570">'+esc(d.client.address)+'</div>':'')+'</div>';
     var secs=d.sections||[];
     for(var s=0;s<secs.length;s++){ h+='<div class="sec">'+esc(secs[s].title)+'</div>';
-      var its=secs[s].items||[]; for(var k=0;k<its.length;k++){ var it=its[k]; h+='<div class="it"><b>'+esc(it.name)+'</b>'+(it.spec?'<div class="sp">'+esc(it.spec)+'</div>':'')+(it.notes?'<div class="nt">'+esc(it.notes)+'</div>':'')+'</div>'; } }
+      var its=secs[s].items||[]; for(var k=0;k<its.length;k++){ var it=its[k]; var pr=(d.showPrices&&it.amount!=null)?'<div class="pr">'+money(it.amount)+'</div>':''; h+='<div class="it'+(pr?' wp':'')+'"><div class="itx"><b>'+esc(it.name)+'</b>'+(it.spec?'<div class="sp">'+esc(it.spec)+'</div>':'')+(it.notes?'<div class="nt">'+esc(it.notes)+'</div>':'')+'</div>'+pr+'</div>'; } }
     var T=d.totals||{}; h+='<div class="tot">';
     if(T.subtotal!=null&&(T.discount||T.tax)) h+='<div><span>Subtotal</span><span>'+money(T.subtotal)+'</span></div>';
     if(T.tax) h+='<div><span>'+esc(T.taxLabel||'Tax')+'</span><span>'+money(T.tax)+'</span></div>';
@@ -82,15 +87,21 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
       h+='</div>'; }
     return h;
   }
+  function acts(d,isSigned){ return '<div class="acts">'+(d.pdf?'<button type="button" class="dl" id="dlb">⬇ Download PDF</button>':'<button type="button" class="dl" id="prb">🖨 Print / Save PDF</button>')+(isSigned?'':'<button type="button" class="ap" id="gos">✍️ Approve &amp; sign</button>')+'</div>'; }
+  function wire(d){
+    var a=document.getElementById('dlb'); if(a) a.onclick=function(){ try{ var b=atob(d.pdf), u=new Uint8Array(b.length); for(var i=0;i<b.length;i++) u[i]=b.charCodeAt(i); var bl=new Blob([u],{type:'application/pdf'}), l=document.createElement('a'); l.href=URL.createObjectURL(bl); l.download=d.pdfName||('Estimate-'+(d.quoteNum||'')+'.pdf'); document.body.appendChild(l); l.click(); setTimeout(function(){ URL.revokeObjectURL(l.href); l.remove(); },4000); }catch(e){ window.print(); } };
+    var p=document.getElementById('prb'); if(p) p.onclick=function(){ window.print(); };
+    var g=document.getElementById('gos'); if(g) g.onclick=function(){ var t=document.getElementById('ag'); if(t){ t.scrollIntoView({behavior:'smooth',block:'center'}); } };
+  }
   function signed(d){
-    show(body(d)+'<div class="card msg done"><div style="font-size:34px">✅</div><h2>Signed — thank you!</h2><p>Signed by <b>'+esc(d.signedName||'')+'</b>'+(d.signedAt?' on '+esc(new Date(d.signedAt).toLocaleDateString('en-US')):'')+'</p>'+(d.img?'<img src="'+esc(d.img)+'" alt="signature">':'')+'<p>We will be in touch to schedule the work.</p></div>');
+    show(body(d)+'<div class="card msg done"><div style="font-size:34px">✅</div><h2>Signed — thank you!</h2><p>Signed by <b>'+esc(d.signedName||'')+'</b>'+(d.signedAt?' on '+esc(new Date(d.signedAt).toLocaleDateString('en-US')):'')+'</p>'+(d.img?'<img src="'+esc(d.img)+'" alt="signature">':'')+'<p>We will be in touch to schedule the work.</p></div>'+acts(d,true)); wire(d);
   }
   function form(d){
     show(body(d)+'<div class="card"><label class="agree"><input type="checkbox" id="ag"> <span>I approve this estimate and agree to the services, price and terms above.</span></label>'+
       '<label class="f">Full name</label><input class="n" id="nm" value="'+esc(d.client&&d.client.name||'')+'" autocomplete="name">'+
       '<label class="f">Signature</label><div class="padw"><canvas id="pad"></canvas><span class="x">✕ sign here with your finger or mouse</span></div>'+
       '<div class="row"><button type="button" class="sec2" id="clr">Clear</button></div>'+
-      '<button type="button" class="go" id="ok" disabled>✍️ Approve &amp; sign</button><div class="err" id="er"></div></div>');
+      '<button type="button" class="go" id="ok" disabled>✍️ Approve &amp; sign</button><div class="err" id="er"></div></div>'+acts(d,false)); wire(d);
     var cv=document.getElementById('pad'), ctx=cv.getContext('2d'), dr=false, empty=true, last=null, dpr=window.devicePixelRatio||1;
     function size(){ var r=cv.getBoundingClientRect(); cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#111'; }
     size();
@@ -120,6 +131,7 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
     if(!doc.exists){ fail('This link is no longer valid','The estimate may have been updated or the link cancelled. Please contact Green Idea Insulation.'); return; }
     var d=doc.data();
     if(d.status==='signed') signed(d); else form(d);
+    if(!/[?&]preview=1/.test(location.search)){ try{ var now=new Date().toISOString(), up={views:firebase.firestore.FieldValue.increment(1),lastViewedAt:now}; if(!d.firstViewedAt) up.firstViewedAt=now; ref.update(up).catch(function(){}); }catch(e){} }
   }).catch(function(){ fail('Could not load the estimate','Check your internet connection and open the link again.'); });
 })();
 </script>
