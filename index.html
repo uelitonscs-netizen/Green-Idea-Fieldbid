@@ -1159,6 +1159,20 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .on-b{display:flex;flex-direction:column;gap:3px;text-align:left;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:12px 14px;font-family:var(--n-font-m);}
 .on-b b{font-size:15px;} .on-b small{font-size:12px;color:var(--n-muted);}
 .jc-opt{color:var(--n-blue)!important;} .jc-opt b{color:var(--n-green-ink)!important;}
+
+.em-how{padding:0 16px 10px;display:flex;flex-direction:column;gap:7px;}
+.emh-k{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--n-muted);margin:2px 0 2px;}
+.emh{display:flex;flex-direction:column;gap:2px;text-align:left;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:10px 12px;font-family:var(--n-font-m);}
+.emh b{font-size:14.5px;} .emh small{font-size:12px;color:var(--n-muted);}
+.emh i{font-style:normal;font-size:9.5px;font-weight:800;background:var(--n-green);color:#fff;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:2px;}
+.emh.on{border-color:var(--n-green);background:var(--n-green-soft);} .emh.on b{color:var(--n-green-ink);}
+.emh-sub{margin:-2px 0 2px 12px;padding:6px 10px;border-left:3px solid var(--n-green);}
+.emh-seg{display:flex;gap:6px;} .emh-seg button{flex:1;border:1.5px solid var(--n-border);background:var(--n-surface);color:var(--n-text);border-radius:10px;padding:9px 4px;font-size:13px;font-weight:800;font-family:var(--n-font-m);}
+.emh-seg button.on{border-color:var(--n-green);background:var(--n-green-soft);color:var(--n-green-ink);}
+.jc-open{font-size:12.5px;font-weight:700;color:var(--n-green-ink);background:var(--n-green-soft);border-radius:9px;padding:5px 9px;margin-top:6px;display:inline-block;}
+.nh-open{display:block;width:calc(100% - 40px);margin:0 20px 8px;text-align:left;border:1px solid #c9d6f3;background:var(--n-blue-soft);color:var(--n-blue);border-radius:14px;padding:11px 13px;font-size:13.5px;font-family:var(--n-font-m);}
+.nh-open b{color:var(--n-text);}
+.sl-v{flex:1;align-self:center;font-size:12.5px;font-weight:700;color:var(--n-green-ink);text-align:center;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1274,7 +1288,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261018-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261018-1100</span></div>
 </div>
 
 <div id="field-app">
@@ -6659,7 +6673,7 @@ function renderJobsList(){
     if(p.address){ h += '<div class="jc-addr">📍 '+esc(p.address)+'</div>'; }
       var _eg=_etGroup(p); if(_eg.length) h += '<button type="button" class="jc-tog" data-act="emailtog" data-pid="'+p.id+'">🔗 '+(_eg.length+1)+' estimates for this client · <b>Email together</b></button>';
     if(p.estOptions&&p.estOptions.list&&p.estOptions.list.length>1) h += '<div class="jc-opt">📊 '+p.estOptions.list.length+' options'+(_oc?' · chosen: <b>'+esc(_oc)+'</b>':' · none chosen yet')+'</div>';
-    if(!p.signed&&p.signReq&&p.signReq.status==='pending') h += '<div class="jc-wait">🔗 Waiting for signature · sent '+esc(p.signReq.sentUS||'')+'</div>';
+    if(!p.signed&&p.signReq&&p.signReq.status==='pending'){ var _sv=Number(p.signReq.views)||0; h += _sv?'<div class="jc-open">👁 Opened '+_sv+'× · last '+esc(_lkWhen(p.signReq.lastViewedAt))+'</div>':'<div class="jc-wait">🔗 Link sent '+esc(p.signReq.sentUS||'')+' · not opened yet</div>'; }
     if(_sigChanged(p)) h += '<div class="jc-sigchg">⚠ Estimate changed after the client signed ($'+Number(p.signed.total||0).toLocaleString('en-US')+' signed)</div>';
     if(p.note && String(p.note).trim()){ var _np=String(p.note).trim(); if(_np.length>80)_np=_np.slice(0,80)+'…'; h += '<div class="jc-note">📝 '+esc(_np)+(p.noteInPdf?' <b>· on PDF</b>':'')+'</div>'; }
     h += '<div class="jc-stats"><span>'+fmtN(Math.round(totalSF))+' SF</span><span>'+areaCount+' area'+(areaCount!==1?'s':'')+'</span>'+(quoteTotal>0?'<span class="jc-tot">$'+quoteTotal.toLocaleString()+'</span>':'')+'<span class="jc-date">'+esc(p.created||'')+'</span></div>';
@@ -6983,7 +6997,8 @@ function renderNHome(){
   if(d){ if(d.fu.length) tiles+='<button type="button" class="nh-tile a" data-pv="fu"><b>'+d.fu.length+'</b><span>📨 Follow up</span></button>';
     if(d.ti.length) tiles+='<button type="button" class="nh-tile b" data-pv="ti"><b>'+d.ti.length+'</b><span>✅ To invoice</span></button>';
     if(d.tc.length) tiles+='<button type="button" class="nh-tile c" data-pv="tc"><b>'+_nvMoney(d.due)+'</b><span>💵 To collect'+(d.overdue?' · <i>'+d.overdue+' late</i>':'')+'</span></button>'; }
-  h+=tiles?'<div class="nh-tiles">'+tiles+'</div>':'<div class="nh-ok">✓ Nothing pending today</div>';
+  var _op=''; try{ var _all=loadProjs(), _now=Date.now(); for(var _q=0;_q<_all.length;_q++){ var _r=_all[_q].signReq; if(_r&&_r.status==='pending'&&Number(_r.views)>0){ var _t=Date.parse(_r.lastViewedAt||''); if(_t&&_now-_t<3*86400000&&(!_r.ackAt||Date.parse(_r.ackAt)<_t)) _op+='<button type="button" class="nh-open" data-op="'+esc(_all[_q].id)+'">👁 <b>'+esc(_all[_q].name)+'</b> opened your estimate · '+_r.views+'× · last '+esc(_lkWhen(_r.lastViewedAt))+'</button>'; } } }catch(e){}
+  h+=(tiles?'<div class="nh-tiles">'+tiles+'</div>':(_op?'':'<div class="nh-ok">✓ Nothing pending today</div>'))+_op;
   var _ld=null; try{ _ld=localStorage.getItem('fb6_lastDownload'); }catch(e){}
   var _dd=_ld?Math.floor((Date.now()-Date.parse(_ld))/86400000):null;
   if(_dd===null||_dd>=7) h+='<button type="button" class="nh-bk" id="nhBk">☁️ <b>Back up to Google Drive</b><span>last: '+(_dd===null?'never':_dd+' days ago')+' ›</span></button>';
@@ -7010,6 +7025,7 @@ function renderNHome(){
   document.getElementById('nhNewT').onclick=function(){ var b=document.getElementById('btnField'); if(b) b.click(); nvMark(); };
   document.getElementById('nhNewE').onclick=function(){ nvGo('est'); var b=document.getElementById('newEstBtn'); if(b) b.click(); };
   document.getElementById('nhAll').onclick=function(){ nvGo('jobs'); };
+  var _ob=box.querySelectorAll('.nh-open[data-op]'); for(var _w=0;_w<_ob.length;_w++){ _ob[_w].onclick=function(){ var id=this.getAttribute('data-op'), ps=loadProjs(); for(var z=0;z<ps.length;z++){ if(ps[z].id===id&&ps[z].signReq){ ps[z].signReq.ackAt=new Date().toISOString(); saveProjs(ps); break; } } try{ openJobFromList(id); }catch(e){} try{ nvGo('jobs'); }catch(e){} }; }
   var _hsb=box.querySelectorAll('.nh-sort [data-hs]'); for(var _q=0;_q<_hsb.length;_q++){ _hsb[_q].onclick=function(){ try{ localStorage.setItem('fb6_homeSort',this.getAttribute('data-hs')); }catch(e){} renderNHome(); }; }
   var tl=box.querySelectorAll('.nh-tile'); for(var a=0;a<tl.length;a++){ tl[a].onclick=function(){ window._pipeView=this.getAttribute('data-pv'); nvGo('jobs'); try{ renderJobsList(); }catch(e){} }; }
   var jb=box.querySelectorAll('.nh-job'); for(var b2=0;b2<jb.length;b2++){ jb[b2].onclick=function(){ var pid=this.getAttribute('data-pid'); nvShow('est'); try{ openJobFromList(pid); }catch(e){} nvMark(); }; }
@@ -7594,10 +7610,11 @@ var SIGN_URL='https://uelitonscs-netizen.github.io/Green-Idea-Fieldbid/sign.html
 function _signToken(){ var c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789', t='', a=new Uint8Array(24);
   try{ crypto.getRandomValues(a); }catch(e){ for(var k=0;k<a.length;k++) a[k]=Math.floor(Math.random()*256); }
   for(var i=0;i<a.length;i++) t+=c.charAt(a[i]%c.length); return t; }
-function _signReqData(p){
+function _signReqData(p,opts){
+  opts=opts||{};
   var qi=p.quoteInfo||{}, lines=invBuildFromEstimate(p), ei=p.estItems||[], order=[], groups={}, sub=0, disc=0, dLbl='Discount', tax=0, tLbl='Tax';
   for(var i=0;i<ei.length;i++){ var e=ei[i], sec='Items'; try{ sec=sectionOf(e)||'Items'; }catch(x){} var sp=''; try{ sp=specFromData(e)||''; }catch(x2){}
-    if(!groups[sec]){ groups[sec]=[]; order.push(sec); } groups[sec].push({name:String(e.name||'Item'),spec:sp,notes:e.notes?String(e.notes):''}); }
+    if(!groups[sec]){ groups[sec]=[]; order.push(sec); } groups[sec].push({name:String(e.name||'Item'),spec:sp,notes:e.notes?String(e.notes):'',amount:(lines[i]&&lines[i].kind==='item')?lines[i].amount:null}); }
   for(var j=0;j<lines.length;j++){ var L=lines[j], a=Number(L.amount)||0, nm=String(L.name||'');
     if(L.kind==='item'||/^additional/i.test(nm)) sub+=a; else if(a<0||/^discount/i.test(nm)){ disc+=a; dLbl=nm; } else if(/tax/i.test(nm)){ tax+=a; tLbl=nm; } else sub+=a; }
   var secs=[]; for(var s=0;s<order.length;s++) secs.push({title:order[s],items:groups[order[s]]});
@@ -7606,7 +7623,8 @@ function _signReqData(p){
     company:{name:'Green Idea Insulation',lines:['238 Webster Street #3 · Worcester, Ma 01603','+7745787186 / 508-579-0762','greenideainsulation@gmail.com · www.greenideainsulation.com']},
     client:{name:String(qi.client||p.name||''),address:String(qi.address||p.address||'')},
     sections:secs,totals:{subtotal:R2(sub),discount:R2(disc),discountLabel:dLbl,tax:R2(tax),taxLabel:tLbl,total:R2(sub+disc+tax)},
-    terms:ESTIMATE_TERMS.slice(),contractorSig:(cfg&&cfg.mySig)||'',contractorName:(cfg&&cfg.mySigName)||''};
+    terms:ESTIMATE_TERMS.slice(),contractorSig:(cfg&&cfg.mySig)||'',contractorName:(cfg&&cfg.mySigName)||'',
+    showPrices:!!opts.showPrices, pdf:opts.pdf||'', pdfName:opts.pdfName||''};
 }
 function sendForSignature(pid){
   var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } } if(!p) return;
@@ -7631,11 +7649,13 @@ function _signLinkSheet(pid){
   ov.innerHTML='<div class="modal sig-m"><div class="mhandle"></div><div class="mtitle">🔗 Signature link</div>'+
     '<div class="sig-sum"><b>'+esc(qi.client||p.name||'')+'</b><span>Sent '+esc(p.signReq.sentUS||'')+' · $'+Number(p.signReq.total||0).toLocaleString('en-US')+'</span>'+(changed?'<span style="color:#f0b429;font-weight:700">⚠ The estimate changed after this link was made — tap “New link”.</span>':'')+'<div class="sl-url">'+esc(url)+'</div></div>'+
     '<div class="sig-row"><button type="button" class="sig-sec" id="slMail">📧 Email</button><button type="button" class="sig-sec" id="slMsg">💬 Message</button></div>'+
+    '<div class="sig-row"><button type="button" class="sig-sec" id="slPrev">👁 Preview as client</button>'+(Number(p.signReq.views)?'<span class="sl-v">Opened '+p.signReq.views+'× · last '+esc(_lkWhen(p.signReq.lastViewedAt))+'</span>':'<span class="sl-v">Not opened yet</span>')+'</div>'+
     '<div class="sig-row"><button type="button" class="sig-sec" id="slCopy">📋 Copy link</button>'+(changed?'<button type="button" class="sig-sec" id="slNew">↻ New link</button>':'')+'</div>'+
     '<div class="sig-row"><button type="button" class="sig-sec" id="slCancel" style="color:#f87171">Cancel link</button><button type="button" class="sig-sec" id="slClose">Close</button></div></div>';
   ov.classList.add('on'); ov.style.display='flex';
   function close(){ ov.classList.remove('on'); ov.style.display='none'; }
   document.getElementById('slClose').onclick=close;
+  document.getElementById('slPrev').onclick=function(){ window.open(url+'&preview=1','_blank'); };   // your own look does not count as an opening
   document.getElementById('slMail').onclick=function(){ if(!to) toast('No client email saved — type it in the email app','err'); location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(msg); };
   document.getElementById('slMsg').onclick=function(){ if(navigator.share){ navigator.share({title:subj,text:msg}).catch(function(){}); } else { location.href='sms:?&body='+encodeURIComponent(msg); } };
   document.getElementById('slCopy').onclick=function(){ try{ navigator.clipboard.writeText(url).then(function(){ toast('📋 Link copied'); }); }catch(e){ toast(url); } };
@@ -7650,9 +7670,34 @@ function _signCheckPending(force){
   var u=null; try{ u=firebase.auth().currentUser; }catch(e){} if(!u||u.isAnonymous) return;
   var ps=loadProjs();
   for(var i=0;i<ps.length;i++){ (function(p){ if(!p.signReq||p.signReq.status!=='pending'||!p.signReq.token) return;
-    db.collection('sign_requests').doc(p.signReq.token).get().then(function(d){ var v=d&&d.exists&&d.data(); if(v&&v.status==='signed'&&v.img) _applyRemoteSign(p.id,v); }).catch(function(){}); })(ps[i]); }
+    db.collection('sign_requests').doc(p.signReq.token).get().then(function(d){ var v=d&&d.exists&&d.data(); if(!v) return;
+      if((Number(v.views)||0)!==(Number(p.signReq.views)||0)) _lkSaveViews(p.id,v);
+      if(v.status==='signed'&&v.img) _applyRemoteSign(p.id,v); }).catch(function(){}); })(ps[i]); }
 }
 window._signCheckPending=_signCheckPending;
+
+// ══ Estimate by link: open tracking ══
+function _lkWhen(iso){ var t=Date.parse(iso||''); if(!t) return '?'; var d=new Date(t), now=new Date(), tm=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  if(d.toDateString()===now.toDateString()) return 'today '+tm; var y=new Date(now.getTime()-86400000); if(d.toDateString()===y.toDateString()) return 'yesterday '+tm;
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+tm; }
+function _lkSaveViews(pid,v){ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid&&ps[i].signReq){ ps[i].signReq.views=Number(v.views)||0; ps[i].signReq.lastViewedAt=v.lastViewedAt||''; ps[i].signReq.firstViewedAt=v.firstViewedAt||''; saveProjs(ps); break; } }
+  try{ if(window.renderJobsList) renderJobsList(); }catch(e){} try{ if(window.renderNHome) renderNHome(); }catch(e){} }
+function _lkB64(bytes){ var u=new Uint8Array(bytes), s='', CH=0x8000; for(var i=0;i<u.length;i+=CH) s+=String.fromCharCode.apply(null,u.subarray(i,i+CH)); return btoa(s); }
+// Make (or replace) the client link for this estimate. cb(url) on success.
+function _lkMake(pid,showPrices,pdfBytes,pdfName,cb){
+  var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } } if(!p){ toast('Job not found','err'); return; }
+  var b64=''; try{ if(pdfBytes&&pdfBytes.byteLength<480000) b64=_lkB64(pdfBytes); }catch(e){ b64=''; }
+  var cur=p.signReq, tok=_signToken(), data=_signReqData(p,{showPrices:showPrices,pdf:b64,pdfName:pdfName||''}); data.hash=_estHash(p);
+  toast('🔗 Creating the link…');
+  db.collection('sign_requests').doc(tok).set(data).then(function(){
+    if(cur&&cur.status==='pending'&&cur.token){ try{ db.collection('sign_requests').doc(cur.token).delete(); }catch(e){} }
+    var ps2=loadProjs(); for(var k=0;k<ps2.length;k++){ if(ps2[k].id===pid){ ps2[k].signReq={token:tok,status:'pending',sentAt:new Date().toISOString(),sentUS:new Date().toLocaleDateString('en-US'),total:data.totals.total,hash:data.hash,showPrices:!!showPrices,byEmail:true,views:0}; break; } }
+    saveProjs(ps2); try{ if(window.renderJobsList) renderJobsList(); }catch(e){}
+    cb(SIGN_URL+tok);
+  }).catch(function(){ toast('Could not create the link — check internet and that you are signed in','err'); });
+}
+window._lkMake=_lkMake;
+
 function _applyRemoteSign(pid,v){
   var ps=loadProjs(), p=null, k; for(k=0;k<ps.length;k++){ if(ps[k].id===pid){ p=ps[k]; break; } } if(!p||!p.signReq||p.signReq.status!=='pending') return;
   var dt=v.signedAt?new Date(v.signedAt):new Date();
@@ -10215,7 +10260,7 @@ function finalizeEstimateDelivery(pid, totalOnly, attachBroch, shareBroch, attac
     toast('⏳ Preparing the estimate…');
     var est0=null; try{ est0=generateEstimatePDF(pid, totalOnly, {returnBytes:true}); }catch(e){ toast('Estimate error: '+(e&&e.message||e),'err'); return; }
     if(!est0||!est0.bytes){ toast('Estimate error','err'); return; }
-    if(!(mB.length||mD.length||mC.length)){ openEstimateEmail(est0.bytes, est0.filename, pid); return; }
+    window._emTotalOnly=!!totalOnly; if(!(mB.length||mD.length||mC.length)){ openEstimateEmail(est0.bytes, est0.filename, pid); return; }
     loadBrochurePdfs(mB).then(function(bp){ return loadDatasheetPdfs(mD).then(function(dp){ return loadContractPdfs(mC).then(function(cp){
       return mergeEstimateWithBrochures(est0.bytes, bp.concat(dp).concat(cp)).then(function(bytes){ openEstimateEmail(bytes, est0.filename, pid); });
     }); }); }).catch(function(e){ toast('Attachment error: '+(e&&e.message||e),'err'); });
@@ -10346,18 +10391,41 @@ function openEstimateEmail(bytes, fname, pid, kind){
   }
   var file=null, canFiles=false;
   try{ file=new File([bytes],fname,{type:'application/pdf'}); canFiles=!!(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})); }catch(e){ canFiles=false; }
+  var _lkOK=(!kind||kind==='estimate')&&!!pid, _how=_lkOK?'link':'pdf', _prices=!window._emTotalOnly;
+  function _lkBody(url){ return 'Hi'+(first?' '+first:'')+',\n\nYour estimate'+(addr?' for '+addr:'')+' is ready:\n'+url+'\n\nYou can review every item, download the PDF and approve it online.\n\nThank you,\n'+co+(contact?'\n'+contact:''); }
+  if(_lkOK) subject='Your insulation estimate'+(addr?' — '+addr:'');
   var ov=document.getElementById('emailEstOverlay');
   if(!ov){ ov=document.createElement('div'); ov.className='overlay'; ov.id='emailEstOverlay'; document.body.appendChild(ov); }
   ov.innerHTML='<div class="modal" style="padding-bottom:26px"><div class="mhandle"></div><div class="mtitle">'+(_isInv?'Ready to email the invoice':'Ready to email')+'</div>'+
+    (_lkOK?'<div class="em-how" id="emHow"></div>':'')+
     '<div class="em-box"><div class="em-row"><span class="em-k">To</span><span class="em-v">'+(to?esc(to):'<span class="em-miss">No client email — add it in the Quote tab, or type it in the email app</span>')+'</span>'+(to?'<button type="button" class="em-copy" id="emCopy">Copy</button>':'')+'</div>'+
     '<div class="em-row"><span class="em-k">Subject</span><span class="em-v">'+esc(subject)+'</span></div>'+
-    '<div class="em-row"><span class="em-k">File</span><span class="em-v">📄 '+esc(fname)+'</span></div></div>'+
-    '<div class="em-tip">'+(canFiles?(to?'The client email is copied when you tap below — paste it in <b>To</b>. Choose <b>Gmail</b>; the PDF is already attached.':'Choose <b>Gmail</b>; the PDF is already attached.'):'This phone can\'t attach automatically: the PDF will download and your email app opens — attach it from <b>Downloads</b>.')+'</div>'+
+    '<div class="em-row" id="emFileRow"><span class="em-k">File</span><span class="em-v">📄 '+esc(fname)+'</span></div></div>'+
+    '<div class="em-tip" id="emTip">'+(canFiles?(to?'The client email is copied when you tap below — paste it in <b>To</b>. Choose <b>Gmail</b>; the PDF is already attached.':'Choose <b>Gmail</b>; the PDF is already attached.'):'This phone can\'t attach automatically: the PDF will download and your email app opens — attach it from <b>Downloads</b>.')+'</div>'+
     '<div style="padding:0 20px;display:flex;flex-direction:column;gap:10px">'+
     '<button type="button" id="emGo" class="em-go">📧 '+(canFiles?'Open email with PDF attached':'Download PDF + open email')+'</button>'+
     '<button type="button" id="emDl" class="em-sec">⬇ Just download the PDF</button>'+
     '<button type="button" id="emCancel" class="em-sec">Cancel</button></div></div>';
   ov.classList.add('on'); ov.style.display='flex';
+  var _tip0=(document.getElementById('emTip')||{}).innerHTML||'', _go0=(document.getElementById('emGo')||{}).innerHTML||'';
+  function drawHow(){
+    var hw=document.getElementById('emHow'); if(!hw) return;
+    hw.innerHTML='<div class="emh-k">How to send</div>'+
+      '<button type="button" class="emh'+(_how==='link'?' on':'')+'" data-how="link"><b>🔗 Link to the estimate <i>RECOMMENDED</i></b><small>You\'ll know when '+esc(first||'the client')+' opens it · download PDF and approve online</small></button>'+
+      (_how==='link'||_how==='both'?'<div class="emh-sub"><div class="emh-k">What '+esc(first||'the client')+' sees on the page</div><div class="emh-seg"><button type="button" data-pr="1" class="'+(_prices?'on':'')+'">📋 Price per item</button><button type="button" data-pr="0" class="'+(!_prices?'on':'')+'">💰 Total only</button></div></div>':'')+
+      '<button type="button" class="emh'+(_how==='pdf'?' on':'')+'" data-how="pdf"><b>📎 PDF attached</b><small>Like before · no way to know if it was opened</small></button>'+
+      '<button type="button" class="emh'+(_how==='both'?' on':'')+'" data-how="both"><b>🔗 + 📎 Both</b><small>Link in the message and the PDF attached</small></button>';
+    var fr=document.getElementById('emFileRow'); if(fr) fr.style.display=(_how==='link')?'none':'';
+    var tp=document.getElementById('emTip'), gb=document.getElementById('emGo');
+    if(tp) tp.innerHTML=(_how==='link')?'Your email app opens with the message and the link ready'+(to?' — the client email is filled in.':'. Type the client email in <b>To</b>.'):_tip0;
+    if(gb) gb.innerHTML=(_how==='link')?'📧 Open email with the link':(_how==='both'?'📧 Open email with link + PDF':_go0);
+  }
+  var _hw=document.getElementById('emHow'); if(_hw){ _hw.addEventListener('click',function(e){ var b=e.target.closest('[data-how]'), r=e.target.closest('[data-pr]'); if(b){ _how=b.getAttribute('data-how'); drawHow(); } else if(r){ _prices=r.getAttribute('data-pr')==='1'; drawHow(); } }); drawHow(); }
+  function _lkPdf(){ // the PDF on the page follows the page choice
+    if(_prices===!window._emTotalOnly) return {bytes:bytes,name:fname};
+    try{ var r2=window.generateEstimatePDF(pid,!_prices,{returnBytes:true}); if(r2&&r2.bytes) return {bytes:r2.bytes,name:r2.filename}; }catch(e){}
+    return {bytes:null,name:''};
+  }
   function close(){ ov.classList.remove('on'); ov.style.display='none'; }
   function copyTo(){ if(!to) return; try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(to); }catch(e){} }
   function askSent(){
@@ -10373,7 +10441,16 @@ function openEstimateEmail(bytes, fname, pid, kind){
   var cbtn=document.getElementById('emCopy'); if(cbtn) cbtn.addEventListener('click',function(){ copyTo(); toast('📋 Email copied'); });
   document.getElementById('emCancel').addEventListener('click',close);
   document.getElementById('emDl').addEventListener('click',function(){ _downloadBlob(new Blob([bytes],{type:'application/pdf'}),fname); toast('📄 Estimate downloaded'); close(); });
-  document.getElementById('emGo').addEventListener('click',function(){
+  document.getElementById('emGo').addEventListener('click',function(ev){
+    if(_lkOK&&(_how==='link'||_how==='both')&&!this._lkDone){
+      var self=this, pf=_lkPdf(); self.disabled=true;
+      window._lkMake(pid,_prices,pf.bytes,pf.name,function(url){
+        self.disabled=false; body=_lkBody(url);
+        if(_how==='link'){ close(); location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body); setTimeout(askSent,900); return; }
+        self._lkDone=true; self.click(); self._lkDone=false;
+      });
+      return;
+    }
     copyTo();
     if(canFiles){
       navigator.share({files:[file],title:subject,text:body}).then(function(){ close(); if(to) toast('📋 Paste the client email in To'); setTimeout(askSent,700); })
