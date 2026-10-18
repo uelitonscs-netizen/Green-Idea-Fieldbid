@@ -1173,6 +1173,25 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .nh-open{display:block;width:calc(100% - 40px);margin:0 20px 8px;text-align:left;border:1px solid #c9d6f3;background:var(--n-blue-soft);color:var(--n-blue);border-radius:14px;padding:11px 13px;font-size:13.5px;font-family:var(--n-font-m);}
 .nh-open b{color:var(--n-text);}
 .sl-v{flex:1;align-self:center;font-size:12.5px;font-weight:700;color:var(--n-green-ink);text-align:center;}
+
+.ce-m{max-height:92vh;overflow:auto;padding-bottom:20px;}
+.ce-note{font-size:12.5px;color:var(--n-muted);padding:0 20px 10px;} .ce-note button{border:none;background:none;color:var(--n-blue);font-weight:800;padding:0;font-size:12.5px;}
+.ce-g{display:flex;flex-direction:column;gap:8px;padding:0 16px;}
+.ce-g label,.ce-3 label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--n-muted);}
+.ce-m input,.ce-m textarea{width:100%;box-sizing:border-box;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-text);border-radius:10px;padding:10px 11px;font-size:15px;font-family:inherit;text-transform:none;letter-spacing:0;font-weight:500;}
+.ce-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;} .ce-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.ce-h{display:flex;justify-content:space-between;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--n-muted);padding:14px 20px 6px;} .ce-h span{color:var(--n-green-ink);}
+.ce-rows{display:flex;flex-direction:column;gap:8px;padding:0 16px;}
+.ce-row{border:1px solid var(--n-border);background:var(--n-surface2);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px;}
+.ce-top{display:flex;gap:6px;} .ce-area{font-weight:800!important;}
+.ce-del{flex:none;width:42px;border:1px solid var(--n-border);background:var(--n-surface);border-radius:10px;font-size:16px;}
+.ce-add{border:1px dashed var(--n-border);background:transparent;color:var(--n-blue);border-radius:12px;padding:11px;font-weight:800;font-size:14px;}
+.ce-btns{display:flex;gap:10px;padding:16px 16px 0;} .ce-cancel{flex:1;padding:13px;border-radius:12px;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-text);font-weight:800;font-size:15px;}
+.ce-go{flex:2;padding:13px;border-radius:12px;border:none;background:var(--n-green);color:#fff;font-weight:800;font-size:15px;}
+#confirmOverlay{z-index:3000!important;}   /* a question always sits on top of the sheet that asked it */
+.ce-dl{display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--n-muted);}
+.ce-dl i{font-style:normal;font-weight:600;text-transform:none;letter-spacing:0;}
+.ce-dl textarea{font-size:14px!important;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1288,7 +1307,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261018-1100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261018-1200</span></div>
 </div>
 
 <div id="field-app">
@@ -3773,7 +3792,7 @@ function showEP(id,tab){
 document.getElementById('btnOpenProj').addEventListener('click',function(){openProjModal();});
 document.getElementById('fieldProjName').addEventListener('click', function(){ openProjModal(); });
   var certBtn=document.getElementById('proofCertBtn');
-  if(certBtn) certBtn.addEventListener('click', function(){ generateProofPDF(); });
+  if(certBtn) certBtn.addEventListener('click', function(){ window.openCertEditor(); });
 (function(){ var mb=document.getElementById('multToggleBtn'); if(mb) mb.addEventListener('click', toggleMultiplier); })();
 document.getElementById('projOverlay').addEventListener('click',function(e){
   if(e.target===this){
@@ -5242,7 +5261,8 @@ function detectMatCatFromText(text){
   if(t.match(/ignition.?barrier|ign\b/)) return 'ign';
   return '';
 }
-function generateProofPDF(pid){
+function generateProofPDF(pid,ov){
+  // ov: {dataOnly:true} returns the calculated data; or edited data {name,address,installDate,certDate,rows,decl,printName}
   if(!window.jspdf){toast('PDF library loading, try again');return;}
   var jsPDF=window.jspdf.jsPDF;
   var doc=new jsPDF({orientation:'portrait',unit:'mm',format:'letter'});
@@ -5313,6 +5333,8 @@ function generateProofPDF(pid){
     var addr=(proj.address||proj.desc||'—');
     var date=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
     var installDate=proj.start?new Date(proj.start).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}):date;
+    var pName=proj.name||'—', _ed=(ov&&!ov.dataOnly)?ov:null;
+    if(_ed){ pName=_ed.name||'—'; addr=_ed.address||'—'; installDate=_ed.installDate||installDate; date=_ed.certDate||date; }
 
     doc.setFillColor(240,248,240);
     doc.roundedRect(margin,y-4,W-margin*2,36,3,3,'F');
@@ -5321,7 +5343,7 @@ function generateProofPDF(pid){
 
     var col1=margin+4, col2=W/2+2;
     text('Project:',col1,y+2,8,'#666666','left','normal');
-    text(proj.name||'—',col1,y+8,11,'#1a1a1a','left','bold');
+    text(pName,col1,y+8,11,'#1a1a1a','left','bold');
     text('Address:',col1,y+15,8,'#666666','left','normal');
     text(addr,col1,y+21,10,'#1a1a1a','left','normal');
 
@@ -5355,7 +5377,10 @@ function generateProofPDF(pid){
     doc.text('SQ FT',c5,y+5.5,{align:'center'});
     y+=8;
 
-    var totalSF=0;
+    var totalSF=0, _rows=[];
+    var _DECL='I hereby certify that the insulation described above was installed at the property '+
+      'listed in accordance with current building codes and manufacturer specifications. '+
+      'All materials used meet or exceed the specified R-values.';
     // Build a map of estItems by name to pick up manual edits (inches, price)
     var estMap={};
     for(var ei=0;ei<projEstItems.length;ei++){
@@ -5413,12 +5438,6 @@ function generateProofPDF(pid){
     for(var i=0;i<srcItems.length;i++){
       var a=srcItems[i];
       if(!a||!a.sf) continue;
-      totalSF+=parseFloat(a.sf)||0;
-      var rowBg=i%2===0?[255,255,255]:[245,250,245];
-      doc.setFillColor(rowBg[0],rowBg[1],rowBg[2]);
-      doc.rect(margin,y,W-margin*2,8,'F');
-
-      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);
       var mname=matLabel[a.matCat||a.matType]||'';
       if(!mname&&a.productId){var _p=getProd(a.productId);if(_p)mname=_p.name;}
       if(!mname) mname='—';
@@ -5492,21 +5511,37 @@ function generateProofPDF(pid){
         else if(matIsOC) thick=(Math.round(rNum/4.2*100)/100)+'"';
       }
       var rval=rNum>0?'R-'+rNum:'';
-
+      _rows.push({area:a.name||'—',material:mname,r:rval,thick:thick,sf:Math.round(parseFloat(a.sf)||0),desc:''});
+    }
+    if(ov&&ov.dataOnly) return {name:proj.name||'',address:addr==='—'?'':addr,installDate:installDate,certDate:date,rows:_rows,decl:_DECL,printName:'Ueliton Silva'};
+    var _draw=_ed&&_ed.rows?_ed.rows:_rows; totalSF=0;
+    for(var i=0;i<_draw.length;i++){
+      var _r=_draw[i]; if(!_r) continue;
+      var _sfN=parseFloat(String(_r.sf).replace(/,/g,''))||0; totalSF+=_sfN;
+      doc.setFont('helvetica','italic'); doc.setFontSize(7.4);
+      var _dl=String(_r.desc||'').trim()?doc.splitTextToSize(String(_r.desc).trim(),W-margin*2-8):[];
+      var _rh=8+(_dl.length?_dl.length*3.3+1.6:0);
+      if(y+_rh>262){ doc.addPage(); y=20; }
+      var rowBg=i%2===0?[255,255,255]:[245,250,245];
+      doc.setFillColor(rowBg[0],rowBg[1],rowBg[2]);
+      doc.rect(margin,y,W-margin*2,_rh,'F');
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);
+      var rval=_r.r||'', thick=_r.thick||'', mname=_r.material||'—';
       // Truncate long names
-      var aname=a.name||'—'; if(aname.length>22) aname=aname.substring(0,22)+'...';
+      var aname=_r.area||'—'; if(aname.length>22) aname=aname.substring(0,22)+'...';
       if(mname.length>22) mname=mname.substring(0,22)+'...';
 
       doc.text(aname,c1,y+5.5);
       doc.text(mname,c2,y+5.5);
       doc.text(rval||'—',c3,y+5.5,{align:'center'});
       doc.text(thick||'—',c4,y+5.5,{align:'center'});
-      doc.text(Math.round(a.sf).toLocaleString(),c5,y+5.5,{align:'center'});
+      doc.text(Math.round(_sfN).toLocaleString(),c5,y+5.5,{align:'center'});
+      if(_dl.length){ doc.setFont('helvetica','italic'); doc.setFontSize(7.4); doc.setTextColor(95,105,98); doc.text(_dl,c1,y+10.6); doc.setFont('helvetica','normal'); }
 
       // Bottom divider
       doc.setDrawColor(220,220,220);doc.setLineWidth(0.1);
-      doc.line(margin,y+8,W-margin,y+8);
-      y+=8;
+      doc.line(margin,y+_rh,W-margin,y+_rh);
+      y+=_rh;
 
       if(y>250){ doc.addPage(); y=20; }
     }
@@ -5527,9 +5562,7 @@ function generateProofPDF(pid){
     doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(26,107,42);
     doc.text('DECLARATION',margin+4,y+6);
     doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(60,60,60);
-    var decl='I hereby certify that the insulation described above was installed at the property '+
-      'listed in accordance with current building codes and manufacturer specifications. '+
-      'All materials used meet or exceed the specified R-values.';
+    var decl=(_ed&&_ed.decl)?_ed.decl:_DECL;
     var declLines=doc.splitTextToSize(decl,W-margin*2-8);
     doc.text(declLines,margin+4,y+12);
     y+=36;
@@ -5542,9 +5575,9 @@ function generateProofPDF(pid){
     doc.setFontSize(7);doc.setTextColor(120,120,120);
     doc.text('Installer Signature',margin,y+14);
     doc.setFontSize(9);doc.setTextColor(80,80,80);
-    doc.text('Date: '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),W-margin-80,y+6);
+    doc.text('Date: '+date,W-margin-80,y+6);
     y+=20;
-    doc.text('Print Name: Ueliton Silva',margin,y);
+    doc.text('Print Name: '+((_ed&&_ed.printName)||'Ueliton Silva'),margin,y);
 
     // ── FOOTER ──
     doc.setFillColor(26,107,42);
@@ -5553,15 +5586,59 @@ function generateProofPDF(pid){
     doc.text('Green Idea Insulation  |  Worcester, MA  |  This certificate is issued for compliance documentation purposes.',W/2,H-5,{align:'center'});
 
     // Save
-    var fname='Proof_of_Insulation_'+(proj.name||'Certificate').replace(/[^a-z0-9]/gi,'_')+'_'+new Date().toISOString().slice(0,10)+'.pdf';
+    var fname='Proof_of_Insulation_'+(pName||'Certificate').replace(/[^a-z0-9]/gi,'_')+'_'+new Date().toISOString().slice(0,10)+'.pdf';
     doc.save(fname);
     toast('✅ Certificate downloaded');
   }
 
   // Use embedded assets
-  buildPDF(LOGO_B64);
+  return buildPDF(LOGO_B64);
 }
 window.generateProofPDF=generateProofPDF;
+// ══ Certificate editor: what the app calculated, editable before the PDF is made ══
+function openCertEditor(pid){
+  pid=pid||(currentProj&&currentProj.id); if(!pid){ toast('Open a job first','err'); return; }
+  var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } }
+  if(!p){ toast('Job not found','err'); return; }
+  var calc=null; try{ calc=window.generateProofPDF(pid,{dataOnly:true}); }catch(e){ calc=null; }
+  if(!calc){ toast('PDF library loading, try again','err'); return; }
+  var D=p.certEdit?JSON.parse(JSON.stringify(p.certEdit)):JSON.parse(JSON.stringify(calc));
+  var ov=document.getElementById('certOv'); if(!ov){ ov=document.createElement('div'); ov.id='certOv'; ov.className='overlay'; document.body.appendChild(ov); }
+  function q(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function draw(){
+    var tot=0; for(var t=0;t<D.rows.length;t++) tot+=parseFloat(String(D.rows[t].sf).replace(/,/g,''))||0;
+    var h='<div class="modal ce-m"><div class="mhandle"></div><div class="mtitle">🏅 Insulation certificate</div>'+
+      (p.certEdit?'<div class="ce-note">Your edits from '+q(new Date(p.certEdit.savedAt||Date.now()).toLocaleDateString('en-US'))+' · <button type="button" id="ceReset">↺ Reset to generated</button></div>':'<div class="ce-note">Filled in from the takeoff and the estimate — change anything before creating the PDF.</div>')+
+      '<div class="ce-g"><label>Project<input data-k="name" value="'+q(D.name)+'"></label><label>Address<input data-k="address" value="'+q(D.address)+'"></label>'+
+      '<div class="ce-2"><label>Installation date<input data-k="installDate" value="'+q(D.installDate)+'"></label><label>Certificate date<input data-k="certDate" value="'+q(D.certDate)+'"></label></div></div>'+
+      '<div class="ce-h">Areas <span>'+Math.round(tot).toLocaleString('en-US')+' SF total</span></div><div class="ce-rows">';
+    for(var r=0;r<D.rows.length;r++){ var R=D.rows[r];
+      h+='<div class="ce-row"><div class="ce-top"><input class="ce-area" data-r="'+r+'" data-f="area" value="'+q(R.area)+'" placeholder="Area / location"><button type="button" class="ce-del" data-del="'+r+'">🗑</button></div>'+
+        '<input data-r="'+r+'" data-f="material" value="'+q(R.material)+'" placeholder="Material">'+
+        '<div class="ce-3"><label>R-value<input data-r="'+r+'" data-f="r" value="'+q(R.r)+'" placeholder="R-21"></label><label>Thickness<input data-r="'+r+'" data-f="thick" value="'+q(R.thick)+'" placeholder="3&quot;"></label><label>SF<input data-r="'+r+'" data-f="sf" inputmode="decimal" value="'+q(R.sf)+'"></label></div>'+
+        '<label class="ce-dl">Description <i>optional · shows under this area on the certificate</i><textarea data-r="'+r+'" data-f="desc" rows="2" placeholder="e.g. Applied to the underside of the roof deck, 2x8 rafters">'+q(R.desc)+'</textarea></label></div>'; }
+    h+='<button type="button" class="ce-add" id="ceAdd">+ Add row</button></div>'+
+      '<div class="ce-h">Declaration</div><div class="ce-g"><textarea data-k="decl" rows="4">'+q(D.decl)+'</textarea><label>Print name<input data-k="printName" value="'+q(D.printName)+'"></label></div>'+
+      '<div class="ce-btns"><button type="button" class="ce-cancel" id="ceCancel">Cancel</button><button type="button" class="ce-go" id="ceGo">📄 Create certificate</button></div></div>';
+    ov.innerHTML=h;
+  }
+  function close(){ ov.classList.remove('on'); ov.style.display='none'; }
+  function save(){ var ps2=loadProjs(); for(var z=0;z<ps2.length;z++){ if(ps2[z].id===pid){ var c=JSON.parse(JSON.stringify(D)); c.savedAt=new Date().toISOString(); ps2[z].certEdit=c; p.certEdit=c; break; } } saveProjs(ps2); }
+  ov.oninput=function(e){ var t=e.target, k=t.getAttribute('data-k'), r=t.getAttribute('data-r'), f=t.getAttribute('data-f');
+    if(k) D[k]=t.value; else if(r!==null&&f){ D.rows[+r][f]=t.value; if(f==='sf'){ var tot=0; for(var x=0;x<D.rows.length;x++) tot+=parseFloat(String(D.rows[x].sf).replace(/,/g,''))||0; var sp=ov.querySelector('.ce-h span'); if(sp) sp.textContent=Math.round(tot).toLocaleString('en-US')+' SF total'; } } };
+  ov.onclick=function(e){ var t=e.target;
+    if(t===ov||t.closest('#ceCancel')){ close(); return; }
+    var d=t.closest('[data-del]'); if(d){ var ix=+d.getAttribute('data-del'), R=D.rows[ix]||{}; appConfirm('Remove "'+(R.area||'this row')+'" from the certificate?',function(){ D.rows.splice(ix,1); draw(); },{confirmLabel:'Remove'}); return; }
+    if(t.closest('#ceAdd')){ D.rows.push({area:'',material:'',r:'',thick:'',sf:'',desc:''}); draw(); var L=ov.querySelectorAll('.ce-area'); if(L.length){ L[L.length-1].focus(); } return; }
+    if(t.closest('#ceReset')){ appConfirm('Go back to what the app calculates from the takeoff? Your edits are removed.',function(){ var ps3=loadProjs(); for(var z=0;z<ps3.length;z++){ if(ps3[z].id===pid){ delete ps3[z].certEdit; break; } } saveProjs(ps3); delete p.certEdit; D=JSON.parse(JSON.stringify(calc)); draw(); toast('↺ Back to the calculated certificate'); },{confirmLabel:'↺ Reset'}); return; }
+    if(t.closest('#ceGo')){ var clean=[]; for(var w=0;w<D.rows.length;w++){ var rw=D.rows[w]; if(String(rw.area||'').trim()||String(rw.material||'').trim()||parseFloat(rw.sf)) clean.push(rw); } D.rows=clean;
+      var changed=JSON.stringify([D.name,D.address,D.installDate,D.certDate,D.rows,D.decl,D.printName])!==JSON.stringify([calc.name,calc.address,calc.installDate,calc.certDate,calc.rows,calc.decl,calc.printName]);
+      if(changed) save();
+      close(); window.generateProofPDF(pid,D); }
+  };
+  draw(); ov.classList.add('on'); ov.style.display='flex';
+}
+window.openCertEditor=openCertEditor;
 
 function renderFA(){
   // Keep the header count truthful (it was showing a stale value like "0 areas").
@@ -6728,7 +6805,7 @@ function _jobAct(act,pid,btn){
     if(act === 'unsign'){ removeClientSign(pid); return; }
     if(act === 'open') openJobFromList(pid);
     else if(act === 'cert'){
-      try{ generateProofPDF(pid); }
+      try{ window.openCertEditor(pid); }
       catch(e){ toast('Certificate error: '+(e&&e.message||e),'err'); }
     }
     else if(act === 'email'){
