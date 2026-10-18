@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Green Idea Insulation · Estimate approval</title>
+<!-- FieldBid sign page v20261014 -->
+<style>
+:root{--g:#1a6b2a;--g2:#4ade80;--t:#1d2a20;--m:#6b7570;--b:#e3e7e1;}
+*{box-sizing:border-box}
+body{margin:0;background:#f3f4f1;color:var(--t);font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.45}
+.wrap{max-width:720px;margin:0 auto;padding:14px}
+.card{background:#fff;border:1px solid var(--b);border-radius:14px;padding:18px;margin-bottom:12px}
+.hd{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.co b{font-size:17px} .co div{font-size:12px;color:var(--m)}
+.meta{font-size:12px;color:var(--m);text-align:right} .meta b{color:var(--t)}
+.bar{height:4px;margin:14px -18px 12px;background:linear-gradient(90deg,var(--g) 0 35%,var(--g2) 35% 70%,#dcefdc 70%)}
+.lbl{font-size:10.5px;color:#9aa39d;letter-spacing:.06em;text-transform:uppercase}
+.cl b{font-size:17px}
+.sec{margin-top:14px;font-weight:800;color:var(--g);font-size:13px;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid var(--g);padding-bottom:3px}
+.it{padding:9px 0;border-bottom:1px solid #f0ede8}
+.it b{display:block;font-size:14.5px} .it .sp{font-size:12.5px;color:#5f6b75} .it .nt{font-size:12.5px;color:#8a8a8a}
+.tot{margin-top:12px;margin-left:auto;max-width:300px}
+.tot div{display:flex;justify-content:space-between;padding:3px 0;font-size:14px;color:var(--m)}
+.tot .dc{color:#2e9e46} .tot .big{border-top:2px solid var(--t);margin-top:4px;padding-top:6px;font-size:18px;font-weight:800;color:var(--t)} .tot .big span:last-child{color:var(--g)}
+.terms{max-height:200px;overflow-y:auto;font-size:12px;color:#55605a;background:#f9f7f4;border-radius:10px;padding:10px 12px}
+.terms p{margin:0 0 6px}
+.mysig{display:flex;align-items:flex-end;gap:10px;margin-top:6px} .mysig img{max-height:54px;max-width:220px}
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;margin:4px 0 12px}
+.agree input{width:22px;height:22px;flex:none;margin-top:1px}
+label.f{display:block;font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 5px}
+input.n{width:100%;padding:12px;border:1px solid #cfd6cc;border-radius:10px;font-size:16px}
+.padw{position:relative;border:2px dashed #b9c3b5;border-radius:12px;background:#fff}
+canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10px}
+.x{position:absolute;left:12px;bottom:8px;font-size:12px;color:#a3aca5;pointer-events:none}
+.row{display:flex;gap:8px;margin-top:10px}
+.sec2{flex:1;padding:12px;border:1px solid #cfd6cc;background:#fff;border-radius:10px;font-weight:700;font-size:14px}
+.go{display:block;width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;background:var(--g);color:#fff;font-size:16px;font-weight:800}
+.go[disabled]{opacity:.4}
+.msg{text-align:center;padding:30px 16px} .msg h2{margin:6px 0} .msg p{color:var(--m)}
+.err{color:#b42318;font-weight:700;font-size:13.5px;min-height:18px;margin-top:8px}
+.done img{max-height:70px;max-width:260px;display:block;margin:6px auto}
+.foot{text-align:center;font-size:11.5px;color:#9aa39d;margin:10px 0 24px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="card msg"><p>Loading estimate…</p></div></div>
+<div class="foot">Green Idea Insulation · Worcester, MA</div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  var app=document.getElementById('app');
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function money(n){ return '$'+(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function show(h){ app.innerHTML=h; window.scrollTo(0,0); }
+  function fail(t,p){ show('<div class="card msg"><h2>'+esc(t)+'</h2><p>'+esc(p||'')+'</p></div>'); }
+  var m=location.search.match(/[?&]t=([A-Za-z0-9]{16,64})/);
+  if(!m){ fail('This link is not complete','Please open the full link from the email or message.'); return; }
+  var token=m[1];
+  try{
+    firebase.initializeApp({apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"});
+  }catch(e){}
+  var ref=firebase.firestore().collection('sign_requests').doc(token);
+
+  function body(d){
+    var h='<div class="card"><div class="hd"><div class="co"><b>'+esc(d.company&&d.company.name||'Green Idea Insulation')+'</b>';
+    var cl=(d.company&&d.company.lines)||[]; for(var i=0;i<cl.length;i++) h+='<div>'+esc(cl[i])+'</div>';
+    h+='</div><div class="meta">'+(d.quoteNum?'Estimate # <b>'+esc(d.quoteNum)+'</b><br>':'')+(d.date?'Date <b>'+esc(d.date)+'</b>':'')+'</div></div><div class="bar"></div>';
+    h+='<div class="lbl">Prepared for</div><div class="cl"><b>'+esc(d.client&&d.client.name||'')+'</b>'+(d.client&&d.client.address?'<div style="font-size:13px;color:#6b7570">'+esc(d.client.address)+'</div>':'')+'</div>';
+    var secs=d.sections||[];
+    for(var s=0;s<secs.length;s++){ h+='<div class="sec">'+esc(secs[s].title)+'</div>';
+      var its=secs[s].items||[]; for(var k=0;k<its.length;k++){ var it=its[k]; h+='<div class="it"><b>'+esc(it.name)+'</b>'+(it.spec?'<div class="sp">'+esc(it.spec)+'</div>':'')+(it.notes?'<div class="nt">'+esc(it.notes)+'</div>':'')+'</div>'; } }
+    var T=d.totals||{}; h+='<div class="tot">';
+    if(T.subtotal!=null&&(T.discount||T.tax)) h+='<div><span>Subtotal</span><span>'+money(T.subtotal)+'</span></div>';
+    if(T.tax) h+='<div><span>'+esc(T.taxLabel||'Tax')+'</span><span>'+money(T.tax)+'</span></div>';
+    if(T.discount) h+='<div class="dc"><span>'+esc(T.discountLabel||'Discount')+'</span><span>-'+money(Math.abs(T.discount))+'</span></div>';
+    h+='<div class="big"><span>Total</span><span>'+money(T.total)+'</span></div></div></div>';
+    var tr=d.terms||[]; if(tr.length){ h+='<div class="card"><div class="lbl" style="margin-bottom:6px">Terms &amp; conditions</div><div class="terms">'; for(var j=0;j<tr.length;j++) h+='<p>'+esc(tr[j])+'</p>'; h+='</div>';
+      if(d.contractorSig) h+='<div class="mysig"><img src="'+esc(d.contractorSig)+'" alt=""><div style="font-size:12px;color:#6b7570">'+esc(d.company&&d.company.name||'')+(d.contractorName?'<br><b style="color:#1d2a20">'+esc(d.contractorName)+'</b>':'')+'</div></div>';
+      h+='</div>'; }
+    return h;
+  }
+  function signed(d){
+    show(body(d)+'<div class="card msg done"><div style="font-size:34px">✅</div><h2>Signed — thank you!</h2><p>Signed by <b>'+esc(d.signedName||'')+'</b>'+(d.signedAt?' on '+esc(new Date(d.signedAt).toLocaleDateString('en-US')):'')+'</p>'+(d.img?'<img src="'+esc(d.img)+'" alt="signature">':'')+'<p>We will be in touch to schedule the work.</p></div>');
+  }
+  function form(d){
+    show(body(d)+'<div class="card"><label class="agree"><input type="checkbox" id="ag"> <span>I approve this estimate and agree to the services, price and terms above.</span></label>'+
+      '<label class="f">Full name</label><input class="n" id="nm" value="'+esc(d.client&&d.client.name||'')+'" autocomplete="name">'+
+      '<label class="f">Signature</label><div class="padw"><canvas id="pad"></canvas><span class="x">✕ sign here with your finger or mouse</span></div>'+
+      '<div class="row"><button type="button" class="sec2" id="clr">Clear</button></div>'+
+      '<button type="button" class="go" id="ok" disabled>✍️ Approve &amp; sign</button><div class="err" id="er"></div></div>');
+    var cv=document.getElementById('pad'), ctx=cv.getContext('2d'), dr=false, empty=true, last=null, dpr=window.devicePixelRatio||1;
+    function size(){ var r=cv.getBoundingClientRect(); cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#111'; }
+    size();
+    function pt(e){ var r=cv.getBoundingClientRect(), t=(e.touches&&e.touches[0])||e; return {x:t.clientX-r.left,y:t.clientY-r.top}; }
+    function ready(){ document.getElementById('ok').disabled=!(document.getElementById('ag').checked&&document.getElementById('nm').value.trim()&&!empty); }
+    function down(e){ e.preventDefault(); dr=true; last=pt(e); ctx.beginPath(); ctx.arc(last.x,last.y,1.1,0,6.3); ctx.fillStyle='#111'; ctx.fill(); empty=false; }
+    function move(e){ if(!dr) return; e.preventDefault(); var p=pt(e); ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; }
+    function up(){ if(!dr) return; dr=false; ready(); }
+    cv.addEventListener('mousedown',down); cv.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+    cv.addEventListener('touchstart',down,{passive:false}); cv.addEventListener('touchmove',move,{passive:false}); cv.addEventListener('touchend',up);
+    document.getElementById('clr').onclick=function(){ ctx.clearRect(0,0,cv.width,cv.height); empty=true; ready(); };
+    document.getElementById('ag').onchange=ready; document.getElementById('nm').oninput=ready;
+    function png(){ var w=cv.width,h=cv.height,px=ctx.getImageData(0,0,w,h).data,x0=w,y0=h,x1=0,y1=0;
+      for(var y=0;y<h;y+=2){ for(var x=0;x<w;x+=2){ if(px[(y*w+x)*4+3]>10){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } } }
+      if(x1<=x0||y1<=y0) return cv.toDataURL('image/png');
+      x0=Math.max(0,x0-8); y0=Math.max(0,y0-8); x1=Math.min(w,x1+8); y1=Math.min(h,y1+8);
+      var sc=Math.min(1,600/(x1-x0)), o=document.createElement('canvas'); o.width=Math.round((x1-x0)*sc); o.height=Math.round((y1-y0)*sc);
+      o.getContext('2d').drawImage(cv,x0,y0,x1-x0,y1-y0,0,0,o.width,o.height); return o.toDataURL('image/png'); }
+    document.getElementById('ok').onclick=function(){
+      var b=this, er=document.getElementById('er'); b.disabled=true; b.textContent='Saving…'; er.textContent='';
+      var rec={status:'signed',signedName:document.getElementById('nm').value.trim(),signedAt:new Date().toISOString(),img:png()};
+      ref.update(rec).then(function(){ var x={}; for(var k in d) x[k]=d[k]; for(var q in rec) x[q]=rec[q]; signed(x); })
+        .catch(function(e){ b.disabled=false; b.innerHTML='✍️ Approve &amp; sign'; er.textContent='Could not save — check your internet and try again.'; });
+    };
+  }
+  ref.get().then(function(doc){
+    if(!doc.exists){ fail('This link is no longer valid','The estimate may have been updated or the link cancelled. Please contact Green Idea Insulation.'); return; }
+    var d=doc.data();
+    if(d.status==='signed') signed(d); else form(d);
+  }).catch(function(){ fail('Could not load the estimate','Check your internet connection and open the link again.'); });
+})();
+</script>
+</body>
+</html>
