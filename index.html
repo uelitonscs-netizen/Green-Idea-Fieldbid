@@ -1307,7 +1307,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261018-1200</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261018-1300</span></div>
 </div>
 
 <div id="field-app">
@@ -7748,16 +7748,29 @@ function _signCheckPending(force){
   var ps=loadProjs();
   for(var i=0;i<ps.length;i++){ (function(p){ if(!p.signReq||p.signReq.status!=='pending'||!p.signReq.token) return;
     db.collection('sign_requests').doc(p.signReq.token).get().then(function(d){ var v=d&&d.exists&&d.data(); if(!v) return;
-      if((Number(v.views)||0)!==(Number(p.signReq.views)||0)) _lkSaveViews(p.id,v);
+      var _st=p.estStatus||'none';
+      if((Number(v.views)||0)!==(Number(p.signReq.views)||0)||((Number(v.views)||0)>0&&(_st==='none'||_st==='draft'))) _lkSaveViews(p.id,v);
       if(v.status==='signed'&&v.img) _applyRemoteSign(p.id,v); }).catch(function(){}); })(ps[i]); }
 }
 window._signCheckPending=_signCheckPending;
 
 // ══ Estimate by link: open tracking ══
+// Draft → Sent (or a new date if it was Sent). Approved / Rejected stay as they are.
+function _markSent(ids,dateUS){
+  var pp=loadProjs(), n=0;
+  for(var k=0;k<pp.length;k++){ if(ids.indexOf(pp[k].id)<0) continue; var st=pp[k].estStatus||'none';
+    if(st==='approved'||st==='rejected') continue; pp[k].estStatus='sent'; pp[k].estSentDate=dateUS; n++; }
+  if(n){ saveProjs(pp); try{ if(window.renderJobsList) renderJobsList(); }catch(e){} try{ if(window.renderNHome) renderNHome(); }catch(e){} }
+  return n;
+}
+window._markSent=_markSent;
+
 function _lkWhen(iso){ var t=Date.parse(iso||''); if(!t) return '?'; var d=new Date(t), now=new Date(), tm=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   if(d.toDateString()===now.toDateString()) return 'today '+tm; var y=new Date(now.getTime()-86400000); if(d.toDateString()===y.toDateString()) return 'yesterday '+tm;
   return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+tm; }
-function _lkSaveViews(pid,v){ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid&&ps[i].signReq){ ps[i].signReq.views=Number(v.views)||0; ps[i].signReq.lastViewedAt=v.lastViewedAt||''; ps[i].signReq.firstViewedAt=v.firstViewedAt||''; saveProjs(ps); break; } }
+function _lkSaveViews(pid,v){ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid&&ps[i].signReq){ ps[i].signReq.views=Number(v.views)||0; ps[i].signReq.lastViewedAt=v.lastViewedAt||''; ps[i].signReq.firstViewedAt=v.firstViewedAt||'';
+      var st=ps[i].estStatus||'none'; if(ps[i].signReq.views>0&&(st==='none'||st==='draft'||st==='')){ ps[i].estStatus='sent'; ps[i].estSentDate=ps[i].signReq.sentUS||new Date(Date.parse(v.firstViewedAt||'')||Date.now()).toLocaleDateString('en-US'); try{ toast('👁 '+(ps[i].name||'Client')+' opened the estimate · status → Sent'); }catch(e){} }
+      saveProjs(ps); break; } }
   try{ if(window.renderJobsList) renderJobsList(); }catch(e){} try{ if(window.renderNHome) renderNHome(); }catch(e){} }
 function _lkB64(bytes){ var u=new Uint8Array(bytes), s='', CH=0x8000; for(var i=0;i<u.length;i+=CH) s+=String.fromCharCode.apply(null,u.subarray(i,i+CH)); return btoa(s); }
 // Make (or replace) the client link for this estimate. cb(url) on success.
@@ -10507,13 +10520,11 @@ function openEstimateEmail(bytes, fname, pid, kind){
   function copyTo(){ if(!to) return; try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(to); }catch(e){} }
   function askSent(){
     if(!pid||_isSigned) return;
-    if(_isComb){ var _ids=window._etInfo.pids||[]; appConfirm('Mark these '+_ids.length+' estimates as sent?',function(){ var pp=loadProjs(), dd=new Date().toLocaleDateString('en-US'); for(var k=0;k<pp.length;k++){ if(_ids.indexOf(pp[k].id)>=0&&pp[k].estStatus!=='approved'){ pp[k].estStatus='sent'; pp[k].estSentDate=dd; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('📨 '+_ids.length+' estimates marked as sent'); },{confirmLabel:'📨 Mark all as Sent',confirmStyle:'accent'}); return; }
-    if(kind==='options'){ appConfirm('Mark this estimate as sent?',function(){ var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid){ pp[k].estStatus='sent'; pp[k].estSentDate=new Date().toLocaleDateString('en-US'); break; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('📨 Marked as sent'); },{confirmLabel:'📨 Mark as Sent',confirmStyle:'accent'}); return; }
     if(_isInv){ appConfirm('Mark this invoice as sent?',function(){ var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid&&pp[k].invoice){ pp[k].invoice.sentDate=new Date().toLocaleDateString('en-US'); break; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('🧾 Invoice marked as sent'); },{confirmLabel:'📨 Mark as Sent',confirmStyle:'accent'}); return; }
-    appConfirm('Mark this estimate as sent?',function(){
-      var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid){ pp[k].estStatus='sent'; pp[k].estSentDate=new Date().toLocaleDateString('en-US'); break; } }
-      saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('📨 Marked as sent');
-    },{confirmLabel:'📨 Mark as Sent',confirmStyle:'accent'});
+    // Estimates: sending it IS the "sent" moment — no question. Approved / rejected jobs are never moved back.
+    var _ids=_isComb?(window._etInfo.pids||[]):[pid];
+    var n=window._markSent(_ids,new Date().toLocaleDateString('en-US'));
+    if(n) toast('📨 Status → Sent'+(n>1?' ('+n+' estimates)':''));
   }
   var cbtn=document.getElementById('emCopy'); if(cbtn) cbtn.addEventListener('click',function(){ copyTo(); toast('📋 Email copied'); });
   document.getElementById('emCancel').addEventListener('click',close);
