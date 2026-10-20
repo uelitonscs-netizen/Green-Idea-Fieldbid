@@ -1192,6 +1192,12 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .ce-dl{display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--n-muted);}
 .ce-dl i{font-style:normal;font-weight:600;text-transform:none;letter-spacing:0;}
 .ce-dl textarea{font-size:14px!important;}
+
+.st-box{border:1px solid var(--n-border);background:var(--n-surface2);border-radius:12px;padding:10px 12px;margin:0 0 10px;}
+.st-t{font-size:13px;font-weight:700;color:var(--n-text);} .st-bar{height:7px;border-radius:9px;background:var(--n-border);margin:7px 0;overflow:hidden;} .st-bar i{display:block;height:100%;border-radius:9px;}
+.st-s{font-size:12px;color:var(--n-muted);margin-top:2px;}
+.st-free{display:flex;flex-direction:column;gap:2px;width:100%;margin-top:8px;text-align:left;border:1.5px solid var(--n-green);background:var(--n-green-soft);color:var(--n-green-ink);border-radius:11px;padding:10px 12px;font-weight:800;font-size:14px;font-family:var(--n-font-m);}
+.st-free small{font-weight:600;font-size:11.5px;color:var(--n-muted);}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1307,7 +1313,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261018-1300</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261019-1300</span></div>
 </div>
 
 <div id="field-app">
@@ -2558,7 +2564,7 @@ function restoreMissingPhotos(){
       });
     }
     scan(proj.areas); scan(proj.estItems);
-    if(claims>0 && has===0)need.push(proj);
+    if(claims>0 && has===0 && !proj.photosCloudOnly)need.push(proj);
   });
   var col=db.collection(_PH_COL);
   // Ask the index which projects actually have photos in the cloud. This replaces
@@ -2583,11 +2589,11 @@ function restoreMissingPhotos(){
     }
     if(allow){
       // Only projects listed in the index; every one of them, no cap.
-      need=projs.filter(function(p){ return p&&p.id&&allow[p.id]; });
+      need=projs.filter(function(p){ return p&&p.id&&allow[p.id]&&!p.photosCloudOnly; });
     } else if(projs.length){
       // No usable index: check every project's photo doc directly. Costs more
       // reads once, but it rebuilds the index and nothing is left behind.
-      need=projs.slice();
+      need=projs.filter(function(p){ return p&&!p.photosCloudOnly; });
     } else if(need.length>8){
       need=need.slice(-8); // no index yet: keep startup reasonable
     }
@@ -2941,10 +2947,94 @@ function fbBkFromFile(){
     r.readAsText(f); };
   inp.click();
 }
+
+// ══ Phone storage: see how full it is, and keep old jobs' photos in the cloud only (checked photo by photo) ══
+var _ST_CAP=5200000;   // ~5 MB of text is what Chrome gives each site
+function _stStats(){
+  var used=0; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i), v=localStorage.getItem(k)||''; used+=k.length+v.length; }
+  var P=[]; try{ P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
+  var onPh=0, jobsPh=0, cloudPh=0, jobsCloud=0;
+  for(var j=0;j<P.length;j++){ var m=_photoMapForProj(P[j]), c=0; for(var k2 in m) c+=m[k2].length; if(c){ onPh+=c; jobsPh++; }
+    if(P[j].photosCloudOnly){ jobsCloud++; var L=[P[j].areas,P[j].estItems]; for(var a=0;a<L.length;a++){ var arr=L[a]||[]; for(var b=0;b<arr.length;b++) if(arr[b]&&arr[b]._phN) cloudPh+=arr[b]._phN; } } }
+  return {used:used,pct:Math.min(100,Math.round(used/_ST_CAP*100)),onPh:onPh,jobsPh:jobsPh,cloudPh:cloudPh,jobsCloud:jobsCloud};
+}
+function _stCandidates(days){
+  var P=[]; try{ P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
+  var cut=Date.now()-days*86400000, cur=(typeof currentProj!=='undefined'&&currentProj)?currentProj.id:'', out=[];
+  for(var i=0;i<P.length;i++){ var p=P[i]; if(!p||!p.id||p.id===cur) continue;
+    var m=_photoMapForProj(p), c=0, sz=0; for(var k in m){ c+=m[k].length; for(var z=0;z<m[k].length;z++) sz+=String(m[k][z]).length; } if(!c) continue;
+    var last=Math.max(Date.parse(p.touchedAt||'')||0, (function(d){ var q=String(d||'').split('/'); return q.length===3?new Date(+q[2],+q[0]-1,+q[1]).getTime():0; })(p.created));
+    if(!last){ var mm=String(p.id).match(/(\d{13})/); if(mm) last=+mm[1]; }
+    if(last&&last<cut) out.push({id:p.id,name:p.name,photos:c,size:sz}); }
+  return out;
+}
+function _stFmt(n){ return (n/1000000).toFixed(1)+' MB'; }
+function _stHtml(){
+  var S=_stStats(), cand=_stCandidates(30), free=0, ph=0; for(var i=0;i<cand.length;i++){ free+=cand[i].size; ph+=cand[i].photos; }
+  var col=S.pct>=90?'var(--n-red,#d64545)':(S.pct>=75?'var(--n-amber)':'var(--n-green)');
+  return '<div class="st-box"><div class="st-t">📱 Phone storage <b style="color:'+col+'">'+_stFmt(S.used)+' of ~'+_stFmt(_ST_CAP)+' · '+S.pct+'%</b></div>'+
+    '<div class="st-bar"><i style="width:'+S.pct+'%;background:'+col+'"></i></div>'+
+    '<div class="st-s">📷 '+S.onPh+' photo'+(S.onPh!==1?'s':'')+' on this phone ('+S.jobsPh+' job'+(S.jobsPh!==1?'s':'')+')'+(S.jobsCloud?' · ☁️ '+S.cloudPh+' kept in the cloud only ('+S.jobsCloud+' job'+(S.jobsCloud!==1?'s':'')+')':'')+'</div>'+
+    (cand.length?'<button type="button" class="st-free" id="stFree">📦 Free up space<small>'+ph+' photos of '+cand.length+' job'+(cand.length!==1?'s':'')+' not opened for 30+ days · frees ≈ '+_stFmt(free)+'</small></button>':'<div class="st-s">No job older than 30 days has photos on this phone.</div>')+'</div>';
+}
+function _stSame(a,b){ if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length) return false; for(var i=0;i<a.length;i++) if(String(a[i])!==String(b[i])) return false; return true; }
+function fbFreeUpSpace(onDone){
+  var cand=_stCandidates(30); if(!cand.length){ toast('Nothing to free up'); return; }
+  if(typeof db==='undefined'||!db||!firebase.auth().currentUser){ toast('Sign in and connect to the internet first','err'); return; }
+  var ph=0, sz=0; for(var i=0;i<cand.length;i++){ ph+=cand[i].photos; sz+=cand[i].size; }
+  appConfirm('Keep the photos of '+cand.length+' older job'+(cand.length!==1?'s':'')+' ('+ph+' photos, ≈ '+_stFmt(sz)+') in the cloud only?\n\nEach photo is checked in the cloud first. A job is only changed if ALL its photos are there. They come back when you open the job.',function(){
+    var col=db.collection(_PH_COL), ok=[], skip=[], chain=Promise.resolve();
+    toast('☁️ Checking photos in the cloud… (0 of '+cand.length+')');
+    for(var k=0;k<cand.length;k++){ (function(c,ix){ chain=chain.then(function(){
+      return _cloudPhotoMap(col,c.id).then(function(cloud){
+        var P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'), p=null; for(var a=0;a<P.length;a++) if(P[a].id===c.id){ p=P[a]; break; }
+        if(!p){ skip.push(c.name); return; }
+        var m=_photoMapForProj(p), all=true; for(var key in m){ if(!_stSame(m[key],cloud[key])){ all=false; break; } }
+        if(all) ok.push(c.id); else { skip.push(c.name); try{ var sg=_loadPhSigs(); delete sg[c.id]; _savePhSigs(sg); }catch(x){} }   // not all in the cloud → send this job's photos again
+        toast('☁️ Checking photos in the cloud… ('+(ix+1)+' of '+cand.length+')');
+      },function(){ skip.push(c.name); });
+    }); })(cand[k],k); }
+    chain.then(function(){
+      if(skip.length){ try{ if(window.schedulePhotoBackup) window.schedulePhotoBackup(); }catch(x){} }
+      if(!ok.length){ alert('Nothing was changed: the photos of these jobs are not all in the cloud yet. They are being sent now — try again in a few minutes.'); return; }
+      var P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'), freed=0, n=0;
+      for(var a=0;a<P.length;a++){ if(ok.indexOf(P[a].id)<0) continue; var L=[P[a].areas,P[a].estItems];
+        for(var b=0;b<L.length;b++){ var arr=L[b]||[]; for(var d=0;d<arr.length;d++){ var o=arr[d]; if(o&&Array.isArray(o.photos)&&o.photos.length){ for(var e=0;e<o.photos.length;e++) freed+=String(o.photos[e]).length; o._phN=o.photos.length; n+=o.photos.length; o.photos=[]; } } }
+        P[a].photosCloudOnly=true; }
+      localStorage.setItem('fb6_projs',JSON.stringify(P)); try{ save(); }catch(e){}
+      alert('✓ Freed ≈ '+_stFmt(freed)+' — '+n+' photos of '+ok.length+' job'+(ok.length!==1?'s':'')+' are now kept in the cloud only. They come back when you open the job.'+(skip.length?'\n\nNot changed — some photos were not in the cloud yet, they are being sent now (try again later): '+skip.join(', '):''));
+      if(onDone) onDone();
+    });
+  },{confirmLabel:'📦 Free up space'});
+}
+window.fbFreeUpSpace=fbFreeUpSpace;
+// Opening a job whose photos are in the cloud only brings them back.
+function fbLoadCloudPhotos(pid){
+  var P=[]; try{ P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){ return; }
+  var p=null; for(var i=0;i<P.length;i++) if(P[i].id===pid){ p=P[i]; break; }
+  if(!p||!p.photosCloudOnly||typeof db==='undefined'||!db) return;
+  toast('📷 Loading this job\'s photos from the cloud…');
+  _cloudPhotoMap(db.collection(_PH_COL),pid).then(function(cloud){
+    var h=_phHealFromCloud(pid,cloud);
+    if(!h){ toast('⚠️ Phone storage is full — More → Backups → Free up space','err'); return; }
+    var Q=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); for(var j=0;j<Q.length;j++){ if(Q[j].id===pid){ delete Q[j].photosCloudOnly; break; } }
+    try{ localStorage.setItem('fb6_projs',JSON.stringify(Q)); }catch(e){}
+    try{ if(typeof window._phRefreshOpen==='function') window._phRefreshOpen(); }catch(e){}
+    toast('📷 Photos loaded');
+  },function(){ toast('Could not load the photos — check the internet','err'); });
+}
+window.fbLoadCloudPhotos=fbLoadCloudPhotos;
+// Never fail silently when the phone storage is full.
+(function(){ try{ var _si=Storage.prototype.setItem, _last=0;
+  Storage.prototype.setItem=function(k,v){ try{ return _si.call(this,k,v); }catch(e){
+    if(e&&(e.name==='QuotaExceededError'||/quota/i.test(e.message||''))&&String(k).indexOf('fb6_')===0&&Date.now()-_last>15000){ _last=Date.now();
+      setTimeout(function(){ try{ toast('⚠️ Phone storage is full — open More → Backups → 📦 Free up space','err'); }catch(x){} },0); }
+    throw e; } };
+}catch(e){} })();
 function fbBackups(){
   var last=null; try{ last=localStorage.getItem('fb6_lastDownload'); }catch(e){}
   var dl=last?Math.floor((Date.now()-Date.parse(last))/86400000):null;
-  var ov=_bkSheet('<div style="padding:0 20px"><div id="bkPh">'+_bkPhotoHtml()+'</div><div class="bk-h">Last 24 hours <span>a copy every 2 hours when something changed</span></div><div id="bkHList" class="nvm-g" style="padding:0">Loading…</div><div class="bk-h">Daily copies <span>last 14 days · tap to restore</span></div><div id="bkList" class="nvm-g" style="padding:0">Loading…</div>'+
+  var ov=_bkSheet('<div style="padding:0 20px"><div id="bkSt">'+_stHtml()+'</div><div id="bkPh">'+_bkPhotoHtml()+'</div><div class="bk-h">Last 24 hours <span>a copy every 2 hours when something changed</span></div><div id="bkHList" class="nvm-g" style="padding:0">Loading…</div><div class="bk-h">Daily copies <span>last 14 days · tap to restore</span></div><div id="bkList" class="nvm-g" style="padding:0">Loading…</div>'+
     '<div class="nvm-g" style="padding:10px 0 0"><button type="button" class="nvm-i" id="bkNow"><span class="nvm-ic">💾</span><span><b>Save a copy now</b><small>replaces today\'s copy</small></span></button>'+
     '<button type="button" class="nvm-i" id="bkDrive"><span class="nvm-ic">☁️</span><span><b>Save to Google Drive</b><small>opens Share → tap Drive → Save</small></span></button>'+
     '<button type="button" class="nvm-i" id="bkDl"><span class="nvm-ic">⬇️</span><span><b>Download backup</b><small>file to this phone · last: '+(dl===null?'never':(dl===0?'today':dl+' day'+(dl!==1?'s':'')+' ago'))+'</small></span></button>'+
@@ -2952,6 +3042,7 @@ function fbBackups(){
   document.getElementById('bkNow').onclick=function(){ fbBkSaveNow().then(function(){ _bkToast('💾 Copy saved'); fbBackups(); }); };
   document.getElementById('bkDl').onclick=fbBkDownload;
   document.getElementById('bkDrive').onclick=fbBkDrive;
+  (function _wireSt(){ var f=document.getElementById('stFree'); if(f) f.onclick=function(){ fbFreeUpSpace(function(){ var b=document.getElementById('bkSt'); if(b){ b.innerHTML=_stHtml(); _wireSt(); } var h=document.getElementById('bkPh'); if(h) h.innerHTML=_bkPhotoHtml(); }); }; })();
   function _wirePh(){ var b=document.getElementById('bkPhNow'); if(b) b.onclick=function(){ b.disabled=true; b.textContent='Backing up…'; try{ if(window.schedulePhotoBackup) window.schedulePhotoBackup(); else backupPhotos(); }catch(e){} setTimeout(function(){ var h=document.getElementById('bkPh'); if(h){ h.innerHTML=_bkPhotoHtml(); _wirePh(); } },6000); }; }
   _wirePh();
   db.collection('fieldbid').doc('bk__hindex').get().then(function(ix){
@@ -3553,6 +3644,7 @@ function _sortJobs(list,mode){
 }
 window._sortJobs=_sortJobs;
 function _fbTouch(pid){
+  try{ if(window.fbLoadCloudPhotos) setTimeout(function(){ window.fbLoadCloudPhotos(pid); },400); }catch(e){}
   setTimeout(function(){ try{ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){
     var last=Date.parse(ps[i].touchedAt||'')||0; if(Date.now()-last<60000) return;   // at most once a minute
     ps[i].touchedAt=new Date().toISOString(); if(currentProj&&currentProj.id===pid) currentProj.touchedAt=ps[i].touchedAt; saveProjs(ps); return; } } }catch(e){} },300);
