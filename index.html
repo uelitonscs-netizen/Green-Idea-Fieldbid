@@ -1382,7 +1382,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261020-1600</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261021-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -3797,6 +3797,52 @@ function parseSum(str){
   return total;
 }
 
+
+// ══ Takeoff ⇄ Estimator: an area and the item made from it stay in step ══
+function _twNorm(x){ return String(x||'').trim().toLowerCase().replace(/\s+/g,' '); }
+var _TW_MAT={'cc':'p2','oc':'p1','hybrid':'p3','hybrid_foam_fg':'p3','hybrid_foam_mw':'p14','cel_blown':'p4','cel':'p4','cel_dense':'p4','fg':'p6','fg_r11':'p6','fg_r13':'p6','fg_r15':'p6','fg_r19':'p7','fg_r21':'p8','fg_r25':'p8','fg_r30':'p9','fg_r38':'p9','fg_r49':'p10','fg_custom':'p6','mw':'p11','mw_r15':'p11','mw_r21':'p12','mw_r23':'p12','mw_r30':'p12','mw_custom':'p11','ign':'p13','ignition':'p13','fb':'p13','other':'p15','custom':'p15'};
+function _twProdForArea(a){
+  if(a.productId&&getProd(a.productId)) return a.productId;
+  var t=String(a.matType||a.matCat||''), id=_TW_MAT[t]; if(/^mw/.test(t)){ id=(parseFloat(a.mwR)||0)>=21?'p12':'p11'; }
+  if(/^fg/.test(t)){ var r=parseFloat(a.fgR)||0; id=r>=49?'p10':(r>=30?'p9':(r>=21?'p8':(r>=19?'p7':'p6'))); }
+  return id&&getProd(id)?id:'';
+}
+function _twInches(a){ var t=String(a.matType||''); if(t==='hybrid'&&a.ccInch>0&&a.ocInch>0) return parseFloat(a.ccInch)+parseFloat(a.ocInch); return parseFloat(a.ccInch)||parseFloat(a.ocInch)||parseFloat(a.fgInch)||parseFloat(a.celInch)||0; }
+function _twSpec(it){ var t=it.matType, inn=parseFloat(it.inches)||0;
+  if(t==='cc'&&inn>0) return inn+'" closed cell'; if(t==='oc'&&inn>0) return inn+'" open cell';
+  if(t==='hybrid'&&(it.ccInch||it.ocInch)) return (it.ccInch||0)+'" cc + '+(it.ocInch||0)+'" oc';
+  var pp=null; try{ pp=getProd(it.productId); }catch(e){} return pp?pp.name:''; }
+// Estimator → Takeoff: the area made for this item follows its name, material, thickness and notes.
+function _twItemToArea(item,orig){
+  if(!currentProj) return; var key=orig||item, byId=key.areaId||'', byName=_twNorm(key.fromArea||key.name);
+  function pick(list){ var hits=[]; for(var i=0;i<(list||[]).length;i++){ var a=list[i]; if(!a) continue; if(byId&&a.aid===byId) return i; if(!byId&&_twNorm(a.name)===byName) hits.push(i); } return hits.length===1?hits[0]:-1; }
+  function apply(a){
+    a.name=item.name; a.notes=item.notes||'';
+    if(item.productId){ a.productId=item.productId; a.matType=item.matType||''; a.matCat=(item.matType==='cc'||item.matType==='oc'||item.matType==='hybrid')?item.matType:(item.matCat||a.matCat||'');
+      a.ccInch=item.ccInch||0; a.ocInch=item.ocInch||0; a.fgR=item.fgR||0; a.celR=item.celR||0; a.mwR=item.mwR||0;
+      var inn=parseFloat(item.inches)||0; if(item.matType==='cc'&&inn>0) a.ccInch=inn; if(item.matType==='oc'&&inn>0) a.ocInch=inn; a.spec=_twSpec(item); }
+    if(a.calcMode==='manual'||!(a.wallRows||a.floorRows||a.roofRows)){ a.sf=item.sf; a.sfBase=item.sf; }
+    if(item.pricePerInch>0) a.lastPrice=item.pricePerInch; else if(item.price>0) a.lastPrice=item.price; a.lastProdId=item.productId||a.lastProdId;
+    if(!a.aid) a.aid='a_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); item.areaId=a.aid; item.fromArea=item.name; }
+  var changed=false;
+  var ps=loadProjs(); for(var p=0;p<ps.length;p++){ if(ps[p].id===currentProj.id){ var ix=pick(ps[p].areas); if(ix>=0){ apply(ps[p].areas[ix]); changed=true; } break; } }
+  if(changed){ saveProjs(ps); var jx=pick(window.fieldAreas); if(jx>=0){ apply(window.fieldAreas[jx]); } try{ saveEI(); }catch(e){} try{ if(typeof renderFA==='function') renderFA(); if(typeof renderFWO==='function') renderFWO(); }catch(e){} toast('🔁 Takeoff area updated too'); }
+}
+// Takeoff → Estimator: the item made from this area follows its name, material, thickness, notes and SF (price per inch is kept).
+function _twAreaToItem(area,oldArea){
+  var L=window.estItems||[], ix=-1, hits=[], byId=area.aid||'', byName=_twNorm(oldArea?oldArea.name:area.name);
+  for(var i=0;i<L.length;i++){ var it=L[i]; if(!it) continue; if(byId&&it.areaId===byId){ ix=i; break; } if(_twNorm(it.fromArea||it.name)===byName) hits.push(i); }
+  if(ix<0&&hits.length===1) ix=hits[0]; if(ix<0) return;
+  var it=L[ix], pid=_twProdForArea(area), prodChanged=!!(pid&&String(it.productId||'')!==String(pid));
+  it.name=area.name; it.fromArea=area.name; it.areaId=area.aid; it.notes=area.notes||''; it.sf=Math.round((parseFloat(area.sf)||0)*10)/10;
+  if(pid){ it.productId=pid; it.matType=area.matType||''; it.matCat=area.matCat||''; it.ccInch=area.ccInch||0; it.ocInch=area.ocInch||0; it.fgR=area.fgR||0; it.celR=area.celR||0; it.mwR=area.mwR||0; it.matChanged=false; it.spec=_twSpec(it); }
+  var inn=_twInches(area), pr=pid?getProd(pid):null;
+  if(prodChanged&&pr){ var lp=0; try{ lp=getLastPrice('prod_'+pid, pr.price||0); }catch(e){ lp=pr.price||0; }   // new material → its own last price
+    if(pr.pricingType==='per_inch'&&pr.cat!=='Hybrid'){ it.pricePerInch=lp; } else { it.pricePerInch=0; it.price=parseFloat((lp||it.price||0).toFixed(2)); } }
+  if(pr&&pr.pricingType==='per_inch'&&pr.cat!=='Hybrid'&&inn>0){ it.inches=inn; if(it.pricePerInch>0) it.price=parseFloat((it.pricePerInch*inn).toFixed(2)); }
+  window.estItems=L; estItems=L; try{ saveEI(); }catch(e){} try{ if(typeof renderEst==='function') renderEst(); }catch(e){}
+  toast('🔁 Estimate item updated too');
+}
 function saveFA(){ saveEI(); } // alias - same operation
 function saveEI(){
   if(currentProj){ saveProjAreas(); }
@@ -9083,9 +9129,12 @@ document.getElementById('faSaveBtn').addEventListener('click',function(){
     // lastPrice is the same field the estimator import already reads.
     lastPrice:(!isNaN(_faPriceVal)&&_faPriceVal>0)?_faPriceVal:0});
   // Always use window.fieldAreas to avoid closure scope divergence
+  var _oldArea=(editFAIdx>=0&&window.fieldAreas[editFAIdx])?window.fieldAreas[editFAIdx]:null;
+  area.aid=(_oldArea&&_oldArea.aid)||('a_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7));
   if(editFAIdx>=0)window.fieldAreas[editFAIdx]=area;else window.fieldAreas.push(area);
   fieldAreas=window.fieldAreas;
   saveFA();
+  try{ if(_oldArea) _twAreaToItem(area,_oldArea); }catch(_te){}
   // Sync fieldAreas from window to ensure photos are included before render
   fieldAreas=window.fieldAreas;
   closeOv('faOverlay');
@@ -9395,6 +9444,8 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
   // works even when the item is created manually (not imported from takeoff).
   // Preserve any existing material data when editing an imported item.
   var _prevItem=(editEIIdx>=0&&window.estItems[editEIIdx])?window.estItems[editEIIdx]:null;
+  var _orig=_prevItem;
+  if(_orig){ if(_orig.section!==undefined) item.section=_orig.section; if(_orig.fromArea) item.fromArea=_orig.fromArea; if(_orig.areaId) item.areaId=_orig.areaId; if(_orig.qty!==undefined) item.qty=_orig.qty; }
   var _mat=deriveMatFromProduct(eiProd, inch);
   // Material changed in this sheet: the old material data no longer applies.
   var _chg=!!(_prevItem&&String(_prevItem.productId||'')!==String(eiProd||''));
@@ -9457,7 +9508,9 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
     }
     saveProjs(_projs);
   }
-  var _wasEdit=editEIIdx>=0;saveEI();renderEst();editEIIdx=-1;eiProd=null;eiPendPh=[];closeOv('eiOverlay');toast(_wasEdit?'✅ Updated':'✅ Item added');
+  var _wasEdit=editEIIdx>=0;saveEI();renderEst();
+  try{ if(_wasEdit) _twItemToArea(item,_orig); }catch(_te){}
+  editEIIdx=-1;eiProd=null;eiPendPh=[];closeOv('eiOverlay');toast(_wasEdit?'✅ Updated':'✅ Item added');
 });
 function delEI(idx){appConfirm('Delete this item?',function(){estItems.splice(idx,1);saveEI();renderEst();toast('🗑 Deleted');});}
 
@@ -10092,8 +10145,10 @@ function doImport(){
       var _old=estItems[_existIdx], _upd=JSON.parse(JSON.stringify(_old));
       _upd.sf=a.sf; _upd.calcMode=_newItem.calcMode; _upd.wallRows=_newItem.wallRows; _upd.floorRows=_newItem.floorRows; _upd.fromArea=a.name||_upd.fromArea;
       if(!(_upd.photos&&_upd.photos.length)) _upd.photos=_newItem.photos;
+      if(a.aid) _upd.areaId=a.aid; _upd.fromArea=a.name||_upd.fromArea;
       estItems[_existIdx]=_upd;
     } else {
+      if(a.aid) _newItem.areaId=a.aid;
       estItems.push(_newItem);
     }
     added++;
