@@ -1267,6 +1267,10 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .bk-dd .bk-h{flex:1;padding:0;margin:0;} .bk-dd b{font-size:12px;color:var(--n-green-ink);white-space:nowrap;} .bk-dd i{font-style:normal;color:var(--n-muted);transition:transform .15s;}
 .bk-dd.open i{transform:rotate(180deg);}
 .bk-fold{display:none!important;} .bk-fold.open{display:flex!important;flex-direction:column;gap:8px;margin-top:8px;}
+
+.em-cp{margin-left:6px;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-blue);border-radius:8px;padding:3px 8px;font-size:11.5px;font-weight:800;}
+.em-sms{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--n-blue);background:var(--n-blue-soft);color:var(--n-blue);font-weight:800;font-size:15px;font-family:var(--n-font-m);}
+.em-sms small{font-weight:600;font-size:11.5px;color:var(--n-muted);}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1382,7 +1386,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261021-0900</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261021-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -10898,6 +10902,8 @@ function openEstimateEmail(bytes, fname, pid, kind){
   var file=null, canFiles=false;
   try{ file=new File([bytes],fname,{type:'application/pdf'}); canFiles=!!(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})); }catch(e){ canFiles=false; }
   var _lkOK=(!kind||kind==='estimate')&&!!pid, _how=_lkOK?'link':'pdf', _prices=!window._emTotalOnly;
+  var _phone=String(qi.phone||'').trim(), _digits=_phone.replace(/\D/g,''); if(_digits.length===10) _digits='1'+_digits;
+  function _smsBody(url){ return 'Hi'+(first?' '+first:'')+', here is your '+co+' estimate'+(addr?' for '+addr:'')+': '+url+' — you can review every item, download the PDF and approve it online. Thank you!'; }
   function _lkBody(url){ return 'Hi'+(first?' '+first:'')+',\n\nYour estimate'+(addr?' for '+addr:'')+' is ready:\n'+url+'\n\nYou can review every item, download the PDF and approve it online.\n\nThank you,\n'+co+(contact?'\n'+contact:''); }
   if(_lkOK) subject='Your insulation estimate'+(addr?' — '+addr:'');
   var ov=document.getElementById('emailEstOverlay');
@@ -10906,6 +10912,7 @@ function openEstimateEmail(bytes, fname, pid, kind){
     (_lkOK?'<div class="em-how" id="emHow"></div>':'')+
     '<div class="em-box"><div class="em-row"><span class="em-k">To</span><span class="em-v">'+(to?esc(to):'<span class="em-miss">No client email — add it in the Quote tab, or type it in the email app</span>')+'</span>'+(to?'<button type="button" class="em-copy" id="emCopy">Copy</button>':'')+'</div>'+
     '<div class="em-row"><span class="em-k">Subject</span><span class="em-v">'+esc(subject)+'</span></div>'+
+    (_phone?'<div class="em-row"><span class="em-k">Phone</span><span class="em-v">'+esc(_phone)+' <button type="button" id="emCopyPh" class="em-cp">📋 Copy</button></span></div>':'')+
     '<div class="em-row" id="emFileRow"><span class="em-k">File</span><span class="em-v">📄 '+esc(fname)+'</span></div></div>'+
     '<div class="em-tip" id="emTip">'+(canFiles?(to?'The client email is copied when you tap below — paste it in <b>To</b>. Choose <b>Gmail</b>; the PDF is already attached.':'Choose <b>Gmail</b>; the PDF is already attached.'):'This phone can\'t attach automatically: the PDF will download and your email app opens — attach it from <b>Downloads</b>.')+'</div>'+
     '<div style="padding:0 20px;display:flex;flex-direction:column;gap:10px">'+
@@ -10933,7 +10940,8 @@ function openEstimateEmail(bytes, fname, pid, kind){
     return {bytes:null,name:''};
   }
   function close(){ ov.classList.remove('on'); ov.style.display='none'; }
-  function copyTo(){ if(!to) return; try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(to); }catch(e){} }
+  // Copies what you will paste in the app you pick: the client email, or the phone when there is no email (for Messages / WhatsApp).
+  function copyTo(){ var v=to||_phone; if(!v) return; try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function(){ if(!to) toast('📋 Phone copied — paste it in Messages'); }); }catch(e){} }
   function askSent(){
     if(!pid||_isSigned) return;
     if(_isInv){ appConfirm('Mark this invoice as sent?',function(){ var pp=loadProjs(); for(var k=0;k<pp.length;k++){ if(pp[k].id===pid&&pp[k].invoice){ pp[k].invoice.sentDate=new Date().toLocaleDateString('en-US'); break; } } saveProjs(pp); if(window.renderJobsList) renderJobsList(); toast('🧾 Invoice marked as sent'); },{confirmLabel:'📨 Mark as Sent',confirmStyle:'accent'}); return; }
@@ -10945,6 +10953,7 @@ function openEstimateEmail(bytes, fname, pid, kind){
   var cbtn=document.getElementById('emCopy'); if(cbtn) cbtn.addEventListener('click',function(){ copyTo(); toast('📋 Email copied'); });
   document.getElementById('emCancel').addEventListener('click',close);
   document.getElementById('emDl').addEventListener('click',function(){ _downloadBlob(new Blob([bytes],{type:'application/pdf'}),fname); toast('📄 Estimate downloaded'); close(); });
+  var _cp=document.getElementById('emCopyPh'); if(_cp) _cp.addEventListener('click',function(){ try{ navigator.clipboard.writeText(_phone).then(function(){ toast('📋 Phone copied — paste it in Messages'); },function(){ toast(_phone); }); }catch(e){ toast(_phone); } });
   document.getElementById('emGo').addEventListener('click',function(ev){
     if(_lkOK&&(_how==='link'||_how==='both')&&!this._lkDone){
       var self=this, pf=_lkPdf(); self.disabled=true;
