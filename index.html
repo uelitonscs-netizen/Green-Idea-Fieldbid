@@ -1198,6 +1198,12 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .st-s{font-size:12px;color:var(--n-muted);margin-top:2px;}
 .st-free{display:flex;flex-direction:column;gap:2px;width:100%;margin-top:8px;text-align:left;border:1.5px solid var(--n-green);background:var(--n-green-soft);color:var(--n-green-ink);border-radius:11px;padding:10px 12px;font-weight:800;font-size:14px;font-family:var(--n-font-m);}
 .st-free small{font-weight:600;font-size:11.5px;color:var(--n-muted);}
+
+.sc-open{display:flex;flex-direction:column;gap:2px;width:100%;margin:0 0 10px;text-align:left;border:1px dashed var(--n-border);background:transparent;color:var(--n-blue);border-radius:11px;padding:9px 12px;font-weight:800;font-size:14px;font-family:var(--n-font-m);}
+.sc-open small{font-weight:600;font-size:11.5px;color:var(--n-muted);}
+.sc-sub{font-size:12.5px;color:var(--n-muted);padding:0 20px 8px;}
+.sc-pre{margin:0 16px;padding:12px;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;font-size:11.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,monospace;}
+.sc-btns{display:flex;gap:10px;padding:14px 16px 0;} .sc-btns .qp-cancel{flex:1;} .sc-copy{flex:2;padding:13px;border-radius:12px;border:none;background:var(--n-green);color:#fff;font-weight:800;font-size:15px;} .sc-copy[disabled]{opacity:.45;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1313,7 +1319,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261019-1300</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261019-2200</span></div>
 </div>
 
 <div id="field-app">
@@ -3031,10 +3037,94 @@ window.fbLoadCloudPhotos=fbLoadCloudPhotos;
       setTimeout(function(){ try{ toast('⚠️ Phone storage is full — open More → Backups → 📦 Free up space','err'); }catch(x){} },0); }
     throw e; } };
 }catch(e){} })();
+
+// ══ Phase 0 — storage check: measures only, changes nothing ══
+function _scHash(str){ var h=2166136261; for(var i=0;i<str.length;i+=7){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return str.length+':'+h.toString(36)+':'+str.slice(-24); }
+function _scProbeIDB(cb){
+  var out={ok:false,msg:''};
+  try{
+    if(!window.indexedDB){ out.msg='not available in this browser'; return cb(out); }
+    var rq=indexedDB.open('fb6_probe',1), done=false;
+    var t=setTimeout(function(){ if(!done){ done=true; out.msg='no answer (blocked?)'; cb(out); } },4000);
+    rq.onupgradeneeded=function(){ try{ rq.result.createObjectStore('t'); }catch(e){} };
+    rq.onerror=function(){ if(done) return; done=true; clearTimeout(t); out.msg='could not open: '+((rq.error&&rq.error.name)||'error'); cb(out); };
+    rq.onsuccess=function(){
+      var dbx=rq.result, val='probe-'+Date.now();
+      try{
+        var tx=dbx.transaction('t','readwrite'); tx.objectStore('t').put(val,'k');
+        tx.oncomplete=function(){
+          var tr=dbx.transaction('t','readonly'), g=tr.objectStore('t').get('k');
+          g.onsuccess=function(){ var same=g.result===val; dbx.close(); try{ indexedDB.deleteDatabase('fb6_probe'); }catch(e){}
+            if(done) return; done=true; clearTimeout(t); out.ok=same; out.msg=same?'write + read back OK':'read back did not match'; cb(out); };
+          g.onerror=function(){ dbx.close(); if(done) return; done=true; clearTimeout(t); out.msg='read failed'; cb(out); };
+        };
+        tx.onerror=function(){ dbx.close(); if(done) return; done=true; clearTimeout(t); out.msg='write failed: '+((tx.error&&tx.error.name)||'error'); cb(out); };
+      }catch(e){ try{ dbx.close(); }catch(x){} if(done) return; done=true; clearTimeout(t); out.msg='error: '+e.message; cb(out); }
+    };
+  }catch(e){ out.msg='error: '+e.message; cb(out); }
+}
+function fbStorageCheck(cb){
+  var keys=[], total=0;
+  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i), v=localStorage.getItem(k)||''; total+=k.length+v.length; keys.push({k:k,n:k.length+v.length}); }
+  keys.sort(function(a,b){ return b.n-a.n; });
+  function sz(k){ var v=localStorage.getItem(k); return v?v.length+k.length:0; }
+  var P=[]; try{ P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
+  var seen={}, nAll=0, nArea=0, nItem=0, uniq=0, uniqSize=0, dupSize=0, phSize=0;
+  function walk(arr,isItem){ if(!Array.isArray(arr)) return; for(var a=0;a<arr.length;a++){ var o=arr[a]; if(!o||!Array.isArray(o.photos)) continue;
+    for(var b=0;b<o.photos.length;b++){ var ph=String(o.photos[b]||''); if(!ph) continue; nAll++; if(isItem) nItem++; else nArea++; phSize+=ph.length;
+      var h=_scHash(ph); if(seen[h]) dupSize+=ph.length; else { seen[h]=1; uniq++; uniqSize+=ph.length; } } } }
+  for(var j=0;j<P.length;j++){ walk(P[j].areas,false); walk(P[j].estItems,true); }
+  var workCopies=sz('fb6_fa')+sz('fb6_ei');
+  var R={total:total,cap:_ST_CAP,projs:sz('fb6_projs'),photosInList:phSize,work:workCopies,other:total-sz('fb6_projs')-workCopies,
+    nAll:nAll,nArea:nArea,nItem:nItem,uniq:uniq,uniqSize:uniqSize,dupSize:dupSize,top:keys.slice(0,5)};
+  _scProbeIDB(function(idb){
+    R.idb=idb;
+    var est=(navigator.storage&&navigator.storage.estimate)?navigator.storage.estimate():Promise.resolve(null);
+    var per=(navigator.storage&&navigator.storage.persisted)?navigator.storage.persisted():Promise.resolve(null);
+    Promise.all([est.catch(function(){ return null; }),per.catch(function(){ return null; })]).then(function(r){
+      R.quota=r[0]&&r[0].quota||0; R.usage=r[0]&&r[0].usage||0; R.persisted=r[1]; cb(R);
+    });
+  });
+}
+function _scMB(n){ return (n/1000000).toFixed(2)+' MB'; }
+function _scText(R){
+  var L=[];
+  L.push('FieldBid storage check — '+new Date().toLocaleString('en-US'));
+  L.push('');
+  L.push('PHONE STORAGE (Chrome, ~'+_scMB(R.cap)+'): '+_scMB(R.total)+' used ('+Math.round(R.total/R.cap*100)+'%)');
+  L.push('  • Project list: '+_scMB(R.projs)+' — photos inside it: '+_scMB(R.photosInList));
+  L.push('  • Open job working copies (takeoff + estimate): '+_scMB(R.work));
+  L.push('  • Everything else: '+_scMB(R.other));
+  L.push('');
+  L.push('PHOTOS: '+R.nAll+' on this phone ('+R.nArea+' in areas, '+R.nItem+' in estimate items)');
+  L.push('  • Different photos: '+R.uniq+' ('+_scMB(R.uniqSize)+')');
+  L.push('  • Copies of the same photo: '+(R.nAll-R.uniq)+' ('+_scMB(R.dupSize)+')');
+  L.push('');
+  L.push('LARGE STORAGE (IndexedDB): '+(R.idb.ok?'available ✓':'NOT working')+' — '+R.idb.msg);
+  L.push('  • Space the browser offers this site: '+(R.quota?(R.quota/1e9).toFixed(1)+' GB':'unknown')+(R.usage?' · in use: '+_scMB(R.usage):''));
+  L.push('  • Persistent storage: '+(R.persisted===true?'yes ✓':(R.persisted===false?'no (Chrome may clear it when the phone is low on space)':'unknown')));
+  L.push('');
+  L.push('PHASE 1 WOULD: mirror '+R.uniq+' different photos (≈ '+_scMB(R.uniqSize)+') into the large storage. Nothing would be removed.');
+  L.push('LATER (phase 2) the phone storage could drop by ≈ '+_scMB(R.photosInList)+' (photos) — copies included.');
+  L.push('');
+  L.push('Biggest items: '+R.top.map(function(t){ return t.k+' '+_scMB(t.n); }).join(' · '));
+  return L.join('\n');
+}
+function fbStorageCheckSheet(){
+  var ov=document.getElementById('scOv'); if(!ov){ ov=document.createElement('div'); ov.id='scOv'; ov.className='overlay'; document.body.appendChild(ov); }
+  ov.innerHTML='<div class="modal" style="padding-bottom:22px;max-height:90vh;overflow:auto"><div class="mhandle"></div><div class="mtitle">🔬 Storage check</div><div class="sc-sub">Only measures — nothing is changed.</div><pre class="sc-pre" id="scPre">Checking…</pre>'+
+    '<div class="sc-btns"><button type="button" class="qp-cancel" id="scClose">Close</button><button type="button" class="sc-copy" id="scCopy" disabled>📋 Copy report</button></div></div>';
+  ov.classList.add('on'); ov.style.display='flex';
+  document.getElementById('scClose').onclick=function(){ ov.classList.remove('on'); ov.style.display='none'; };
+  fbStorageCheck(function(R){ var t=_scText(R), pre=document.getElementById('scPre'); if(!pre) return; pre.textContent=t; window._scLast=t;
+    var c=document.getElementById('scCopy'); c.disabled=false;
+    c.onclick=function(){ try{ navigator.clipboard.writeText(t).then(function(){ toast('📋 Report copied — paste it to Claude'); },function(){ toast('Select the text and copy it','err'); }); }catch(e){ toast('Select the text and copy it','err'); } }; });
+}
+window.fbStorageCheck=fbStorageCheck; window.fbStorageCheckSheet=fbStorageCheckSheet;
 function fbBackups(){
   var last=null; try{ last=localStorage.getItem('fb6_lastDownload'); }catch(e){}
   var dl=last?Math.floor((Date.now()-Date.parse(last))/86400000):null;
-  var ov=_bkSheet('<div style="padding:0 20px"><div id="bkSt">'+_stHtml()+'</div><div id="bkPh">'+_bkPhotoHtml()+'</div><div class="bk-h">Last 24 hours <span>a copy every 2 hours when something changed</span></div><div id="bkHList" class="nvm-g" style="padding:0">Loading…</div><div class="bk-h">Daily copies <span>last 14 days · tap to restore</span></div><div id="bkList" class="nvm-g" style="padding:0">Loading…</div>'+
+  var ov=_bkSheet('<div style="padding:0 20px"><div id="bkSt">'+_stHtml()+'</div><button type="button" class="sc-open" id="bkCheck">🔬 Storage check<small>measures only · nothing is changed</small></button><div id="bkPh">'+_bkPhotoHtml()+'</div><div class="bk-h">Last 24 hours <span>a copy every 2 hours when something changed</span></div><div id="bkHList" class="nvm-g" style="padding:0">Loading…</div><div class="bk-h">Daily copies <span>last 14 days · tap to restore</span></div><div id="bkList" class="nvm-g" style="padding:0">Loading…</div>'+
     '<div class="nvm-g" style="padding:10px 0 0"><button type="button" class="nvm-i" id="bkNow"><span class="nvm-ic">💾</span><span><b>Save a copy now</b><small>replaces today\'s copy</small></span></button>'+
     '<button type="button" class="nvm-i" id="bkDrive"><span class="nvm-ic">☁️</span><span><b>Save to Google Drive</b><small>opens Share → tap Drive → Save</small></span></button>'+
     '<button type="button" class="nvm-i" id="bkDl"><span class="nvm-ic">⬇️</span><span><b>Download backup</b><small>file to this phone · last: '+(dl===null?'never':(dl===0?'today':dl+' day'+(dl!==1?'s':'')+' ago'))+'</small></span></button>'+
@@ -3042,6 +3132,7 @@ function fbBackups(){
   document.getElementById('bkNow').onclick=function(){ fbBkSaveNow().then(function(){ _bkToast('💾 Copy saved'); fbBackups(); }); };
   document.getElementById('bkDl').onclick=fbBkDownload;
   document.getElementById('bkDrive').onclick=fbBkDrive;
+  document.getElementById('bkCheck').onclick=fbStorageCheckSheet;
   (function _wireSt(){ var f=document.getElementById('stFree'); if(f) f.onclick=function(){ fbFreeUpSpace(function(){ var b=document.getElementById('bkSt'); if(b){ b.innerHTML=_stHtml(); _wireSt(); } var h=document.getElementById('bkPh'); if(h) h.innerHTML=_bkPhotoHtml(); }); }; })();
   function _wirePh(){ var b=document.getElementById('bkPhNow'); if(b) b.onclick=function(){ b.disabled=true; b.textContent='Backing up…'; try{ if(window.schedulePhotoBackup) window.schedulePhotoBackup(); else backupPhotos(); }catch(e){} setTimeout(function(){ var h=document.getElementById('bkPh'); if(h){ h.innerHTML=_bkPhotoHtml(); _wirePh(); } },6000); }; }
   _wirePh();
