@@ -5,6 +5,58 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#3fb950">
+<script>
+/* ══ Photo pool: every different photo is stored ONCE (fb6_pool); the lists keep a small label @ph:… ══
+   Works at the storage "door": the rest of the app reads and writes full photos as always.
+   Off until the migration (More → Backups) has been checked; labels are always resolved if present. */
+(function(){
+  try{
+    var S=Storage.prototype, rawGet=S.getItem, rawSet=S.setItem, rawRem=S.removeItem;
+    window.__lsGet=function(k){ return rawGet.call(localStorage,k); };
+    window.__lsSet=function(k,v){ return rawSet.call(localStorage,k,v); };
+    var POOLED={'fb6_projs':1,'fb6_fa':1,'fb6_ei':1}, RX=/"(data:image\/[a-zA-Z.+-]+;base64,[A-Za-z0-9+\/=]+)"/g, RXREF=/"@ph:([a-z0-9_]+)"/g;
+    var pool=null, poolRaw=null;
+    function loadPool(){ var r=rawGet.call(localStorage,'fb6_pool'); if(pool===null||r!==poolRaw){ poolRaw=r; try{ pool=r?JSON.parse(r):{}; }catch(e){ pool={}; } if(!pool||typeof pool!=='object') pool={}; } return pool; }
+    function idOf(str){ var h1=2166136261, h2=5381; for(var i=0;i<str.length;i++){ var c=str.charCodeAt(i); h1^=c; h1=Math.imul(h1,16777619)>>>0; h2=((h2<<5)+h2+c)>>>0; } return str.length.toString(36)+'_'+h1.toString(36)+h2.toString(36); }
+    function poolId(pl,str){ var id=idOf(str), n=1, cand=id; while(pl[cand]!==undefined&&pl[cand]!==str){ n++; cand=id+'_'+n; } return cand; }
+    window.__phPool={
+      on:function(){ return rawGet.call(localStorage,'fb6_poolOn')==='1'; },
+      pool:loadPool,
+      // labels → photos (labels missing from the pool are dropped, so the photo counts as missing and comes back from the cloud)
+      hydrate:function(v){
+        if(!v||v.indexOf('"@ph:')<0) return v;
+        var pl=loadPool(), miss=false;
+        var out=v.replace(RXREF,function(m,id){ var d=pl[id]; if(d===undefined){ miss=true; return m; } return JSON.stringify(d); });
+        if(miss){ try{ var o=JSON.parse(out); (function walk(x){ if(!x||typeof x!=='object') return; if(Array.isArray(x)){ for(var i=0;i<x.length;i++) walk(x[i]); return; }
+          if(Array.isArray(x.photos)) x.photos=x.photos.filter(function(q){ return !(typeof q==='string'&&q.indexOf('@ph:')===0); }); for(var k in x) if(x.hasOwnProperty(k)&&typeof x[k]==='object') walk(x[k]); })(o); out=JSON.stringify(o); }catch(e){} }
+        return out;
+      },
+      // photos → labels; new photos are written to the pool FIRST
+      dehydrate:function(v,dry){
+        if(!v||v.indexOf('"data:image/')<0) return v;
+        var pl=loadPool(), copy=null, added=0;
+        var out=v.replace(RX,function(m,d){ var id=poolId(pl,d); if(pl[id]===undefined){ if(!copy){ copy={}; for(var k in pl) copy[k]=pl[k]; pl=copy; } pl[id]=d; added++; } return '"@ph:'+id+'"'; });
+        if(added&&!dry){ var s2=JSON.stringify(pl); rawSet.call(localStorage,'fb6_pool',s2); poolRaw=null; loadPool(); }
+        return dry?{out:out,pool:pl}:out;
+      },
+      gc:function(){ var pl=loadPool(), used={}, keys=['fb6_projs','fb6_fa','fb6_ei'], m;
+        for(var i=0;i<keys.length;i++){ var r=rawGet.call(localStorage,keys[i])||''; RXREF.lastIndex=0; while((m=RXREF.exec(r))) used[m[1]]=1; }
+        var keep={}, drop=0; for(var id in pl){ if(used[id]) keep[id]=pl[id]; else drop++; }
+        if(drop){ rawSet.call(localStorage,'fb6_pool',JSON.stringify(keep)); poolRaw=null; loadPool(); } return drop; }
+    };
+    var lastRaw={}, lastOut={};
+    S.getItem=function(k){ var v=rawGet.call(this,k); if(this!==localStorage||!POOLED[k]||!v||v.indexOf('"@ph:')<0) return v;
+      if(lastRaw[k]===v&&poolRaw===rawGet.call(localStorage,'fb6_pool')) return lastOut[k];
+      var o=window.__phPool.hydrate(v); lastRaw[k]=v; lastOut[k]=o; return o; };
+    S.setItem=function(k,v){ if(this===localStorage&&POOLED[k]&&window.__phPool.on()){ v=window.__phPool.dehydrate(String(v));
+        window.__phWrites=(window.__phWrites||0)+1; rawSet.call(this,k,v); if(k==='fb6_projs'&&window.__phWrites%15===0){ try{ window.__phPool.gc(); }catch(e){} } return; }
+      return rawSet.call(this,k,v); };
+  }catch(e){ try{ console.warn('photo pool door off',e); }catch(x){} }
+  // Ask Chrome not to clear this app's data by itself when the phone is low on space.
+  try{ if(navigator.storage&&navigator.storage.persisted){ navigator.storage.persisted().then(function(p){ if(!p&&navigator.storage.persist) navigator.storage.persist(); }); } }catch(e){}
+})();
+</script>
+
 <script>try{var _t=localStorage.getItem('fb6_theme');if(_t==='light'||_t==='dark')document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1204,6 +1256,8 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .sc-sub{font-size:12.5px;color:var(--n-muted);padding:0 20px 8px;}
 .sc-pre{margin:0 16px;padding:12px;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;font-size:11.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,monospace;}
 .sc-btns{display:flex;gap:10px;padding:14px 16px 0;} .sc-btns .qp-cancel{flex:1;} .sc-copy{flex:2;padding:13px;border-radius:12px;border:none;background:var(--n-green);color:#fff;font-weight:800;font-size:15px;} .sc-copy[disabled]{opacity:.45;}
+.pl-on{font-size:13px;font-weight:800;color:var(--n-green-ink);background:var(--n-green-soft);border-radius:11px;padding:9px 12px;margin:0 0 10px;} .pl-on small{display:block;font-weight:600;color:var(--n-muted);font-size:11.5px;}
+#bkPl .st-free{margin:0 0 10px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1319,7 +1373,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261019-2200</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261020-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -2910,7 +2964,7 @@ function fbBkRestoreDay(day){
 function _bkBuild(){
   // Complete copy: data AND photos (photos only live on the phone + one cloud copy).
   var o={app:'FieldBid',format:'fb-backup-v1',withPhotos:true,createdAt:new Date().toISOString(),data:{}};
-  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('fb6_')===0&&k!=='fb6_phlog'&&k!=='fb6_phSig') o.data[k]=localStorage.getItem(k); }
+  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('fb6_')===0&&k!=='fb6_phlog'&&k!=='fb6_phSig'&&k!=='fb6_pool'&&k!=='fb6_poolOn') o.data[k]=localStorage.getItem(k); }
   try{ var _pp=JSON.parse(o.data.fb6_projs||'[]'), _np=0; for(var q=0;q<_pp.length;q++){ var _m=_photoMapForProj(_pp[q]); for(var mk in _m) _np+=_m[mk].length; } o.photos=_np; }catch(e){}
   var n=0; try{ n=JSON.parse(o.data.fb6_projs||'[]').length; }catch(e){} o.count=n;
   var d=new Date();
@@ -2957,7 +3011,8 @@ function fbBkFromFile(){
 // ══ Phone storage: see how full it is, and keep old jobs' photos in the cloud only (checked photo by photo) ══
 var _ST_CAP=5200000;   // ~5 MB of text is what Chrome gives each site
 function _stStats(){
-  var used=0; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i), v=localStorage.getItem(k)||''; used+=k.length+v.length; }
+  var _rg=window.__lsGet||function(k){ return localStorage.getItem(k); };
+  var used=0; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i), v=_rg(k)||''; used+=k.length+v.length; }
   var P=[]; try{ P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
   var onPh=0, jobsPh=0, cloudPh=0, jobsCloud=0;
   for(var j=0;j<P.length;j++){ var m=_photoMapForProj(P[j]), c=0; for(var k2 in m) c+=m[k2].length; if(c){ onPh+=c; jobsPh++; }
@@ -3064,10 +3119,10 @@ function _scProbeIDB(cb){
   }catch(e){ out.msg='error: '+e.message; cb(out); }
 }
 function fbStorageCheck(cb){
-  var keys=[], total=0;
-  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i), v=localStorage.getItem(k)||''; total+=k.length+v.length; keys.push({k:k,n:k.length+v.length}); }
+  var keys=[], total=0, _rg=window.__lsGet||function(k){ return localStorage.getItem(k); };
+  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i), v=_rg(k)||''; total+=k.length+v.length; keys.push({k:k,n:k.length+v.length}); }
   keys.sort(function(a,b){ return b.n-a.n; });
-  function sz(k){ var v=localStorage.getItem(k); return v?v.length+k.length:0; }
+  function sz(k){ var v=_rg(k); return v?v.length+k.length:0; }
   var P=[]; try{ P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
   var seen={}, nAll=0, nArea=0, nItem=0, uniq=0, uniqSize=0, dupSize=0, phSize=0;
   function walk(arr,isItem){ if(!Array.isArray(arr)) return; for(var a=0;a<arr.length;a++){ var o=arr[a]; if(!o||!Array.isArray(o.photos)) continue;
@@ -3075,7 +3130,8 @@ function fbStorageCheck(cb){
       var h=_scHash(ph); if(seen[h]) dupSize+=ph.length; else { seen[h]=1; uniq++; uniqSize+=ph.length; } } } }
   for(var j=0;j<P.length;j++){ walk(P[j].areas,false); walk(P[j].estItems,true); }
   var workCopies=sz('fb6_fa')+sz('fb6_ei');
-  var R={total:total,cap:_ST_CAP,projs:sz('fb6_projs'),photosInList:phSize,work:workCopies,other:total-sz('fb6_projs')-workCopies,
+  var _pl=(window.__phPool&&window.__phPool.pool())||{}, _pn=0; for(var _q in _pl) _pn++;
+  var R={total:total,cap:_ST_CAP,projs:sz('fb6_projs'),photosInList:phSize,work:workCopies,other:total-sz('fb6_projs')-workCopies-sz('fb6_pool'),poolOn:!!(window.__phPool&&window.__phPool.on()),poolN:_pn,poolSize:sz('fb6_pool'),
     nAll:nAll,nArea:nArea,nItem:nItem,uniq:uniq,uniqSize:uniqSize,dupSize:dupSize,top:keys.slice(0,5)};
   _scProbeIDB(function(idb){
     R.idb=idb;
@@ -3094,6 +3150,7 @@ function _scText(R){
   L.push('PHONE STORAGE (Chrome, ~'+_scMB(R.cap)+'): '+_scMB(R.total)+' used ('+Math.round(R.total/R.cap*100)+'%)');
   L.push('  • Project list: '+_scMB(R.projs)+' — photos inside it: '+_scMB(R.photosInList));
   L.push('  • Open job working copies (takeoff + estimate): '+_scMB(R.work));
+  L.push('  • Photo pool (each photo once): '+(R.poolOn?'ON ✓ — '+R.poolN+' photos, '+_scMB(R.poolSize):'off'));
   L.push('  • Everything else: '+_scMB(R.other));
   L.push('');
   L.push('PHOTOS: '+R.nAll+' on this phone ('+R.nArea+' in areas, '+R.nItem+' in estimate items)');
@@ -3121,10 +3178,58 @@ function fbStorageCheckSheet(){
     c.onclick=function(){ try{ navigator.clipboard.writeText(t).then(function(){ toast('📋 Report copied — paste it to Claude'); },function(){ toast('Select the text and copy it','err'); }); }catch(e){ toast('Select the text and copy it','err'); } }; });
 }
 window.fbStorageCheck=fbStorageCheck; window.fbStorageCheckSheet=fbStorageCheckSheet;
+
+// ══ Photo pool migration: store each different photo once — checked in memory first, then job by job ══
+function _poolDupInfo(){
+  var P=[]; try{ P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){}
+  var seen={}, n=0, dupN=0, dupSize=0, RX=/"(data:image\/[a-zA-Z.+-]+;base64,[A-Za-z0-9+\/=]+)"/g, m, raw=JSON.stringify(P);
+  while((m=RX.exec(raw))){ n++; var d=m[1], h=d.length+':'+d.slice(-40)+d.slice(200,240); if(seen[h]){ dupN++; dupSize+=d.length; } else seen[h]=1; }
+  return {n:n,dupN:dupN,dupSize:dupSize};
+}
+function _poolHtml(){
+  var PP=window.__phPool; if(!PP) return '';
+  if(PP.on()){ var pl=PP.pool(), c=0; for(var k in pl) c++; return '<div class="pl-on">🧩 Each photo stored once ✓ <small>'+c+' different photos in the pool</small></div>'; }
+  var D=_poolDupInfo(); if(!D.dupN) return '';
+  return '<button type="button" class="st-free" id="plGo">🧩 Store each photo once<small>'+D.dupN+' copies of the same photos · frees ≈ '+_stFmt(D.dupSize)+' · photos stay on this phone</small></button>';
+}
+function _poolHyd(v,pl){ return v.replace(/"@ph:([a-z0-9_]+)"/g,function(m,id){ return pl[id]===undefined?m:JSON.stringify(pl[id]); }); }
+function fbPoolMigrate(onDone){
+  var PP=window.__phPool, get=window.__lsGet, set=window.__lsSet;
+  if(!PP||!get||!set){ toast('Not available in this browser','err'); return; }
+  if(PP.on()){ toast('Already on ✓'); return; }
+  var st=_bkPhotoStatus(); if(st.missing>0){ alert('First, '+st.missing+' photo'+(st.missing!==1?'s are':' is')+' not in the cloud yet. Tap "Back up now" and wait for ✓ — then try again.'); return; }
+  var D=_poolDupInfo();
+  appConfirm('Store each photo once?\n\n'+D.dupN+' copies will be replaced by a small label pointing to the same photo (≈ '+_stFmt(D.dupSize)+' freed). Every photo stays on this phone.\n\nEverything is checked first, then job by job. It stops at the first problem.',function(){
+    var orig=get('fb6_projs')||'[]', P=JSON.parse(orig), canon=JSON.stringify(P);
+    // 1) full check in memory: photos → labels → photos must give back exactly the same text
+    var dry=PP.dehydrate(canon,true);
+    if(_poolHyd(dry.out,dry.pool)!==canon){ alert('Check failed — nothing was changed. Please send a screenshot to Claude.'); return; }
+    // 2) job by job, most copies first (frees room early)
+    var order=[]; for(var i=0;i<P.length;i++){ var js=JSON.stringify(P[i]), c=(js.match(/"data:image\//g)||[]).length; if(c) order.push({i:i,c:c}); }
+    order.sort(function(a,b){ return b.c-a.c; });
+    var before=0; for(var q=0;q<localStorage.length;q++){ var kk=localStorage.key(q); before+=kk.length+(get(kk)||'').length; }
+    for(var s=0;s<order.length;s++){
+      var ix=order[s].i, prev=get('fb6_projs');
+      try{
+        var d=PP.dehydrate(JSON.stringify(P[ix]));   // new photos go to the pool first
+        P[ix]=JSON.parse(d);
+        set('fb6_projs',JSON.stringify(P));
+      }catch(e){ alert('Stopped at "'+(P[ix]&&P[ix].name)+'": the phone storage is full. Run 📦 Free up space first, then try again — everything done so far keeps working.'); if(onDone) onDone(); return; }
+      if(PP.hydrate(get('fb6_projs'))!==canon){ try{ set('fb6_projs',prev); }catch(e){} alert('Check failed at "'+(P[ix]&&P[ix].name)+'" — that step was undone and the change stopped. Please send a screenshot to Claude.'); if(onDone) onDone(); return; }
+    }
+    set('fb6_poolOn','1');
+    try{ var fa=localStorage.getItem('fb6_fa'); if(fa) localStorage.setItem('fb6_fa',fa); var ei=localStorage.getItem('fb6_ei'); if(ei) localStorage.setItem('fb6_ei',ei); }catch(e){}
+    try{ PP.gc(); }catch(e){}
+    var after=0; for(var r=0;r<localStorage.length;r++){ var k2=localStorage.key(r); after+=k2.length+(get(k2)||'').length; }
+    alert('✓ Each photo is now stored once.\n\nPhone storage: '+_stFmt(before)+' → '+_stFmt(after)+' (freed ≈ '+_stFmt(Math.max(0,before-after))+'). Every photo is still on this phone.');
+    if(onDone) onDone();
+  },{confirmLabel:'🧩 Store each photo once'});
+}
+window.fbPoolMigrate=fbPoolMigrate;
 function fbBackups(){
   var last=null; try{ last=localStorage.getItem('fb6_lastDownload'); }catch(e){}
   var dl=last?Math.floor((Date.now()-Date.parse(last))/86400000):null;
-  var ov=_bkSheet('<div style="padding:0 20px"><div id="bkSt">'+_stHtml()+'</div><button type="button" class="sc-open" id="bkCheck">🔬 Storage check<small>measures only · nothing is changed</small></button><div id="bkPh">'+_bkPhotoHtml()+'</div><div class="bk-h">Last 24 hours <span>a copy every 2 hours when something changed</span></div><div id="bkHList" class="nvm-g" style="padding:0">Loading…</div><div class="bk-h">Daily copies <span>last 14 days · tap to restore</span></div><div id="bkList" class="nvm-g" style="padding:0">Loading…</div>'+
+  var ov=_bkSheet('<div style="padding:0 20px"><div id="bkSt">'+_stHtml()+'</div><div id="bkPl">'+_poolHtml()+'</div><button type="button" class="sc-open" id="bkCheck">🔬 Storage check<small>measures only · nothing is changed</small></button><div id="bkPh">'+_bkPhotoHtml()+'</div><div class="bk-h">Last 24 hours <span>a copy every 2 hours when something changed</span></div><div id="bkHList" class="nvm-g" style="padding:0">Loading…</div><div class="bk-h">Daily copies <span>last 14 days · tap to restore</span></div><div id="bkList" class="nvm-g" style="padding:0">Loading…</div>'+
     '<div class="nvm-g" style="padding:10px 0 0"><button type="button" class="nvm-i" id="bkNow"><span class="nvm-ic">💾</span><span><b>Save a copy now</b><small>replaces today\'s copy</small></span></button>'+
     '<button type="button" class="nvm-i" id="bkDrive"><span class="nvm-ic">☁️</span><span><b>Save to Google Drive</b><small>opens Share → tap Drive → Save</small></span></button>'+
     '<button type="button" class="nvm-i" id="bkDl"><span class="nvm-ic">⬇️</span><span><b>Download backup</b><small>file to this phone · last: '+(dl===null?'never':(dl===0?'today':dl+' day'+(dl!==1?'s':'')+' ago'))+'</small></span></button>'+
@@ -3133,6 +3238,7 @@ function fbBackups(){
   document.getElementById('bkDl').onclick=fbBkDownload;
   document.getElementById('bkDrive').onclick=fbBkDrive;
   document.getElementById('bkCheck').onclick=fbStorageCheckSheet;
+  (function _wirePl(){ var g=document.getElementById('plGo'); if(g) g.onclick=function(){ fbPoolMigrate(function(){ var a=document.getElementById('bkPl'); if(a){ a.innerHTML=_poolHtml(); _wirePl(); } var b=document.getElementById('bkSt'); if(b) b.innerHTML=_stHtml(); }); }; })();
   (function _wireSt(){ var f=document.getElementById('stFree'); if(f) f.onclick=function(){ fbFreeUpSpace(function(){ var b=document.getElementById('bkSt'); if(b){ b.innerHTML=_stHtml(); _wireSt(); } var h=document.getElementById('bkPh'); if(h) h.innerHTML=_bkPhotoHtml(); }); }; })();
   function _wirePh(){ var b=document.getElementById('bkPhNow'); if(b) b.onclick=function(){ b.disabled=true; b.textContent='Backing up…'; try{ if(window.schedulePhotoBackup) window.schedulePhotoBackup(); else backupPhotos(); }catch(e){} setTimeout(function(){ var h=document.getElementById('bkPh'); if(h){ h.innerHTML=_bkPhotoHtml(); _wirePh(); } },6000); }; }
   _wirePh();
