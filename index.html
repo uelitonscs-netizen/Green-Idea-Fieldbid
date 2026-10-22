@@ -1320,6 +1320,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .sc-line{display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--n-border);font-size:13.5px;} .sc-line:last-child{border:none;} .sc-line b{color:var(--n-text);}
 .sc-opt{display:flex;flex-direction:column;gap:2px;text-align:left;width:calc(100% - 32px);margin:0 16px 8px;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:11px 12px;font-family:var(--n-font-m);} .sc-opt b{font-size:14.5px;} .sc-opt small{font-size:12px;color:var(--n-muted);} .sc-opt.on{border-color:var(--n-green);background:var(--n-green-soft);} .sc-opt.on b{color:var(--n-green-ink);}
 .sc-pick{margin:0 16px 8px;border:1px solid var(--n-border);border-radius:12px;padding:6px 12px;} .sc-pick label{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--n-border);font-size:14px;} .sc-pick label:last-child{border:none;} .sc-pick label span{margin-left:auto;color:var(--n-muted);font-weight:700;}
+.nvm-ver{text-align:center;font-size:11px;color:var(--n-muted);padding:12px 0 4px;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1435,7 +1436,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261021-1500</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261021-1500</span></div>
 </div>
 
 <div id="field-app">
@@ -7687,7 +7688,8 @@ function nvMore(){
     it('quote','💰','Quote','client, markup, discount')+it('prods','🗄️','Products','prices and coverage')+it('settings','⚙️','Settings','company, costs, signature')+
     it('broch','📄','Brochures','')+it('ds','📋','Data sheets','')+it('ct','✍️','Contract','')+
     it('wl','🧰','WorkLog','open the WorkLog app')+it('diag','🩺','Diagnostics','photos and sync check')+it('backups','🗄️','Backups','daily copies · download · restore')+it('imp','📥','Import takeoff','paste the FIELDBID-TAKEOFF block')+it('tkcopy','📤','Copy takeoff','of the open job · to share')+it('refresh','↺','Refresh','reload the app')+it('classic','↩️','Classic version','the FieldBid as before')+
-    '</div><div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="nvmClose">Close</button></div></div>';
+    '</div><div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="nvmClose">Close</button></div>'+
+    '<div class="nvm-ver">FieldBid · '+((document.getElementById('fbBuild')||{}).textContent||'')+'</div></div>';
   ov.classList.add('on'); ov.style.display='flex';
   function close(){ ov.classList.remove('on'); ov.style.display='none'; }
   document.getElementById('nvmClose').onclick=close;
