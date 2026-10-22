@@ -1322,6 +1322,18 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .sc-opt{display:flex;flex-direction:column;gap:2px;text-align:left;width:calc(100% - 32px);margin:0 16px 8px;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:11px 12px;font-family:var(--n-font-m);} .sc-opt b{font-size:14.5px;} .sc-opt small{font-size:12px;color:var(--n-muted);} .sc-opt.on{border-color:var(--n-green);background:var(--n-green-soft);} .sc-opt.on b{color:var(--n-green-ink);}
 .sc-pick{margin:0 16px 8px;border:1px solid var(--n-border);border-radius:12px;padding:6px 12px;} .sc-pick label{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--n-border);font-size:14px;} .sc-pick label:last-child{border:none;} .sc-pick label span{margin-left:auto;color:var(--n-muted);font-weight:700;}
 .nvm-ver{text-align:center;font-size:11px;color:var(--n-muted);padding:12px 0 4px;}
+
+textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;overflow:hidden;}
+.n5-note,.card-note,.q-tnote,.n2mid .nt,.n2nt,.est-notes{white-space:pre-line;}
+
+.q-pick{flex:none;margin-left:8px;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-blue);border-radius:9px;padding:6px 10px;font-size:12px;font-weight:800;font-family:var(--n-font-m);}
+.cl-m{max-height:94vh;overflow:auto;padding-bottom:22px;display:flex;flex-direction:column;} .cl-n{font-size:12px;font-weight:800;color:var(--n-muted);margin-left:8px;}
+.cl-top{display:flex;gap:8px;padding:0 16px 10px;} .cl-top .pj-search{flex:1;min-width:0;} .cl-new{flex:none;border:none;background:var(--n-green);color:#fff;border-radius:12px;padding:0 14px;font-weight:800;font-size:14px;font-family:var(--n-font-m);}
+.cl-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:0 16px;}
+.cl-card{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:14px;padding:11px 13px;font-family:var(--n-font-m);}
+.cl-card b{font-size:16px;} .cl-card span{font-size:12.5px;color:var(--n-muted);} .cl-card i{font-style:normal;color:var(--n-amber);} .cl-card small{font-size:11px;font-weight:800;color:var(--n-green-ink);}
+.cl-jobs{display:flex;flex-direction:column;gap:6px;padding:0 16px;} .cl-job{display:flex;flex-direction:column;text-align:left;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:11px;padding:9px 11px;font-family:var(--n-font-m);} .cl-job b{font-size:14px;} .cl-job span{font-size:12px;color:var(--n-muted);}
+.cl-del{display:block;width:calc(100% - 32px);margin:10px 16px 0;border:1px solid var(--n-border);background:transparent;color:var(--n-red,#d64545);border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;font-family:var(--n-font-m);}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1437,7 +1449,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261022-1200</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261022-1500</span></div>
 </div>
 
 <div id="field-app">
@@ -1523,7 +1535,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
   </div>
   <div id="ep-quote" class="page">
     <div class="q-info">
-      <div class="q-row"><span class="q-lbl">Client</span><span class="q-val tap" id="qClient">Tap to add</span></div>
+      <div class="q-row"><span class="q-lbl">Client</span><span class="q-val tap" id="qClient">Tap to add</span><button type="button" class="q-pick" id="qPick">👥 Pick</button></div>
       <div class="q-row"><span class="q-lbl">Address</span><span class="q-val tap" id="qAddress">Tap to add</span></div>
       <div class="q-row"><span class="q-lbl">Phone</span><span class="q-val tap" id="qPhone">Tap to add</span></div>
       <div class="q-row"><span class="q-lbl">Email</span><span class="q-val tap" id="qEmail">Tap to add</span></div>
@@ -1753,7 +1765,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
     <div class="mtitle" id="projModalTitle">Projects</div>
     <div class="fg" id="newProjForm">
       <label class="fl">New Project Name / Client</label>
-      <input class="fi af" id="newProjName" type="text" placeholder="e.g. Smith Residence" style="margin-bottom:8px">
+      <div style="display:flex;gap:8px;margin-bottom:8px"><input class="fi af" id="newProjName" type="text" placeholder="e.g. Smith Residence" style="flex:1;min-width:0"><button type="button" class="q-pick" id="npPick" style="flex:none">👥 Pick</button></div>
       <div style="display:flex;gap:8px;margin-bottom:8px">
         <div style="flex:1;min-width:0"><label class="fl">Phone</label><input class="fi af" id="newProjPhone" type="text" inputmode="tel" autocapitalize="off" placeholder="(508) 555-0000" autocomplete="off" style="width:100%;box-sizing:border-box"></div>
         <div style="flex:1;min-width:0"><label class="fl">Email</label><input class="fi af" id="newProjEmail" type="text" inputmode="email" autocapitalize="off" placeholder="client@email.com" autocomplete="off" style="width:100%;box-sizing:border-box"></div>
@@ -1954,7 +1966,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
       </div>
     </div>
     <div class="frow">
-      <div class="fg"><label class="fl">Field Notes</label><input class="fi" id="fa_notes" type="text" placeholder="Access, instructions..."></div>
+      <div class="fg"><label class="fl">Field Notes</label><textarea class="fi fi-ta" id="fa_notes" rows="2" placeholder="Access, instructions..."></textarea></div>
     </div>
     <div class="fg"><label class="fl">Photos</label>
       <div class="ph-row"><button class="ph-btn" id="faCamBtn">📷 Camera</button><button class="ph-btn" id="faGalBtn">🖼️ Gallery</button></div>
@@ -1980,7 +1992,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
       <div class="fg"><label class="fl" id="ei_price_label">Price / SF ($)</label><input class="fi" id="ei_price" type="number" inputmode="decimal" placeholder="0.00" step="0.01"></div>
     </div>
     <div class="hint" id="eiHint">Line total: <strong>$0.00</strong></div>
-    <div class="fg" style="margin-top:10px"><label class="fl">Notes</label><input class="fi" id="ei_notes" type="text" placeholder="R-value, fire-rated..."></div>
+    <div class="fg" style="margin-top:10px"><label class="fl">Notes</label><textarea class="fi fi-ta" id="ei_notes" rows="2" placeholder="R-value, fire-rated..."></textarea></div>
     <div class="fg"><label class="fl">Photos</label>
       <div class="ph-row"><button class="ph-btn" id="eiCamBtn">📷 Camera</button><button class="ph-btn" id="eiGalBtn">🖼️ Gallery</button></div>
       <input type="file" id="eiCam" accept="image/*" capture="environment" style="display:none">
@@ -4074,6 +4086,100 @@ document.addEventListener('click',function(e){ if(e.target&&e.target.closest&&e.
 
 function _faSetSrc(v){ window._faSrc=(v==='plans')?'plans':'site'; var b=document.querySelectorAll('#faSrc button'); for(var i=0;i<b.length;i++) b[i].classList.toggle('on',b[i].getAttribute('data-src')===window._faSrc); }
 document.addEventListener('click',function(e){ var b=e.target&&e.target.closest&&e.target.closest('#faSrc button'); if(b) _faSetSrc(b.getAttribute('data-src')); });
+
+// Notes boxes grow with the text (Enter makes a new line)
+(function(){ function grow(t){ t.style.height='auto'; t.style.height=Math.min(220,Math.max(44,t.scrollHeight+2))+'px'; }
+  document.addEventListener('input',function(e){ if(e.target&&e.target.classList&&e.target.classList.contains('fi-ta')) grow(e.target); });
+  window._taGrow=function(){ var L=document.querySelectorAll('textarea.fi-ta'); for(var i=0;i<L.length;i++) grow(L[i]); };
+  var _ov=new MutationObserver(function(){ setTimeout(window._taGrow,30); });
+  document.addEventListener('DOMContentLoaded',function(){ var a=document.getElementById('eiOverlay'), b=document.getElementById('faOverlay'); if(a) _ov.observe(a,{attributes:true,attributeFilter:['class','style']}); if(b) _ov.observe(b,{attributes:true,attributeFilter:['class','style']}); });
+})();
+
+// ══ Clients: one list built from the jobs (name, phone, email, address) + what you add by hand ══
+function _clLoad(){ try{ return JSON.parse(localStorage.getItem('fb6_clients')||'[]')||[]; }catch(e){ return []; } }
+function _clSave(list,push){ try{ localStorage.setItem('fb6_clients',JSON.stringify(list)); }catch(e){}
+  if(push!==false){ try{ if(typeof db!=='undefined'&&db&&firebase.auth().currentUser&&!firebase.auth().currentUser.isAnonymous){ db.collection('fieldbid').doc('clients').set({data:JSON.stringify(list),updatedAt:new Date().toISOString()}).catch(function(){}); localStorage.setItem('fb6_clientsTs',new Date().toISOString()); } }catch(e){} } }
+function _clPull(cb){ try{ if(typeof db==='undefined'||!db) { if(cb) cb(); return; }
+  db.collection('fieldbid').doc('clients').get().then(function(d){ var v=d&&d.exists&&d.data(); if(v&&v.data&&String(v.updatedAt||'')>String(localStorage.getItem('fb6_clientsTs')||'')){ try{ localStorage.setItem('fb6_clients',v.data); localStorage.setItem('fb6_clientsTs',v.updatedAt||''); }catch(e){} } if(cb) cb(); }).catch(function(){ if(cb) cb(); }); }catch(e){ if(cb) cb(); } }
+function _clNorm(x){ return String(x||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function _clDigits(x){ return String(x||'').replace(/\D/g,''); }
+function _clKey(c){ return _clNorm(c.name); }
+// The book = saved clients + every job's Quote info (saved fields win; jobs fill what is missing)
+function _clBook(){
+  var saved=_clLoad(), P=loadProjs(), byKey={}, out=[];
+  for(var i=0;i<saved.length;i++){ var c=saved[i]; if(!c||!c.name) continue; c.jobs=[]; byKey[_clKey(c)]=c; out.push(c); }
+  for(var j=0;j<P.length;j++){ var p=P[j], q=p.quoteInfo||{}, nm=String(q.client||p.name||'').trim(); if(!nm) continue;
+    var k=_clNorm(nm), c2=byKey[k];
+    if(!c2){ // match by phone / email too
+      var ph=_clDigits(q.phone), em=_clNorm(q.email);
+      for(var m=0;m<out.length&&!c2;m++){ if((ph&&_clDigits(out[m].phone)===ph)||(em&&_clNorm(out[m].email)===em)) c2=out[m]; }
+      if(!c2){ c2={id:'c_'+k.replace(/[^a-z0-9]+/g,'_'),name:nm,phone:'',email:'',address:'',notes:'',auto:true,jobs:[]}; byKey[k]=c2; out.push(c2); } }
+    if(!c2.phone&&q.phone) c2.phone=String(q.phone).trim(); if(!c2.email&&q.email) c2.email=String(q.email).trim(); if(!c2.address&&(q.address||p.address)) c2.address=String(q.address||p.address).trim();
+    c2.jobs.push({id:p.id,name:p.name,address:p.address||q.address||'',status:p.estStatus||'none',created:p.created||''}); }
+  out.sort(function(a,b){ return _clNorm(a.name)<_clNorm(b.name)?-1:1; }); return out;
+}
+// Keep the saved list in step when a Quote is saved
+function _clUpsert(q){ q=q||{}; var nm=String(q.client||'').trim(); if(!nm) return; var L=_clLoad(), k=_clNorm(nm), c=null;
+  for(var i=0;i<L.length;i++) if(_clKey(L[i])===k){ c=L[i]; break; }
+  if(!c){ c={id:'c_'+Date.now().toString(36),name:nm,phone:'',email:'',address:'',notes:''}; L.push(c); }
+  if(q.phone) c.phone=String(q.phone).trim(); if(q.email) c.email=String(q.email).trim(); if(q.address) c.address=String(q.address).trim(); c.updatedAt=new Date().toISOString(); _clSave(L); }
+window._clUpsert=_clUpsert;
+function _clOv(id){ var ov=document.getElementById(id); if(!ov){ ov=document.createElement('div'); ov.id=id; ov.className='overlay'; document.body.appendChild(ov); } return ov; }
+function _clCard(c,pickMode){ var n=c.jobs?c.jobs.length:0;
+  return '<button type="button" class="cl-card" data-cid="'+esc(c.id)+'"><b>'+esc(c.name)+'</b>'+(c.address?'<span>📍 '+esc(c.address)+'</span>':'')+'<span>'+(c.phone?'📞 '+esc(c.phone):'')+(c.phone&&c.email?' · ':'')+(c.email?'✉️ '+esc(c.email):'')+((!c.phone&&!c.email)?'<i>no phone or email yet</i>':'')+'</span>'+(pickMode?'':'<small>'+n+' job'+(n!==1?'s':'')+'</small>')+'</button>'; }
+// More → Clients
+function fbClients(){
+  var ov=_clOv('clOv'); ov.classList.add('on'); ov.style.display='flex';
+  function draw(q){ var B=_clBook(), h='', nq=_clNorm(q||''), n=0;
+    for(var i=0;i<B.length;i++){ var c=B[i]; if(nq&&(_clNorm(c.name)+' '+_clNorm(c.address)+' '+_clDigits(c.phone)+' '+_clNorm(c.email)).indexOf(nq)<0) continue; h+=_clCard(c,false); n++; }
+    ov.innerHTML='<div class="modal cl-m"><div class="mhandle"></div><div class="mtitle">👥 Clients <span class="cl-n">'+B.length+'</span></div>'+
+      '<div class="cl-top"><input id="clSearch" class="pj-search" type="search" placeholder="🔍 Search name, address, phone or email" value="'+esc(q||'')+'"><button type="button" class="cl-new" id="clNew">+ New</button></div>'+
+      '<div class="cl-list">'+(h||'<div class="tk-sub">No client found.</div>')+'</div>'+
+      '<div style="padding:8px 16px 0"><button type="button" class="js-cancel" id="clClose">Close</button></div></div>';
+    var sr=document.getElementById('clSearch'); sr.oninput=function(){ var v=this.value, pos=this.selectionStart; draw(v); var s2=document.getElementById('clSearch'); s2.focus(); try{ s2.setSelectionRange(pos,pos); }catch(e){} };
+    document.getElementById('clClose').onclick=function(){ ov.classList.remove('on'); ov.style.display='none'; };
+    document.getElementById('clNew').onclick=function(){ fbClientEdit(null,function(){ draw(document.getElementById('clSearch')?document.getElementById('clSearch').value:''); }); };
+    var cards=ov.querySelectorAll('.cl-card'); for(var k=0;k<cards.length;k++){ cards[k].onclick=function(){ var id=this.getAttribute('data-cid'), c=null, B2=_clBook(); for(var z=0;z<B2.length;z++) if(B2[z].id===id){ c=B2[z]; break; } if(c) fbClientEdit(c,function(){ draw(document.getElementById('clSearch')?document.getElementById('clSearch').value:''); }); }; } }
+  _clPull(function(){ draw(''); }); draw('');
+}
+window.fbClients=fbClients;
+// Add / edit one client
+function fbClientEdit(c,onDone){
+  var ov=_clOv('clEdOv'), isNew=!c; c=c||{id:'c_'+Date.now().toString(36),name:'',phone:'',email:'',address:'',notes:'',jobs:[]};
+  var jobs=(c.jobs||[]).map(function(j){ return '<button type="button" class="cl-job" data-pid="'+esc(j.id)+'"><b>'+esc(j.name)+'</b><span>'+esc(j.address||'')+(j.created?' · '+esc(j.created):'')+'</span></button>'; }).join('');
+  ov.innerHTML='<div class="modal cl-m"><div class="mhandle"></div><div class="mtitle">'+(isNew?'👤 New client':'👤 '+esc(c.name))+'</div>'+
+    '<div class="ce-g"><label>Name<input id="clName" value="'+esc(c.name)+'" placeholder="Client or company"></label><div class="ce-2"><label>Phone<input id="clPhone" inputmode="tel" value="'+esc(c.phone||'')+'" placeholder="(508) 555-0000"></label><label>Email<input id="clEmail" inputmode="email" autocapitalize="off" value="'+esc(c.email||'')+'" placeholder="client@email.com"></label></div>'+
+    '<label>Address<input id="clAddr" value="'+esc(c.address||'')+'" placeholder="Street, town"></label><label>Notes<textarea id="clNotes" rows="2">'+esc(c.notes||'')+'</textarea></label></div>'+
+    (jobs?'<div class="ce-h">Jobs</div><div class="cl-jobs">'+jobs+'</div>':'')+
+    '<div class="ce-btns"><button type="button" class="ce-cancel" id="clCancel">Cancel</button><button type="button" class="ce-go" id="clSave">✓ Save</button></div>'+
+    (isNew?'':'<button type="button" class="cl-del" id="clDel">🗑 Remove from the list</button>')+'</div>';
+  ov.classList.add('on'); ov.style.display='flex';
+  function close(){ ov.classList.remove('on'); ov.style.display='none'; }
+  document.getElementById('clCancel').onclick=close;
+  document.getElementById('clSave').onclick=function(){ var nm=document.getElementById('clName').value.trim(); if(!nm){ toast('Enter the name','err'); return; }
+    var L=_clLoad(), found=null; for(var i=0;i<L.length;i++) if(L[i].id===c.id||_clKey(L[i])===_clNorm(c.name)){ found=L[i]; break; }
+    if(!found){ found={id:c.id}; L.push(found); }
+    found.name=nm; found.phone=document.getElementById('clPhone').value.trim(); found.email=document.getElementById('clEmail').value.trim(); found.address=document.getElementById('clAddr').value.trim(); found.notes=document.getElementById('clNotes').value.trim(); found.updatedAt=new Date().toISOString();
+    _clSave(L); close(); toast('✓ Client saved'); if(onDone) onDone(found); };
+  var del=document.getElementById('clDel'); if(del) del.onclick=function(){ appConfirm('Remove "'+c.name+'" from the client list? The jobs are not touched.',function(){ var L=_clLoad().filter(function(x){ return x.id!==c.id&&_clKey(x)!==_clNorm(c.name); }); _clSave(L); close(); toast('Removed'); if(onDone) onDone(null); },{confirmLabel:'Remove'}); };
+  var jb=ov.querySelectorAll('.cl-job'); for(var k=0;k<jb.length;k++){ jb[k].onclick=function(){ var pid=this.getAttribute('data-pid'); close(); var o2=document.getElementById('clOv'); if(o2){ o2.classList.remove('on'); o2.style.display='none'; } try{ openJobFromList(pid); }catch(e){} }; }
+}
+window.fbClientEdit=fbClientEdit;
+// Picker used by the Quote tab and the New project form
+function fbClientPick(cb){
+  var ov=_clOv('clPkOv'); ov.classList.add('on'); ov.style.display='flex';
+  function draw(q){ var B=_clBook(), h='', nq=_clNorm(q||'');
+    for(var i=0;i<B.length;i++){ var c=B[i]; if(nq&&(_clNorm(c.name)+' '+_clNorm(c.address)+' '+_clDigits(c.phone)+' '+_clNorm(c.email)).indexOf(nq)<0) continue; h+=_clCard(c,true); }
+    ov.innerHTML='<div class="modal cl-m"><div class="mhandle"></div><div class="mtitle">👥 Pick a client</div><div class="cl-top"><input id="clPkSearch" class="pj-search" type="search" placeholder="🔍 Search" value="'+esc(q||'')+'"><button type="button" class="cl-new" id="clPkNew">+ New</button></div><div class="cl-list">'+(h||'<div class="tk-sub">No client found.</div>')+'</div><div style="padding:8px 16px 0"><button type="button" class="js-cancel" id="clPkClose">Cancel</button></div></div>';
+    var sr=document.getElementById('clPkSearch'); sr.oninput=function(){ var v=this.value, pos=this.selectionStart; draw(v); var s2=document.getElementById('clPkSearch'); s2.focus(); try{ s2.setSelectionRange(pos,pos); }catch(e){} };
+    document.getElementById('clPkClose').onclick=function(){ ov.classList.remove('on'); ov.style.display='none'; };
+    document.getElementById('clPkNew').onclick=function(){ fbClientEdit(null,function(c){ if(c){ ov.classList.remove('on'); ov.style.display='none'; cb(c); } }); };
+    var cards=ov.querySelectorAll('.cl-card'); for(var k=0;k<cards.length;k++){ cards[k].onclick=function(){ var id=this.getAttribute('data-cid'), B2=_clBook(); for(var z=0;z<B2.length;z++) if(B2[z].id===id){ ov.classList.remove('on'); ov.style.display='none'; cb(B2[z]); return; } }; } }
+  draw('');
+}
+window.fbClientPick=fbClientPick;
+setTimeout(function(){ try{ _clPull(); }catch(e){} },9000);
+
 function saveFA(){ saveEI(); } // alias - same operation
 function saveEI(){
   if(currentProj){ saveProjAreas(); }
@@ -4139,6 +4245,7 @@ function saveQI(){
     }
   }catch(e){ console.warn('saveQI project sync failed:', e); }
   _syncJobLabelFromClient();
+  try{ window._clUpsert(quoteInfo); }catch(e){}
   save();
   // Labor / overhead / markup edits live here: refresh the WorkLog summary too
   // (it used to refresh only when the Estimator list was redrawn).
@@ -4453,6 +4560,8 @@ document.getElementById('projCloseBtn').addEventListener('click',function(){
   closeOv('projOverlay');
 });
 document.getElementById('createProjBtn').addEventListener('click',function(){createProj();});
+document.getElementById('npPick').addEventListener('click',function(){ window.fbClientPick(function(c){ document.getElementById('newProjName').value=c.name||''; document.getElementById('newProjAddress').value=c.address||''; var ph=document.getElementById('newProjPhone'), em=document.getElementById('newProjEmail'); if(ph) ph.value=c.phone||''; if(em) em.value=c.email||''; }); });
+document.addEventListener('click',function(e){ if(e.target&&e.target.id==='qPick'){ window.fbClientPick(function(c){ quoteInfo.client=c.name||quoteInfo.client; if(c.address) quoteInfo.address=c.address; if(c.phone) quoteInfo.phone=c.phone; if(c.email) quoteInfo.email=c.email; saveQI(); renderQuote(); toast('👥 '+c.name); }); } });
 function openProjModal(){
   var f=document.getElementById('newProjForm');
   if(f) f.style.display='';
@@ -4738,6 +4847,7 @@ function createProj(){
   var projs=loadProjs();
   var proj={id:'p_'+Date.now(),name:name,address:address||'',areas:[],estItems:[],quoteInfo:{client:name,address:address||'',phone:phone,email:email},created:new Date().toLocaleDateString('en-US')};
   projs.unshift(proj);saveProjs(projs);
+  try{ window._clUpsert(proj.quoteInfo); }catch(e){}
   currentProj=proj;
   fieldAreas=[];window.fieldAreas=fieldAreas;
   estItems=[];window.estItems=estItems;
@@ -7688,7 +7798,7 @@ function nvMore(){
   ov.innerHTML='<div class="modal nvm"><div class="mhandle"></div><div class="mtitle">More</div><div class="nvm-g">'+
     it('quote','💰','Quote','client, markup, discount')+it('prods','🗄️','Products','prices and coverage')+it('settings','⚙️','Settings','company, costs, signature')+
     it('broch','📄','Brochures','')+it('ds','📋','Data sheets','')+it('ct','✍️','Contract','')+
-    it('wl','🧰','WorkLog','open the WorkLog app')+it('diag','🩺','Diagnostics','photos and sync check')+it('backups','🗄️','Backups','daily copies · download · restore')+it('imp','📥','Import takeoff','paste the FIELDBID-TAKEOFF block')+it('tkcopy','📤','Copy takeoff','of the open job · to share')+it('refresh','↺','Refresh','reload the app')+it('classic','↩️','Classic version','the FieldBid as before')+
+    it('wl','🧰','WorkLog','open the WorkLog app')+it('diag','🩺','Diagnostics','photos and sync check')+it('backups','🗄️','Backups','daily copies · download · restore')+it('clients','👥','Clients','phone, email, address — from your jobs')+it('imp','📥','Import takeoff','paste the FIELDBID-TAKEOFF block')+it('tkcopy','📤','Copy takeoff','of the open job · to share')+it('refresh','↺','Refresh','reload the app')+it('classic','↩️','Classic version','the FieldBid as before')+
     '</div><div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="nvmClose">Close</button></div>'+
     '<div class="nvm-ver">FieldBid · '+((document.getElementById('fbBuild')||{}).textContent||'')+'</div></div>';
   ov.classList.add('on'); ov.style.display='flex';
@@ -7705,6 +7815,7 @@ function nvMore(){
     if(m==='refresh'){ location.reload(); return; }
     if(m==='backups'){ if(window.fbBackups) window.fbBackups(); return; }
     if(m==='imp'){ if(window.fbImportTakeoff) window.fbImportTakeoff(); return; }
+    if(m==='clients'){ if(window.fbClients) window.fbClients(); return; }
     if(m==='tkcopy'){ if(window.fbCopyTakeoff) window.fbCopyTakeoff(); return; }
   };
 }
