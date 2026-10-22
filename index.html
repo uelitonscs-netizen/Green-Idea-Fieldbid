@@ -1288,6 +1288,38 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .proj-acts button{width:34px;height:30px;border-radius:9px;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-muted);font-size:14px;display:flex;align-items:center;justify-content:center;padding:0;}
 .proj-acts .proj-check.on{color:var(--n-green-ink);border-color:var(--n-green);background:var(--n-green-soft);}
 .proj-acts .proj-del{color:var(--n-red,#d64545);}
+
+/* Takeoff: source of the measurements, Site check, import */
+.src-chip{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.04em;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:2px;}
+.src-chip.plan{background:var(--n-blue-soft);color:var(--n-blue);} .src-chip.site{background:var(--n-green-soft);color:var(--n-green-ink);}
+.src-seg{display:flex;gap:6px;} .src-seg button{flex:1;border:1.5px solid var(--n-border);background:var(--n-surface);color:var(--n-text);border-radius:10px;padding:9px 4px;font-size:13px;font-weight:800;font-family:var(--n-font-m);}
+.src-seg button.on{border-color:var(--n-green);background:var(--n-green-soft);color:var(--n-green-ink);}
+.tk-banner{display:flex;align-items:center;gap:10px;background:var(--n-blue-soft);border:1px solid #c9d6f3;border-radius:14px;padding:10px 12px;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--n-blue);}
+.tk-banner.done{background:var(--n-green-soft);border-color:var(--n-green);color:var(--n-green-ink);}
+.tk-banner button{margin-left:auto;flex:none;background:var(--n-green);color:#fff;border:none;border-radius:10px;padding:8px 11px;font-weight:800;font-size:12.5px;font-family:var(--n-font-m);}
+.tk-m{max-height:94vh;overflow:auto;padding-bottom:22px;} .tk-sub{font-size:12.5px;color:var(--n-muted);padding:0 20px 8px;}
+.tk-ta{display:block;width:calc(100% - 32px);margin:0 16px;box-sizing:border-box;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:10px;font-size:12px;font-family:ui-monospace,monospace;}
+.tk-row{display:flex;gap:8px;padding:8px 16px 0;} .tk-sec{flex:1;border:1px solid var(--n-border);background:var(--n-surface);color:var(--n-text);border-radius:10px;padding:9px;font-weight:800;font-size:13px;font-family:var(--n-font-m);}
+.tk-prev{padding:8px 16px 0;} .tk-head{font-weight:800;font-size:15px;margin-bottom:6px;} .tk-head small{font-weight:600;color:var(--n-muted);font-size:12px;}
+.tk-a{display:flex;justify-content:space-between;gap:8px;border:1px solid var(--n-border);background:var(--n-surface2);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:13px;} .tk-a span{color:var(--n-muted);white-space:nowrap;}
+.tk-err{color:var(--n-red,#d64545);font-weight:700;font-size:13px;}
+.tk-add{display:block;width:calc(100% - 32px);margin:8px 16px 0;border:1px dashed var(--n-border);background:transparent;color:var(--n-blue);border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;font-family:var(--n-font-m);} .tk-add[disabled]{opacity:.45;}
+.sc-a{border:1px solid var(--n-border);background:var(--n-surface);border-radius:14px;padding:11px 12px;margin:0 16px 10px;}
+.sc-h{display:flex;justify-content:space-between;align-items:center;} .sc-h b{font-size:16px;}
+.sc-chip{font-size:11px;font-weight:800;border-radius:999px;padding:3px 9px;background:var(--n-surface2);color:var(--n-muted);} .sc-chip.ok{background:var(--n-green-soft);color:var(--n-green-ink);} .sc-chip.amb{background:var(--n-amber-soft,#fbf1df);color:var(--n-amber);} .sc-chip.red{background:#fde8e8;color:#c53030;}
+.sc-row{display:grid;grid-template-columns:62px 1fr 1fr 1fr;gap:6px;align-items:center;margin-top:7px;font-size:12.5px;}
+.sc-row.sc-hd span{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--n-muted);text-align:center;}
+.sc-k{color:var(--n-muted);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.03em;}
+.sc-v{background:var(--n-surface2);border:1px solid var(--n-border);border-radius:9px;padding:8px 6px;text-align:center;color:var(--n-text);}
+.sc-in{width:100%;box-sizing:border-box;background:var(--n-surface);border:1.5px solid var(--n-green);border-radius:9px;padding:8px 6px;text-align:center;font-weight:800;font-size:14px;color:var(--n-text);font-family:var(--n-font-m);} .sc-in.empty{border-color:var(--n-border);font-weight:500;}
+.sc-sum{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:8px;border-top:1px dashed var(--n-border);font-size:13px;color:var(--n-muted);}
+.sc-d{font-weight:800;} .sc-d.ok,.sc-big b.ok{color:var(--n-green-ink);} .sc-d.amb,.sc-big b.amb,.sc-line b.amb{color:var(--n-amber);} .sc-d.red,.sc-big b.red{color:#c53030;}
+.sc-same{border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:9px;padding:7px 10px;font-size:12px;font-weight:800;font-family:var(--n-font-m);}
+.sc-tot{margin:0 16px 8px;border:1px solid var(--n-border);background:var(--n-surface);border-radius:14px;padding:12px;}
+.sc-big{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;} .sc-big div{background:var(--n-surface2);border-radius:11px;padding:9px 4px;} .sc-big b{display:block;font-size:19px;color:var(--n-text);} .sc-big span{font-size:10.5px;color:var(--n-muted);font-weight:800;text-transform:uppercase;}
+.sc-line{display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--n-border);font-size:13.5px;} .sc-line:last-child{border:none;} .sc-line b{color:var(--n-text);}
+.sc-opt{display:flex;flex-direction:column;gap:2px;text-align:left;width:calc(100% - 32px);margin:0 16px 8px;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:11px 12px;font-family:var(--n-font-m);} .sc-opt b{font-size:14.5px;} .sc-opt small{font-size:12px;color:var(--n-muted);} .sc-opt.on{border-color:var(--n-green);background:var(--n-green-soft);} .sc-opt.on b{color:var(--n-green-ink);}
+.sc-pick{margin:0 16px 8px;border:1px solid var(--n-border);border-radius:12px;padding:6px 12px;} .sc-pick label{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--n-border);font-size:14px;} .sc-pick label:last-child{border:none;} .sc-pick label span{margin-left:auto;color:var(--n-muted);font-weight:700;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1403,7 +1435,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261021-1200</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span style="font-size:10px;color:#9ca3af">build v20261021-1500</span></div>
 </div>
 
 <div id="field-app">
@@ -1741,6 +1773,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
     <div class="mhandle"></div>
     <div class="mtitle" id="faTitle">Add Area</div>
     <div class="fg"><label class="fl">Area Name</label><input class="fi af" id="fa_name" type="text" placeholder="e.g. North exterior wall"></div>
+    <div class="fg"><div class="src-seg" id="faSrc"><button type="button" data-src="site" class="on">📏 Measured on site</button><button type="button" data-src="plans">📐 From plans</button></div></div>
     <!-- MEASUREMENT CALCULATOR -->
     <div class="fg">
       <label class="fl">Measurement Mode</label>
@@ -3854,7 +3887,8 @@ function _twAreaToItem(area,oldArea){
   var L=window.estItems||[], ix=-1, hits=[], byId=area.aid||'', byName=_twNorm(oldArea?oldArea.name:area.name);
   for(var i=0;i<L.length;i++){ var it=L[i]; if(!it) continue; if(byId&&it.areaId===byId){ ix=i; break; } if(_twNorm(it.fromArea||it.name)===byName) hits.push(i); }
   if(ix<0&&hits.length===1) ix=hits[0]; if(ix<0) return;
-  var it=L[ix], pid=_twProdForArea(area), prodChanged=!!(pid&&String(it.productId||'')!==String(pid));
+  var it=L[ix], matMoved=!oldArea||String(oldArea.matCat||'')!==String(area.matCat||'')||String(oldArea.matType||'')!==String(area.matType||'')||(oldArea.fgR||0)!==(area.fgR||0)||(oldArea.mwR||0)!==(area.mwR||0)||(oldArea.celR||0)!==(area.celR||0);
+  var pid=matMoved?_twProdForArea(area):(it.productId||_twProdForArea(area)), prodChanged=matMoved&&!!(pid&&String(it.productId||'')!==String(pid));
   it.name=area.name; it.fromArea=area.name; it.areaId=area.aid; it.notes=area.notes||''; it.sf=Math.round((parseFloat(area.sf)||0)*10)/10;
   if(pid){ it.productId=pid; it.matType=area.matType||''; it.matCat=area.matCat||''; it.ccInch=area.ccInch||0; it.ocInch=area.ocInch||0; it.fgR=area.fgR||0; it.celR=area.celR||0; it.mwR=area.mwR||0; it.matChanged=false; it.spec=_twSpec(it); }
   var inn=_twInches(area), pr=pid?getProd(pid):null;
@@ -3864,6 +3898,180 @@ function _twAreaToItem(area,oldArea){
   window.estItems=L; estItems=L; try{ saveEI(); }catch(e){} try{ if(typeof renderEst==='function') renderEst(); }catch(e){}
   toast('🔁 Estimate item updated too');
 }
+
+// ══ Takeoff import / export (FIELDBID-TAKEOFF v1) and Site check (plans vs field) ══
+function _tkSpec(a){ var d=MAT_CAT_DATA[a.matCat]||{type:'other',label:a.matCat||''}, t=d.type;
+  if(t==='cc') return a.ccInch?a.ccInch+'" closed cell':d.label; if(t==='oc') return a.ocInch?a.ocInch+'" open cell':d.label;
+  if(t==='hybrid'){ var sp=(a.ccInch?a.ccInch+'" cc ':'')+(a.ocInch?a.ocInch+'" oc':''); return sp.trim()||d.label; }
+  if(t==='fg') return ((a.fgR?'R-'+a.fgR+' ':d.label+' ')+(a.fgInch?a.fgInch+'"':'')).trim();
+  if(t==='cel') return d.label+(a.celR?' R-'+a.celR:'')+(a.celInch?' '+a.celInch+'"':'');
+  if(t==='mw') return d.label+(a.mwR?' R-'+a.mwR:''); return d.label||''; }
+// SF of an area from its own measurements (same math as the Add Area calculator)
+function _tkSF(a,rowsOverride){
+  var t=0, m=a.calcMode||'manual', R=rowsOverride||null, i;
+  if(m==='walls'||m==='floor'){ var L=R?R:(m==='walls'?a.wallRows:a.floorRows)||[];
+    for(i=0;i<L.length;i++){ var l=parseSum(String(L[i].l||'')), h=parseSum(String(L[i].h||'')), q=Math.max(1,Math.round(Number(L[i].q)||1)); if(l>0&&h>0) t+=Math.round(l*h*q*10)/10; } }
+  else if(m==='roof'){ var RR=R?R:(a.roofRows||[]); for(i=0;i<RR.length;i++) t+=calcRoofRow(RR[i]).sf; if(a.roofWaste&&t>0) t=t*1.10; }
+  else { t=R?parseFloat(R.sf)||0:(parseFloat(a.sfBase)||parseFloat(a.sf)||0); }
+  t=Math.round(t*10)/10; var mult=parseFloat(a.mult)||1; if(mult<1) mult=1; return {base:t, sf:Math.round(t*mult*10)/10};
+}
+function _tkAid(){ return 'a_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function _tkParse(text){
+  var s=String(text||''), i=s.indexOf('{'); if(i<0) throw new Error('No takeoff found in the text');
+  var o=JSON.parse(s.slice(i, s.lastIndexOf('}')+1)); if(!o||!Array.isArray(o.areas)||!o.areas.length) throw new Error('The takeoff has no areas');
+  return o;
+}
+function _tkArea(x,source){
+  var mode=x.mode||(x.roof?'roof':(x.rows?'walls':'manual')); if(mode==='gable') mode='roof';
+  var mat=String(x.mat||'other'); if(!MAT_CAT_DATA[mat]){ var alias={closed:'cc',open:'oc',fiberglass:'fg_r13',cellulose:'cel_blown',roxul:'mw_r15',mineral:'mw_r15',ignition:'ign',ign:'ign',fireblock:'fb',fb:'fb',other:'other'}; mat=alias[mat.toLowerCase()]||'other'; }
+  var d=MAT_CAT_DATA[mat]||{type:'other'};
+  var a={name:String(x.name||'Area'),productId:null,notes:String(x.notes||''),photos:[],mult:parseFloat(x.mult)||1,calcMode:mode,matCat:mat,matType:d.type,
+    ccInch:parseFloat(x.cc)||0,ocInch:parseFloat(x.oc)||0,fgR:parseFloat(x.fgR)||d.r||0,fgInch:parseFloat(x.fgInch)||d.inch||0,celR:parseFloat(x.celR)||0,celInch:parseFloat(x.celInch)||0,mwR:parseFloat(x.mwR)||d.r||0,
+    wallRows:[],floorRows:[],roofRows:null,roofWaste:!!x.waste,lastPrice:parseFloat(x.price)||0,source:source,aid:_tkAid()};
+  if(!MAT_CAT_DATA[mat]||!MAT_CAT_DATA[mat].type) a.matType=mat;
+  var rows=[], k;
+  if(mode==='walls'||mode==='floor'){ for(k=0;k<(x.rows||[]).length;k++){ var r=x.rows[k]||{}; rows.push({l:String(r.l!=null?r.l:''),h:String(r.h!=null?r.h:(r.w!=null?r.w:'')),q:Math.max(1,Math.round(Number(r.q)||1))}); }
+    if(mode==='walls') a.wallRows=rows; else a.floorRows=rows; }
+  else if(mode==='roof'){ a.roofRows=[]; for(k=0;k<(x.roof||[]).length;k++){ var rr=x.roof[k]||{}; a.roofRows.push({type:rr.type||'gable',a:String(rr.a!=null?rr.a:(rr.w!=null?rr.w:'')),l:String(rr.l!=null?rr.l:''),c:String(rr.c!=null?rr.c:''),pitch:String(rr.pitch||'8-12').replace(':','-').replace('/','-'),q:Math.max(1,Math.round(Number(rr.q)||1))}); } }
+  else { a.calcMode='manual'; a.sfBase=parseFloat(x.sf)||0; }
+  var r2=_tkSF(a); a.sfBase=(mode==='manual')?(parseFloat(x.sf)||0):r2.base; a.sf=r2.sf; if(mode==='manual') a.sf=Math.round(a.sfBase*a.mult*10)/10;
+  a.spec=_tkSpec(a); return a;
+}
+function _tkText(p){
+  var A=p.areas||[], out=[];
+  for(var i=0;i<A.length;i++){ var a=A[i], o={name:a.name,mode:a.calcMode||'manual',mat:a.matCat||a.matType||'other'};
+    if(o.mode==='walls') o.rows=(a.wallRows||[]).map(function(r){ return {l:r.l,h:r.h,q:r.q||1}; });
+    else if(o.mode==='floor') o.rows=(a.floorRows||[]).map(function(r){ return {l:r.l,w:r.h,q:r.q||1}; });
+    else if(o.mode==='roof'){ o.roof=(a.roofRows||[]).map(function(r){ return {type:r.type,a:r.a,l:r.l,c:r.c,pitch:r.pitch,q:r.q||1}; }); if(a.roofWaste) o.waste=true; }
+    else o.sf=a.sfBase||a.sf;
+    if(a.ccInch) o.cc=a.ccInch; if(a.ocInch) o.oc=a.ocInch; if(a.fgR) o.fgR=a.fgR; if(a.fgInch) o.fgInch=a.fgInch; if(a.celR) o.celR=a.celR; if(a.celInch) o.celInch=a.celInch; if(a.mwR) o.mwR=a.mwR;
+    if(a.mult&&a.mult!==1) o.mult=a.mult; if(a.notes) o.notes=a.notes; if(a.lastPrice) o.price=a.lastPrice; out.push(o); }
+  var head={name:p.name||'',address:p.address||'',source:p.source||'site'}; var q=p.quoteInfo||{}; if(q.phone) head.phone=q.phone; if(q.email) head.email=q.email;
+  head.areas=out; return 'FIELDBID-TAKEOFF v1\n'+JSON.stringify(head,null,1);
+}
+function _tkOv(id){ var ov=document.getElementById(id); if(!ov){ ov=document.createElement('div'); ov.id=id; ov.className='overlay'; document.body.appendChild(ov); } return ov; }
+function _tkClose(id){ var ov=document.getElementById(id); if(ov){ ov.classList.remove('on'); ov.style.display='none'; } }
+// ── Import: paste the FIELDBID-TAKEOFF block (or pick a file)
+function fbImportTakeoff(){
+  var ov=_tkOv('tkOv'), cur=currentProj;
+  ov.innerHTML='<div class="modal tk-m"><div class="mhandle"></div><div class="mtitle">📥 Import takeoff</div><div class="tk-sub">Paste the FIELDBID-TAKEOFF block (from Claude) or pick the file.</div>'+
+    '<textarea id="tkText" class="tk-ta" rows="7" placeholder="FIELDBID-TAKEOFF v1&#10;{&quot;name&quot;:…}"></textarea>'+
+    '<div class="tk-row"><button type="button" class="tk-sec" id="tkPaste">📋 Paste</button><button type="button" class="tk-sec" id="tkFileBtn">📂 File…</button><input type="file" id="tkFile" accept=".txt,.json,text/plain,application/json" style="display:none"></div>'+
+    '<div id="tkPrev" class="tk-prev"></div>'+
+    '<div class="ce-btns"><button type="button" class="ce-cancel" id="tkCancel">Cancel</button><button type="button" class="ce-go" id="tkGo" disabled>📥 Create project</button></div>'+
+    (cur?'<button type="button" class="tk-add" id="tkAdd" disabled>➕ Add the areas to “'+esc(cur.name)+'” instead</button>':'')+'</div>';
+  ov.classList.add('on'); ov.style.display='flex';
+  var parsed=null;
+  function prev(){ var t=document.getElementById('tkText').value, box=document.getElementById('tkPrev'); parsed=null;
+    if(!t.trim()){ box.innerHTML=''; set(false); return; }
+    try{ var o=_tkParse(t), areas=o.areas.map(function(x){ return _tkArea(x,o.source==='site'?'site':'plans'); }), tot=0, h='';
+      for(var i=0;i<areas.length;i++){ tot+=areas[i].sf; h+='<div class="tk-a"><b>'+esc(areas[i].name)+'</b><span>'+fmtN(areas[i].sf)+' SF · '+esc(areas[i].spec||'')+'</span></div>'; }
+      parsed={o:o,areas:areas};
+      box.innerHTML='<div class="tk-head">'+esc(o.name||'(no name)')+(o.address?' · '+esc(o.address):'')+'<br><small>'+areas.length+' area'+(areas.length!==1?'s':'')+' · '+fmtN(tot)+' SF · '+(o.source==='site'?'📏 measured on site':'📐 from plans')+'</small></div>'+h; set(true);
+    }catch(e){ box.innerHTML='<div class="tk-err">⚠ '+esc(e.message||'Could not read the takeoff')+'</div>'; set(false); } }
+  function set(ok){ document.getElementById('tkGo').disabled=!ok; var ad=document.getElementById('tkAdd'); if(ad) ad.disabled=!ok; }
+  document.getElementById('tkText').addEventListener('input',prev);
+  document.getElementById('tkPaste').onclick=function(){ try{ navigator.clipboard.readText().then(function(t){ document.getElementById('tkText').value=t; prev(); },function(){ toast('Long-press the box and paste','err'); }); }catch(e){ toast('Long-press the box and paste','err'); } };
+  document.getElementById('tkFileBtn').onclick=function(){ document.getElementById('tkFile').click(); };
+  document.getElementById('tkFile').onchange=function(){ var f=this.files&&this.files[0]; if(!f) return; var rd=new FileReader(); rd.onload=function(){ document.getElementById('tkText').value=String(rd.result||''); prev(); }; rd.readAsText(f); };
+  document.getElementById('tkCancel').onclick=function(){ _tkClose('tkOv'); };
+  document.getElementById('tkGo').onclick=function(){ if(!parsed) return; var o=parsed.o; if(currentProj) saveProjAreas();
+    var projs=loadProjs(), proj={id:'p_'+Date.now(),name:String(o.name||'Imported takeoff'),address:String(o.address||''),areas:parsed.areas,estItems:[],quoteInfo:{client:String(o.name||''),address:String(o.address||''),phone:String(o.phone||''),email:String(o.email||'')},created:new Date().toLocaleDateString('en-US'),source:o.source==='site'?'site':'plans'};
+    projs.unshift(proj); saveProjs(projs); _tkClose('tkOv');
+    try{ closeOv('projOverlay'); }catch(e){} try{ switchProjById(proj.id); }catch(e){} try{ nvGo('field'); }catch(e){} try{ closeOv('projOverlay'); renderFA(); renderFWO(); }catch(e){}
+    toast('📥 “'+proj.name+'” created · '+parsed.areas.length+' areas'); };
+  var ad=document.getElementById('tkAdd'); if(ad) ad.onclick=function(){ if(!parsed||!currentProj) return;
+    for(var i=0;i<parsed.areas.length;i++) window.fieldAreas.push(parsed.areas[i]); fieldAreas=window.fieldAreas; saveFA(); _tkClose('tkOv'); renderFA(); try{ renderFWO(); }catch(e){} toast('➕ '+parsed.areas.length+' areas added'); };
+}
+window.fbImportTakeoff=fbImportTakeoff;
+// ── Copy the open job's takeoff as text (to send to Claude or another phone)
+function fbCopyTakeoff(){
+  if(!currentProj){ toast('Open a job first','err'); return; } saveProjAreas();
+  var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++) if(ps[i].id===currentProj.id){ p=ps[i]; break; } if(!p){ toast('Job not found','err'); return; }
+  var t=_tkText(p);
+  function done(){ toast('📤 Takeoff copied — paste it to Claude'); }
+  try{ if(navigator.share){ navigator.share({text:t}).then(done,function(){}); return; } }catch(e){}
+  try{ navigator.clipboard.writeText(t).then(done,function(){ prompt('Copy this text:',t); }); }catch(e){ prompt('Copy this text:',t); }
+}
+window.fbCopyTakeoff=fbCopyTakeoff;
+// ── Site check: plans vs what you measure on site
+function _tkItemFor(a){ var L=window.estItems||[]; for(var i=0;i<L.length;i++){ var it=L[i]; if(a.aid&&it.areaId===a.aid) return it; } var n=_twNorm(a.name); for(var j=0;j<L.length;j++){ if(_twNorm(L[j].fromArea||L[j].name)===n) return L[j]; } return null; }
+function _tkPlanRows(a){ var m=a.calcMode||'manual'; if(m==='walls') return JSON.parse(JSON.stringify(a.wallRows||[])); if(m==='floor') return JSON.parse(JSON.stringify(a.floorRows||[])); if(m==='roof') return JSON.parse(JSON.stringify(a.roofRows||[])); return {sf:a.sfBase||a.sf}; }
+function _tkEmptyRows(a){ var m=a.calcMode||'manual', P=_tkPlanRows(a); if(m==='roof') return P.map(function(r){ return {type:r.type,pitch:r.pitch,q:r.q||1,a:'',l:'',c:''}; }); if(m==='walls'||m==='floor') return P.map(function(r){ return {l:'',h:'',q:r.q||1}; }); return {sf:''}; }
+function _tkEntered(a,R){ var m=a.calcMode||'manual'; if(m==='walls'||m==='floor'){ for(var i=0;i<R.length;i++) if(String(R[i].l||'').trim()&&String(R[i].h||'').trim()) return true; return false; } if(m==='roof'){ for(var j=0;j<R.length;j++) if(String(R[j].a||'').trim()&&String(R[j].l||'').trim()) return true; return false; } return String(R.sf||'').trim()!==''; }
+function fbSiteCheck(){
+  if(!currentProj){ toast('Open a job first','err'); return; }
+  var A=window.fieldAreas||[]; if(!A.length){ toast('This job has no areas yet','err'); return; }
+  var S=[]; for(var i=0;i<A.length;i++){ var a=A[i]; S.push({i:i,site:a.siteDraft?JSON.parse(JSON.stringify(a.siteDraft)):_tkEmptyRows(a)}); }
+  S.sort(function(x,y){ var px=(A[x.i].source==='plans'&&!A[x.i].siteCheckedAt)?0:1, py=(A[y.i].source==='plans'&&!A[y.i].siteCheckedAt)?0:1; return px-py; });
+  var ov=_tkOv('scOv2'); ov.classList.add('on'); ov.style.display='flex';
+  function money(n){ return (n<0?'−':'+')+'$'+Math.abs(Math.round(n)).toLocaleString('en-US'); }
+  function stat(s){ var a=A[s.i], ent=_tkEntered(a,s.site), fs=ent?_tkSF(a,s.site).sf:a.sf, d=Math.round((fs-a.sf)*10)/10, pct=a.sf?Math.round(d/a.sf*1000)/10:0, it=_tkItemFor(a), usd=it?d*(parseFloat(it.price)||0):0; return {ent:ent,fs:fs,d:d,pct:pct,usd:usd,it:it}; }
+  function inp(sIdx,ri,f,v,ph){ return '<input class="sc-in'+(String(v).trim()?'':' empty')+'" inputmode="decimal" data-s="'+sIdx+'" data-r="'+ri+'" data-f="'+f+'" value="'+esc(String(v))+'" placeholder="'+ph+'">'; }
+  function draw(){
+    var h='<div class="modal tk-m"><div class="mhandle"></div><div class="mtitle">✅ Site check</div><div class="tk-sub">'+esc(currentProj.name)+' · plans vs what you measure today</div>';
+    for(var k=0;k<S.length;k++){ var s=S[k], a=A[s.i], m=a.calcMode||'manual', st=stat(s), cls=st.ent?(Math.abs(st.pct)<=5?'ok':(Math.abs(st.pct)<=15?'amb':'red')):'';
+      var chip=!st.ent?'<span class="sc-chip">not checked</span>':(st.d===0?'<span class="sc-chip ok">= same</span>':'<span class="sc-chip '+cls+'">'+(st.pct>0?'+':'')+st.pct+'%</span>');
+      h+='<div class="sc-a"><div class="sc-h"><b>'+esc(a.name)+'</b>'+chip+'</div>';
+      if(m==='walls'||m==='floor'){ var P=_tkPlanRows(a); h+='<div class="sc-row sc-hd"><span></span><span>'+(m==='walls'?'Length':'Length')+'</span><span>'+(m==='walls'?'Height':'Width')+'</span><span>SF</span></div>';
+        for(var r=0;r<P.length;r++){ var pr=P[r], sr=s.site[r]||{l:'',h:''}, q=(pr.q>1?' ×'+pr.q:'');
+          h+='<div class="sc-row"><span class="sc-k">📐 Plan</span><span class="sc-v">'+esc(String(pr.l||''))+'</span><span class="sc-v">'+esc(String(pr.h||''))+q+'</span><span class="sc-v">'+fmtN(Math.round(parseSum(String(pr.l||''))*parseSum(String(pr.h||''))*(pr.q||1)*10)/10)+'</span></div>';
+          h+='<div class="sc-row"><span class="sc-k">📏 Site</span>'+inp(k,r,'l',sr.l,'length')+inp(k,r,'h',sr.h,m==='walls'?'height':'width')+'<span class="sc-v"><b>'+fmtN(Math.round(parseSum(String(sr.l||''))*parseSum(String(sr.h||''))*(pr.q||1)*10)/10)+'</b></span></div>'; } }
+      else if(m==='roof'){ var PR=_tkPlanRows(a); h+='<div class="sc-row sc-hd"><span></span><span>A</span><span>L</span><span>C / SF</span></div>';
+        for(var r2=0;r2<PR.length;r2++){ var pr2=PR[r2], sr2=s.site[r2]||{a:'',l:'',c:''}, needC=(pr2.type==='hiprect'||pr2.type==='mansard');
+          h+='<div class="sc-row"><span class="sc-k">📐 '+esc(pr2.type||'gable')+(pr2.pitch?' '+esc(String(pr2.pitch).replace('-',':')):'')+'</span><span class="sc-v">'+esc(String(pr2.a||''))+'</span><span class="sc-v">'+esc(String(pr2.l||''))+'</span><span class="sc-v">'+(needC?esc(String(pr2.c||'')):fmtN(calcRoofRow(pr2).sf))+'</span></div>';
+          h+='<div class="sc-row"><span class="sc-k">📏 Site</span>'+inp(k,r2,'a',sr2.a,'A')+inp(k,r2,'l',sr2.l,'L')+(needC?inp(k,r2,'c',sr2.c,'C'):'<span class="sc-v"><b>'+fmtN(calcRoofRow({type:pr2.type,pitch:pr2.pitch,q:pr2.q,a:sr2.a,l:sr2.l,c:sr2.c}).sf)+'</b></span>')+'</div>'; } }
+      else { h+='<div class="sc-row"><span class="sc-k">📐 Plan</span><span class="sc-v" style="grid-column:span 2">'+fmtN(a.sfBase||a.sf)+' SF (typed)</span><span></span></div><div class="sc-row"><span class="sc-k">📏 Site</span>'+inp(k,0,'sf',s.site.sf,'SF measured')+'<span></span><span></span></div>'; }
+      h+='<div class="sc-sum"><span>'+(st.ent?'Difference':'')+'</span>'+(st.ent?'<span class="sc-d '+cls+'">'+(st.d===0?'0 SF · checked':((st.d>0?'+':'−')+fmtN(Math.abs(st.d))+' SF · '+(st.pct>0?'+':'')+st.pct+'%'+(st.it?' · ≈ '+money(st.usd):'')))+'</span>':'<button type="button" class="sc-same" data-same="'+k+'">= Same as plan</button>')+'</div></div>'; }
+    h+='<div class="ce-btns"><button type="button" class="ce-cancel" id="scLater">Save for later</button><button type="button" class="ce-go" id="scReview">Review changes →</button></div></div>';
+    ov.innerHTML=h;
+  }
+  function readInputs(){ var ins=ov.querySelectorAll('.sc-in'); for(var i=0;i<ins.length;i++){ var e=ins[i], s=S[+e.getAttribute('data-s')], r=+e.getAttribute('data-r'), f=e.getAttribute('data-f'); if(f==='sf') s.site.sf=e.value; else { if(!s.site[r]) s.site[r]={}; s.site[r][f]=e.value; } } }
+  ov.oninput=function(e){ if(!e.target.classList.contains('sc-in')) return; readInputs(); var sc=ov.querySelector('.modal').scrollTop, act=e.target, sIdx=act.getAttribute('data-s'), r=act.getAttribute('data-r'), f=act.getAttribute('data-f'), pos=act.selectionStart; draw(); ov.querySelector('.modal').scrollTop=sc; var again=ov.querySelector('.sc-in[data-s="'+sIdx+'"][data-r="'+r+'"][data-f="'+f+'"]'); if(again){ again.focus(); try{ again.setSelectionRange(pos,pos); }catch(x){} } };
+  ov.onclick=function(e){ var t=e.target;
+    var sm=t.closest('[data-same]'); if(sm){ readInputs(); var s=S[+sm.getAttribute('data-same')], a=A[s.i]; s.site=_tkPlanRows(a); if((a.calcMode||'manual')==='manual') s.site={sf:String(a.sfBase||a.sf)}; draw(); return; }
+    if(t.closest('#scLater')){ readInputs(); for(var i=0;i<S.length;i++){ if(_tkEntered(A[S[i].i],S[i].site)) A[S[i].i].siteDraft=S[i].site; else delete A[S[i].i].siteDraft; } saveFA(); _tkClose('scOv2'); toast('💾 Saved — continue from More → or the Site check button'); return; }
+    if(t.closest('#scReview')){ readInputs(); review(); return; }
+    if(t.closest('#scBack')){ draw(); return; }
+    if(t.closest('#scApply')){ apply(); return; }
+    if(t===ov){ return; } };
+  var mode='all';
+  function review(){ var planSF=0, fieldSF=0, changed=[], usd=0, big=null;
+    for(var i=0;i<S.length;i++){ var st=stat(S[i]), a=A[S[i].i]; planSF+=a.sf; fieldSF+=st.fs; if(st.ent&&st.d!==0){ changed.push({k:i,st:st,a:a}); usd+=st.usd; if(!big||Math.abs(st.pct)>Math.abs(big.st.pct)) big={st:st,a:a}; } }
+    var h='<div class="modal tk-m"><div class="mhandle"></div><div class="mtitle">Plan vs field</div><div class="tk-sub">'+esc(currentProj.name)+' · checked '+new Date().toLocaleDateString('en-US')+'</div>'+
+      '<div class="sc-tot"><div class="sc-big"><div><span>Plans</span><b>'+fmtN(planSF)+'</b></div><div><span>Field</span><b>'+fmtN(fieldSF)+'</b></div><div><span>Difference</span><b class="'+(fieldSF-planSF>0?'amb':(fieldSF-planSF<0?'red':'ok'))+'">'+((fieldSF-planSF)>0?'+':'')+fmtN(Math.round((fieldSF-planSF)*10)/10)+' SF</b></div></div>'+
+      '<div class="sc-line"><span>Areas changed</span><b>'+changed.length+' of '+S.length+'</b></div><div class="sc-line"><span>$ at the same prices</span><b class="'+(usd>0?'amb':'')+'">'+money(usd)+'</b></div>'+(big?'<div class="sc-line"><span>Biggest change</span><b>'+esc(big.a.name)+' '+(big.st.pct>0?'+':'')+big.st.pct+'%</b></div>':'')+'</div>'+
+      '<div class="ce-h" style="padding-top:6px">What to do with the field measurements</div>'+
+      '<button type="button" class="sc-opt'+(mode==='all'?' on':'')+'" data-mode="all"><b>📏 Use field measurements</b><small>Areas and the estimate follow what you measured · prices are kept · plans stay as history</small></button>'+
+      '<button type="button" class="sc-opt'+(mode==='keep'?' on':'')+'" data-mode="keep"><b>📐 Keep the plans</b><small>Only record this check · nothing changes in the estimate</small></button>'+
+      '<button type="button" class="sc-opt'+(mode==='pick'?' on':'')+'" data-mode="pick"><b>✍️ Choose area by area</b><small>Use field for some, keep plans for others</small></button>'+
+      (mode==='pick'?'<div class="sc-pick">'+changed.map(function(c){ return '<label><input type="checkbox" data-pick="'+c.k+'" checked> '+esc(c.a.name)+' <span>'+(c.st.d>0?'+':'−')+fmtN(Math.abs(c.st.d))+' SF</span></label>'; }).join('')+(changed.length?'':'<div class="tk-sub">No area changed.</div>')+'</div>':'')+
+      '<div class="ce-btns"><button type="button" class="ce-cancel" id="scBack">Back</button><button type="button" class="ce-go" id="scApply">✅ Apply</button></div></div>';
+    ov.innerHTML=h;
+    var ops=ov.querySelectorAll('.sc-opt'); for(var j=0;j<ops.length;j++){ ops[j].onclick=function(){ mode=this.getAttribute('data-mode'); review(); }; }
+  }
+  function apply(){ var now=new Date().toISOString(), picked={}, n=0, planSF=0, fieldSF=0;
+    if(mode==='pick'){ var cbs=ov.querySelectorAll('[data-pick]'); for(var c=0;c<cbs.length;c++) if(cbs[c].checked) picked[+cbs[c].getAttribute('data-pick')]=1; }
+    for(var i=0;i<S.length;i++){ var s=S[i], a=A[s.i], st=stat(s); planSF+=a.sf; fieldSF+=st.fs; if(!st.ent) continue;
+      var use=(mode==='all')||(mode==='pick'&&picked[i]); if(!a.aid) a.aid=_tkAid();
+      if(use&&st.d!==0){ var old=JSON.parse(JSON.stringify(a)); if(!a.plan) a.plan={calcMode:a.calcMode,wallRows:a.wallRows,floorRows:a.floorRows,roofRows:a.roofRows,sf:a.sf,sfBase:a.sfBase,savedAt:now};
+        var m=a.calcMode||'manual'; if(m==='walls') a.wallRows=s.site; else if(m==='floor') a.floorRows=s.site; else if(m==='roof') a.roofRows=s.site; else a.sfBase=parseFloat(s.site.sf)||0;
+        var r=_tkSF(a); a.sfBase=(m==='manual')?a.sfBase:r.base; a.sf=(m==='manual')?Math.round(a.sfBase*(parseFloat(a.mult)||1)*10)/10:r.sf; n++;
+        try{ _twAreaToItem(a,old); }catch(e){} }
+      else { a.siteSF=st.fs; }
+      a.source='site'; a.siteCheckedAt=now; delete a.siteDraft; }
+    window.fieldAreas=A; fieldAreas=A; saveFA();
+    var ps=loadProjs(); for(var p=0;p<ps.length;p++){ if(ps[p].id===currentProj.id){ ps[p].siteCheck={at:now,planSF:planSF,fieldSF:fieldSF,changed:n}; ps[p].areas=A; break; } } saveProjs(ps); currentProj.siteCheck={at:now,planSF:planSF,fieldSF:fieldSF,changed:n};
+    _tkClose('scOv2'); renderFA(); try{ renderFWO(); renderEst(); }catch(e){} try{ if(window.renderJobsList) renderJobsList(); }catch(e){}
+    toast('✅ Site check saved'+(n?' · '+n+' area'+(n!==1?'s':'')+' updated':''));
+  }
+  draw();
+}
+window.fbSiteCheck=fbSiteCheck;
+document.addEventListener('click',function(e){ if(e.target&&e.target.closest&&e.target.closest('#tkSiteBtn')) fbSiteCheck(); });
+
+function _faSetSrc(v){ window._faSrc=(v==='plans')?'plans':'site'; var b=document.querySelectorAll('#faSrc button'); for(var i=0;i<b.length;i++) b[i].classList.toggle('on',b[i].getAttribute('data-src')===window._faSrc); }
+document.addEventListener('click',function(e){ var b=e.target&&e.target.closest&&e.target.closest('#faSrc button'); if(b) _faSetSrc(b.getAttribute('data-src')); });
 function saveFA(){ saveEI(); } // alias - same operation
 function saveEI(){
   if(currentProj){ saveProjAreas(); }
@@ -5984,6 +6192,7 @@ function generateProofPDF(pid,ov){
     doc.text('TOTAL INSTALLED AREA',c1,y+6);
     doc.text(Math.round(totalSF).toLocaleString()+' SF',c5,y+6,{align:'center'});
     y+=18;
+    if(y+60>H-14){ doc.addPage(); y=20; }   // declaration + signature never run into the footer
 
     // ── DECLARATION ──
     doc.setFillColor(248,252,248);
@@ -6100,13 +6309,16 @@ function renderFA(){
   var matLabel={'cc':'Closed Cell','oc':'Open Cell','hybrid':'Hybrid CC+OC','hybrid_foam_fg':'Hybrid Foam+Fiberglass','hybrid_foam_mw':'Hybrid Foam+Mineral Wool','fg_r11':'Fiberglass R-11','fg_r13':'Fiberglass R-13','fg_r15':'Fiberglass R-15','fg_r19':'Fiberglass R-19','fg_r21':'Fiberglass R-21','fg_r25':'Fiberglass R-25','fg_r30':'Fiberglass R-30','fg_r38':'Fiberglass R-38','fg_r49':'Fiberglass R-49','fg_custom':'Fiberglass','cel_blown':'Cellulose Blown','cel_dense':'Cellulose Dense Pack','mw_r15':'Mineral Wool R-15','mw_r23':'Mineral Wool R-23','mw_r30':'Mineral Wool R-30','mw_custom':'Mineral Wool','ign':'Ignition Barrier','fb':'Fire Blocking','foam_cans':'Foam Cans','insulation_removal':'Insulation Removal','other':'Other'};
     window._faMatEmoji=matEmoji; window._faMatLabel=matLabel;   // shared with the field Work Order
   var h='';
+  (function(){ var np=0; for(var z=0;z<fieldAreas.length;z++) if(fieldAreas[z].source==='plans'&&!fieldAreas[z].siteCheckedAt) np++;
+    if(np) h+='<div class="tk-banner">📐 From plans · '+np+' area'+(np!==1?'s':'')+' not checked on site yet<button type="button" id="tkSiteBtn">✅ Site check</button></div>';
+    else if(currentProj&&currentProj.siteCheck){ var sc=currentProj.siteCheck, d=Math.round((sc.fieldSF-sc.planSF)*10)/10; h+='<div class="tk-banner done">✅ Checked on site '+new Date(sc.at).toLocaleDateString('en-US')+' · '+(d>0?'+':'')+fmtN(d)+' SF vs plans<button type="button" id="tkSiteBtn">Check again</button></div>'; } })();
   for(var i=0;i<fieldAreas.length;i++){
     var a=fieldAreas[i];var pr=getProd(a.productId);
     var em=a.matCat?(matEmoji[a.matCat]||(pr?pr.emoji:'📦')):pr?pr.emoji:'📦';
     var pn=a.matCat?(matLabel[a.matCat]||(pr?pr.name:'Unknown')):pr?pr.name:'Unknown';
     h+='<div class="card">';
     if(a.photos&&a.photos.length){h+='<div class="card-photos">';for(var p=0;p<a.photos.length;p++)h+='<span class="ph-w'+phCls(a.photos[p])+'"><img class="card-photo" src="'+a.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" data-cap="'+esc(a.name||'')+'" onclick="openLB(this)" alt=""><i class="ph-b ph-wo">WO</i><i class="ph-b ph-est">EST</i></span>';h+='</div>';}
-    h+='<div class="card-body"><div class="card-em f">'+em+'</div><div class="card-info"><div class="card-name">'+esc(a.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(a.sf)+' SF'+(a.spec?' · '+esc(a.spec):'')+'</div>'+formatDimRows(a)+(a.notes?'<div class="card-note">📋 '+esc(a.notes)+'</div>':'')+(a.photos&&a.photos.length?'<div class="card-ph">📷 '+a.photos.length+' photo'+(a.photos.length>1?'s':'')+'</div>':'')+'</div></div>';
+    h+='<div class="card-body"><div class="card-em f">'+em+'</div><div class="card-info"><div class="card-name">'+esc(a.name)+((a.source==='plans'&&!a.siteCheckedAt)?' <i class="src-chip plan">📐 plan</i>':((a.siteCheckedAt||a.source==='site')?' <i class="src-chip site">📏 site</i>':''))+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(a.sf)+' SF'+(a.spec?' · '+esc(a.spec):'')+'</div>'+formatDimRows(a)+(a.notes?'<div class="card-note">📋 '+esc(a.notes)+'</div>':'')+(a.photos&&a.photos.length?'<div class="card-ph">📷 '+a.photos.length+' photo'+(a.photos.length>1?'s':'')+'</div>':'')+'</div></div>';
     h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca" data-idx="'+i+'" data-act="dup">⧉ Copy</button><button class="ca fav" data-idx="'+i+'" data-act="fav" aria-label="Save as favorite">☆</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑</button></div></div>';
   }
   list.innerHTML=h;
@@ -7181,6 +7393,8 @@ function renderJobsList(){
     if(p.address){ h += '<div class="jc-addr">📍 '+esc(p.address)+'</div>'; }
       var _eg=_etGroup(p); if(_eg.length) h += '<button type="button" class="jc-tog" data-act="emailtog" data-pid="'+p.id+'">🔗 '+(_eg.length+1)+' estimates for this client · <b>Email together</b></button>';
     if(p.estOptions&&p.estOptions.list&&p.estOptions.list.length>1) h += '<div class="jc-opt">📊 '+p.estOptions.list.length+' options'+(_oc?' · chosen: <b>'+esc(_oc)+'</b>':' · none chosen yet')+'</div>';
+    (function(){ var np=0, L=p.areas||[]; for(var z=0;z<L.length;z++) if(L[z].source==='plans'&&!L[z].siteCheckedAt) np++;
+      if(np) h+='<div class="jc-wait">📐 From plans · not checked on site</div>'; else if(p.siteCheck){ var d=Math.round((p.siteCheck.fieldSF-p.siteCheck.planSF)*10)/10; h+='<div class="jc-seen">✅ Checked on site '+esc(new Date(p.siteCheck.at).toLocaleDateString('en-US'))+' · '+(d>0?'+':'')+esc(String(d.toLocaleString('en-US')))+' SF vs plans</div>'; } })();
     if(!p.signed&&p.signReq&&p.signReq.status==='pending'){ var _sv=Number(p.signReq.views)||0; h += _sv?'<div class="jc-seen">👁 Opened '+_sv+'× · last '+esc(_lkWhen(p.signReq.lastViewedAt))+'</div>':'<div class="jc-wait">🔗 Link sent '+esc(p.signReq.sentUS||'')+' · not opened yet</div>'; }
     if(_sigChanged(p)) h += '<div class="jc-sigchg">⚠ Estimate changed after the client signed ($'+Number(p.signed.total||0).toLocaleString('en-US')+' signed)</div>';
     if(p.note && String(p.note).trim()){ var _np=String(p.note).trim(); if(_np.length>80)_np=_np.slice(0,80)+'…'; h += '<div class="jc-note">📝 '+esc(_np)+(p.noteInPdf?' <b>· on PDF</b>':'')+'</div>'; }
@@ -7235,6 +7449,7 @@ function _jobAct(act,pid,btn){
     if(act === 'signlink'){ sendForSignature(pid); return; }
     if(act === 'unsign'){ removeClientSign(pid); return; }
     if(act === 'open') openJobFromList(pid);
+    else if(act === 'sitecheck'){ try{ openJobFromList(pid); setTimeout(function(){ try{ nvGo('field'); }catch(e){} if(window.fbSiteCheck) window.fbSiteCheck(); },450); }catch(e){} }
     else if(act === 'cert'){
       try{ window.openCertEditor(pid); }
       catch(e){ toast('Certificate error: '+(e&&e.message||e),'err'); }
@@ -7296,7 +7511,8 @@ function _jobSheet(pid,kind){
        (p.noInvoice?'<button type="button" class="js-b row" data-js="noinv_undo">↩️ <b>Back to To invoice</b><span style="margin-left:auto">marked no invoice · '+esc(p.noInvoice.dateUS||'')+'</span></button>':'')+
        (p.invoice&&p.invoice.closed?'<button type="button" class="js-b row" data-js="close_undo">↩️ <b>Reopen balance</b><span style="margin-left:auto">closed · '+esc(p.invoice.closed.dateUS||'')+'</span></button>':'')+
        ((p.estStatus==='sent'&&p.lastFollowUp&&_pipeDays(p.lastFollowUp)!==null&&_pipeDays(p.lastFollowUp)<7)?'<button type="button" class="js-b row" data-js="fu_undo">↩️ <b>Back to Follow up</b><span style="margin-left:auto">followed up '+esc(String(p.lastFollowUp))+'</span></button>':'')+
-       '<button type="button" class="js-b row" data-js="cert">📋 <b>Generate Certificate</b></button>'+
+       (function(){ var L=p.areas||[]; for(var z=0;z<L.length;z++) if(L[z].source==='plans'||L[z].siteCheckedAt) return '<button type="button" class="js-b row" data-js="sitecheck">✅ <b>Site check</b><span style="margin-left:auto">plans vs field</span></button>'; return ''; })()+
+      '<button type="button" class="js-b row" data-js="cert">📋 <b>Generate Certificate</b></button>'+
        '<button type="button" class="js-b row" data-js="note">📝 <b>'+(hasNote?'Edit Note':'Add Note')+'</b></button>'+
        '<button type="button" class="js-b row" data-js="dup">⧉ <b>Duplicate</b></button>'+
     '<button type="button" class="js-b row" data-js="emailtog">📧 <b>Email together with other estimates</b></button>'+
@@ -7470,7 +7686,7 @@ function nvMore(){
   ov.innerHTML='<div class="modal nvm"><div class="mhandle"></div><div class="mtitle">More</div><div class="nvm-g">'+
     it('quote','💰','Quote','client, markup, discount')+it('prods','🗄️','Products','prices and coverage')+it('settings','⚙️','Settings','company, costs, signature')+
     it('broch','📄','Brochures','')+it('ds','📋','Data sheets','')+it('ct','✍️','Contract','')+
-    it('wl','🧰','WorkLog','open the WorkLog app')+it('diag','🩺','Diagnostics','photos and sync check')+it('backups','🗄️','Backups','daily copies · download · restore')+it('refresh','↺','Refresh','reload the app')+it('classic','↩️','Classic version','the FieldBid as before')+
+    it('wl','🧰','WorkLog','open the WorkLog app')+it('diag','🩺','Diagnostics','photos and sync check')+it('backups','🗄️','Backups','daily copies · download · restore')+it('imp','📥','Import takeoff','paste the FIELDBID-TAKEOFF block')+it('tkcopy','📤','Copy takeoff','of the open job · to share')+it('refresh','↺','Refresh','reload the app')+it('classic','↩️','Classic version','the FieldBid as before')+
     '</div><div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="nvmClose">Close</button></div></div>';
   ov.classList.add('on'); ov.style.display='flex';
   function close(){ ov.classList.remove('on'); ov.style.display='none'; }
@@ -7485,6 +7701,8 @@ function nvMore(){
     if(m==='classic'){ location.href='classico.html'; return; }
     if(m==='refresh'){ location.reload(); return; }
     if(m==='backups'){ if(window.fbBackups) window.fbBackups(); return; }
+    if(m==='imp'){ if(window.fbImportTakeoff) window.fbImportTakeoff(); return; }
+    if(m==='tkcopy'){ if(window.fbCopyTakeoff) window.fbCopyTakeoff(); return; }
   };
 }
 function _nvMoney(n){ return '$'+Math.round(Number(n)||0).toLocaleString('en-US'); }
@@ -7578,12 +7796,15 @@ function n2Takeoff(){
     document.getElementById('n2Fav').onclick=function(){ if(!((cfg.areaFavs||[]).length)){ toast('No favorites yet — tap ⋯ → ☆ Favorite on an area to save one'); return; } var f=document.getElementById('fieldFab'); if(f) f.click(); };
   } else {
     var h='';
+    (function(){ var np=0; for(var z=0;z<A.length;z++) if(A[z].source==='plans'&&!A[z].siteCheckedAt) np++;
+      if(np) h+='<div class="tk-banner">📐 From plans · '+np+' area'+(np!==1?'s':'')+' not checked on site yet<button type="button" id="tkSiteBtn">✅ Site check</button></div>';
+      else if(currentProj&&currentProj.siteCheck){ var sc=currentProj.siteCheck, d=Math.round((sc.fieldSF-sc.planSF)*10)/10; h+='<div class="tk-banner done">✅ Checked on site '+new Date(sc.at).toLocaleDateString('en-US')+' · '+(d>0?'+':'')+fmtN(d)+' SF vs plans<button type="button" id="tkSiteBtn">Check again</button></div>'; } })();
     for(var i2=0;i2<A.length;i2++){ var a2=A[i2], ps=a2.photos||[], lb2=_n2Label(a2), spec=a2.spec?String(a2.spec):'';
       var _ti=0; if(a2.matCat==='cc') _ti=Number(a2.ccInch)||Number(a2._editedInches)||0; else if(a2.matCat==='oc') _ti=Number(a2.ocInch)||Number(a2._editedInches)||0;
       var thk=_ti>0?(_ti+'"'):((a2.matCat==='hybrid'&&(a2.ccInch||a2.ocInch))?((a2.ccInch||0)+'" cc + '+(a2.ocInch||0)+'" oc'):'');
       h+='<div class="n2a"><div class="n2row">';
       h+=ps.length?'<button type="button" class="n2th" data-n2="photos" data-i="'+i2+'" style="background-image:url(\''+ps[0]+'\')"><b>📷 '+ps.length+'</b></button>':'<button type="button" class="n2th n" data-act="ph" data-idx="'+i2+'">📷</button>';
-      h+='<div class="n2mid"><b>'+esc(a2.name||'Area')+'</b><div class="m"><i style="background:'+_n2Color(a2.matCat)+'"></i>'+esc(lb2)+(thk?' · '+esc(thk):(spec&&spec.toLowerCase().indexOf(lb2.toLowerCase())<0?' · '+esc(spec):''))+'</div>'+(a2.notes?'<div class="nt">📋 '+esc(a2.notes)+'</div>':'')+'</div>';
+      h+='<div class="n2mid"><b>'+esc(a2.name||'Area')+((a2.source==='plans'&&!a2.siteCheckedAt)?' <i class="src-chip plan">📐 plan</i>':((a2.siteCheckedAt||a2.source==='site')?' <i class="src-chip site">📏 site</i>':''))+'</b><div class="m"><i style="background:'+_n2Color(a2.matCat)+'"></i>'+esc(lb2)+(thk?' · '+esc(thk):(spec&&spec.toLowerCase().indexOf(lb2.toLowerCase())<0?' · '+esc(spec):''))+'</div>'+(a2.notes?'<div class="nt">📋 '+esc(a2.notes)+'</div>':'')+'</div>';
       h+='<div class="n2rt"><div class="sf">'+fmtN(Math.round(Number(a2.sf)||0))+' <small>SF</small></div><div class="ib"><button type="button" data-act="ph" data-idx="'+i2+'" aria-label="Add photo">📷</button><button type="button" data-act="edit" data-idx="'+i2+'" aria-label="Edit">✏️</button><button type="button" data-n2="more" data-i="'+i2+'" aria-label="More">⋯</button></div></div></div>';
       var _dims=''; try{ _dims=formatDimRows(a2)||''; }catch(_de){}
       if(_dims) h+='<div class="n2dims">'+_dims+'</div>';
@@ -8757,6 +8978,7 @@ function openFAModal(idx){
   if(faCamEl) faCamEl.value='';
   if(faGalEl) faGalEl.value='';
   initCalc();
+  _faSetSrc(idx>=0&&fieldAreas[idx]&&fieldAreas[idx].source?fieldAreas[idx].source:(window._faSrcLast||(currentProj&&currentProj.source)||'site'));
   if(idx>=0){
     var a=fieldAreas[idx];
     document.getElementById('fa_name').value=a.name;
@@ -9154,6 +9376,7 @@ document.getElementById('faSaveBtn').addEventListener('click',function(){
     lastPrice:(!isNaN(_faPriceVal)&&_faPriceVal>0)?_faPriceVal:0});
   // Always use window.fieldAreas to avoid closure scope divergence
   var _oldArea=(editFAIdx>=0&&window.fieldAreas[editFAIdx])?window.fieldAreas[editFAIdx]:null;
+  area.source=window._faSrc||'site'; window._faSrcLast=area.source; if(_oldArea&&_oldArea.siteCheckedAt&&area.source==='site') area.siteCheckedAt=_oldArea.siteCheckedAt; if(_oldArea&&_oldArea.plan) area.plan=_oldArea.plan;
   area.aid=(_oldArea&&_oldArea.aid)||('a_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7));
   if(editFAIdx>=0)window.fieldAreas[editFAIdx]=area;else window.fieldAreas.push(area);
   fieldAreas=window.fieldAreas;
