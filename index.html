@@ -1217,6 +1217,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .emh{display:flex;flex-direction:column;gap:2px;text-align:left;border:1.5px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:12px;padding:10px 12px;font-family:var(--n-font-m);}
 .emh b{font-size:14.5px;} .emh small{font-size:12px;color:var(--n-muted);}
 .emh i{font-style:normal;font-size:9.5px;font-weight:800;background:var(--n-green);color:#fff;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:2px;}
+.emh.sig{border-style:dashed;} .emh.sig.on{border-style:solid;}
 .emh.on{border-color:var(--n-green);background:var(--n-green-soft);} .emh.on b{color:var(--n-green-ink);}
 .emh-sub{margin:-2px 0 2px 12px;padding:6px 10px;border-left:3px solid var(--n-green);}
 .emh-seg{display:flex;gap:6px;} .emh-seg button{flex:1;border:1.5px solid var(--n-border);background:var(--n-surface);color:var(--n-text);border-radius:10px;padding:9px 4px;font-size:13px;font-weight:800;font-family:var(--n-font-m);}
@@ -1436,7 +1437,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261021-1500</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261022-1100</span></div>
 </div>
 
 <div id="field-app">
@@ -9454,6 +9455,7 @@ function deriveMatFromProduct(productId, inches){
   else if(c.indexOf('blown')>=0||c.indexOf('cellulose')>=0){out.matType='cel';}
   else if(c.indexOf('batt')>=0||c.indexOf('fiberglass')>=0){out.matType='fg';}
   else if(c.indexOf('air')>=0||c.indexOf('ignition')>=0){out.matType='ign';}
+  else if(c.indexOf('rigid')>=0||c.indexOf('board')>=0){out.matType=(prod.id==='p16')?'rb2':'rb1';out.fbInch=(prod.id==='p16')?2:1;}
   else out.matType='other';
   return out;
 }
@@ -11149,12 +11151,16 @@ function openEstimateEmail(bytes, fname, pid, kind){
   var _lkOK=(!kind||kind==='estimate')&&!!pid, _how=_lkOK?'link':'pdf', _prices=!window._emTotalOnly;
   var _phone=String(qi.phone||'').trim(), _digits=_phone.replace(/\D/g,''); if(_digits.length===10) _digits='1'+_digits;
   function _smsBody(url){ return 'Hi'+(first?' '+first:'')+', here is your '+co+' estimate'+(addr?' for '+addr:'')+': '+url+' — you can review every item, download the PDF and approve it online. Thank you!'; }
-  function _lkBody(url){ return 'Hi'+(first?' '+first:'')+',\n\nYour estimate'+(addr?' for '+addr:'')+' is ready:\n'+url+'\n\nYou can review every item, download the PDF and approve it online.\n\nThank you,\n'+co+(contact?'\n'+contact:''); }
-  if(_lkOK) subject='Your insulation estimate'+(addr?' — '+addr:'');
+  var _sig=_lkOK||!!_isComb;   // ask for the signature (default on)
+  var _cPids=_isComb?(window._etInfo.pids||[]):[];
+  function _combLinks(urls){ var P=loadProjs(), out=[]; for(var i=0;i<_cPids.length;i++){ var pj=null; for(var j=0;j<P.length;j++) if(P[j].id===_cPids[i]){ pj=P[j]; break; } var tot=pj?(window._etInfo.lines[i]||pj.name):_cPids[i]; out.push((pj?pj.name:'Estimate')+': '+urls[i]); } return '\n\nTo approve, open each link, review the items and tap "Approve & sign" (each estimate is signed on its own — you can download its PDF there too):\n'+out.join('\n'); }
+  function _lkBody(url){ return 'Hi'+(first?' '+first:'')+',\n\nYour estimate'+(addr?' for '+addr:'')+' is ready:\n'+url+'\n\n'+(_sig?'To approve it, open the link, review the items and tap "Approve & sign" — it takes a minute and you can download the PDF there too.':'You can review every item, download the PDF and approve it online.')+'\n\nThank you,\n'+co+(contact?'\n'+contact:''); }
+  function _subj(){ return 'Your insulation estimate'+(addr?' — '+addr:'')+(_sig?' · please review and sign':''); }
+  if(_lkOK) subject=_subj();
   var ov=document.getElementById('emailEstOverlay');
   if(!ov){ ov=document.createElement('div'); ov.className='overlay'; ov.id='emailEstOverlay'; document.body.appendChild(ov); }
   ov.innerHTML='<div class="modal" style="padding-bottom:26px"><div class="mhandle"></div><div class="mtitle">'+(_isInv?'Ready to email the invoice':'Ready to email')+'</div>'+
-    (_lkOK?'<div class="em-how" id="emHow"></div>':'')+
+    ((_lkOK||_isComb)?'<div class="em-how" id="emHow"></div>':'')+
     '<div class="em-box"><div class="em-row"><span class="em-k">To</span><span class="em-v">'+(to?esc(to):'<span class="em-miss">No client email — add it in the Quote tab, or type it in the email app</span>')+'</span>'+(to?'<button type="button" class="em-copy" id="emCopy">Copy</button>':'')+'</div>'+
     '<div class="em-row"><span class="em-k">Subject</span><span class="em-v">'+esc(subject)+'</span></div>'+
     (_phone?'<div class="em-row"><span class="em-k">Phone</span><span class="em-v">'+esc(_phone)+' <button type="button" id="emCopyPh" class="em-cp">📋 Copy</button></span></div>':'')+
@@ -11168,17 +11174,20 @@ function openEstimateEmail(bytes, fname, pid, kind){
   var _tip0=(document.getElementById('emTip')||{}).innerHTML||'', _go0=(document.getElementById('emGo')||{}).innerHTML||'';
   function drawHow(){
     var hw=document.getElementById('emHow'); if(!hw) return;
+    if(_isComb&&!_lkOK){ hw.innerHTML='<button type="button" class="emh sig'+(_sig?' on':'')+'" data-sig="1"><b>'+(_sig?'☑':'☐')+' ✍️ Request signature</b><small>'+(_sig?'One link per estimate in the message — each can be approved and signed on its own · the combined PDF stays attached':'No signature request · only the combined PDF')+'</small></button>'; return; }
     hw.innerHTML='<div class="emh-k">How to send</div>'+
       '<button type="button" class="emh'+(_how==='link'?' on':'')+'" data-how="link"><b>🔗 Link to the estimate <i>RECOMMENDED</i></b><small>You\'ll know when '+esc(first||'the client')+' opens it · download PDF and approve online</small></button>'+
       (_how==='link'||_how==='both'?'<div class="emh-sub"><div class="emh-k">What '+esc(first||'the client')+' sees on the page</div><div class="emh-seg"><button type="button" data-pr="1" class="'+(_prices?'on':'')+'">📋 Price per item</button><button type="button" data-pr="0" class="'+(!_prices?'on':'')+'">💰 Total only</button></div></div>':'')+
       '<button type="button" class="emh'+(_how==='pdf'?' on':'')+'" data-how="pdf"><b>📎 PDF attached</b><small>Like before · no way to know if it was opened</small></button>'+
-      '<button type="button" class="emh'+(_how==='both'?' on':'')+'" data-how="both"><b>🔗 + 📎 Both</b><small>Link in the message and the PDF attached</small></button>';
+      '<button type="button" class="emh'+(_how==='both'?' on':'')+'" data-how="both"><b>🔗 + 📎 Both</b><small>Link in the message and the PDF attached</small></button>'+
+      '<button type="button" class="emh sig'+(_sig?' on':'')+'" data-sig="1"><b>'+(_sig?'☑':'☐')+' ✍️ Request signature</b><small>'+(_sig?'The message asks '+esc(first||'the client')+' to review and sign on the page'+(_how==='pdf'?' · a link is added next to the PDF':''):'No signature request in the message')+'</small></button>';
     var fr=document.getElementById('emFileRow'); if(fr) fr.style.display=(_how==='link')?'none':'';
     var tp=document.getElementById('emTip'), gb=document.getElementById('emGo');
+    subject=_subj(); var sr=document.querySelector('#emailEstOverlay .em-row:nth-child(2) .em-v'); if(sr) sr.textContent=subject;
     if(tp) tp.innerHTML=(_how==='link')?'Your email app opens with the message and the link ready'+(to?' — the client email is filled in.':'. Type the client email in <b>To</b>.'):_tip0;
     if(gb) gb.innerHTML=(_how==='link')?'📧 Open email with the link':(_how==='both'?'📧 Open email with link + PDF':_go0);
   }
-  var _hw=document.getElementById('emHow'); if(_hw){ _hw.addEventListener('click',function(e){ var b=e.target.closest('[data-how]'), r=e.target.closest('[data-pr]'); if(b){ _how=b.getAttribute('data-how'); drawHow(); } else if(r){ _prices=r.getAttribute('data-pr')==='1'; drawHow(); } }); drawHow(); }
+  var _hw=document.getElementById('emHow'); if(_hw){ _hw.addEventListener('click',function(e){ var sg=e.target.closest('[data-sig]'), b=e.target.closest('[data-how]'), r=e.target.closest('[data-pr]'); if(sg){ _sig=!_sig; drawHow(); } else if(b){ _how=b.getAttribute('data-how'); drawHow(); } else if(r){ _prices=r.getAttribute('data-pr')==='1'; drawHow(); } }); drawHow(); }
   function _lkPdf(){ // the PDF on the page follows the page choice
     if(_prices===!window._emTotalOnly) return {bytes:bytes,name:fname};
     try{ var r2=window.generateEstimatePDF(pid,!_prices,{returnBytes:true}); if(r2&&r2.bytes) return {bytes:r2.bytes,name:r2.filename}; }catch(e){}
@@ -11200,7 +11209,13 @@ function openEstimateEmail(bytes, fname, pid, kind){
   document.getElementById('emDl').addEventListener('click',function(){ _downloadBlob(new Blob([bytes],{type:'application/pdf'}),fname); toast('📄 Estimate downloaded'); close(); });
   var _cp=document.getElementById('emCopyPh'); if(_cp) _cp.addEventListener('click',function(){ try{ navigator.clipboard.writeText(_phone).then(function(){ toast('📋 Phone copied — paste it in Messages'); },function(){ toast(_phone); }); }catch(e){ toast(_phone); } });
   document.getElementById('emGo').addEventListener('click',function(ev){
-    if(_lkOK&&(_how==='link'||_how==='both')&&!this._lkDone){
+    if(_isComb&&_sig&&_cPids.length&&!this._lkDone){
+      var selfC=this, urls=[], k=0, pricesC=!window._emTotalOnly; selfC.disabled=true;
+      (function next(){ if(k>=_cPids.length){ selfC.disabled=false; body+=_combLinks(urls); selfC._lkDone=true; selfC.click(); selfC._lkDone=false; return; }
+        window._lkMake(_cPids[k],pricesC,bytes,fname,function(url){ urls.push(url); k++; next(); }); })();
+      return;
+    }
+    if(_lkOK&&(_how==='link'||_how==='both'||(_how==='pdf'&&_sig))&&!this._lkDone){
       var self=this, pf=_lkPdf(); self.disabled=true;
       window._lkMake(pid,_prices,pf.bytes,pf.name,function(url){
         self.disabled=false; body=_lkBody(url);
@@ -11566,6 +11581,7 @@ function computeMaterialUsage(items){
   function _hyb(it){ var s=String(it.spec||''), mc=s.match(/([\d.]+)\s*"?\s*cc/i), mo=s.match(/([\d.]+)\s*"?\s*oc/i);
     return {cc:_num(it.ccInch)||_num(it.hybCc)||(mc?_num(mc[1]):0), oc:_num(it.ocInch)||_num(it.hybOc)||(mo?_num(mo[1]):0)}; }
   function _priced(it){ return _num(it.pricePerInch)>0?_num(it.inches):0; }
+  function _rbOf(it){ var pr=null; try{ pr=it.productId?getProd(it.productId):null; }catch(e){} if(!pr) return null; var c=String(pr.cat||'').toLowerCase(); if(c.indexOf('rigid')<0&&c.indexOf('board')<0) return null; return (pr.id==='p16'||/\b2\s*"/.test(String(pr.name||'')))?'rb2':'rb1'; }
 
   (items||[]).forEach(function(it){
     if(!it)return;
@@ -11590,8 +11606,9 @@ function computeMaterialUsage(items){
       mwBags[mr]=(mwBags[mr]||0)+Math.ceil(sf/(covMw(mr)||45));
     }
     else if(t==='ign'){ ignSqft+=sf; }
-    else if(t==='fb'||t==='rb1'||t==='rb2'){
-      var th=(t==='rb2'||Number(it.fbInch)===2)?2:1;
+    else if(t==='rb1'||t==='rb2'||_rbOf(it)){   // rigid board comes from the product; 'fb' = fire blocking, no board
+      var _k=(t==='rb1'||t==='rb2')?t:_rbOf(it);
+      var th=(_k==='rb2'||Number(it.fbInch)===2)?2:1;
       fbSqft[th]+=sf;
     }
   });
