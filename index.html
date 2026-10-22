@@ -1437,7 +1437,7 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261022-1100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261022-1200</span></div>
 </div>
 
 <div id="field-app">
@@ -8433,9 +8433,12 @@ function _lkMake(pid,showPrices,pdfBytes,pdfName,cb){
   var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } } if(!p){ toast('Job not found','err'); return; }
   var b64=''; try{ if(pdfBytes&&pdfBytes.byteLength<480000) b64=_lkB64(pdfBytes); }catch(e){ b64=''; }
   var cur=p.signReq, tok=_signToken(), data=_signReqData(p,{showPrices:showPrices,pdf:b64,pdfName:pdfName||''}); data.hash=_estHash(p);
+  // Same estimate, same page option → keep the link already sent (every email with it stays valid)
+  if(cur&&cur.status==='pending'&&cur.token&&cur.hash===data.hash&&(!!cur.showPrices)===(!!showPrices)&&!cur.noPdf){ cb(SIGN_URL+cur.token); return; }
   toast('🔗 Creating the link…');
   db.collection('sign_requests').doc(tok).set(data).then(function(){
-    if(cur&&cur.status==='pending'&&cur.token){ try{ db.collection('sign_requests').doc(cur.token).delete(); }catch(e){} }
+    // the previous link is removed only when the estimate changed (it would show outdated items)
+    if(cur&&cur.status==='pending'&&cur.token&&cur.hash!==data.hash){ try{ db.collection('sign_requests').doc(cur.token).delete(); }catch(e){} }
     var ps2=loadProjs(); for(var k=0;k<ps2.length;k++){ if(ps2[k].id===pid){ ps2[k].signReq={token:tok,status:'pending',sentAt:new Date().toISOString(),sentUS:new Date().toLocaleDateString('en-US'),total:data.totals.total,hash:data.hash,showPrices:!!showPrices,byEmail:true,views:0}; break; } }
     saveProjs(ps2); try{ if(window.renderJobsList) renderJobsList(); }catch(e){}
     cb(SIGN_URL+tok);
