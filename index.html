@@ -1449,7 +1449,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261022-1500</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261023-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -1493,7 +1493,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
   <div id="fp-wo" class="page">
     <div class="wo-bar">
       <div class="lang-grp"><button class="lang-btn on" id="fLangEN">EN</button><button class="lang-btn" id="fLangPT">PT</button></div>
-      <button class="print-btn" id="fPrintBtn">🖨️ Print</button>
+      <button class="print-btn" id="fPrintBtn">📄 PDF</button>
     </div>
     <div id="fieldWO"></div>
   </div>
@@ -1615,7 +1615,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
   <div id="ep-wo" class="page">
     <div class="wo-bar">
       <div class="lang-grp"><button class="lang-btn on" id="eLangEN">EN</button><button class="lang-btn" id="eLangPT">PT</button></div>
-      <button class="print-btn" id="ePrintBtn">🖨️ Print</button>
+      <button class="print-btn" id="ePrintBtn">📄 PDF</button>
     </div>
     <div id="estWO"></div>
   </div>
@@ -6347,6 +6347,69 @@ function generateProofPDF(pid,ov){
   return buildPDF(LOGO_B64);
 }
 window.generateProofPDF=generateProofPDF;
+// the Work Order reuses the certificate's embedded logo (read from the function text, so the image lives in one place only)
+try{ window._LOGO_B64=(generateProofPDF.toString().match(/data:image\/jpeg;base64,[A-Za-z0-9+\/=]+/)||[''])[0]; }catch(e){ window._LOGO_B64=''; }
+// ══ Work Order PDF — one clear page for the helpers: materials to bring, then one box per area ══
+function generateWOPDF(D){
+  if(!window.jspdf){ toast('PDF library loading, try again'); return; }
+  var jsPDF=window.jspdf.jsPDF, doc=new jsPDF({orientation:'portrait',unit:'mm',format:'letter'});
+  var W=215.9, H=279.4, M=14, y=0, pt=(D.lang==='pt');
+  var T=pt?{title:'ORDEM DE SERVIÇO',sub:'Instruções de campo · sem preços',wo:'O.S. #',date:'Data',job:'Serviço',addr:'Endereço',phone:'Telefone',bring:'LEVAR · MATERIAL DO SERVIÇO',areas:'ÁREAS',done:'Feito',notes:'Instruções',total:'TOTAL',page:'Página',of:'de',none:'Nenhuma área ainda.',sf:'SF'}:
+             {title:'WORK ORDER',sub:'Field instructions · no pricing',wo:'W.O. #',date:'Date',job:'Job',addr:'Address',phone:'Phone',bring:'BRING · MATERIAL FOR THIS JOB',areas:'AREAS',done:'Done',notes:'Notes',total:'TOTAL',page:'Page',of:'of',none:'No areas yet.',sf:'SF'};
+  function col(r,g,b){ doc.setTextColor(r,g,b); }
+  function txt(s,x,yy,size,style,align){ doc.setFont('helvetica',style||'normal'); doc.setFontSize(size); doc.text(String(s),x,yy,{align:align||'left'}); }
+  function footer(){ var n=doc.getNumberOfPages(); for(var i=1;i<=n;i++){ doc.setPage(i); doc.setFillColor(26,107,42); doc.rect(0,H-9,W,9,'F'); col(255,255,255); txt(D.company+'  ·  '+T.title+' '+D.num+'  ·  '+D.job,M,H-3.3,8,'normal'); txt(T.page+' '+i+' '+T.of+' '+n,W-M,H-3.3,8,'normal','right'); } }
+  function newPage(){ doc.addPage(); y=14; }
+  function need(h){ if(y+h>H-14) newPage(); }
+  // header
+  doc.setFillColor(26,107,42); doc.rect(0,0,W,30,'F');
+  try{ if(window._LOGO_B64){ doc.setFillColor(0,0,0); doc.roundedRect(M,4,22,22,2,2,'F'); doc.addImage(window._LOGO_B64,'JPEG',M+1.5,5.5,19,19); } }catch(e){}
+  col(255,255,255); txt(D.company,M+26,12,15,'bold'); txt(T.title,M+26,19,10,'bold'); txt(T.sub,M+26,24.5,8.5,'normal');
+  txt(T.wo+' '+D.num,W-M,12,13,'bold','right'); txt(D.date,W-M,19,9,'normal','right');
+  y=38;
+  // job box
+  doc.setFillColor(240,248,240); doc.setDrawColor(26,107,42); doc.setLineWidth(0.5); doc.roundedRect(M,y-4,W-M*2,22,3,3,'FD');
+  col(102,102,102); txt(T.job,M+4,y+1,7.5,'normal'); col(26,26,26); txt(D.job||'—',M+4,y+7.5,13,'bold');
+  col(102,102,102); txt(T.addr,M+4,y+12.5,7.5,'normal'); col(26,26,26); txt(D.address||'—',M+4,y+16.5,10,'normal');
+  if(D.phone){ col(102,102,102); txt(T.phone,W/2+10,y+12.5,7.5,'normal'); col(26,26,26); txt(D.phone,W/2+10,y+16.5,10,'normal'); }
+  col(26,107,42); txt(D.areas.length+' '+(pt?'áreas':'areas')+' · '+fmtN(D.totalSF)+' '+T.sf,W-M-4,y+7.5,11,'bold','right');
+  y+=26;
+  // bring
+  if(D.mat&&D.mat.length){
+    var rows=D.mat, bh=9+Math.ceil(rows.length/2)*6.2;
+    doc.setFillColor(255,247,230); doc.setDrawColor(240,160,44); doc.roundedRect(M,y,W-M*2,bh,3,3,'FD');
+    col(146,94,10); txt(T.bring,M+4,y+6,8.5,'bold');
+    col(26,26,26); for(var i=0;i<rows.length;i++){ var cx=M+4+(i%2)*((W-M*2)/2), cy=y+12+Math.floor(i/2)*6.2; txt('• '+rows[i].label+': ',cx,cy,9.5,'normal'); var w0=doc.getTextWidth('• '+rows[i].label+': '); txt(rows[i].qty+' '+rows[i].unit,cx+w0,cy,9.5,'bold'); }
+    y+=bh+6;
+  }
+  col(26,107,42); txt(T.areas,M,y,8.5,'bold'); y+=4;
+  if(!D.areas.length){ col(120,120,120); txt(T.none,M,y+8,10); }
+  for(var a=0;a<D.areas.length;a++){ var A=D.areas[a];
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    var dims=[], dl=String(A.dims||'').split('\n'); for(var q=0;q<dl.length;q++){ if(dl[q].trim()) dims=dims.concat(doc.splitTextToSize(dl[q].trim(),W-M*2-12)); }
+    doc.setFontSize(9); var notes=[], nl=String(A.notes||'').split('\n'); for(var q2=0;q2<nl.length;q2++){ if(nl[q2].trim()) notes=notes.concat(doc.splitTextToSize(nl[q2].trim(),W-M*2-12)); }
+    var phN=Math.min(3,(A.photos||[]).length), phH=phN?34:0;
+    var bh2=16+dims.length*4.2+(notes.length?notes.length*4.4+5:0)+phH+3;
+    need(bh2);
+    doc.setFillColor(a%2?250:255,a%2?252:255,a%2?250:255); doc.setDrawColor(200,210,200); doc.setLineWidth(0.3); doc.roundedRect(M,y,W-M*2,bh2,3,3,'FD');
+    doc.setFillColor(26,107,42); doc.roundedRect(M+3,y+3,10,10,2,2,'F'); col(255,255,255); txt(String(a+1),M+8,y+10.2,11,'bold','center');
+    col(26,26,26); txt(A.name,M+16,y+8.5,12.5,'bold'); col(26,107,42); txt(A.material,M+16,y+14.5,10,'bold');
+    col(26,26,26); txt(fmtN(A.sf)+' '+T.sf,W-M-16,y+9.5,13,'bold','right');
+    // done box
+    doc.setDrawColor(26,107,42); doc.setLineWidth(0.6); doc.rect(W-M-12,y+4,8,8); col(26,107,42); txt(T.done,W-M-8,y+15.5,6.5,'bold','center');
+    var yy=y+19; col(60,60,60); doc.setFont('courier','normal'); for(var d=0;d<dims.length;d++){ doc.setFontSize(8.5); doc.text(dims[d],M+16,yy); yy+=4.2; }
+    if(notes.length){ col(146,94,10); txt(T.notes.toUpperCase(),M+16,yy+1.5,7.5,'bold'); yy+=5; col(40,40,40); for(var n=0;n<notes.length;n++){ txt(notes[n],M+16,yy,9,'normal'); yy+=4.4; } }
+    if(phN){ for(var p=0;p<phN;p++){ try{ doc.addImage(A.photos[p],'JPEG',M+16+p*48,yy+1,44,30); }catch(e){} } yy+=phH; }
+    y+=bh2+5;
+  }
+  footer();
+  var fname=(pt?'Ordem-de-Servico-':'Work-Order-')+String(D.job||'job').replace(/[^A-Za-z0-9]+/g,'-')+'-'+new Date().toLocaleDateString('en-US').replace(/\//g,'')+'.pdf';
+  var bytes=doc.output('arraybuffer');
+  try{ var f=new File([bytes],fname,{type:'application/pdf'}); if(navigator.share&&navigator.canShare&&navigator.canShare({files:[f]})){ navigator.share({files:[f],title:T.title+' '+D.num}).catch(function(){}); return; } }catch(e){}
+  doc.save(fname);
+}
+window.generateWOPDF=generateWOPDF;
+
 // ══ Certificate editor: what the app calculated, editable before the PDF is made ══
 function openCertEditor(pid){
   pid=pid||(currentProj&&currentProj.id); if(!pid){ toast('Open a job first','err'); return; }
@@ -7054,8 +7117,23 @@ document.getElementById('fLangEN').addEventListener('click',function(){fwLang='e
 document.getElementById('fLangPT').addEventListener('click',function(){fwLang='pt';this.className='lang-btn on';document.getElementById('fLangEN').className='lang-btn';renderFWO();});
 document.getElementById('eLangEN').addEventListener('click',function(){ewLang='en';this.className='lang-btn on';document.getElementById('eLangPT').className='lang-btn';renderEWO();});
 document.getElementById('eLangPT').addEventListener('click',function(){ewLang='pt';this.className='lang-btn on';document.getElementById('eLangEN').className='lang-btn';renderEWO();});
-document.getElementById('fPrintBtn').addEventListener('click',function(){window.print();});
-document.getElementById('ePrintBtn').addEventListener('click',function(){window.print();});
+// Build the Work Order data from the open job and hand it to the PDF
+function _woData(lang,useItems){
+  var list=useItems?(window.estItems||[]):(window.fieldAreas||[]), areas=[], tot=0, pseudo=[];
+  for(var i=0;i<list.length;i++){ var a=list[i]; if(!a) continue; var pr=getProd(a.productId);
+    var _ML=window._faMatLabel||{}; var mat=useItems?(pr?pr.name:'—'):(a.matCat?(_ML[a.matCat]||(pr?pr.name:'—')):(pr?pr.name:'—'));
+    var spec=a.spec?String(a.spec):''; var material=spec?(mat+' · '+spec):mat;
+    var dims=''; try{ if(!useItems) dims=(formatDimRows(a,{print:true})||'').replace(/<[^>]+>/g,' ').replace(/&times;/g,'×').replace(/&nbsp;/g,' ').replace(/[\uD83C-\uDBFF][\uDC00-\uDFFF]/g,'').replace(/\s+/g,' ').replace(/(Length|Width|Area|Roof)[^0-9]*?(?=\d)/gi,'').replace(/ SF /g,' SF\n').trim(); }catch(e){}
+    var sf=parseFloat(a.sf)||0; tot+=sf;
+    areas.push({name:String(a.name||'Area'),material:material,sf:sf,dims:dims,notes:String(a.notes||''),photos:phFor(a.photos||[],'wo')});
+    pseudo.push({matType:a.matType||'',sf:sf,inches:parseFloat(a.inches||a.ccInch||a.ocInch)||0,ccInch:a.ccInch||0,ocInch:a.ocInch||0,fgR:a.fgR||0,celR:a.celR||0,mwR:a.mwR||0,productId:a.productId||null,pricePerInch:0}); }
+  var mat=[]; try{ var u=computeMaterialUsage(useItems?list:pseudo); for(var m=0;m<u.rows.length;m++) if(u.rows[m].qty>0) mat.push({label:u.rows[m].label,qty:u.rows[m].qty,unit:u.rows[m].unit}); }catch(e){}
+  var qi=(typeof quoteInfo!=='undefined'&&quoteInfo)||{}, p=currentProj||{};
+  return {lang:lang,company:cfg.company||'Green Idea Insulation',num:String(quoteNum||''),date:new Date().toLocaleDateString(lang==='pt'?'pt-BR':'en-US',{year:'numeric',month:'long',day:'numeric'}),job:p.name||qi.client||'',address:p.address||qi.address||'',phone:qi.phone||'',areas:areas,totalSF:tot,mat:mat};
+}
+document.getElementById('fPrintBtn').addEventListener('click',function(){ try{ saveProjAreas(); }catch(e){} window.generateWOPDF(_woData(fwLang,false)); });
+document.getElementById('ePrintBtn').addEventListener('click',function(){ window.generateWOPDF(_woData(ewLang,true)); });
+
 
 function buildWOHd(t,lang,j1,j2,num){
   var today=new Date().toLocaleDateString(lang==='pt'?'pt-BR':'en-US',{year:'numeric',month:'long',day:'numeric'});
