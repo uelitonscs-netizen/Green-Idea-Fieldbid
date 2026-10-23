@@ -1457,7 +1457,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261023-1200</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261023-1400</span></div>
 </div>
 
 <div id="field-app">
@@ -7027,7 +7027,7 @@ function renderQuote(){
           var q=(r.unit==='set')?r.qty.toFixed(2):r.qty;
           h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #78350f22">'+
              '<div><div style="font-size:13px;color:#fde68a;font-weight:600">'+r.label+'</div>'+
-             '<div style="font-size:11px;color:#a16207">'+q+' '+r.unit+(r.qty!=1&&r.unit!=='set'?'s':'')+'</div></div>'+
+             '<div style="font-size:11px;color:#a16207">'+q+' '+r.unit+(r.qty!=1&&r.unit!=='set'?'s':'')+(r.gal?' · '+r.gal+' gal':'')+'</div></div>'+
              '<div style="font-size:14px;font-weight:700;color:'+(r.priced?'#fbbf24':'#78350f')+'">'+
              (r.priced?('$'+r.cost.toFixed(2)):'sem custo')+'</div></div>';
         });
@@ -7117,7 +7117,7 @@ function _woData(lang,useItems){
     var sf=parseFloat(a.sf)||0; tot+=sf;
     areas.push({name:String(a.name||'Area'),material:material,sf:sf,dims:dims,notes:String(a.notes||''),photos:phFor(a.photos||[],'wo')});
     pseudo.push({matType:a.matType||'',sf:sf,inches:parseFloat(a.inches||a.ccInch||a.ocInch)||0,ccInch:a.ccInch||0,ocInch:a.ocInch||0,fgR:a.fgR||0,celR:a.celR||0,mwR:a.mwR||0,productId:a.productId||null,pricePerInch:0}); }
-  var mat=[]; try{ var u=computeMaterialUsage(useItems?list:pseudo); for(var m=0;m<u.rows.length;m++) if(u.rows[m].qty>0) mat.push({label:u.rows[m].label,qty:u.rows[m].qty,unit:u.rows[m].unit}); }catch(e){}
+  var mat=[]; try{ var u=computeMaterialUsage(useItems?list:pseudo); for(var m=0;m<u.rows.length;m++) if(u.rows[m].qty>0) mat.push({label:u.rows[m].label,qty:u.rows[m].qty,unit:u.rows[m].unit+(u.rows[m].gal?' ('+u.rows[m].gal+' gal)':'')}); }catch(e){}
   var qi=(typeof quoteInfo!=='undefined'&&quoteInfo)||{}, p=currentProj||{};
   return {lang:lang,company:cfg.company||'Green Idea Insulation',num:String(quoteNum||''),date:new Date().toLocaleDateString(lang==='pt'?'pt-BR':'en-US',{year:'numeric',month:'long',day:'numeric'}),job:p.name||qi.client||'',address:p.address||qi.address||'',phone:qi.phone||'',areas:areas,totalSF:tot,mat:mat};
 }
@@ -8110,7 +8110,7 @@ function _n5MultLabels(){
 function _n5Bring(){
   var rows=[]; try{ rows=computeMaterialUsage(estItems||[]).rows||[]; }catch(e){ rows=[]; }
   var h=''; for(var i=0;i<rows.length;i++){ var r=rows[i]; if(!(r.qty>0)) continue;
-    var q=Math.ceil(r.qty*10-1e-9)/10; h+='<div class="n5b"><span>'+esc(r.label)+'</span><b>≈ '+q+' '+esc(r.unit||'')+'</b></div>'; }
+    var q=Math.ceil(r.qty*10-1e-9)/10; h+='<div class="n5b"><span>'+esc(r.label)+'</span><b>≈ '+q+' '+esc(r.unit||'')+(r.gal?' · '+r.gal+' gal':'')+'</b></div>'; }
   var _as=[]; try{ _as=computeMaterialUsage(estItems||[]).assumed||[]; }catch(e){}
   var asH=''; for(var a=0;a<_as.length;a++) asH+='<div class="n5b-a">* '+esc(_as[a])+'</div>';
   return h?h+asH+'<div class="n5b-n">From your Coverage settings · round up on site</div>':'';
@@ -11804,14 +11804,14 @@ function computeMaterialUsage(items){
     total+=cost;
     rows.push({key:key,label:label,qty:qty,unit:unit,cost:cost,priced:uc>0,unitCost:uc});
   }
-  add('ccSet','Closed Cell',  Math.ceil(ccBF/CC_BF_SET*100)/100,'set');
-  add('ocSet','Open Cell',    Math.ceil(ocBF/OC_BF_SET*100)/100,'set');
+  add('ccSet','Closed Cell',  Math.ceil(ccBF/CC_BF_SET*100)/100,'set'); if(rows.length&&rows[rows.length-1].key==='ccSet') rows[rows.length-1].gal=Math.round(rows[rows.length-1].qty*(covGet('cov_ccGal')||55)*10)/10;
+  add('ocSet','Open Cell',    Math.ceil(ocBF/OC_BF_SET*100)/100,'set'); if(rows.length&&rows[rows.length-1].key==='ocSet') rows[rows.length-1].gal=Math.round(rows[rows.length-1].qty*(covGet('cov_ocGal')||55)*10)/10;
   add('celBag','Cellulose',   celBags,'bag');
   FG_R.forEach(function(r){ add('fgR'+r,'Fiberglass R-'+r, fgBags[r]||0,'bag'); });
   MW_R.forEach(function(r){ add('mwR'+r,'Roxul R-'+r,      mwBags[r]||0,'bag'); });
   add('fb1','Foam Board 1"',  Math.ceil(fbSqft[1]/(FB_SHEET||32)),'sheet');
   add('fb2','Foam Board 2"',  Math.ceil(fbSqft[2]/(FB_SHEET||32)),'sheet');
-  add('ignBucket','Ignition Barrier', Math.ceil(ignSqft/IGN_SQFT_BUCKET),'bucket');
+  add('ignBucket','Ignition Barrier', Math.ceil(ignSqft/IGN_SQFT_BUCKET*100)/100,'bucket');   // decimal, like the foam sets
 
   // Manual quantities: caulking tubes and window/door cans, stored per job.
   var qi=(typeof quoteInfo!=='undefined'&&quoteInfo)?quoteInfo:{};
