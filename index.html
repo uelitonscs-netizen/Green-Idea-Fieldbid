@@ -52,6 +52,9 @@
     S.setItem=function(k,v){ if(this===localStorage&&POOLED[k]&&window.__phPool.on()){ v=window.__phPool.dehydrate(String(v));
         window.__phWrites=(window.__phWrites||0)+1; rawSet.call(this,k,v); if(k==='fb6_projs'&&window.__phWrites%15===0){ try{ window.__phPool.gc(); }catch(e){} } return; }
       return rawSet.call(this,k,v); };
+    // A phone with no full photos stored (fresh, or right after its site data was cleared) starts with the pool on:
+    // there is nothing to convert, and the photos restored from the cloud then come back without the copies.
+    try{ if(rawGet.call(localStorage,'fb6_poolOn')!=='1'){ var _pr=rawGet.call(localStorage,'fb6_projs')||''; if(_pr.indexOf('"data:image/')<0) rawSet.call(localStorage,'fb6_poolOn','1'); } }catch(e){}
   }catch(e){ try{ console.warn('photo pool door off',e); }catch(x){} }
   // Ask Chrome not to clear this app's data by itself when the phone is low on space.
   try{ if(navigator.storage&&navigator.storage.persisted){ navigator.storage.persisted().then(function(p){ if(!p&&navigator.storage.persist) navigator.storage.persist(); }); } }catch(e){}
@@ -1457,7 +1460,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261024-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261024-1100</span></div>
 </div>
 
 <div id="field-app">
@@ -3282,7 +3285,7 @@ function fbPoolMigrate(onDone,silent){
   var say=silent?function(m){ try{ toast(m.split('\n')[0]); }catch(e){} }:function(m){ alert(m); };
   if(!PP||!get||!set){ toast('Not available in this browser','err'); return; }
   if(PP.on()){ if(!silent) toast('Already on ✓'); return; }
-  var st=_bkPhotoStatus(); if(st.missing>0){ if(silent) return; alert('First, '+st.missing+' photo'+(st.missing!==1?'s are':' is')+' not in the cloud yet. Tap "Back up now" and wait for ✓ — then try again.'); return; }
+  var st=_bkPhotoStatus(); if(st.missing>0&&!silent){ alert('First, '+st.missing+' photo'+(st.missing!==1?'s are':' is')+' not in the cloud yet. Tap "Back up now" and wait for ✓ — then try again.'); return; }
   var D=_poolDupInfo();
   function run(){
     var orig=get('fb6_projs')||'[]', P=JSON.parse(orig), canon=JSON.stringify(P);
@@ -3315,9 +3318,12 @@ window.fbPoolMigrate=fbPoolMigrate;
 // After a cloud restore the pool is off: turn it back on by itself once every photo is confirmed in the cloud.
 (function(){ var tries=0;
   function tick(){ tries++; try{ var PP=window.__phPool;
-    if(PP&&!PP.on()&&window._phRestoreDone!==false){ var st=_bkPhotoStatus(); if(st.total>0&&st.missing===0&&!window._poolBusy){ window._poolBusy=true; fbPoolMigrate(function(){ window._poolBusy=false; try{ var a=document.getElementById('bkPl'); if(a) a.innerHTML=_poolHtml(); }catch(e){} },true); return; } } }catch(e){}
-    if(tries<20) setTimeout(tick,30000); }
-  setTimeout(tick,25000); })();
+    if(PP&&!PP.on()&&window._phRestoreDone!==false&&!window._poolBusy){ window._poolBusy=true;
+      fbPoolMigrate(function(){ window._poolBusy=false; try{ var a=document.getElementById('bkPl'); if(a) a.innerHTML=_poolHtml(); }catch(e){}
+        // photos that did not fit before now fit: restore them again
+        if(window._phRestoreErr&&PP.on()){ window._phRestoreErr=0; window._phRestoreErrMsg=''; try{ window._phRestoreDone=false; restoreMissingPhotos(); }catch(e){} } },true); return; } }catch(e){}
+    if(tries<20) setTimeout(tick,tries<3?5000:30000); }
+  setTimeout(tick,4000); })();
 
 
 // ══ Phase 1 — large-storage mirror: a verified copy of every pool photo in IndexedDB. Nothing is removed. ══
