@@ -1338,6 +1338,13 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 .cl-card b{font-size:16px;} .cl-card span{font-size:12.5px;color:var(--n-muted);} .cl-card i{font-style:normal;color:var(--n-amber);} .cl-card small{font-size:11px;font-weight:800;color:var(--n-green-ink);}
 .cl-jobs{display:flex;flex-direction:column;gap:6px;padding:0 16px;} .cl-job{display:flex;flex-direction:column;text-align:left;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:11px;padding:9px 11px;font-family:var(--n-font-m);} .cl-job b{font-size:14px;} .cl-job span{font-size:12px;color:var(--n-muted);}
 .cl-del{display:block;width:calc(100% - 32px);margin:10px 16px 0;border:1px solid var(--n-border);background:transparent;color:var(--n-red,#d64545);border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;font-family:var(--n-font-m);}
+
+/* Quote rows: label left, value right; the client name sits right next to the Pick button */
+.q-row{gap:12px;}
+.q-row .q-lbl{flex:none;}
+.q-row .q-val{flex:0 1 auto;margin-left:auto;min-width:0;text-align:right;overflow-wrap:anywhere;}
+#qClient{font-size:14px;font-weight:700;}
+.q-row .q-pick{padding:5px 9px;font-size:11.5px;margin-left:0;}
 </style>
 <script>
 // PDF / QR libraries are only needed when you make a PDF or a QR code: they load after the app is on screen
@@ -1460,7 +1467,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261024-1100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261024-1300</span></div>
 </div>
 
 <div id="field-app">
@@ -11653,7 +11660,7 @@ var MAT_COST_DEFS=[
 // panel stays short instead of listing every possible extra on every job.
 var MANUAL_MATS=[
   {k:'caulkTube',qk:'qtyCaulk',  label:'Caulking (tubos)',        words:['caulk','fire block','fireblock','air seal','airseal','seal']},
-  {k:'wdCan',    qk:'qtyWdCan',  label:'Window & door (latas)',   words:['window','door','janela','porta']},
+  {k:'wdCan',    qk:'qtyWdCan',  label:'Window & door (latas)',   words:['window','door','janela','porta','air seal','airseal','air-seal','foam can','spray can']},
   {k:'thermDome',qk:'qtyDome',   label:'Thermal dome (un)',       words:['dome','attic entrance','hatch','scuttle']},
   {k:'baffle',   qk:'qtyBaffle', label:'Baffles / vents (un)',    words:['baffle','vent','proper vent','soffit']},
   {k:'exhWrap',  qk:'qtyExh',    label:'Exhaust / wrap (un)',     words:['exhaust','bathroom','pipe','duct','wrap']},
