@@ -1467,7 +1467,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261025-0900</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261025-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -4013,6 +4013,7 @@ function fbImportTakeoff(){
   document.getElementById('tkCancel').onclick=function(){ _tkClose('tkOv'); };
   document.getElementById('tkGo').onclick=function(){ if(!parsed) return; var o=parsed.o; if(currentProj) saveProjAreas();
     var projs=loadProjs(), proj={id:'p_'+Date.now(),name:String(o.name||'Imported takeoff'),address:String(o.address||''),areas:parsed.areas,estItems:[],quoteInfo:{client:String(o.name||''),address:String(o.address||''),phone:String(o.phone||''),email:String(o.email||'')},created:new Date().toLocaleDateString('en-US'),source:o.source==='site'?'site':'plans'};
+    try{ _qnAssignTo(proj); }catch(e){}
     projs.unshift(proj); saveProjs(projs); _tkClose('tkOv');
     try{ closeOv('projOverlay'); }catch(e){} try{ switchProjById(proj.id); }catch(e){} try{ nvGo('field'); }catch(e){} try{ closeOv('projOverlay'); renderFA(); renderFWO(); }catch(e){}
     toast('📥 “'+proj.name+'” created · '+parsed.areas.length+' areas'); };
@@ -4227,6 +4228,20 @@ function _ignNoteSync(elId,on,lastKey,silent){
   else if(v.indexOf(IGN_NOTE)>=0){ el.value=v.replace('\n'+IGN_NOTE,'').replace(IGN_NOTE,'').replace(/^\s+|\s+$/g,''); }
   try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){}
 }
+
+// ══ Quote numbers: every job gets its own number, once, and keeps it (never two jobs with the same number) ══
+function _qnMax(){ var m=1000, ps=[]; try{ ps=loadProjs(); }catch(e){} for(var i=0;i<ps.length;i++){ var n=parseInt(ps[i]&&ps[i].quoteInfo&&ps[i].quoteInfo.quoteNum)||0; if(n>m) m=n; } var c=parseInt(localStorage.getItem('fb6_qn'))||0; if(c>m) m=c; return m; }
+function _qnAssignTo(p){ if(!p) return 0; p.quoteInfo=p.quoteInfo||{client:p.name||'',address:p.address||''}; var n=parseInt(p.quoteInfo.quoteNum)||0; if(n>0) return n; n=_qnMax()+1; p.quoteInfo.quoteNum=n; try{ localStorage.setItem('fb6_qn',String(n)); }catch(e){} return n; }
+// The number shown in the Estimator is the open job's own; an old job without one gets the next number now
+function _qnShow(){ var n=parseInt(quoteInfo&&quoteInfo.quoteNum)||0;
+  if(!n&&currentProj&&currentProj.id){ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===currentProj.id){ n=_qnAssignTo(ps[i]); quoteInfo.quoteNum=n; try{ localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); }catch(e){} saveProjs(ps); break; } } }
+  if(n){ quoteNum=n; var a=document.getElementById('estQNum'), b=document.getElementById('qNumber'); if(a) a.textContent=n; if(b) b.textContent='#'+n; } }
+window._qnShow=_qnShow;
+// One pass for the jobs made before this rule: oldest first, continuing after the highest number in use
+function _qnMigrate(){ try{ if(localStorage.getItem('fb6_qnMig')==='2') return; var ps=loadProjs(), todo=[]; for(var i=0;i<ps.length;i++){ if(ps[i]&&!(parseInt(ps[i].quoteInfo&&ps[i].quoteInfo.quoteNum)>0)) todo.push(ps[i]); }
+  if(todo.length){ todo.sort(function(a,b){ var da=Date.parse(a.created||'')||0, db=Date.parse(b.created||'')||0; if(da!==db) return da-db; return String(a.id).localeCompare(String(b.id)); }); var n=_qnMax(); for(var j=0;j<todo.length;j++){ n++; todo[j].quoteInfo=todo[j].quoteInfo||{client:todo[j].name||'',address:todo[j].address||''}; todo[j].quoteInfo.quoteNum=n; } try{ localStorage.setItem('fb6_qn',String(n)); }catch(e){} saveProjs(ps); if(currentProj){ for(var k=0;k<ps.length;k++) if(ps[k].id===currentProj.id){ quoteInfo.quoteNum=ps[k].quoteInfo.quoteNum; break; } } try{ _qnShow(); }catch(e){} }
+  localStorage.setItem('fb6_qnMig','2'); }catch(e){} }
+setTimeout(_qnMigrate,8000);
 function saveFA(){ saveEI(); } // alias - same operation
 function saveEI(){
   if(currentProj){ saveProjAreas(); }
@@ -4667,6 +4682,7 @@ function duplicateJobById(pid){
     done:false,
     estStatus:'none' // the copy starts fresh (not sent/approved)
   };
+  try{ newProj.quoteInfo.quoteNum=0; _qnAssignTo(newProj); }catch(e){}
   // Only the job label gets "(copy)". The client name on the PDF stays the real
   // client, so a duplicated job never prints "(copy)" to the customer.
   if(newProj.quoteInfo){
@@ -4895,6 +4911,7 @@ function createProj(){
   if(currentProj)saveProjAreas();
   var projs=loadProjs();
   var proj={id:'p_'+Date.now(),name:name,address:address||'',areas:[],estItems:[],quoteInfo:{client:name,address:address||'',phone:phone,email:email},created:new Date().toLocaleDateString('en-US')};
+  try{ _qnAssignTo(proj); }catch(e){}
   projs.unshift(proj);saveProjs(projs);
   try{ window._clUpsert(proj.quoteInfo); }catch(e){}
   currentProj=proj;
@@ -4917,7 +4934,7 @@ function createProj(){
 // NEW EST
 function doNewEst(){
   estItems=[];quoteInfo={client:'',address:''};
-  quoteNum++;localStorage.setItem('fb6_qn',quoteNum);
+  quoteNum=_qnMax()+1; localStorage.setItem('fb6_qn',String(quoteNum)); quoteInfo.quoteNum=quoteNum;
   document.getElementById('estQNum').textContent=quoteNum;
   document.getElementById('qNumber').textContent='#'+quoteNum;
   document.getElementById('qDate').textContent=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
@@ -6931,6 +6948,7 @@ function rebuildTakeoffFromItems(){
              estItems:JSON.parse(JSON.stringify(estItems)),
              quoteInfo:JSON.parse(JSON.stringify(quoteInfo||{})),
              created:new Date().toLocaleDateString('en-US')};
+    try{ _qnAssignTo(_np); quoteInfo.quoteNum=_np.quoteInfo.quoteNum; }catch(e){}
     var _ap=loadProjs();_ap.push(_np);saveProjs(_ap);
     currentProj=_np;
     _autoCreated=true;
@@ -7006,6 +7024,7 @@ function rebuildTakeoffFromItems(){
 (function(){var b=document.getElementById('sendToTakeoffBtn');if(b)b.addEventListener('click',rebuildTakeoffFromItems);})();
 
 function renderQuote(){
+  try{ _qnShow(); }catch(e){}
   var totals=calcTotals();
   // Always reset the WorkLog button to its default state for the current quote,
   // so a transient "Sent!" from a previous send never sticks to another project.
@@ -8980,6 +8999,7 @@ function openJobFromList(pid){
       window.estItems = estItems;
       quoteInfo = projs[i].quoteInfo ? JSON.parse(JSON.stringify(projs[i].quoteInfo)) : {client:projs[i].name,address:projs[i].address||''};
       window.quoteInfo = quoteInfo;
+      try{ _qnShow(); }catch(e){}
       updateProjHeader();
       renderEst();
       renderJobsList();
@@ -10523,7 +10543,7 @@ function createEstimateVariant(srcProjId){
   // so leaving the client as the base name would make the sync wipe the "Option N"
   // label on the first save. Renaming either one later still updates both.
   v.quoteInfo.client=v.name;
-  v.quoteInfo.markup=''; v.quoteInfo.discount='';
+  v.quoteInfo.markup=''; v.quoteInfo.discount=''; v.quoteInfo.quoteNum=0; try{ _qnAssignTo(v); }catch(e){}
   v.created=new Date().toLocaleDateString('en-US');
   projs.splice(idx+1,0,v);
   saveProjs(projs);
