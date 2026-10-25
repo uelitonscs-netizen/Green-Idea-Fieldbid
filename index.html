@@ -1467,7 +1467,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261024-1300</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261025-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -1918,7 +1918,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
             <option value="fb">Fire Blocking</option>
             <option value="foam_cans">Foam Cans</option>
             <option value="insulation_removal">Insulation Removal</option>
-            <option value="other">Other</option>
+            <option value="dome">Thermal Dome</option> <option value="prep">Prep Work</option> <option value="other">Other</option>
           </optgroup>
         </select>
       </div>
@@ -3958,7 +3958,7 @@ function _tkParse(text){
 }
 function _tkArea(x,source){
   var mode=x.mode||(x.roof?'roof':(x.rows?'walls':'manual')); if(mode==='gable') mode='roof';
-  var mat=String(x.mat||'other'); if(!MAT_CAT_DATA[mat]){ var alias={closed:'cc',open:'oc',fiberglass:'fg_r13',cellulose:'cel_blown',roxul:'mw_r15',mineral:'mw_r15',ignition:'ign',ign:'ign',fireblock:'fb',fb:'fb',other:'other'}; mat=alias[mat.toLowerCase()]||'other'; }
+  var mat=String(x.mat||'other'); if(!MAT_CAT_DATA[mat]){ var alias={closed:'cc',open:'oc',fiberglass:'fg_r13',cellulose:'cel_blown',roxul:'mw_r15',mineral:'mw_r15',ignition:'ign',ign:'ign',fireblock:'fb',fb:'fb',thermal_dome:'dome',prep_work:'prep',other:'other'}; mat=alias[mat.toLowerCase()]||'other'; }
   var d=MAT_CAT_DATA[mat]||{type:'other'};
   var a={name:String(x.name||'Area'),productId:null,notes:String(x.notes||''),photos:[],mult:parseFloat(x.mult)||1,calcMode:mode,matCat:mat,matType:d.type,
     ccInch:parseFloat(x.cc)||0,ocInch:parseFloat(x.oc)||0,fgR:parseFloat(x.fgR)||d.r||0,fgInch:parseFloat(x.fgInch)||d.inch||0,celR:parseFloat(x.celR)||0,celInch:parseFloat(x.celInch)||0,mwR:parseFloat(x.mwR)||d.r||0,
@@ -3970,7 +3970,7 @@ function _tkArea(x,source){
   else if(mode==='roof'){ a.roofRows=[]; for(k=0;k<(x.roof||[]).length;k++){ var rr=x.roof[k]||{}; a.roofRows.push({type:rr.type||'gable',a:String(rr.a!=null?rr.a:(rr.w!=null?rr.w:'')),l:String(rr.l!=null?rr.l:''),c:String(rr.c!=null?rr.c:''),pitch:String(rr.pitch||'8-12').replace(':','-').replace('/','-'),q:Math.max(1,Math.round(Number(rr.q)||1))}); } }
   else { a.calcMode='manual'; a.sfBase=parseFloat(x.sf)||0; }
   var r2=_tkSF(a); a.sfBase=(mode==='manual')?(parseFloat(x.sf)||0):r2.base; a.sf=r2.sf; if(mode==='manual') a.sf=Math.round(a.sfBase*a.mult*10)/10;
-  if(mat==='ign'&&String(a.notes).indexOf(IGN_NOTE)<0) a.notes=(a.notes?a.notes+'\n':'')+IGN_NOTE;
+  if(CAT_NOTES[mat]&&String(a.notes).indexOf(CAT_NOTES[mat])<0) a.notes=(a.notes?a.notes+'\n':'')+CAT_NOTES[mat];
   a.spec=_tkSpec(a); return a;
 }
 function _tkText(p){
@@ -4207,6 +4207,19 @@ setTimeout(function(){ try{ _clPull(); }catch(e){} },9000);
 var IGN_NOTE='Exposed foam plastic insulation shall be separated from the building interior by a code-compliant thermal barrier meeting the applicable requirements of 780 CMR Section R316, unless an approved exception or alternative assembly applies.';
 function _isIgnProd(pid){ var pr=null; try{ pr=pid?getProd(pid):null; }catch(e){} if(!pr) return false; var c=String(pr.cat||'').toLowerCase(), n=String(pr.name||'').toLowerCase(); return c.indexOf('air')>=0||c.indexOf('ignition')>=0||n.indexOf('ignition')>=0; }
 // on: the material is now ignition barrier. Acts only when the material CHANGES to/from it (opening a saved item never rewrites its notes).
+var CAT_NOTES={ign:IGN_NOTE, dome:'Thermal cover for attic pulled down stairs.', prep:"Plastic windows, doors, floor, and homeowner's belongings that was not moved from work area."};
+// key: the category now chosen (only keys in CAT_NOTES carry a sentence). Acts only when it CHANGES;
+// the previous automatic sentence leaves, the new one comes in, the user's own text stays.
+function _catNoteSync(elId,key,lastKey,silent){
+  key=CAT_NOTES[key]?key:null; var el=document.getElementById(elId), last=window[lastKey]||null; window[lastKey]=key; if(!el||silent||key===last) return;
+  var v=String(el.value||'');
+  if(last&&CAT_NOTES[last]&&v.indexOf(CAT_NOTES[last])>=0) v=v.replace('\n'+CAT_NOTES[last],'').replace(CAT_NOTES[last],'').replace(/^\s+|\s+$/g,'');
+  if(key&&v.indexOf(CAT_NOTES[key])<0) v=v.trim()?(v.replace(/\s+$/,'')+'\n'+CAT_NOTES[key]):CAT_NOTES[key];
+  el.value=v; try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){}
+}
+// Estimator: the sentence follows the product (ignition barrier) or, for a new item, the description (thermal dome, prep work)
+function _eiNoteKey(pid,name){ if(_isIgnProd(pid)) return 'ign'; var pr=null; try{ pr=pid?getProd(pid):null; }catch(e){} var pn=String(pr&&pr.name||'');
+  if(/dome/i.test(pn)) return 'dome'; if(/\bprep/i.test(pn)) return 'prep'; var c=null; try{ c=faCatFromName(name||''); }catch(e){} return (c==='dome'||c==='prep')?c:null; }
 function _ignNoteSync(elId,on,lastKey,silent){
   var el=document.getElementById(elId), last=!!window[lastKey]; window[lastKey]=!!on; if(!el||silent||on===last) return;
   var v=String(el.value||'');
@@ -4966,7 +4979,7 @@ function exportField(){
   for(var i=0;i<fieldAreas.length;i++){
     var a=fieldAreas[i];var pr=getProd(a.productId);
     lines.push((i+1)+'. '+a.name);
-    var matLabelMap={'cc':'Closed Cell Spray Foam','oc':'Open Cell Spray Foam','hybrid':'Hybrid CC+OC','hybrid_foam_fg':'Hybrid Foam+Fiberglass','hybrid_foam_mw':'Hybrid Foam+Mineral Wool','fg_r11':'Fiberglass R-11','fg_r13':'Fiberglass R-13','fg_r15':'Fiberglass R-15','fg_r19':'Fiberglass R-19','fg_r21':'Fiberglass R-21','fg_r25':'Fiberglass R-25','fg_r30':'Fiberglass R-30','fg_r38':'Fiberglass R-38','fg_r49':'Fiberglass R-49','fg_custom':'Fiberglass','cel':'Cellulose Dense Pack','cel_blown':'Cellulose Blown-In','cel_dense':'Cellulose Dense Pack','mw_r15':'Mineral Wool R-15','mw_r23':'Mineral Wool R-23','mw_r30':'Mineral Wool R-30','mw_custom':'Mineral Wool','ign':'Ignition Barrier','fb':'Fire Blocking','foam_cans':'Foam Cans','insulation_removal':'Insulation Removal','other':'Other'};
+    var matLabelMap={'cc':'Closed Cell Spray Foam','oc':'Open Cell Spray Foam','hybrid':'Hybrid CC+OC','hybrid_foam_fg':'Hybrid Foam+Fiberglass','hybrid_foam_mw':'Hybrid Foam+Mineral Wool','fg_r11':'Fiberglass R-11','fg_r13':'Fiberglass R-13','fg_r15':'Fiberglass R-15','fg_r19':'Fiberglass R-19','fg_r21':'Fiberglass R-21','fg_r25':'Fiberglass R-25','fg_r30':'Fiberglass R-30','fg_r38':'Fiberglass R-38','fg_r49':'Fiberglass R-49','fg_custom':'Fiberglass','cel':'Cellulose Dense Pack','cel_blown':'Cellulose Blown-In','cel_dense':'Cellulose Dense Pack','mw_r15':'Mineral Wool R-15','mw_r23':'Mineral Wool R-23','mw_r30':'Mineral Wool R-30','mw_custom':'Mineral Wool','ign':'Ignition Barrier','fb':'Fire Blocking','foam_cans':'Foam Cans','dome':'Thermal Dome','prep':'Prep Work','insulation_removal':'Insulation Removal','other':'Other'};
     var productName=a.matCat?matLabelMap[a.matCat]:(pr?pr.name:'Unknown');
     lines.push('   Product: '+productName);
     lines.push('   SF: '+fmtN(a.sf)+(a.spec?' | '+a.spec:''));
@@ -6131,7 +6144,7 @@ function generateProofPDF(pid,ov){
       'cel_blown':'Cellulose Blown','cel_dense':'Cellulose Dense Pack',
       'mw_r15':'Mineral Wool R-15','mw_r23':'Mineral Wool R-23','mw_r30':'Mineral Wool R-30',
       'mw_custom':'Mineral Wool','ign':'Ignition Barrier','fb':'Fire Blocking',
-      'foam_cans':'Foam Cans','other':'Other'};
+      'foam_cans':'Foam Cans','dome':'Thermal Dome','prep':'Prep Work','other':'Other'};
 
     // Table header
     doc.setFillColor(26,107,42);
@@ -6206,6 +6219,7 @@ function generateProofPDF(pid,ov){
     for(var i=0;i<srcItems.length;i++){
       var a=srcItems[i];
       if(!a||!a.sf) continue;
+      if(a.matCat==='prep'||a.matType==='prep'||/\bprep\b|prep\s*work/i.test(a.name||'')) continue;   // prep work is not insulation
       var mname=matLabel[a.matCat||a.matType]||'';
       if(!mname&&a.productId){var _p=getProd(a.productId);if(_p)mname=_p.name;}
       if(!mname) mname='—';
@@ -6496,8 +6510,8 @@ function renderFA(){
 
   checkImportBar();
   if(!fieldAreas.length){list.innerHTML='<div class="empty"><div class="empty-icon">📐</div><div class="empty-title">No areas yet</div><div class="empty-body">Tap + to measure your first area</div></div>';return;}
-  var matEmoji={'cc':'🫧','oc':'💧','hybrid':'🔀','hybrid_foam_fg':'🔀','hybrid_foam_mw':'🔀','fg_r11':'🧶','fg_r13':'🧶','fg_r15':'🧶','fg_r19':'🧶','fg_r21':'🧶','fg_r25':'🧶','fg_r30':'🧶','fg_r38':'🧶','fg_r49':'🧶','fg_custom':'🧶','cel_blown':'📦','cel_dense':'📦','mw_r15':'🪨','mw_r23':'🪨','mw_r30':'🪨','mw_custom':'🪨','ign':'🔥','fb':'🧱','foam_cans':'🫙','insulation_removal':'🗑️','other':'📦'};
-  var matLabel={'cc':'Closed Cell','oc':'Open Cell','hybrid':'Hybrid CC+OC','hybrid_foam_fg':'Hybrid Foam+Fiberglass','hybrid_foam_mw':'Hybrid Foam+Mineral Wool','fg_r11':'Fiberglass R-11','fg_r13':'Fiberglass R-13','fg_r15':'Fiberglass R-15','fg_r19':'Fiberglass R-19','fg_r21':'Fiberglass R-21','fg_r25':'Fiberglass R-25','fg_r30':'Fiberglass R-30','fg_r38':'Fiberglass R-38','fg_r49':'Fiberglass R-49','fg_custom':'Fiberglass','cel_blown':'Cellulose Blown','cel_dense':'Cellulose Dense Pack','mw_r15':'Mineral Wool R-15','mw_r23':'Mineral Wool R-23','mw_r30':'Mineral Wool R-30','mw_custom':'Mineral Wool','ign':'Ignition Barrier','fb':'Fire Blocking','foam_cans':'Foam Cans','insulation_removal':'Insulation Removal','other':'Other'};
+  var matEmoji={'cc':'🫧','oc':'💧','hybrid':'🔀','hybrid_foam_fg':'🔀','hybrid_foam_mw':'🔀','fg_r11':'🧶','fg_r13':'🧶','fg_r15':'🧶','fg_r19':'🧶','fg_r21':'🧶','fg_r25':'🧶','fg_r30':'🧶','fg_r38':'🧶','fg_r49':'🧶','fg_custom':'🧶','cel_blown':'📦','cel_dense':'📦','mw_r15':'🪨','mw_r23':'🪨','mw_r30':'🪨','mw_custom':'🪨','ign':'🔥','fb':'🧱','foam_cans':'🫙','dome':'🛡️','prep':'🧻','insulation_removal':'🗑️','other':'📦'};
+  var matLabel={'cc':'Closed Cell','oc':'Open Cell','hybrid':'Hybrid CC+OC','hybrid_foam_fg':'Hybrid Foam+Fiberglass','hybrid_foam_mw':'Hybrid Foam+Mineral Wool','fg_r11':'Fiberglass R-11','fg_r13':'Fiberglass R-13','fg_r15':'Fiberglass R-15','fg_r19':'Fiberglass R-19','fg_r21':'Fiberglass R-21','fg_r25':'Fiberglass R-25','fg_r30':'Fiberglass R-30','fg_r38':'Fiberglass R-38','fg_r49':'Fiberglass R-49','fg_custom':'Fiberglass','cel_blown':'Cellulose Blown','cel_dense':'Cellulose Dense Pack','mw_r15':'Mineral Wool R-15','mw_r23':'Mineral Wool R-23','mw_r30':'Mineral Wool R-30','mw_custom':'Mineral Wool','ign':'Ignition Barrier','fb':'Fire Blocking','foam_cans':'Foam Cans','dome':'Thermal Dome','prep':'Prep Work','insulation_removal':'Insulation Removal','other':'Other'};
     window._faMatEmoji=matEmoji; window._faMatLabel=matLabel;   // shared with the field Work Order
   var h='';
   (function(){ var np=0; for(var z=0;z<fieldAreas.length;z++) if(fieldAreas[z].source==='plans'&&!fieldAreas[z].siteCheckedAt) np++;
@@ -9174,7 +9188,7 @@ function renderFavChips(show){
 window.renderFavChips=renderFavChips;
 
 function openFAModal(idx){
-  editFAIdx=idx; window._faOpening=true; window._faIgnLast=false; setTimeout(function(){ window._faOpening=false; },0);
+  editFAIdx=idx; window._faOpening=true; window._faNoteLast=null; setTimeout(function(){ window._faOpening=false; },0);
   document.getElementById('faTitle').textContent=idx>=0?'Edit Area':'Add Area';
   document.getElementById('faSaveBtn').textContent=idx>=0?'Update':'Add Area';
   try{ renderFavChips(idx<0); }catch(_fe){}
@@ -9303,6 +9317,8 @@ var MAT_CAT_DATA = {
   'fb':       {label:'Fire Blocking', type:'fb'},
   'foam_cans':        {label:'Foam Cans',          type:'foam_cans'},
   'insulation_removal':{label:'Insulation Removal', type:'insulation_removal'},
+  'dome':      {label:'Thermal Dome',      type:'dome'},
+  'prep':      {label:'Prep Work',         type:'prep'},
   'other':    {label:'Other', type:'other'}
 };
 
@@ -9335,7 +9351,7 @@ function autofillFaPrice(force){
 function onMatCatChange(){
   var cat = document.getElementById('fa_mat_cat').value;
   var d = MAT_CAT_DATA[cat]||{type:'other'};
-  try{ _ignNoteSync('fa_notes',cat==='ign','_faIgnLast',!!window._faOpening); }catch(_ie){}
+  try{ _catNoteSync('fa_notes',cat,'_faNoteLast',!!window._faOpening); }catch(_ie){}
   // Hide all conditional fields
   document.getElementById('mat_foam_fields').style.display='none';
   document.getElementById('mat_fg_fields').style.display='none';
@@ -9392,6 +9408,8 @@ function faCatFromName(name){
   function has(re){ return re.test(t); }
   var MW=/mineral\s*wool|roxul|rockwool|rock\s*wool|stone\s*wool|comfort\s*batt|\bmw\b/, FG=/fiberglass|fibreglass|\bfg\b|\bbatts?\b|owens|kraft\s*faced/;
   if(has(/hybrid|flash\s*(and|&|\+)\s*batt|\bcc\s*\+\s*oc\b/)){ if(has(MW)) return 'hybrid_foam_mw'; if(has(FG)||has(/flash/)) return 'hybrid_foam_fg'; return 'hybrid'; }
+  if(has(/thermal\s*dome|\bdome\b|stairs?\s*cover|pull\s*down\s*stairs?|attic\s*(stairs?|ladder)\s*(cover|tent)/)) return 'dome';
+  if(has(/\bprep\b|prep\s*work|preparation/)) return 'prep';
   if(has(/ignition|\bdc\s*315\b|intumescent|thermal\s*barrier/)) return 'ign';
   if(has(/fire\s*block/)) return 'fb';
   if(has(/foam\s*cans?\b|great\s*stuff|can\s*foam/)) return 'foam_cans';
@@ -9645,7 +9663,7 @@ function _eiPick(pid){
     document.getElementById('ei_price').value=lp?lp:'';
     var si=document.getElementById('ei_spec_info'); if(si) si.style.display='none';
   }
-  try{ _ignNoteSync('ei_notes',_isIgnProd(pid),'_eiIgnLast',false); }catch(_ie){}
+  try{ _catNoteSync('ei_notes',_eiNoteKey(pid,(document.getElementById('ei_name')||{}).value),'_eiNoteLast',false); }catch(_ie){}
   _eiProdShow(); updateEIPricingUI();
   if(was!==pid) toast(String(window._eiProdOrig||'')!==String(pid)?'Material changed — check the price':'Material: '+pr.name);
 }
@@ -9737,7 +9755,8 @@ function _eiOnName(){
     if(window._eiProdManual) return;
     if(pid&&pid!==eiProd){ _eiPick(pid); window._eiAutoPid=pid; var pk=document.getElementById('ei_prod_pick'); if(pk) pk.style.display='none'; }
     if(pid&&pid===eiProd){ var _pn=(getProd(pid)||{}).name||''; _eiAutoHint(window._eiApprox?('✨ Closest material: <b>'+esc(_pn)+'</b> (no '+window._eiApprox+' product)'):'✨ Material picked from the description'); }
-    if(!pid&&window._eiAutoPid&&eiProd===window._eiAutoPid){ eiProd=''; try{ _ignNoteSync('ei_notes',false,'_eiIgnLast',false); }catch(_ie){} var _ep=document.getElementById('ei_price'); if(_ep) _ep.value=''; _eiProdShow(); try{ updateEIPricingUI(); }catch(e){} window._eiAutoPid=null; _eiAutoHint(''); }
+    if(!pid){ try{ _catNoteSync('ei_notes',_eiNoteKey(eiProd,document.getElementById('ei_name').value),'_eiNoteLast',false); }catch(_ie){} }
+    if(!pid&&window._eiAutoPid&&eiProd===window._eiAutoPid){ eiProd=''; try{ _catNoteSync('ei_notes',_eiNoteKey('',(document.getElementById('ei_name')||{}).value),'_eiNoteLast',false); }catch(_ie){} var _ep=document.getElementById('ei_price'); if(_ep) _ep.value=''; _eiProdShow(); try{ updateEIPricingUI(); }catch(e){} window._eiAutoPid=null; _eiAutoHint(''); }
   } else {
     if(pid&&pid!==eiProd){ var pr=getProd(pid); _eiAutoHint('💡 The description suggests <b>'+esc(pr?pr.name:'')+'</b> <button type="button" id="eiUseProd">Use it</button>');
       var u=document.getElementById('eiUseProd'); if(u) u.onclick=function(){ _eiPick(pid); _eiAutoHint(''); }; }
@@ -9792,7 +9811,7 @@ function openEIModal(idx){
     }
     document.getElementById('ei_inch').value=_itInch||'';
     document.getElementById('ei_notes').value=it.notes||'';
-    eiProd=it.productId||null; window._eiIgnLast=_isIgnProd(eiProd);
+    eiProd=it.productId||null; window._eiNoteLast=_eiNoteKey(eiProd,it.name);
     eiPendPh=it.photos?it.photos.slice():[];
     // Show material label if item has a product
     var pr=getProd(eiProd);
@@ -9824,7 +9843,7 @@ function openEIModal(idx){
     document.getElementById('ei_price').value='';
     document.getElementById('ei_inch').value='';
     document.getElementById('ei_notes').value='';
-    eiProd=null; window._eiIgnLast=false;
+    eiProd=null; window._eiNoteLast=null;
     window._eiProdOrig=null;
     _eiProdShow();
     var _spi=document.getElementById('ei_spec_info');
@@ -10716,6 +10735,7 @@ function _n7Rows(){
       if(Math.round(o)===Math.round(n)){ st='= Same'; cls='same'; } else { st='↻ Update · '+fmtN(o)+' → '+fmtN(n)+' SF · keeps $'+(Number(it.price)||0).toFixed(2)+'/SF'; cls='upd'; } }
     var elsewhere=!!(a.sentTo&&(toNew||_n7Norm(a.sentTo)!==cur));
     var def=!_n7.send?true:(toNew?(!a.sentTo&&idx<0):!elsewhere);
+    if(window._n7Touched&&window._n7Touched[i]) def=!!importSel[i];   // the user decided this one: keep it when the list is redrawn
     importSel[i]=def;
     h+='<div class="imp-row"><button class="imp-chk'+(def?' on':'')+'" data-idx="'+i+'" id="ic'+i+'" data-act="imp">'+(def?'✓':'')+'</button><div style="flex:1;min-width:0"><div class="imp-name">'+esc(a.name)+'</div><div class="imp-meta">'+fmtN(a.sf)+' SF · '+esc(_n7Mat(a))+'</div><div class="n7-st '+cls+'">'+esc(st)+(a.sentTo?' <span class="n7-to">→ in '+esc(a.sentTo)+'</span>':'')+'</div></div></div>';
   }
@@ -10842,7 +10862,7 @@ function showImportAreas(pid){
       rw.style.display='none';
     }
   }
-  importSel={};
+  importSel={}; window._n7Touched={};   // a fresh list: nothing touched yet
   var h='';
   if(!_importAreas.length){
     h='<div style="padding:20px;text-align:center;color:#7d8590;font-size:13px">This project has no areas.</div>';
@@ -10866,7 +10886,7 @@ function showImportAreas(pid){
     togImp(b);
   });
 }
-function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':'';}
+function togImp(el){var idx=parseInt(el.getAttribute('data-idx'));importSel[idx]=!importSel[idx];el.className='imp-chk'+(importSel[idx]?' on':'');el.textContent=importSel[idx]?'✓':''; (window._n7Touched||(window._n7Touched={}))[idx]=true;}
 document.getElementById('importBarBtn').addEventListener('click',function(){
   showImportProjects();
 });
