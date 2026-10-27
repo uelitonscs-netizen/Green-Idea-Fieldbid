@@ -1477,7 +1477,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261025-1300</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261026-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -4279,6 +4279,7 @@ function saveEI(){
 // A duplicated job keeps the auto label "... (copy)". Once a real client name is
 // set, adopt it as the job label. Editing the Client field saves through saveEI(),
 // not saveQI(), so this must run from both paths.
+function _clearBlankEst(){ try{ if(!currentProj||!currentProj.id) return; var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===currentProj.id&&ps[i].blankEst){ delete ps[i].blankEst; saveProjs(ps); } } }catch(e){} }
 function _syncJobLabelFromClient(){
   try{
     var _cp=(typeof currentProj!=='undefined')?currentProj:(window.currentProj||null);
@@ -4322,6 +4323,7 @@ function saveQI(){
     }
   }catch(e){ console.warn('saveQI project sync failed:', e); }
   _syncJobLabelFromClient();
+  if(quoteInfo&&String(quoteInfo.client||'').trim()) _clearBlankEst();
   try{ window._clUpsert(quoteInfo); }catch(e){}
   save();
   // Labor / overhead / markup edits live here: refresh the WorkLog summary too
@@ -4972,18 +4974,22 @@ function createProj(){
 }
 
 // NEW EST
+// New estimate = a NEW job (one project holds both the takeoff and the estimate). The job that was open
+// is saved and left exactly as it was. A blank job made by a previous tap is reused instead of piling up.
 function doNewEst(){
-  estItems=[];quoteInfo={client:'',address:''};
-  quoteNum=_qnMax()+1; localStorage.setItem('fb6_qn',String(quoteNum)); quoteInfo.quoteNum=quoteNum;
-  document.getElementById('estQNum').textContent=quoteNum;
-  document.getElementById('qNumber').textContent='#'+quoteNum;
-  document.getElementById('qDate').textContent=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  saveEI();renderEst();toast('New estimate');
+  try{ saveEI(); }catch(e){}
+  var ps=loadProjs();
+  if(currentProj&&currentProj.id){ for(var i=0;i<ps.length;i++){ var o=ps[i]; if(o.id===currentProj.id&&o.blankEst&&!(o.estItems&&o.estItems.length)&&!(o.areas&&o.areas.length)&&!String(o.quoteInfo&&o.quoteInfo.client||'').trim()){ toast('🧮 New estimate #'+(o.quoteInfo&&o.quoteInfo.quoteNum||'')+' · set the client in Quote'); try{ renderEst(); renderQuote(); }catch(e){} return; } } }
+  var np={id:'p_'+Date.now(), name:'New estimate', address:'', areas:[], estItems:[], quoteInfo:{client:'',address:''},
+          created:new Date().toLocaleDateString('en-US'), touchedAt:new Date().toISOString(), blankEst:true};
+  try{ _qnAssignTo(np); }catch(e){} np.name='New estimate #'+(np.quoteInfo.quoteNum||'');
+  ps.unshift(np); saveProjs(ps);
+  try{ switchProjById(np.id); }catch(e){}
+  try{ nvGo('est'); }catch(e){}
+  try{ renderEst(); renderQuote(); }catch(e){}
+  toast('🧮 New estimate #'+np.quoteInfo.quoteNum+' · set the client in Quote');
 }
-document.getElementById('newEstBtn').addEventListener('click',function(){
-  if(estItems.length){appConfirm('Clear current estimate?',function(){doNewEst();},{confirmLabel:'Clear',confirmStyle:'accent'});return;}
-  doNewEst();
-});
+document.getElementById('newEstBtn').addEventListener('click',function(){ doNewEst(); });
 
 // FABs
 document.getElementById('fieldFab').addEventListener('click',function(){openFAModal(-1);});
