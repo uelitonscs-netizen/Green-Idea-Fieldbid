@@ -1487,7 +1487,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261028-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261028-1100</span></div>
 </div>
 
 <div id="field-app">
@@ -5290,16 +5290,16 @@ var _brochurePdfCache={}; // key -> ArrayBuffer of the original PDF
 
 // Which brochures match the materials currently in the estimate?
 function suggestedBrochureKeys(){
-  var present={};
-  for(var i=0;i<estItems.length;i++){
-    var it=estItems[i];
+  var present={}, _srcI=window._docItems||estItems;   // Email together: the items of every estimate in it
+  for(var i=0;i<_srcI.length;i++){
+    var it=_srcI[i];
     var t=it.matType||'';
     if(!t){var m=(typeof deriveMatFromProduct==='function')?deriveMatFromProduct(it.productId,it.inches):null;if(m)t=m.matType;}
-    if(t)present[t]=1;
+    if(t){ present[t]=1; present[String(t).split('_')[0]]=1; }
   }
   // Use THIS project's takeoff areas. The global fieldAreas array may belong to a
   // different job, which made the suggestions match the wrong materials.
-  try{
+  if(!window._docItems) try{
     var _cp=(typeof currentProj!=='undefined')?currentProj:(window.currentProj||null);
     var _src=(_cp&&Array.isArray(_cp.areas)&&_cp.areas.length)?_cp.areas
              :((!_cp&&Array.isArray(fieldAreas))?fieldAreas:null);
@@ -5354,14 +5354,14 @@ function datasheetDefByKey(key){
 
 // Which data sheets match the materials currently in the estimate?
 function suggestedDatasheetKeys(){
-  var present={};
-  for(var i=0;i<estItems.length;i++){
-    var it=estItems[i];
+  var present={}, _srcI=window._docItems||estItems;   // Email together: the items of every estimate in it
+  for(var i=0;i<_srcI.length;i++){
+    var it=_srcI[i];
     var t=it.matType||'';
     if(!t){var m=(typeof deriveMatFromProduct==='function')?deriveMatFromProduct(it.productId,it.inches):null;if(m)t=m.matType;}
-    if(t)present[t]=1;
+    if(t){ present[t]=1; present[String(t).split('_')[0]]=1; }
   }
-  try{
+  if(!window._docItems) try{
     var _cp2=(typeof currentProj!=='undefined')?currentProj:(window.currentProj||null);
     var _src2=(_cp2&&Array.isArray(_cp2.areas)&&_cp2.areas.length)?_cp2.areas
               :((!_cp2&&Array.isArray(fieldAreas))?fieldAreas:null);
@@ -7984,8 +7984,24 @@ function _etBuild(ids,totalOnly){
     var first=jobs[0]; for(var e2=0;e2<jobs.length;e2++){ if(String((jobs[e2].quoteInfo||{}).email||'').trim()){ first=jobs[e2]; break; } }
     window._etInfo={pids:ids.slice(),lines:lines,count:jobs.length};
     var fn='Estimates-'+(client||'Client').replace(/[^a-zA-Z0-9]+/g,'_')+'-'+new Date().toLocaleDateString('en-US').replace(/\//g,'')+'.pdf';
-    openEstimateEmail(bytes,fn,first.id,'combined');
+    _etAttachDocs(jobs,bytes,function(fin){ openEstimateEmail(fin,fn,first.id,'combined'); });
   }).catch(function(e){ toast('Could not build the combined PDF: '+(e&&e.message||e),'err'); });
+}
+// Brochures, data sheets and contract for an Email together: the same steps as a single estimate,
+// suggested from the items of every estimate in it, appended once at the end of the combined PDF.
+function _etAttachDocs(jobs,bytes,done){
+  var all=[]; for(var j=0;j<jobs.length;j++){ var L=jobs[j].estItems||[]; for(var k=0;k<L.length;k++) all.push(L[k]); }
+  window._docItems=all;
+  function finish(keys){ window._docItems=null; if(!keys.length){ done(bytes); return; } if(!window.PDFLib){ toast('PDF library still loading, try again','err'); return; }
+    toast('⏳ Adding the documents…');
+    var b=keys[0], d=keys[1], c=keys[2];
+    loadBrochurePdfs(b).then(function(bp){ return loadDatasheetPdfs(d).then(function(dp){ return loadContractPdfs(c).then(function(cp){ return mergeEstimateWithBrochures(bytes,bp.concat(dp).concat(cp)); }); }); })
+      .then(function(m){ done(m); }).catch(function(e){ toast('Could not add the documents: '+(e&&e.message||e)+' — sending the estimates alone','err'); done(bytes); }); }
+  try{ openBrochureModal(function(bK,bM){ closeOv('brochureOverlay'); var B=(bM!=='skip'&&bK.length)?bK:[];
+      openDatasheetModal(function(dK,dM){ closeOv('datasheetOverlay'); var D=(dM!=='skip'&&dK.length)?dK:[];
+        openContractModal(function(cK,cM){ closeOv('contractOverlay'); var C=(cM!=='skip'&&cK.length)?cK:[];
+          finish((B.length+D.length+C.length)?[B,D,C]:[]); }); }); });
+  }catch(e){ window._docItems=null; done(bytes); }
 }
 var _etJA=_jobAct; _jobAct=function(a,pid,btn){ if(a==='emailtog'){ openEmailTogether(pid); return; } return _etJA.apply(this,arguments); };
 
