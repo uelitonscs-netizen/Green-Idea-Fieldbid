@@ -1477,7 +1477,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261026-0900</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261028-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -3797,7 +3797,11 @@ function setLastPrice(matType, price){
 }
 
 function fmt(n){return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
-function fmtN(n){return (''+Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function fmtN(n){ n=Number(n)||0; var r=Math.round(n*100)/100, neg=r<0; r=Math.abs(r); var ip=Math.floor(r+1e-9), fp=Math.round((r-ip)*100); if(fp>=100){ ip+=1; fp=0; }
+  var t=(''+ip).replace(/\B(?=(\d{3})+(?!\d))/g,','); if(fp>0){ var d=(fp<10?'0':'')+fp; if(d.charAt(1)==='0') d=d.charAt(0); t+='.'+d; } return (neg?'-':'')+t; }
+// $/SF with its real decimals (2 to 5): 2.5 → 2.50 · 0.5363 × 5.5" = 2.94965 → 2.94965
+function fmtRate(n){ n=Number(n)||0; var t=(Math.round(n*100000)/100000).toFixed(5); while(t.length>t.indexOf('.')+3&&t.charAt(t.length-1)==='0') t=t.slice(0,-1); return t; }
+window.fmtRate=fmtRate;
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function getProd(id){for(var i=0;i<products.length;i++)if(products[i].id===id)return products[i];return null;}
 window.getProd=getProd;   // used by sendToWorkLog / computeMaterialUsage (outside this scope)
@@ -3846,7 +3850,7 @@ function getEffectivePrice(it){
   // Legacy guard: per-inch, has inches, but no pricePerInch recorded AND
   // price looks like a raw rate (price equals product base price)
   if(isPerInch&&!isHybrid&&inch>0&&(!it.pricePerInch||it.pricePerInch===0)){
-    return parseFloat((pr*inch).toFixed(2));
+    return Math.round(pr*inch*1000000)/1000000;
   }
   return pr;
 }
@@ -3935,12 +3939,12 @@ function _twAreaToItem(area,oldArea){
   if(ix<0&&hits.length===1) ix=hits[0]; if(ix<0) return;
   var it=L[ix], matMoved=!oldArea||String(oldArea.matCat||'')!==String(area.matCat||'')||String(oldArea.matType||'')!==String(area.matType||'')||(oldArea.fgR||0)!==(area.fgR||0)||(oldArea.mwR||0)!==(area.mwR||0)||(oldArea.celR||0)!==(area.celR||0);
   var pid=matMoved?_twProdForArea(area):(it.productId||_twProdForArea(area)), prodChanged=matMoved&&!!(pid&&String(it.productId||'')!==String(pid));
-  it.name=area.name; it.fromArea=area.name; it.areaId=area.aid; it.notes=area.notes||''; it.sf=Math.round((parseFloat(area.sf)||0)*10)/10;
+  it.name=area.name; it.fromArea=area.name; it.areaId=area.aid; it.notes=area.notes||''; it.sf=Math.round((parseFloat(area.sf)||0)*100)/100;
   if(pid){ it.productId=pid; it.matType=area.matType||''; it.matCat=area.matCat||''; it.ccInch=area.ccInch||0; it.ocInch=area.ocInch||0; it.fgR=area.fgR||0; it.celR=area.celR||0; it.mwR=area.mwR||0; it.matChanged=false; it.spec=_twSpec(it); }
   var inn=_twInches(area), pr=pid?getProd(pid):null;
   if(prodChanged&&pr){ var lp=0; try{ lp=getLastPrice('prod_'+pid, pr.price||0); }catch(e){ lp=pr.price||0; }   // new material → its own last price
-    if(pr.pricingType==='per_inch'&&pr.cat!=='Hybrid'){ it.pricePerInch=lp; } else { it.pricePerInch=0; it.price=parseFloat((lp||it.price||0).toFixed(2)); } }
-  if(pr&&pr.pricingType==='per_inch'&&pr.cat!=='Hybrid'&&inn>0){ it.inches=inn; if(it.pricePerInch>0) it.price=parseFloat((it.pricePerInch*inn).toFixed(2)); }
+    if(pr.pricingType==='per_inch'&&pr.cat!=='Hybrid'){ it.pricePerInch=lp; } else { it.pricePerInch=0; it.price=Math.round((lp||it.price||0)*1000000)/1000000; } }
+  if(pr&&pr.pricingType==='per_inch'&&pr.cat!=='Hybrid'&&inn>0){ it.inches=inn; if(it.pricePerInch>0) it.price=Math.round(it.pricePerInch*inn*1000000)/1000000; }
   window.estItems=L; estItems=L; try{ saveEI(); }catch(e){} try{ if(typeof renderEst==='function') renderEst(); }catch(e){}
   toast('🔁 Estimate item updated too');
 }
@@ -3956,10 +3960,10 @@ function _tkSpec(a){ var d=MAT_CAT_DATA[a.matCat]||{type:'other',label:a.matCat|
 function _tkSF(a,rowsOverride){
   var t=0, m=a.calcMode||'manual', R=rowsOverride||null, i;
   if(m==='walls'||m==='floor'){ var L=R?R:(m==='walls'?a.wallRows:a.floorRows)||[];
-    for(i=0;i<L.length;i++){ var l=parseSum(String(L[i].l||'')), h=parseSum(String(L[i].h||'')), q=Math.max(1,Math.round(Number(L[i].q)||1)); if(l>0&&h>0) t+=Math.round(l*h*q*10)/10; } }
+    for(i=0;i<L.length;i++){ var l=parseSum(String(L[i].l||'')), h=parseSum(String(L[i].h||'')), q=Math.max(1,Math.round(Number(L[i].q)||1)); if(l>0&&h>0) t+=Math.round(l*h*q*100)/100; } }
   else if(m==='roof'){ var RR=R?R:(a.roofRows||[]); for(i=0;i<RR.length;i++) t+=calcRoofRow(RR[i]).sf; if(a.roofWaste&&t>0) t=t*1.10; }
   else { t=R?parseFloat(R.sf)||0:(parseFloat(a.sfBase)||parseFloat(a.sf)||0); }
-  t=Math.round(t*10)/10; var mult=parseFloat(a.mult)||1; if(mult<1) mult=1; return {base:t, sf:Math.round(t*mult*10)/10};
+  t=Math.round(t*100)/100; var mult=parseFloat(a.mult)||1; if(mult<1) mult=1; return {base:t, sf:Math.round(t*mult*100)/100};
 }
 function _tkAid(){ return 'a_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function _tkParse(text){
@@ -3980,7 +3984,7 @@ function _tkArea(x,source){
     if(mode==='walls') a.wallRows=rows; else a.floorRows=rows; }
   else if(mode==='roof'){ a.roofRows=[]; for(k=0;k<(x.roof||[]).length;k++){ var rr=x.roof[k]||{}; a.roofRows.push({type:rr.type||'gable',a:String(rr.a!=null?rr.a:(rr.w!=null?rr.w:'')),l:String(rr.l!=null?rr.l:''),c:String(rr.c!=null?rr.c:''),pitch:String(rr.pitch||'8-12').replace(':','-').replace('/','-'),q:Math.max(1,Math.round(Number(rr.q)||1))}); } }
   else { a.calcMode='manual'; a.sfBase=parseFloat(x.sf)||0; }
-  var r2=_tkSF(a); a.sfBase=(mode==='manual')?(parseFloat(x.sf)||0):r2.base; a.sf=r2.sf; if(mode==='manual') a.sf=Math.round(a.sfBase*a.mult*10)/10;
+  var r2=_tkSF(a); a.sfBase=(mode==='manual')?(parseFloat(x.sf)||0):r2.base; a.sf=r2.sf; if(mode==='manual') a.sf=Math.round(a.sfBase*a.mult*100)/100;
   if(CAT_NOTES[mat]&&String(a.notes).indexOf(CAT_NOTES[mat])<0) a.notes=(a.notes?a.notes+'\n':'')+CAT_NOTES[mat];
   a.spec=_tkSpec(a); return a;
 }
@@ -4054,7 +4058,7 @@ function fbSiteCheck(){
   S.sort(function(x,y){ var px=(A[x.i].source==='plans'&&!A[x.i].siteCheckedAt)?0:1, py=(A[y.i].source==='plans'&&!A[y.i].siteCheckedAt)?0:1; return px-py; });
   var ov=_tkOv('scOv2'); ov.classList.add('on'); ov.style.display='flex';
   function money(n){ return (n<0?'−':'+')+'$'+Math.abs(Math.round(n)).toLocaleString('en-US'); }
-  function stat(s){ var a=A[s.i], ent=_tkEntered(a,s.site), fs=ent?_tkSF(a,s.site).sf:a.sf, d=Math.round((fs-a.sf)*10)/10, pct=a.sf?Math.round(d/a.sf*1000)/10:0, it=_tkItemFor(a), usd=it?d*(parseFloat(it.price)||0):0; return {ent:ent,fs:fs,d:d,pct:pct,usd:usd,it:it}; }
+  function stat(s){ var a=A[s.i], ent=_tkEntered(a,s.site), fs=ent?_tkSF(a,s.site).sf:a.sf, d=Math.round((fs-a.sf)*100)/100, pct=a.sf?Math.round(d/a.sf*1000)/10:0, it=_tkItemFor(a), usd=it?d*(parseFloat(it.price)||0):0; return {ent:ent,fs:fs,d:d,pct:pct,usd:usd,it:it}; }
   function inp(sIdx,ri,f,v,ph){ return '<input class="sc-in'+(String(v).trim()?'':' empty')+'" inputmode="decimal" data-s="'+sIdx+'" data-r="'+ri+'" data-f="'+f+'" value="'+esc(String(v))+'" placeholder="'+ph+'">'; }
   function draw(){
     var h='<div class="modal tk-m"><div class="mhandle"></div><div class="mtitle">✅ Site check</div><div class="tk-sub">'+esc(currentProj.name)+' · plans vs what you measure today</div>';
@@ -4063,8 +4067,8 @@ function fbSiteCheck(){
       h+='<div class="sc-a"><div class="sc-h"><b>'+esc(a.name)+'</b>'+chip+'</div>';
       if(m==='walls'||m==='floor'){ var P=_tkPlanRows(a); h+='<div class="sc-row sc-hd"><span></span><span>'+(m==='walls'?'Length':'Length')+'</span><span>'+(m==='walls'?'Height':'Width')+'</span><span>SF</span></div>';
         for(var r=0;r<P.length;r++){ var pr=P[r], sr=s.site[r]||{l:'',h:''}, q=(pr.q>1?' ×'+pr.q:'');
-          h+='<div class="sc-row"><span class="sc-k">📐 Plan</span><span class="sc-v">'+esc(String(pr.l||''))+'</span><span class="sc-v">'+esc(String(pr.h||''))+q+'</span><span class="sc-v">'+fmtN(Math.round(parseSum(String(pr.l||''))*parseSum(String(pr.h||''))*(pr.q||1)*10)/10)+'</span></div>';
-          h+='<div class="sc-row"><span class="sc-k">📏 Site</span>'+inp(k,r,'l',sr.l,'length')+inp(k,r,'h',sr.h,m==='walls'?'height':'width')+'<span class="sc-v"><b>'+fmtN(Math.round(parseSum(String(sr.l||''))*parseSum(String(sr.h||''))*(pr.q||1)*10)/10)+'</b></span></div>'; } }
+          h+='<div class="sc-row"><span class="sc-k">📐 Plan</span><span class="sc-v">'+esc(String(pr.l||''))+'</span><span class="sc-v">'+esc(String(pr.h||''))+q+'</span><span class="sc-v">'+fmtN(Math.round(parseSum(String(pr.l||''))*parseSum(String(pr.h||''))*(pr.q||1)*100)/100)+'</span></div>';
+          h+='<div class="sc-row"><span class="sc-k">📏 Site</span>'+inp(k,r,'l',sr.l,'length')+inp(k,r,'h',sr.h,m==='walls'?'height':'width')+'<span class="sc-v"><b>'+fmtN(Math.round(parseSum(String(sr.l||''))*parseSum(String(sr.h||''))*(pr.q||1)*100)/100)+'</b></span></div>'; } }
       else if(m==='roof'){ var PR=_tkPlanRows(a); h+='<div class="sc-row sc-hd"><span></span><span>A</span><span>L</span><span>C / SF</span></div>';
         for(var r2=0;r2<PR.length;r2++){ var pr2=PR[r2], sr2=s.site[r2]||{a:'',l:'',c:''}, needC=(pr2.type==='hiprect'||pr2.type==='mansard');
           h+='<div class="sc-row"><span class="sc-k">📐 '+esc(pr2.type||'gable')+(pr2.pitch?' '+esc(String(pr2.pitch).replace('-',':')):'')+'</span><span class="sc-v">'+esc(String(pr2.a||''))+'</span><span class="sc-v">'+esc(String(pr2.l||''))+'</span><span class="sc-v">'+(needC?esc(String(pr2.c||'')):fmtN(calcRoofRow(pr2).sf))+'</span></div>';
@@ -4087,7 +4091,7 @@ function fbSiteCheck(){
   function review(){ var planSF=0, fieldSF=0, changed=[], usd=0, big=null;
     for(var i=0;i<S.length;i++){ var st=stat(S[i]), a=A[S[i].i]; planSF+=a.sf; fieldSF+=st.fs; if(st.ent&&st.d!==0){ changed.push({k:i,st:st,a:a}); usd+=st.usd; if(!big||Math.abs(st.pct)>Math.abs(big.st.pct)) big={st:st,a:a}; } }
     var h='<div class="modal tk-m"><div class="mhandle"></div><div class="mtitle">Plan vs field</div><div class="tk-sub">'+esc(currentProj.name)+' · checked '+new Date().toLocaleDateString('en-US')+'</div>'+
-      '<div class="sc-tot"><div class="sc-big"><div><span>Plans</span><b>'+fmtN(planSF)+'</b></div><div><span>Field</span><b>'+fmtN(fieldSF)+'</b></div><div><span>Difference</span><b class="'+(fieldSF-planSF>0?'amb':(fieldSF-planSF<0?'red':'ok'))+'">'+((fieldSF-planSF)>0?'+':'')+fmtN(Math.round((fieldSF-planSF)*10)/10)+' SF</b></div></div>'+
+      '<div class="sc-tot"><div class="sc-big"><div><span>Plans</span><b>'+fmtN(planSF)+'</b></div><div><span>Field</span><b>'+fmtN(fieldSF)+'</b></div><div><span>Difference</span><b class="'+(fieldSF-planSF>0?'amb':(fieldSF-planSF<0?'red':'ok'))+'">'+((fieldSF-planSF)>0?'+':'')+fmtN(Math.round((fieldSF-planSF)*100)/100)+' SF</b></div></div>'+
       '<div class="sc-line"><span>Areas changed</span><b>'+changed.length+' of '+S.length+'</b></div><div class="sc-line"><span>$ at the same prices</span><b class="'+(usd>0?'amb':'')+'">'+money(usd)+'</b></div>'+(big?'<div class="sc-line"><span>Biggest change</span><b>'+esc(big.a.name)+' '+(big.st.pct>0?'+':'')+big.st.pct+'%</b></div>':'')+'</div>'+
       '<div class="ce-h" style="padding-top:6px">What to do with the field measurements</div>'+
       '<button type="button" class="sc-opt'+(mode==='all'?' on':'')+'" data-mode="all"><b>📏 Use field measurements</b><small>Areas and the estimate follow what you measured · prices are kept · plans stay as history</small></button>'+
@@ -4104,7 +4108,7 @@ function fbSiteCheck(){
       var use=(mode==='all')||(mode==='pick'&&picked[i]); if(!a.aid) a.aid=_tkAid();
       if(use&&st.d!==0){ var old=JSON.parse(JSON.stringify(a)); if(!a.plan) a.plan={calcMode:a.calcMode,wallRows:a.wallRows,floorRows:a.floorRows,roofRows:a.roofRows,sf:a.sf,sfBase:a.sfBase,savedAt:now};
         var m=a.calcMode||'manual'; if(m==='walls') a.wallRows=s.site; else if(m==='floor') a.floorRows=s.site; else if(m==='roof') a.roofRows=s.site; else a.sfBase=parseFloat(s.site.sf)||0;
-        var r=_tkSF(a); a.sfBase=(m==='manual')?a.sfBase:r.base; a.sf=(m==='manual')?Math.round(a.sfBase*(parseFloat(a.mult)||1)*10)/10:r.sf; n++;
+        var r=_tkSF(a); a.sfBase=(m==='manual')?a.sfBase:r.base; a.sf=(m==='manual')?Math.round(a.sfBase*(parseFloat(a.mult)||1)*100)/100:r.sf; n++;
         try{ _twAreaToItem(a,old); }catch(e){} }
       else { a.siteSF=st.fs; }
       a.source='site'; a.siteCheckedAt=now; delete a.siteDraft; }
@@ -4908,41 +4912,35 @@ function renderProjList(keepScroll){
 window.renderProjList=renderProjList;
 document.addEventListener('click',function(e){ var c=e.target&&e.target.closest?e.target.closest('#pjChips .pj-chip'):null; if(!c) return; try{ localStorage.setItem('fb6_pjFilter',c.getAttribute('data-f')); }catch(x){} var sr=document.getElementById('projSearch'); if(sr&&sr.value){ sr.value=''; window._projSearchQ=''; } renderProjList(); });
 function openEditProjModal(pid){
-  var projs=loadProjs();
-  var p=projs.find(function(x){return x.id===pid;});
+  var projs=loadProjs(), p=null; for(var i=0;i<projs.length;i++) if(projs[i].id===pid) p=projs[i];
   if(!p) return;
-  var name=prompt('Edit project name:',p.name||'');
-  if(name===null) return;
-  var address=prompt('Edit address:',p.address||'');
-  if(address===null) return;
-  var _oldName=p.name;
-  p.name=name.trim()||p.name;
-  p.address=address.trim();
-  // The estimate PDF prints quoteInfo.client / quoteInfo.address, not p.name.
-  // Keep them in sync, otherwise a renamed job still prints the old name.
-  if(!p.quoteInfo)p.quoteInfo={};
-  // The job label and the client name are the same thing in practice, so renaming
-  // the job always renames the client the PDF prints. (Set a different client in the
-  // Quote tab afterwards if you ever need them to differ.)
-  p.quoteInfo.client=p.name;
-  if(!p.quoteInfo.address || p.quoteInfo.address!==p.address) p.quoteInfo.address=p.address;
-  saveProjs(projs);
-  if(currentProj&&currentProj.id===pid){
-    currentProj.name=p.name;currentProj.address=p.address;
-    currentProj.quoteInfo=p.quoteInfo;
-    // If this job is the one open in the Estimator, refresh the live quote too.
-    try{
-      if(typeof quoteInfo!=='undefined'&&quoteInfo){
-        quoteInfo.client=p.quoteInfo.client;
-        quoteInfo.address=p.quoteInfo.address;
-        localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo));
-        if(typeof renderQuote==='function')renderQuote();
-      }
-    }catch(e){}
-    updateProjHeader();
-  }
-  renderProjList();
-  toast('✅ Project updated');
+  var q=p.quoteInfo||{};
+  var ov=document.getElementById('pjEdOv'); if(!ov){ ov=document.createElement('div'); ov.id='pjEdOv'; ov.className='overlay'; document.body.appendChild(ov); }
+  ov.innerHTML='<div class="modal cl-m"><div class="mhandle"></div><div class="mtitle">✏️ Edit job</div>'+
+    '<div class="ce-g"><label>Name / client<div style="display:flex;gap:8px"><input id="pjEdName" style="flex:1;min-width:0" value="'+esc(p.name||'')+'"><button type="button" class="q-pick" id="pjEdPick">👥 Pick</button></div></label>'+
+    '<div class="ce-2"><label>Phone<input id="pjEdPhone" inputmode="tel" value="'+esc(q.phone||'')+'" placeholder="(508) 555-0000"></label><label>Email<input id="pjEdEmail" inputmode="email" autocapitalize="off" value="'+esc(q.email||'')+'" placeholder="client@email.com"></label></div>'+
+    '<label>Address<input id="pjEdAddr" value="'+esc(p.address||q.address||'')+'" placeholder="Street, town"></label></div>'+
+    '<div class="ce-btns"><button type="button" class="ce-cancel" id="pjEdCancel">Cancel</button><button type="button" class="ce-go" id="pjEdSave">✓ Save</button></div></div>';
+  ov.classList.add('on'); ov.style.display='flex';
+  function close(){ ov.classList.remove('on'); ov.style.display='none'; }
+  document.getElementById('pjEdCancel').onclick=close;
+  document.getElementById('pjEdPick').onclick=function(){ if(!window.fbClientPick) return; window.fbClientPick(function(c){ document.getElementById('pjEdName').value=c.name||''; if(c.phone) document.getElementById('pjEdPhone').value=c.phone; if(c.email) document.getElementById('pjEdEmail').value=c.email; if(c.address) document.getElementById('pjEdAddr').value=c.address; }); };
+  document.getElementById('pjEdSave').onclick=function(){
+    var nm=document.getElementById('pjEdName').value.trim(), ph=document.getElementById('pjEdPhone').value.trim(), em=document.getElementById('pjEdEmail').value.trim(), ad=document.getElementById('pjEdAddr').value.trim();
+    var ps=loadProjs(), pj=null; for(var k=0;k<ps.length;k++) if(ps[k].id===pid) pj=ps[k]; if(!pj){ close(); return; }
+    pj.name=nm||pj.name; pj.address=ad;
+    // The estimate PDF prints quoteInfo.client / address / phone / email: keep them in step with the job
+    pj.quoteInfo=pj.quoteInfo||{}; pj.quoteInfo.client=pj.name; pj.quoteInfo.address=ad; pj.quoteInfo.phone=ph; pj.quoteInfo.email=em;
+    pj.touchedAt=new Date().toISOString();
+    saveProjs(ps);
+    try{ window._clUpsert(pj.quoteInfo); }catch(e){}
+    if(currentProj&&currentProj.id===pid){
+      currentProj.name=pj.name; currentProj.address=pj.address; currentProj.quoteInfo=pj.quoteInfo;
+      try{ if(typeof quoteInfo!=='undefined'&&quoteInfo){ quoteInfo.client=pj.quoteInfo.client; quoteInfo.address=ad; quoteInfo.phone=ph; quoteInfo.email=em; localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); if(typeof renderQuote==='function') renderQuote(); } }catch(e){}
+      updateProjHeader();
+    }
+    close(); renderProjList(); toast('✓ '+pj.name+' saved');
+  };
 }
 function createProj(){
   var name=document.getElementById('newProjName').value.trim();
@@ -5109,7 +5107,7 @@ function formatDimText(a, indent){
     var hh = (typeof parseSum==='function') ? parseSum(hr) : parseFloat(hr);
     if(l>0&&hh>0){
       var _q = Math.max(1,Math.round(Number(rows[i].q)||1));
-      var sf = Math.round(l*hh*_q*10)/10;
+      var sf = Math.round(l*hh*_q*100)/100;
       out.push(pad + '- ' + lbl + ': ' + lr + ' x ' + hr + (_q>1?' x'+_q:'') + ' = ' + sf + ' SF');
     }
   }
@@ -5159,7 +5157,7 @@ function formatDimRows(a, opts){
     var hh = (typeof parseSum==='function') ? parseSum(hr) : parseFloat(hr);
     if(l>0&&hh>0){
       var _q = Math.max(1,Math.round(Number(rows[i].q)||1));
-      var sf = Math.round(l*hh*_q*10)/10;
+      var sf = Math.round(l*hh*_q*100)/100;
       lines.push('<div class="card-dim-row">'+esc(lr)+' \u00d7 '+esc(hr)+(_q>1?' \u00d7'+_q:'')+' = <strong>'+sf+'</strong> SF</div>');
     }
   }
@@ -6927,7 +6925,7 @@ function renderEst(){
         h+='<div class="drag-handle" data-idx="'+i+'" style="position:absolute;top:0;left:0;bottom:0;width:38px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#f0a02c,#d97a1a);border-radius:14px 0 0 14px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2" title="Drag to reorder"><span style="color:#1a1200;font-size:22px;font-weight:900;letter-spacing:-2px;line-height:1">⁝⁝</span></div>';
       }
       if(it.photos&&it.photos.length){h+='<div class="card-photos">';for(var p=0;p<it.photos.length;p++)h+='<span class="ph-w'+phCls(it.photos[p])+'"><img class="card-photo" src="'+it.photos[p]+'" data-ii="'+i+'" data-pi="'+p+'" data-cap="'+esc(it.name||'')+'" onclick="openLB(this)" alt=""><i class="ph-b ph-wo">WO</i><i class="ph-b ph-est">EST</i></span>';h+='</div>';}
-      h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+effPrice.toFixed(2)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
+      h+='<div class="card-body"><div class="card-em e">'+em+'</div><div class="card-info"><div class="card-name">'+esc(it.name)+'</div><div class="card-type">'+esc(pn)+'</div><div class="card-sf">'+fmtN(it.sf)+' SF · $'+fmtRate(effPrice)+'/SF</div>'+(it.notes?'<div class="card-note">'+esc(it.notes)+'</div>':'')+(it.photos&&it.photos.length?'<div class="card-ph">📷 '+it.photos.length+' photo'+(it.photos.length>1?'s':'')+'</div>':'')+'</div><div class="card-cost">'+fmt(cost)+'</div></div>';
       h+='<div class="card-acts"><button class="ca ph" data-idx="'+i+'" data-act="ph">📷 Photo</button><button class="ca" data-idx="'+i+'" data-act="edit">✏️ Edit</button><button class="ca" data-idx="'+i+'" data-act="sec">📂 Section</button><button class="ca del" data-idx="'+i+'" data-act="del">🗑 Del</button></div></div>';
     }
   }
@@ -7184,7 +7182,7 @@ function renderQuote(){
   var lines='';
   for(var j=0;j<estItems.length;j++){
     var it=estItems[j];var c=calcItem(it);var effPrice=getEffectivePrice(it);var pr=getProd(it.productId);
-    lines+='<div class="q-trow"><div class="q-tn">'+(pr?pr.emoji:'📦')+' '+esc(it.name)+(it.notes?'<div class="q-tnote">'+esc(it.notes)+'</div>':'')+'</div><div class="q-tv">'+fmtN(it.sf)+'</div><div class="q-tv">$'+getEffectivePrice(it).toFixed(2)+'</div><div class="q-tt">'+fmt(c)+'</div></div>';
+    lines+='<div class="q-trow"><div class="q-tn">'+(pr?pr.emoji:'📦')+' '+esc(it.name)+(it.notes?'<div class="q-tnote">'+esc(it.notes)+'</div>':'')+'</div><div class="q-tv">'+fmtN(it.sf)+'</div><div class="q-tv">$'+fmtRate(getEffectivePrice(it))+'</div><div class="q-tt">'+fmt(c)+'</div></div>';
   }
   if(!estItems.length)lines='<div style="padding:20px;text-align:center;color:#4d5560;font-size:13px">No items yet</div>';
   document.getElementById('quoteLines').innerHTML=lines;
@@ -7434,8 +7432,8 @@ function calcRoofRow(r){
   else if(r.type==='hipsq'){ if(a>0&&l>0){sf=a*l;det=a+' × '+l+' (half base)';} }
   else if(r.type==='leanto'){ if(a>0&&l>0){sf=a*l;det=a+' × '+l;} }
   else if(r.type==='mansard'){ if(a>0&&l>0&&cv>0){sf=(a+l)*cv/2;det='('+a+' + '+l+') × '+cv+' ÷ 2';} }
-  sf=Math.round(sf*10)/10;
-  var _rq=Math.max(1,Math.round(Number(r.q)||1)); if(_rq>1&&sf>0){ sf=Math.round(sf*_rq*10)/10; det='('+det+') ×'+_rq; }
+  sf=Math.round(sf*100)/100;
+  var _rq=Math.max(1,Math.round(Number(r.q)||1)); if(_rq>1&&sf>0){ sf=Math.round(sf*_rq*100)/100; det='('+det+') ×'+_rq; }
   return {sf:sf, detail:det?(det+' = '+sf+' SF'):''};
 }
 
@@ -7533,9 +7531,9 @@ function calcRoofSF(){
   var w=document.getElementById('roofWaste');
   if(w&&w.checked&&total>0){
     total=total*1.10;
-    lines.push('+10% waste = '+Math.round(total*10)/10+' SF');
+    lines.push('+10% waste = '+Math.round(total*100)/100+' SF');
   }
-  return {sf:Math.round(total*10)/10, detail:lines.join('\n')};
+  return {sf:Math.round(total*100)/100, detail:lines.join('\n')};
 }
 
 
@@ -7590,7 +7588,7 @@ function projectEstimateTotal(p){
       var isHy=prod&&prod.cat==='Hybrid';
       var inch=Number(it.inches)||0;
       if(isPI&&!isHy&&inch>0&&(!it.pricePerInch||it.pricePerInch===0)){
-        eff=parseFloat((eff*inch).toFixed(2));
+        eff=Math.round(eff*inch*1000000)/1000000;
       }
     }catch(e){}
     var itMk=(mkType==='pct')?mkVal:0;
@@ -8075,7 +8073,7 @@ function n2Takeoff(){
   for(var i=0;i<A.length;i++){ var a=A[i]; sf+=Number(a.sf)||0; ph+=(a.photos||[]).length; var lb=_n2Label(a), k=_n2Color(a.matCat)+'|'+lb; if(!mats[k]){ mats[k]=0; order.push(k); } mats[k]+=Number(a.sf)||0; }
   var sum=document.getElementById('n2Sum'); if(!sum){ sum=document.createElement('div'); sum.id='n2Sum'; fa.insertBefore(sum,fa.firstChild); }
   if(A.length){ var m=''; for(var j=0;j<order.length;j++){ var parts=order[j].split('|'); m+='<span><i style="background:'+parts[0]+'"></i>'+esc(parts[1])+' '+fmtN(Math.round(mats[order[j]]))+' SF</span>'; }
-    sum.innerHTML='<div class="l1">'+A.length+' area'+(A.length!==1?'s':'')+' · <em>'+fmtN(Math.round(sf))+' SF</em>'+(ph?' · '+ph+' photo'+(ph!==1?'s':''):'')+'</div><div class="mats">'+m+'</div>'; sum.style.display='block'; }
+    sum.innerHTML='<div class="l1">'+A.length+' area'+(A.length!==1?'s':'')+' · <em>'+fmtN(sf)+' SF</em>'+(ph?' · '+ph+' photo'+(ph!==1?'s':''):'')+'</div><div class="mats">'+m+'</div>'; sum.style.display='block'; }
   else sum.style.display='none';
   if(!A.length){
     list.innerHTML='<div class="n2-empty"><div class="ic">📐</div><b>No areas yet</b>Measure the first area of this job.<div class="eb"><button type="button" class="g" id="n2Add">+ Add area</button><button type="button" class="w" id="n2Fav">★ From a favorite</button></div></div>';
@@ -8092,7 +8090,7 @@ function n2Takeoff(){
       h+='<div class="n2a"><div class="n2row">';
       h+=ps.length?'<button type="button" class="n2th" data-n2="photos" data-i="'+i2+'" style="background-image:url(\''+ps[0]+'\')"><b>📷 '+ps.length+'</b></button>':'<button type="button" class="n2th n" data-act="ph" data-idx="'+i2+'">📷</button>';
       h+='<div class="n2mid"><b>'+esc(a2.name||'Area')+((a2.source==='plans'&&!a2.siteCheckedAt)?' <i class="src-chip plan">📐 plan</i>':((a2.siteCheckedAt||a2.source==='site')?' <i class="src-chip site">📏 site</i>':''))+'</b><div class="m"><i style="background:'+_n2Color(a2.matCat)+'"></i>'+esc(lb2)+(thk?' · '+esc(thk):(spec&&spec.toLowerCase().indexOf(lb2.toLowerCase())<0?' · '+esc(spec):''))+'</div>'+(a2.notes?'<div class="nt">📋 '+esc(a2.notes)+'</div>':'')+'</div>';
-      h+='<div class="n2rt"><div class="sf">'+fmtN(Math.round(Number(a2.sf)||0))+' <small>SF</small></div><div class="ib"><button type="button" data-act="ph" data-idx="'+i2+'" aria-label="Add photo">📷</button><button type="button" data-act="edit" data-idx="'+i2+'" aria-label="Edit">✏️</button><button type="button" data-n2="more" data-i="'+i2+'" aria-label="More">⋯</button></div></div></div>';
+      h+='<div class="n2rt"><div class="sf">'+fmtN(Number(a2.sf)||0)+' <small>SF</small></div><div class="ib"><button type="button" data-act="ph" data-idx="'+i2+'" aria-label="Add photo">📷</button><button type="button" data-act="edit" data-idx="'+i2+'" aria-label="Edit">✏️</button><button type="button" data-n2="more" data-i="'+i2+'" aria-label="More">⋯</button></div></div></div>';
       var _dims=''; try{ _dims=formatDimRows(a2)||''; }catch(_de){}
       if(_dims) h+='<div class="n2dims">'+_dims+'</div>';
       if(ps.length){ h+='<div class="n2strip" id="n2s'+i2+'" style="display:none">'; for(var p=0;p<ps.length;p++) h+='<span class="ph-w'+phCls(ps[p])+'"><img class="card-photo" src="'+ps[p]+'" data-ii="'+i2+'" data-pi="'+p+'" data-cap="'+esc(a2.name||'')+'" onclick="openLB(this)" alt=""><i class="ph-b ph-wo">WO</i><i class="ph-b ph-est">EST</i></span>'; h+='</div>'; }
@@ -8258,7 +8256,7 @@ function n5Bar(){
   var E=document.getElementById('est-app'), it=document.getElementById('ep-items'), show=E&&E.style.display==='block'&&it&&/\bon\b/.test(it.className)&&estItems&&estItems.length&&!(document.getElementById('reorderToggleBtn')&&/done/i.test(document.getElementById('reorderToggleBtn').textContent));
   var sf=0; for(var i=0;i<(estItems||[]).length;i++) sf+=Number(estItems[i].sf)||0;
   if(show){ document.getElementById('n5BarTot').textContent=(document.getElementById('eTotalCost')||{}).textContent||'';
-    document.getElementById('n5BarSub').textContent='Total · '+estItems.length+' item'+(estItems.length!==1?'s':'')+' · '+fmtN(Math.round(sf))+' SF · '+((document.getElementById('eTotalNote')||{}).textContent||''); }
+    document.getElementById('n5BarSub').textContent='Total · '+estItems.length+' item'+(estItems.length!==1?'s':'')+' · '+fmtN(sf)+' SF · '+((document.getElementById('eTotalNote')||{}).textContent||''); }
   document.body.classList.toggle('n5-bar',!!show);
 }
 (function(){
@@ -8855,9 +8853,9 @@ function invBuildFromEstimate(p){
   var hasDc=qi.discount!==undefined&&qi.discount!==null&&qi.discount!=='', dcVal=hasDc?(Number(qi.discount)||0):0, dcType=(qi.discountType==='usd')?'usd':'pct';
   var ei=p.estItems||[], sub=0;
   for(var i=0;i<ei.length;i++){ var it=ei[i], sf=Number(it.sf)||0, eff=Number(it.price)||0;
-    try{ var prod=it.productId?getProd(it.productId):null, inch=Number(it.inches)||0; if(prod&&prod.pricingType==='per_inch'&&prod.cat!=='Hybrid'&&inch>0&&(!it.pricePerInch||it.pricePerInch===0)) eff=parseFloat((eff*inch).toFixed(2)); }catch(e){}
+    try{ var prod=it.productId?getProd(it.productId):null, inch=Number(it.inches)||0; if(prod&&prod.pricingType==='per_inch'&&prod.cat!=='Hybrid'&&inch>0&&(!it.pricePerInch||it.pricePerInch===0)) eff=Math.round(eff*inch*1000000)/1000000; }catch(e){}
     var rate=eff*(1+((mkType==='pct')?mkVal:0)/100), amt=_invR2(sf*rate); sub+=amt;
-    items.push({kind:'item',name:it.name||'Item',sf:Math.round(sf*10)/10,rate:_invR2(rate),amount:amt}); }
+    items.push({kind:'item',name:it.name||'Item',sf:Math.round(sf*100)/100,rate:_invR2(rate),amount:amt}); }
   if(mkType==='usd'&&mkVal){ items.push({kind:'line',name:'Additional',amount:_invR2(mkVal)}); sub+=mkVal; }
   var tr=Number(cfg&&cfg.taxRate)||0; if(tr){ var tax=_invR2(sub*tr/100); items.push({kind:'line',name:'Sales tax ('+tr+'%)',amount:tax}); sub+=tax; }
   if(hasDc&&dcVal){ var dc=(dcType==='usd')?dcVal:sub*dcVal/100; items.push({kind:'line',name:'Discount'+(dcType==='pct'?' ('+dcVal+'%)':''),amount:-_invR2(dc)}); }
@@ -9148,12 +9146,12 @@ function recalcSF(){
   if(calcMode==='walls'){
     for(var i=0;i<wallRows.length;i++){
       var l=parseSum(wallRows[i].l);var h=parseSum(wallRows[i].h);var _q=Math.max(1,Math.round(Number(wallRows[i].q)||1));
-      if(l>0&&h>0){var sf=Math.round(l*h*_q*10)/10;total+=sf;lines.push(l+' × '+h+(_q>1?' ×'+_q:'')+' = '+sf);}
+      if(l>0&&h>0){var sf=Math.round(l*h*_q*100)/100;total+=sf;lines.push(l+' × '+h+(_q>1?' ×'+_q:'')+' = '+sf);}
     }
   }else if(calcMode==='floor'){
     for(var i=0;i<floorRows.length;i++){
       var l=parseSum(floorRows[i].l);var h=parseSum(floorRows[i].h);var _q=Math.max(1,Math.round(Number(floorRows[i].q)||1));
-      if(l>0&&h>0){var sf=Math.round(l*h*_q*10)/10;total+=sf;lines.push(l+' × '+h+(_q>1?' ×'+_q:'')+' = '+sf);}
+      if(l>0&&h>0){var sf=Math.round(l*h*_q*100)/100;total+=sf;lines.push(l+' × '+h+(_q>1?' ×'+_q:'')+' = '+sf);}
     }
   }else if(calcMode==='roof'){
     var r=calcRoofSF();
@@ -9162,7 +9160,7 @@ function recalcSF(){
   }else{
     total=parseFloat(document.getElementById('fa_sf_m').value)||0;
   }
-  total=Math.round(total*10)/10;
+  total=Math.round(total*100)/100;
   // For manual mode, trigger recalc when sf_m changes
   // Apply multiplier if active
   var multWrap=document.getElementById('multWrap');
@@ -9171,7 +9169,7 @@ function recalcSF(){
     mult=parseFloat(document.getElementById('fa_mult').value)||1;
     if(mult<1) mult=1;
   }
-  var finalSF=Math.round(total*mult*10)/10;
+  var finalSF=Math.round(total*mult*100)/100;
   document.getElementById('calcSF').textContent=finalSF>0?finalSF.toLocaleString():'0';
   document.getElementById('calcBD').textContent=lines.join('\n');
   document.getElementById('fa_sf').value=finalSF;
@@ -9330,7 +9328,7 @@ function openFAModal(idx){
       setTimeout(function(){recalcSF();},50);
     } else {
       setMMode('manual',document.getElementById('mm3'));
-      var restoreBase=a.sfBase||(a.mult&&a.mult>1?Math.round((a.sf/a.mult)*10)/10:a.sf)||0;
+      var restoreBase=a.sfBase||(a.mult&&a.mult>1?Math.round((a.sf/a.mult)*100)/100:a.sf)||0;
       document.getElementById('fa_sf_m').value=restoreBase;
       setTimeout(function(){recalcSF();},50);
     }
@@ -9986,7 +9984,7 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
   if(isPerInch()&&!isHybridItem){
     inch=parseFloat(document.getElementById('ei_inch').value)||0;
     if(!inch||inch<=0){toast('Enter thickness (inches)');return;}
-    linePrice=parseFloat((price*inch).toFixed(2));
+    linePrice=Math.round(price*inch*1000000)/1000000;
   }
   var item={name:name,productId:eiProd,sf:sf,price:linePrice,pricePerInch:(!isHybridItem&&isPerInch())?price:0,inches:inch,notes:notes,photos:eiPendPh.slice()};
   // Carry material fields derived from the chosen product so WorkLog matBudget
@@ -10682,7 +10680,7 @@ function doImport(){
     if(_isPerInchImport&&!_isHybridImport&&(_importInch||0)>0){
       // lastP is the per-inch rate; line price = rate * inches
       _ppi=lastP;
-      _linePrice=parseFloat((lastP*(_importInch||0)).toFixed(2));
+      _linePrice=Math.round(lastP*(_importInch||0)*1000000)/1000000;
     }
     var _newItem={name:a.name,productId:_newProdId,sf:a.sf,price:_linePrice,pricePerInch:_ppi,inches:_importInch||0,notes:a.notes||'',photos:a.photos?a.photos.slice():[],calcMode:a.calcMode||'',wallRows:a.wallRows?JSON.parse(JSON.stringify(a.wallRows)):null,floorRows:a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):null,
       // Preserve material fields so WorkLog matBudget tracking works after import
@@ -10798,7 +10796,7 @@ function _n7Rows(){
     var toNew=_n7.send&&_n7.dest==='new';
     if(toNew||idx<0){ st='+ New'; cls='new'; }
     else { var it=estItems[idx], o=parseFloat(it.sf)||0, n=parseFloat(a.sf)||0;
-      if(Math.round(o)===Math.round(n)){ st='= Same'; cls='same'; } else { st='↻ Update · '+fmtN(o)+' → '+fmtN(n)+' SF · keeps $'+(Number(it.price)||0).toFixed(2)+'/SF'; cls='upd'; } }
+      if(Math.round(o)===Math.round(n)){ st='= Same'; cls='same'; } else { st='↻ Update · '+fmtN(o)+' → '+fmtN(n)+' SF · keeps $'+fmtRate(Number(it.price)||0)+'/SF'; cls='upd'; } }
     var elsewhere=!!(a.sentTo&&(toNew||_n7Norm(a.sentTo)!==cur));
     var def=!_n7.send?true:(toNew?(!a.sentTo&&idx<0):!elsewhere);
     if(window._n7Touched&&window._n7Touched[i]) def=!!importSel[i];   // the user decided this one: keep it when the list is redrawn
@@ -11188,7 +11186,7 @@ document.getElementById('licToggle').addEventListener('click',function(){
 function buildQT(){
   var totals=calcTotals();
   var lines=[cfg.company,cfg.contact,'','INSULATION ESTIMATE','Quote #'+quoteNum,new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),'','Client: '+(quoteInfo.client||'N/A'),'Address: '+(quoteInfo.address||'N/A'),'','─────────────────────────'];
-  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);var sp=(typeof specFromData==='function')?specFromData(it):'';if(sp)lines.push('  Spec: '+sp);lines.push('  '+fmtN(it.sf)+' SF × $'+getEffectivePrice(it).toFixed(2)+'/SF = '+fmt(c));var dims=formatDimText(it,'  ');for(var di=0;di<dims.length;di++)lines.push(dims[di]);if(it.notes)lines.push('  Note: '+it.notes);}
+  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);var sp=(typeof specFromData==='function')?specFromData(it):'';if(sp)lines.push('  Spec: '+sp);lines.push('  '+fmtN(it.sf)+' SF × $'+fmtRate(getEffectivePrice(it))+'/SF = '+fmt(c));var dims=formatDimText(it,'  ');for(var di=0;di<dims.length;di++)lines.push(dims[di]);if(it.notes)lines.push('  Note: '+it.notes);}
   lines.push('─────────────────────────','Subtotal: '+fmt(totals.sub));
   if(cfg.taxRate>0)lines.push('Tax ('+cfg.taxRate+'%): '+fmt(totals.tax));
   if(hasDiscount()&&totals.discount>0)lines.push('Discount'+(getDiscountType()==='pct'?' ('+getDiscount()+'%)':'')+': -'+fmt(totals.discount));
