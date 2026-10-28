@@ -1487,7 +1487,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261028-1100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261028-1400</span></div>
 </div>
 
 <div id="field-app">
@@ -1574,6 +1574,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
   <div id="ep-quote" class="page">
     <div class="q-info">
       <div class="q-row"><span class="q-lbl">Client</span><span class="q-val tap" id="qClient">Tap to add</span><button type="button" class="q-pick" id="qPick">👥 Pick</button></div>
+      <div class="q-row"><span class="q-lbl">Title</span><span class="q-val tap" id="qTitle">Tap to add</span></div>
       <div class="q-row"><span class="q-lbl">Address</span><span class="q-val tap" id="qAddress">Tap to add</span></div>
       <div class="q-row"><span class="q-lbl">Phone</span><span class="q-val tap" id="qPhone">Tap to add</span></div>
       <div class="q-row"><span class="q-lbl">Email</span><span class="q-val tap" id="qEmail">Tap to add</span></div>
@@ -4337,6 +4338,13 @@ function _qnMigrate(){ try{ if(localStorage.getItem('fb6_qnMig')==='3') return; 
   if(todo.length){ todo.sort(function(a,b){ var da=Date.parse(a.created||'')||0, db=Date.parse(b.created||'')||0; if(da!==db) return da-db; return String(a.id).localeCompare(String(b.id)); }); var n=_qnMax(); for(var j=0;j<todo.length;j++){ n++; todo[j].quoteInfo=todo[j].quoteInfo||{client:todo[j].name||'',address:todo[j].address||''}; todo[j].quoteInfo.quoteNum=n; } try{ localStorage.setItem('fb6_qn',String(n)); }catch(e){} saveProjs(ps); if(currentProj){ for(var k=0;k<ps.length;k++) if(ps[k].id===currentProj.id){ quoteInfo.quoteNum=ps[k].quoteInfo.quoteNum; break; } } try{ _qnShow(); }catch(e){} }
   localStorage.setItem('fb6_qnMig','3'); }catch(e){} }
 setTimeout(_qnMigrate,8000);
+
+// ══ Quote title: what the job is (Spray Foam, Removal, Roxul…), shown to the client apart from the name ══
+// The title is the one set in the Quote; a job named the old way, "Debora (spray foam)", lends its "(…)".
+function _qTitleCase(t){ return String(t||'').replace(/\s+/g,' ').trim().replace(/(^|[\s\/-])([a-z])/g,function(m,a,b){ return a+b.toUpperCase(); }); }
+function _qTitleOf(p,qi){ qi=qi||(p&&p.quoteInfo)||{}; var t=String(qi.title||'').trim(); if(t) return t; var m=/\(([^)]+)\)\s*$/.exec(String(qi.client||'').trim())||/\(([^)]+)\)\s*$/.exec(String(p&&p.name||'').trim()); return m&&!/^copy$/i.test(m[1])?_qTitleCase(m[1]):''; }
+function _qClientClean(name){ return String(name||'').replace(/\s*\([^)]*\)\s*$/,'').trim()||String(name||''); }
+window._qTitleOf=_qTitleOf; window._qClientClean=_qClientClean;
 function saveFA(){ saveEI(); } // alias - same operation
 function saveEI(){
   if(currentProj){ saveProjAreas(); }
@@ -5795,7 +5803,8 @@ function generateEstimatePDF(pid, totalOnly, opts){
   var _pqDcType = (projQuoteInfo.discountType==='usd')?'usd':'pct';
   var _pqHasDc = (projQuoteInfo.discount!==undefined&&projQuoteInfo.discount!==null&&projQuoteInfo.discount!=='');
 
-  var clientName=projQuoteInfo.client||proj.name||'Client';
+  var _qTitle=_qTitleOf(proj,projQuoteInfo);
+  var clientName=projQuoteInfo.client||proj.name||'Client'; if(_qTitle) clientName=_qClientClean(clientName);
   var clientAddr=projQuoteInfo.address||proj.address||'';
   var estNum=projQuoteInfo.quoteNum||quoteNum||'';
   var dateStr=new Date().toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
@@ -5873,6 +5882,8 @@ function generateEstimatePDF(pid, totalOnly, opts){
   // ── PREPARED FOR ──
   setFont('normal',7.5,[150,150,150]);
   txt('PREPARED FOR',margin,y+4);
+  var _ty0=y;
+  if(_qTitle){ txt('ESTIMATE FOR',W-margin,y+4,{align:'right'}); setFont('bold',15,[26,107,42]); txt(_qTitle,W-margin,y+13,{align:'right'}); }
   y+=8;
   setFont('bold',12,[20,20,20]);
   txt(clientName,margin,y);
@@ -5883,6 +5894,7 @@ function generateEstimatePDF(pid, totalOnly, opts){
     y+=4;
   }
   y+=6;
+  if(_qTitle&&y<_ty0+19) y=_ty0+19;   // room under the bigger title
   line(margin,y,W-margin,y,[220,220,220],0.4);
   y+=6;
 
@@ -7153,6 +7165,7 @@ function renderQuote(){
   (function(){var _wb=document.getElementById('sendWLBtn');if(_wb){_wb.textContent='🔗 Send to WorkLog';_wb.disabled=false;_wb.style.opacity='1';_wb.style.background='#1a6b2a';}})();
   document.getElementById('qClient').textContent=quoteInfo.client||'Tap to add';
   document.getElementById('qAddress').textContent=quoteInfo.address||'Tap to add';
+  (function(){ var _te=document.getElementById('qTitle'); if(!_te) return; var _t=String(quoteInfo.title||'').trim(), _d=_t?'':_qTitleOf(currentProj,quoteInfo); _te.textContent=_t||(_d?_d+' · from the name':'e.g. Spray Foam · Removal · Roxul'); _te.style.opacity=_t?'1':'.6'; })();
   (function(){var _ph=document.getElementById('qPhone'),_em=document.getElementById('qEmail');if(_ph)_ph.textContent=quoteInfo.phone||'Tap to add';if(_em)_em.textContent=quoteInfo.email||'Tap to add';})();
   document.getElementById('qSub').textContent=fmt(totals.sub);
   document.getElementById('qTax').textContent=fmt(totals.tax);
@@ -7963,10 +7976,10 @@ function _etBuild(ids,totalOnly){
   d.setFont('helvetica','bold'); d.setFontSize(17); d.setTextColor(30,99,52); d.text(co,m,y);
   d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(110,110,110); d.text(new Date().toLocaleDateString('en-US'),W-m,y,{align:'right'});
   y+=16; d.setFont('helvetica','bold'); d.setFontSize(20); d.setTextColor(25,25,25); d.text(jobs.length+' Estimates',m,y);
-  y+=8; d.setFont('helvetica','normal'); d.setFontSize(12); d.setTextColor(60,60,60); if(client){ d.text('Prepared for '+client,m,y); y+=6; } if(addr){ d.text(addr,m,y); y+=6; }
+  y+=8; d.setFont('helvetica','normal'); d.setFontSize(12); d.setTextColor(60,60,60); if(client){ d.text('Prepared for '+_qClientClean(client),m,y); y+=6; } if(addr){ d.text(addr,m,y); y+=6; }
   y+=6; d.setDrawColor(30,99,52); d.setLineWidth(0.6); d.line(m,y,W-m,y); y+=10;
   for(k=0;k<jobs.length;k++){ var p=jobs[k], qi=p.quoteInfo||{}, t=window.projectEstimateTotal?projectEstimateTotal(p):0;
-    d.setFont('helvetica','bold'); d.setFontSize(13); d.setTextColor(25,25,25); d.text(String(k+1)+'.  '+String(p.name||''),m,y);
+    d.setFont('helvetica','bold'); d.setFontSize(13); d.setTextColor(25,25,25); var _tt=_qTitleOf(p,qi); d.text(String(k+1)+'.  '+(_tt||String(p.name||'')),m,y);
     d.text('$'+(Number(t)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),W-m,y,{align:'right'});
     y+=5.5; d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(110,110,110); d.text((qi.quoteNum?'Estimate #'+qi.quoteNum+'  ·  ':'')+(p.estItems||[]).length+' item'+((p.estItems||[]).length!==1?'s':''),m+7,y);
     y+=5; d.setDrawColor(225,225,225); d.setLineWidth(0.3); d.line(m,y,W-m,y); y+=9; }
@@ -7980,10 +7993,10 @@ function _etBuild(ids,totalOnly){
     for(var i2=0;i2<parts.length;i2++){ (function(ix){ chain=chain.then(function(){ return add(ix); }); })(i2); }
     return chain.then(function(){ return out.save(); });
   }).then(function(bytes){
-    var lines=[]; for(var z=0;z<jobs.length;z++){ var tt=window.projectEstimateTotal?projectEstimateTotal(jobs[z]):0; lines.push('• '+jobs[z].name+' — $'+(Number(tt)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})); }
+    var lines=[]; for(var z=0;z<jobs.length;z++){ var tt=window.projectEstimateTotal?projectEstimateTotal(jobs[z]):0; lines.push('• '+(_qTitleOf(jobs[z])||jobs[z].name)+' — $'+(Number(tt)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})); }
     var first=jobs[0]; for(var e2=0;e2<jobs.length;e2++){ if(String((jobs[e2].quoteInfo||{}).email||'').trim()){ first=jobs[e2]; break; } }
     window._etInfo={pids:ids.slice(),lines:lines,count:jobs.length};
-    var fn='Estimates-'+(client||'Client').replace(/[^a-zA-Z0-9]+/g,'_')+'-'+new Date().toLocaleDateString('en-US').replace(/\//g,'')+'.pdf';
+    var fn='Estimates-'+_qClientClean(client||'Client').replace(/[^a-zA-Z0-9]+/g,'_')+'-'+new Date().toLocaleDateString('en-US').replace(/\//g,'')+'.pdf';
     _etAttachDocs(jobs,bytes,function(fin){ openEstimateEmail(fin,fn,first.id,'combined'); });
   }).catch(function(e){ toast('Could not build the combined PDF: '+(e&&e.message||e),'err'); });
 }
@@ -10372,6 +10385,7 @@ document.getElementById('lb').addEventListener('click',function(e){if(e.target==
 // QUOTE FIELDS
 document.getElementById('qClient').addEventListener('click',function(){openFE('client','Client Name',quoteInfo.client);});
 document.getElementById('qAddress').addEventListener('click',function(){openFE('address','Job Address',quoteInfo.address);});
+document.getElementById('qTitle').addEventListener('click',function(){openFE('title','Quote title — e.g. Spray Foam, Removal, Roxul',quoteInfo.title||_qTitleOf(currentProj,quoteInfo));});
 document.getElementById('qPhone').addEventListener('click',function(){openFE('phone','Client Phone',quoteInfo.phone);});
 document.getElementById('qEmail').addEventListener('click',function(){openFE('email','Client Email',quoteInfo.email);});
 var _feMkType='pct';
