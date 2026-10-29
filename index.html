@@ -1490,7 +1490,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261028-1500</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261029-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -4330,7 +4330,7 @@ function _qnAssignTo(p){ if(!p) return 0; p.quoteInfo=p.quoteInfo||{client:p.nam
 // The number shown in the Estimator is the open job's own; an old job without one gets the next number now
 function _qnShow(){ var n=parseInt(quoteInfo&&quoteInfo.quoteNum)||0;
   if(!n&&currentProj&&currentProj.id){ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===currentProj.id){ n=_qnAssignTo(ps[i]); quoteInfo.quoteNum=n; try{ localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); }catch(e){} saveProjs(ps); break; } } }
-  if(n){ quoteNum=n; var a=document.getElementById('estQNum'), b=document.getElementById('qNumber'); if(a) a.textContent=n; if(b) b.textContent='#'+n; } }
+  if(n){ quoteNum=n; try{ window.quoteNum=n; }catch(e){} var a=document.getElementById('estQNum'), b=document.getElementById('qNumber'); if(a) a.textContent=n; if(b) b.textContent='#'+n; } }
 window._qnShow=_qnShow;
 // One pass for the jobs made before this rule: oldest first, continuing after the highest number in use
 function _qnMigrate(){ try{ if(localStorage.getItem('fb6_qnMig')==='3') return; var ps=loadProjs(), todo=[], seen={};
@@ -8041,7 +8041,7 @@ function renderJobHeader(){
     h+='</div>'; }
   if(!addr&&!phone&&!email) h+='<div class="jh-miss">No address or contact yet</div>';
   if(p.signed) h+='<div class="'+(_sigChanged(p)?'jc-sigchg':'jh-signed')+'">'+(_sigChanged(p)?'⚠ Changed after the client signed ($'+Number(p.signed.total||0).toLocaleString('en-US')+' signed on '+esc(p.signed.dateUS||'')+')':'✍️ Signed by '+esc(p.signed.name||'')+' on '+esc(p.signed.dateUS||''))+'</div>';
-  h+='<div class="jh-ft"><span>Quote #'+esc(String(window.quoteNum||quoteNum||''))+(p.created?' · '+esc(p.created):'')+'</span><button type="button" class="jh-edit" id="jhEdit">Edit ›</button></div></div>';
+  h+='<div class="jh-ft"><span>Quote #'+esc(String((p.quoteInfo&&p.quoteInfo.quoteNum)||(quoteInfo&&quoteInfo.quoteNum)||quoteNum||''))+(p.created?' · '+esc(p.created):'')+'</span><button type="button" class="jh-edit" id="jhEdit">Edit ›</button></div></div>';
   box.innerHTML=h; box.style.display='block';
   var sb=document.getElementById('jhSt'); if(sb) sb.onclick=function(){ _jobSheet(cp.id,'status'); };
   var eb=document.getElementById('jhEdit'); if(eb) eb.onclick=function(){ var t=document.getElementById('et2'); if(t) t.click(); };
@@ -11136,7 +11136,7 @@ function renderCtDoc(){
   var extra=document.getElementById('ctExtra').value;
   var h='<div class="ct-dh"><div class="ct-dlogo">🌿</div><div class="ct-dco">'+esc(cfg.company)+'</div></div>';
   if(cfg.contact||(cfg.license&&cfg.showLicense))h+='<div class="ct-dcontact">'+esc(cfg.contact)+((cfg.license&&cfg.showLicense)?' · Lic. '+esc(cfg.license):'')+'</div>';
-  h+='<hr class="ct-rule"><div class="ct-dtitle">'+esc(title)+'</div><div class="ct-dmeta">Quote #'+quoteNum+' · '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})+'</div>';
+  h+='<hr class="ct-rule"><div class="ct-dtitle">'+esc(title)+'</div><div class="ct-dmeta">Quote #'+((quoteInfo&&quoteInfo.quoteNum)||quoteNum)+' · '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})+'</div>';
   h+='<div class="ct-ig"><div class="ct-ic"><div class="ct-il">Client</div><div class="ct-iv">'+(quoteInfo.client||'—')+'</div></div><div class="ct-ic"><div class="ct-il">Address</div><div class="ct-iv">'+(quoteInfo.address||'—')+'</div></div></div>';
   h+='<p style="font-size:13px;color:#444;line-height:1.7;margin-bottom:12px">'+esc(intro).replace(/\n/g,'<br>')+'</p>';
   h+='<div class="ct-sh">Scope of Work</div>';
@@ -11297,7 +11297,7 @@ document.getElementById('licToggle').addEventListener('click',function(){
 // EXPORT
 function buildQT(){
   var totals=calcTotals();
-  var lines=[cfg.company,cfg.contact,'','INSULATION ESTIMATE','Quote #'+quoteNum,new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),'','Client: '+(quoteInfo.client||'N/A'),'Address: '+(quoteInfo.address||'N/A'),'','─────────────────────────'];
+  var lines=[cfg.company,cfg.contact,'','INSULATION ESTIMATE','Quote #'+((quoteInfo&&quoteInfo.quoteNum)||quoteNum),new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),'','Client: '+(quoteInfo.client||'N/A'),'Address: '+(quoteInfo.address||'N/A'),'','─────────────────────────'];
   for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);var c=calcItem(it);lines.push((pr?pr.name:'Custom')+' — '+it.name);var sp=(typeof specFromData==='function')?specFromData(it):'';if(sp)lines.push('  Spec: '+sp);lines.push('  '+fmtN(it.sf)+' SF × $'+fmtRate(getEffectivePrice(it))+'/SF = '+fmt(c));var dims=formatDimText(it,'  ');for(var di=0;di<dims.length;di++)lines.push(dims[di]);if(it.notes)lines.push('  Note: '+it.notes);}
   lines.push('─────────────────────────','Subtotal: '+fmt(totals.sub));
   if(cfg.taxRate>0)lines.push('Tax ('+cfg.taxRate+'%): '+fmt(totals.tax));
@@ -11311,7 +11311,7 @@ document.getElementById('copyQuoteBtn').addEventListener('click',function(){
   else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 Copied!');}
 });
 document.getElementById('shareQuoteBtn').addEventListener('click',function(){
-  if(navigator.share)navigator.share({title:'Quote #'+quoteNum,text:buildQT()}).catch(function(){});
+  if(navigator.share)navigator.share({title:'Quote #'+((quoteInfo&&quoteInfo.quoteNum)||quoteNum),text:buildQT()}).catch(function(){});
   else document.getElementById('copyQuoteBtn').click();
 });
 document.getElementById('printQuoteBtn').addEventListener('click',function(){
