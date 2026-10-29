@@ -1490,7 +1490,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261029-0900</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261029-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -12340,13 +12340,22 @@ function _wlBuildMatBudget(){
     detail:(function(){
       try{
         var mu=computeMaterialUsage(all);
-        return mu.rows.map(function(r){
+        var _det=mu.rows.map(function(r){
           // Include the cost so WorkLog can pre-fill the expense instead of making
           // the user type supplier prices twice. unitCost already includes tax.
           return {key:r.key, label:r.label, qty:r.qty, unit:r.unit,
                   unitCost:Math.round((r.unitCost||0)*100)/100,
                   cost:Math.round((r.cost||0)*100)/100};
         });
+        // Insulation removal always has a disposal cost: when the Disposal quantity was left empty,
+        // WorkLog gets 1 disposal at the price-book price, marked as assumed.
+        var _hasDump=false; for(var _d=0;_d<_det.length;_d++) if(_det[_d].key==='dumpster'&&_det[_d].qty>0) _hasDump=true;
+        var _rem=false; for(var _r=0;_r<all.length;_r++){ var _it=all[_r]; if(!_it) continue; var _pn=''; try{ var _pp=getProd(_it.productId); _pn=_pp?(_pp.name+' '+_pp.cat):''; }catch(_e){}
+          if(String(_it.matCat||_it.matType||'')==='insulation_removal'||/remov|dispos|\bdemo\b|tear\s*out/i.test(String(_it.name||'')+' '+String(_it.notes||'')+' '+_pn)){ _rem=true; break; } }
+        if(!_hasDump&&_rem&&typeof quoteInfo!=='undefined'&&quoteInfo){ var _had=Object.prototype.hasOwnProperty.call(quoteInfo,'qtyDump'), _old=quoteInfo.qtyDump;
+          try{ quoteInfo.qtyDump=1; var _mu2=computeMaterialUsage(all); for(var _k=0;_k<_mu2.rows.length;_k++){ var _rw=_mu2.rows[_k]; if(_rw.key==='dumpster'&&_rw.qty>0){ _det.push({key:'dumpster',label:_rw.label+' (assumed 1)',qty:1,unit:_rw.unit,unitCost:Math.round((_rw.unitCost||0)*100)/100,cost:Math.round((_rw.cost||0)*100)/100,assumed:true}); break; } } }
+          finally{ if(_had) quoteInfo.qtyDump=_old; else delete quoteInfo.qtyDump; } }
+        return _det;
       }catch(e){ return []; }
     })(),
     source:'fieldbid'
