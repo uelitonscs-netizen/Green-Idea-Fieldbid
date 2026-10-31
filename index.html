@@ -1496,7 +1496,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261031-1400</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261031-1500</span></div>
 </div>
 
 <div id="field-app">
@@ -7947,7 +7947,8 @@ function openEmailTogether(pid){
   var showAll=false, totalOnly=false;
   var ov=document.getElementById('etOv'); if(!ov){ ov=document.createElement('div'); ov.id='etOv'; ov.className='overlay'; document.body.appendChild(ov); }
   function row(p){ var on=!!sel[p.id], t=window.projectEstimateTotal?projectEstimateTotal(p):0, q=(p.quoteInfo&&p.quoteInfo.quoteNum)?' · #'+p.quoteInfo.quoteNum:'';
-    return '<button type="button" class="et-row'+(on?' on':'')+'" data-pid="'+p.id+'"><span class="et-chk">'+(on?'✓':'')+'</span><span class="et-n"><b>'+esc(p.name)+'</b><small>'+esc((p.estStatus&&p.estStatus!=='none')?p.estStatus[0].toUpperCase()+p.estStatus.slice(1):'Draft')+q+(p.address?' · '+esc(p.address):'')+'</small></span><span class="et-t">'+_etMoney(t)+'</span></button>'; }
+    var _tt=(window._qTitleOf?_qTitleOf(p):''), _nm=_tt?(_qClientClean(p.name)+' · '+_tt):p.name;   // the title tells the estimates of one client apart
+    return '<button type="button" class="et-row'+(on?' on':'')+'" data-pid="'+p.id+'"><span class="et-chk">'+(on?'✓':'')+'</span><span class="et-n"><b>'+esc(_nm)+'</b><small>'+esc((p.estStatus&&p.estStatus!=='none')?p.estStatus[0].toUpperCase()+p.estStatus.slice(1):'Draft')+q+(p.address?' · '+esc(p.address):'')+'</small></span><span class="et-t">'+_etMoney(t)+'</span></button>'; }
   function draw(){
     var n=0; for(var k in sel) if(sel[k]) n++;
     var h='<div class="modal" style="padding-bottom:22px"><div class="mhandle"></div><div class="mtitle">📧 Email together</div><div class="et-sub">One email and one PDF. Each estimate stays separate — no combined total.</div><div class="et-list">'+row(me);
