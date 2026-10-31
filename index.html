@@ -1368,6 +1368,12 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
 .jc-title{display:block;width:fit-content;max-width:100%;margin-top:4px;padding:3px 10px;border-radius:999px;background:rgba(46,160,67,.16);color:var(--n-green-ink,#3fb950);font-size:13px;font-weight:800;letter-spacing:.2px;}
 .jc-title.sm{font-size:11.5px;padding:2px 8px;margin-top:3px;}
+
+.nvm-h{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8b98a5;padding:10px 22px 2px;}
+.nvm-g.nvm-2{grid-template-columns:1fr 1fr;} .nvm-g.nvm-3{grid-template-columns:1fr 1fr 1fr;}
+.nvm-g.nvm-3 .nvm-i{flex-direction:column;gap:4px;text-align:center;padding:10px 6px;} .nvm-g.nvm-3 .nvm-i b{font-size:12.5px;}
+.nvm-i.nvm-sm{background:transparent;border-color:#2a3340;color:#8b98a5;} .nvm-i.nvm-sm b{font-weight:700;color:#8b98a5;font-size:12px;} .nvm-i.nvm-sm .nvm-ic{font-size:16px;}
+.nvm-g.nvm-2 .nvm-i small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
 </style>
 <script>
 // PDF / QR libraries are only needed when you make a PDF or a QR code: they load after the app is on screen
@@ -1490,7 +1496,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261030-1900</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261031-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -8096,11 +8102,15 @@ function nvMark(){
 function nvMore(){
   var ov=document.getElementById('nvMoreOv'); if(!ov){ ov=document.createElement('div'); ov.id='nvMoreOv'; ov.className='overlay'; document.body.appendChild(ov); }
   function it(id,ic,t,s){ return '<button type="button" class="nvm-i" data-m="'+id+'"><span class="nvm-ic">'+ic+'</span><span><b>'+t+'</b>'+(s?'<small>'+s+'</small>':'')+'</span></button>'; }
-  ov.innerHTML='<div class="modal nvm"><div class="mhandle"></div><div class="mtitle">More</div><div class="nvm-g">'+
-    it('quote','💰','Quote','client, markup, discount')+it('prods','🗄️','Products','prices and coverage')+it('settings','⚙️','Settings','company, costs, signature')+
-    it('broch','📄','Brochures','')+it('ds','📋','Data sheets','')+it('ct','✍️','Contract','')+
-    it('diag','🩺','Diagnostics','photos and sync check')+it('backups','🗄️','Backups','daily copies · download · restore')+it('clients','👥','Clients','phone, email, address — from your jobs')+it('imp','📥','Import takeoff','paste the FIELDBID-TAKEOFF block')+it('tkcopy','📤','Copy takeoff','of the open job · to share')+it('refresh','↺','Refresh','reload the app')+it('classic','↩️','Classic version','the FieldBid as before')+
-    '</div><div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="nvmClose">Close</button></div>'+
+  // Grouped: Estimator · Documents · Data; the rarely used ones in one compact row at the end
+  function sm(id,ic,t){ return '<button type="button" class="nvm-i nvm-sm" data-m="'+id+'"><span class="nvm-ic">'+ic+'</span><b>'+t+'</b></button>'; }
+  ov.innerHTML='<div class="modal nvm"><div class="mhandle"></div><div class="mtitle">More</div>'+
+    '<div class="nvm-h">Estimator</div><div class="nvm-g">'+it('prods','🗄️','Products','prices and coverage')+it('settings','⚙️','Settings','company, costs, signature')+'</div>'+
+    '<div class="nvm-h">Documents</div><div class="nvm-g nvm-3">'+it('broch','📄','Brochures','')+it('ds','📋','Data sheets','')+it('ct','✍️','Contract','')+'</div>'+
+    '<div class="nvm-h">Data</div><div class="nvm-g">'+it('clients','👥','Clients','phone, email, address — from your jobs')+it('backups','🗄️','Backups','daily copies · download · restore')+'</div>'+
+    '<div class="nvm-g nvm-2">'+it('imp','📥','Import takeoff','paste the block')+it('tkcopy','📤','Copy takeoff','of the open job')+'</div>'+
+    '<div class="nvm-h">App</div><div class="nvm-g nvm-3">'+sm('diag','🩺','Diagnostics')+sm('refresh','↺','Refresh')+sm('classic','↩️','Classic')+'</div>'+
+    '<div style="padding:10px 20px 0"><button type="button" class="js-cancel" id="nvmClose">Close</button></div>'+
     '<div class="nvm-ver">FieldBid · '+((document.getElementById('fbBuild')||{}).textContent||'')+'</div></div>';
   ov.classList.add('on'); ov.style.display='flex';
   function close(){ ov.classList.remove('on'); ov.style.display='none'; }
