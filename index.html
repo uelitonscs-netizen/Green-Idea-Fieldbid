@@ -1509,7 +1509,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261101-1200</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261101-1300</span></div>
 </div>
 
 <div id="field-app">
@@ -4396,7 +4396,7 @@ window._qTitleOf=_qTitleOf; window._qClientClean=_qClientClean;
 window._wlIns=null;
 function _wlInsPull(cb){ try{ var cached=localStorage.getItem('fb6_wlIns'); if(cached&&!window._wlIns) window._wlIns=JSON.parse(cached); }catch(e){}
   try{ if(typeof db==='undefined'||!db){ if(cb) cb(); return; }
-    db.collection('fieldbid').doc('wl_insights').get().then(function(d){ var v=d&&d.exists&&d.data(); if(v&&v.data){ try{ window._wlIns=JSON.parse(v.data); localStorage.setItem('fb6_wlIns',v.data); }catch(e){} } if(cb) cb(); }).catch(function(){ if(cb) cb(); }); }catch(e){ if(cb) cb(); } }
+    db.collection('fieldbid').doc('wl_insights').get().then(function(d){ var v=d&&d.exists&&d.data(); if(v&&v.data){ try{ window._wlIns=JSON.parse(v.data); localStorage.setItem('fb6_wlIns',v.data); window._wlInsErr=''; }catch(e){ window._wlInsErr='results unreadable'; } } else window._wlInsErr='not published by WorkLog yet'; if(cb) cb(); }).catch(function(e){ window._wlInsErr='cloud read blocked ('+((e&&(e.code||e.message))||'error')+')'; if(cb) cb(); }); }catch(e){ window._wlInsErr=e&&e.message; if(cb) cb(); } }
 // product → WorkLog job type
 function _pcFamily(pr){ var k=(window._PROD_CAT&&_PROD_CAT[pr.id])?_PROD_CAT[pr.id][0]:''; if(/^(cc|oc|hybrid)/.test(k)) return 'Spray foam'; if(/^fg/.test(k)) return 'Fiberglass'; if(/^cel/.test(k)) return 'Cellulose'; if(/^mw/.test(k)) return 'Mineral wool'; if(/^rb/.test(k)) return 'Foam board';
   var c=String(pr.cat||'')+' '+String(pr.name||''); if(/spray|foam/i.test(c)&&!/board|can/i.test(c)) return 'Spray foam'; if(/batt|fiberglass|blown-in fiberglass/i.test(c)) return 'Fiberglass'; if(/cellulose/i.test(c)) return 'Cellulose'; if(/mineral|roxul/i.test(c)) return 'Mineral wool'; if(/rigid|board/i.test(c)) return 'Foam board'; return ''; }
@@ -4409,7 +4409,7 @@ function openPriceCheck(){
   var ov=document.getElementById('pcOv'); if(!ov){ ov=document.createElement('div'); ov.id='pcOv'; ov.className='overlay'; document.body.appendChild(ov); }
   function draw(){ var I=window._wlIns, h='<div class="modal cl-m"><div class="mhandle"></div><div class="mtitle">💡 Price check</div>';
     h+='<div class="tk-sub" style="padding:0 16px 10px">What your finished jobs in WorkLog say about your prices. <b>Nothing changes until you tap Apply.</b></div>';
-    if(!I||!I.types){ h+='<div class="cl-list"><div class="pc-empty">No results from WorkLog yet.<br>Open WorkLog → Reports → 🎯 Accuracy once (with the finished jobs marked Done and updated from FieldBid); it publishes the results here.</div></div>'; }
+    if(!I||!I.types){ h+='<div class="cl-list"><div class="pc-empty">No results from WorkLog yet'+(window._wlInsErr?' <b>('+esc(window._wlInsErr)+')</b>':'')+'.<br>Open WorkLog → Reports → 🎯 Accuracy once (with the finished jobs marked Done and updated from FieldBid); it publishes the results here.</div></div>'; }
     else {
       var fams={}, order=['Spray foam','Fiberglass','Mineral wool','Cellulose','Foam board'];
       for(var i=0;i<products.length;i++){ var f=_pcFamily(products[i]); if(f) (fams[f]=fams[f]||[]).push(i); }
@@ -4432,7 +4432,7 @@ function openPriceCheck(){
     h+='<div style="padding:8px 16px 0;display:flex;gap:8px"><button type="button" class="js-cancel" id="pcRefresh" style="flex:1">⟳ Refresh</button><button type="button" class="js-cancel" id="pcClose" style="flex:1">Close</button></div></div>';
     ov.innerHTML=h; ov.classList.add('on'); ov.style.display='flex';
     document.getElementById('pcClose').onclick=function(){ ov.classList.remove('on'); ov.style.display='none'; };
-    document.getElementById('pcRefresh').onclick=function(){ toast('⏳ Reading WorkLog results…'); _wlInsPull(function(){ draw(); toast(window._wlIns?'✓ Updated':'No results yet'); }); };
+    document.getElementById('pcRefresh').onclick=function(){ toast('⏳ Reading WorkLog results…'); _wlInsPull(function(){ draw(); toast(window._wlIns?'✓ Updated':('No results: '+(window._wlInsErr||'not published yet'))); }); };
     var bs=ov.querySelectorAll('.pc-apply'); for(var b=0;b<bs.length;b++){ bs[b].onclick=function(){ var idx=parseInt(this.getAttribute('data-idx'),10), sug=parseFloat(this.getAttribute('data-sug')), pr=products[idx]; if(!pr) return; var unit=(pr.pricingType==='per_inch')?'/in':'/SF', from=Number(pr.price)||0;
       appConfirm('Change '+pr.name+' from '+_pcMoney(from)+unit+' to '+_pcMoney(sug)+unit+'? New estimates will use the new price; existing ones are not changed.',function(){ pr.price=sug; savePR(); try{ var L=_pcLog(); L.push({id:pr.id,name:pr.name,from:from,to:sug,at:new Date().toISOString()}); localStorage.setItem('fb6_priceLog',JSON.stringify(L.slice(-50))); }catch(e){} try{ renderProds(); }catch(e){} toast('✓ '+pr.name+' is now '+_pcMoney(sug)+unit); draw(); },{confirmLabel:'Change price',confirmStyle:'accent'}); }; }
   }
