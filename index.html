@@ -1374,6 +1374,19 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 .nvm-g.nvm-3 .nvm-i{flex-direction:column;gap:4px;text-align:center;padding:10px 6px;} .nvm-g.nvm-3 .nvm-i b{font-size:12.5px;}
 .nvm-i.nvm-sm{background:transparent;border-color:#2a3340;color:#8b98a5;} .nvm-i.nvm-sm b{font-weight:700;color:#8b98a5;font-size:12px;} .nvm-i.nvm-sm .nvm-ic{font-size:16px;}
 .nvm-g.nvm-2 .nvm-i small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+
+.pc-ban{display:block;width:100%;text-align:left;margin:0 0 12px;padding:11px 13px;border-radius:12px;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);font-weight:800;font-size:13px;font-family:var(--n-font-m);}
+.pc-ban.bad{border-color:#f59e0b;color:#f59e0b;} .pc-ban.ok{border-color:var(--n-green);color:var(--n-green-ink,#3fb950);} .pc-ban.mute{color:var(--n-muted);}
+.pc-meta{font-size:11px;color:var(--n-muted);padding:0 16px 8px;}
+.pc-empty{padding:14px;border:1px dashed var(--n-border);border-radius:12px;color:var(--n-muted);font-size:13px;line-height:1.5;}
+.pc-fam{border:1px solid var(--n-border);border-radius:14px;padding:12px 12px 6px;margin-bottom:10px;background:var(--n-surface);}
+.pc-fam-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:15px;} .pc-pill{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+.pc-pill.bad{background:rgba(245,158,11,.15);color:#f59e0b;} .pc-pill.good{background:rgba(46,160,67,.15);color:var(--n-green-ink,#3fb950);} .pc-pill.ok{background:rgba(46,160,67,.15);color:var(--n-green-ink,#3fb950);} .pc-pill.mute{background:var(--n-surface2);color:var(--n-muted);}
+.pc-stats{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--n-muted);margin:6px 0;} .pc-stats b{color:var(--n-text);}
+.pc-note{font-size:12.5px;color:var(--n-text);background:var(--n-surface2);border-radius:10px;padding:8px 10px;margin:4px 0 8px;line-height:1.45;}
+.pc-prod{display:flex;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid var(--n-border);} .pc-em{font-size:18px;} .pc-pn{flex:1;min-width:0;display:flex;flex-direction:column;} .pc-pn b{font-size:13.5px;} .pc-pn small{font-size:11.5px;color:var(--n-muted);}
+.pc-apply{border:none;background:var(--n-green);color:#fff;border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:800;font-family:var(--n-font-m);} .pc-keep{font-size:11px;color:var(--n-muted);font-weight:700;} .pc-keep.done{color:var(--n-green-ink,#3fb950);}
+.pc-log{font-size:11.5px;color:var(--n-muted);padding:6px 2px;} .pc-log b{display:block;color:var(--n-text);margin-bottom:2px;}
 </style>
 <script>
 // PDF / QR libraries are only needed when you make a PDF or a QR code: they load after the app is on screen
@@ -1496,7 +1509,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261031-1500</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261101-1200</span></div>
 </div>
 
 <div id="field-app">
@@ -1707,6 +1720,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
   <div id="ep-products" class="page">
     <div class="sec"><span class="sec-lbl">Product Database</span><button class="btn bg" id="addProdBtn" style="flex:none;height:36px;padding:0 16px;font-size:12px">+ Add</button></div>
     <div class="prod-note">Tap <strong style="color:#3fb950">+ Add</strong> for custom products. Prices only visible in Estimator.</div>
+      <div id="pcBanner"></div>
     <div id="productList"></div>
   </div>
   <div id="ep-settings" class="page">
@@ -4375,6 +4389,62 @@ function _qTitleCase(t){ return String(t||'').replace(/\s+/g,' ').trim().replace
 function _qTitleOf(p,qi){ qi=qi||(p&&p.quoteInfo)||{}; var t=String(qi.title||'').trim(); if(t) return t; var m=/\(([^)]+)\)\s*$/.exec(String(qi.client||'').trim())||/\(([^)]+)\)\s*$/.exec(String(p&&p.name||'').trim()); return m&&!/^copy$/i.test(m[1])?_qTitleCase(m[1]):''; }
 function _qClientClean(name){ return String(name||'').replace(/\s*\([^)]*\)\s*$/,'').trim()||String(name||''); }
 window._qTitleOf=_qTitleOf; window._qClientClean=_qClientClean;
+
+// ══ PRICE CHECK: WorkLog results against your product prices. Suggestions only — nothing changes
+// until you tap Apply on a product. Data comes from fieldbid/wl_insights, written by WorkLog
+// (finished jobs of the last 12 months with a complete FieldBid estimate, same as its Accuracy report).
+window._wlIns=null;
+function _wlInsPull(cb){ try{ var cached=localStorage.getItem('fb6_wlIns'); if(cached&&!window._wlIns) window._wlIns=JSON.parse(cached); }catch(e){}
+  try{ if(typeof db==='undefined'||!db){ if(cb) cb(); return; }
+    db.collection('fieldbid').doc('wl_insights').get().then(function(d){ var v=d&&d.exists&&d.data(); if(v&&v.data){ try{ window._wlIns=JSON.parse(v.data); localStorage.setItem('fb6_wlIns',v.data); }catch(e){} } if(cb) cb(); }).catch(function(){ if(cb) cb(); }); }catch(e){ if(cb) cb(); } }
+// product → WorkLog job type
+function _pcFamily(pr){ var k=(window._PROD_CAT&&_PROD_CAT[pr.id])?_PROD_CAT[pr.id][0]:''; if(/^(cc|oc|hybrid)/.test(k)) return 'Spray foam'; if(/^fg/.test(k)) return 'Fiberglass'; if(/^cel/.test(k)) return 'Cellulose'; if(/^mw/.test(k)) return 'Mineral wool'; if(/^rb/.test(k)) return 'Foam board';
+  var c=String(pr.cat||'')+' '+String(pr.name||''); if(/spray|foam/i.test(c)&&!/board|can/i.test(c)) return 'Spray foam'; if(/batt|fiberglass|blown-in fiberglass/i.test(c)) return 'Fiberglass'; if(/cellulose/i.test(c)) return 'Cellulose'; if(/mineral|roxul/i.test(c)) return 'Mineral wool'; if(/rigid|board/i.test(c)) return 'Foam board'; return ''; }
+function _pcMoney(v){ return '$'+(Math.round(v*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function _pcApplied(pr,I){ var L=_pcLog(), since=String((I&&I.updatedAt)||''); for(var i=L.length-1;i>=0;i--){ if(L[i].id===pr.id&&String(L[i].at)>=since) return L[i]; } return null; }
+function _pcSuggest(pr,t,I){ if(!t||t.overPct===null||t.overPct<2) return null; if(_pcApplied(pr,I)) return null; var f=1+t.overPct/100, cur=Number(pr.price)||0; if(!(cur>0)) return null; var sug=Math.round(cur*f*100)/100; return sug>cur?sug:null; }
+function _pcLog(){ try{ return JSON.parse(localStorage.getItem('fb6_priceLog')||'[]')||[]; }catch(e){ return []; } }
+function _pcMinJobs(){ return 3; }
+function openPriceCheck(){
+  var ov=document.getElementById('pcOv'); if(!ov){ ov=document.createElement('div'); ov.id='pcOv'; ov.className='overlay'; document.body.appendChild(ov); }
+  function draw(){ var I=window._wlIns, h='<div class="modal cl-m"><div class="mhandle"></div><div class="mtitle">💡 Price check</div>';
+    h+='<div class="tk-sub" style="padding:0 16px 10px">What your finished jobs in WorkLog say about your prices. <b>Nothing changes until you tap Apply.</b></div>';
+    if(!I||!I.types){ h+='<div class="cl-list"><div class="pc-empty">No results from WorkLog yet.<br>Open WorkLog → Reports → 🎯 Accuracy once (with the finished jobs marked Done and updated from FieldBid); it publishes the results here.</div></div>'; }
+    else {
+      var fams={}, order=['Spray foam','Fiberglass','Mineral wool','Cellulose','Foam board'];
+      for(var i=0;i<products.length;i++){ var f=_pcFamily(products[i]); if(f) (fams[f]=fams[f]||[]).push(i); }
+      var upd=I.updatedAt?new Date(I.updatedAt):null; h+='<div class="pc-meta">WorkLog results · last 12 months · updated '+(upd?upd.toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—')+'</div><div class="cl-list">';
+      for(var o=0;o<order.length;o++){ var fam=order[o], idxs=fams[fam]; if(!idxs||!idxs.length) continue; var t=I.types[fam];
+        h+='<div class="pc-fam"><div class="pc-fam-hd"><b>'+esc(fam)+'</b>';
+        if(!t||t.n<_pcMinJobs()){ h+='<span class="pc-pill mute">'+(t?t.n:0)+' finished job'+((t&&t.n===1)?'':'s')+' · need '+_pcMinJobs()+'</span></div><div class="pc-note">Not enough finished jobs with a complete estimate to judge yet.</div></div>'; continue; }
+        var over=t.overPct, lab=t.eL?Math.round((t.aL/t.eL-1)*100):null, mat=t.eM?Math.round((t.aM/t.eM-1)*100):null, oh=t.eO?Math.round((t.aO/t.eO-1)*100):null;
+        var verdict=over>=2?'<span class="pc-pill bad">costs '+Math.round(over)+'% over estimates</span>':(over<=-2?'<span class="pc-pill good">costs '+Math.round(-over)+'% under estimates</span>':'<span class="pc-pill ok">on target</span>');
+        h+=verdict+'</div>';
+        h+='<div class="pc-stats"><span>'+t.n+' jobs</span><span>margin '+(t.mE!==null?Math.round(t.mE)+'% planned → ':'')+(t.mA!==null?'<b>'+Math.round(t.mA)+'% real</b>':'—')+'</span>'+(lab!==null?'<span>labor '+(lab>0?'+':'')+lab+'%</span>':'')+(mat!==null?'<span>materials '+(mat>0?'+':'')+mat+'%</span>':'')+(oh!==null?'<span>overhead '+(oh>0?'+':'')+oh+'%</span>':'')+(t.hPer1k!==null?'<span>'+t.hPer1k+' h / 1,000 SF'+(t.hPer1kE!==null?' (est. '+t.hPer1kE+')':'')+'</span>':'')+(t.priceSq!==null?'<span>price '+_pcMoney(t.priceSq)+' · cost '+_pcMoney(t.costSq)+' / SF</span>':'')+'</div>';
+        if(over>=2) h+='<div class="pc-note">To keep the margin you planned, prices in this family need about <b>+'+Math.round(over)+'%</b>. Suggested per product below — apply the ones you agree with.</div>';
+        else if(over<=-2) h+='<div class="pc-note">Jobs cost less than estimated: the real margin is above the planned one. No increase suggested; you have room if you need to be more competitive.</div>';
+        else h+='<div class="pc-note">Estimates are matching reality. No change suggested.</div>';
+        for(var k=0;k<idxs.length;k++){ var pr=products[idxs[k]], cur=Number(pr.price)||0, unit=(pr.pricingType==='per_inch')?'/in':'/SF', ap=_pcApplied(pr,I), sug=_pcSuggest(pr,t,I);
+          h+='<div class="pc-prod"><span class="pc-em">'+pr.emoji+'</span><div class="pc-pn"><b>'+esc(pr.name)+'</b><small>now '+_pcMoney(cur)+unit+(sug?' → suggested <b>'+_pcMoney(sug)+unit+'</b>':(ap?' · was '+_pcMoney(ap.from)+unit:''))+'</small></div>'+(sug?'<button type="button" class="pc-apply" data-idx="'+idxs[k]+'" data-sug="'+sug+'">Apply</button>':(ap?'<span class="pc-keep done">applied ✓</span>':'<span class="pc-keep">keep</span>'))+'</div>'; }
+        h+='</div>'; }
+      var L=_pcLog(); if(L.length){ h+='<div class="pc-log"><b>Applied</b>'+L.slice(-5).reverse().map(function(x){ return '<div>'+esc(x.name)+': '+_pcMoney(x.from)+' → '+_pcMoney(x.to)+' · '+new Date(x.at).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</div>'; }).join('')+'</div>'; }
+      h+='</div>'; }
+    h+='<div style="padding:8px 16px 0;display:flex;gap:8px"><button type="button" class="js-cancel" id="pcRefresh" style="flex:1">⟳ Refresh</button><button type="button" class="js-cancel" id="pcClose" style="flex:1">Close</button></div></div>';
+    ov.innerHTML=h; ov.classList.add('on'); ov.style.display='flex';
+    document.getElementById('pcClose').onclick=function(){ ov.classList.remove('on'); ov.style.display='none'; };
+    document.getElementById('pcRefresh').onclick=function(){ toast('⏳ Reading WorkLog results…'); _wlInsPull(function(){ draw(); toast(window._wlIns?'✓ Updated':'No results yet'); }); };
+    var bs=ov.querySelectorAll('.pc-apply'); for(var b=0;b<bs.length;b++){ bs[b].onclick=function(){ var idx=parseInt(this.getAttribute('data-idx'),10), sug=parseFloat(this.getAttribute('data-sug')), pr=products[idx]; if(!pr) return; var unit=(pr.pricingType==='per_inch')?'/in':'/SF', from=Number(pr.price)||0;
+      appConfirm('Change '+pr.name+' from '+_pcMoney(from)+unit+' to '+_pcMoney(sug)+unit+'? New estimates will use the new price; existing ones are not changed.',function(){ pr.price=sug; savePR(); try{ var L=_pcLog(); L.push({id:pr.id,name:pr.name,from:from,to:sug,at:new Date().toISOString()}); localStorage.setItem('fb6_priceLog',JSON.stringify(L.slice(-50))); }catch(e){} try{ renderProds(); }catch(e){} toast('✓ '+pr.name+' is now '+_pcMoney(sug)+unit); draw(); },{confirmLabel:'Change price',confirmStyle:'accent'}); }; }
+  }
+  draw(); _wlInsPull(function(){ if(ov.classList.contains('on')) draw(); });
+}
+window.openPriceCheck=openPriceCheck;
+// Products screen: a short banner with the verdict and a way in
+function _pcBanner(){ var el=document.getElementById('pcBanner'); if(!el) return; var I=window._wlIns; if(!I||!I.types){ el.innerHTML='<button type="button" class="pc-ban mute" onclick="openPriceCheck()">💡 Price check · no WorkLog results yet</button>'; return; }
+  var over=[], n=0; for(var t in I.types){ var x=I.types[t]; if(x.n>=_pcMinJobs()){ n++; if(x.overPct!==null&&x.overPct>=2) over.push(t+' +'+Math.round(x.overPct)+'%'); } }
+  el.innerHTML='<button type="button" class="pc-ban '+(over.length?'bad':'ok')+'" onclick="openPriceCheck()">💡 Price check · '+(over.length?over.join(' · ')+' suggested':(n?'prices on target':'not enough finished jobs yet'))+' ›</button>'; }
+window._pcBanner=_pcBanner;
+setTimeout(function(){ try{ _wlInsPull(_pcBanner); }catch(e){} },10000);
 function saveFA(){ saveEI(); } // alias - same operation
 function saveEI(){
   if(currentProj){ saveProjAreas(); }
@@ -8092,6 +8162,7 @@ function nvMore(){
   function sm(id,ic,t){ return '<button type="button" class="nvm-i nvm-sm" data-m="'+id+'"><span class="nvm-ic">'+ic+'</span><b>'+t+'</b></button>'; }
   ov.innerHTML='<div class="modal nvm"><div class="mhandle"></div><div class="mtitle">More</div>'+
     '<div class="nvm-h">Estimator</div><div class="nvm-g">'+it('prods','🗄️','Products','prices and coverage')+it('settings','⚙️','Settings','company, costs, signature')+'</div>'+
+    '<div class="nvm-g">'+it('pricecheck','💡','Price check','WorkLog results vs your prices · suggestions only')+'</div>'+
     '<div class="nvm-h">Documents</div><div class="nvm-g nvm-3">'+it('broch','📄','Brochures','')+it('ds','📋','Data sheets','')+it('ct','✍️','Contract','')+'</div>'+
     '<div class="nvm-h">Data</div><div class="nvm-g">'+it('clients','👥','Clients','phone, email, address — from your jobs')+it('backups','🗄️','Backups','daily copies · download · restore')+'</div>'+
     '<div class="nvm-g nvm-2">'+it('imp','📥','Import takeoff','paste the block')+it('tkcopy','📤','Copy takeoff','of the open job')+'</div>'+
@@ -8112,7 +8183,7 @@ function nvMore(){
     if(m==='refresh'){ location.reload(); return; }
     if(m==='backups'){ if(window.fbBackups) window.fbBackups(); return; }
     if(m==='imp'){ if(window.fbImportTakeoff) window.fbImportTakeoff(); return; }
-    if(m==='clients'){ if(window.fbClients) window.fbClients(); return; }
+    if(m==='clients'){ if(window.fbClients) window.fbClients(); return; } if(m==='pricecheck'){ if(window.openPriceCheck) window.openPriceCheck(); return; }
     if(m==='tkcopy'){ if(window.fbCopyTakeoff) window.fbCopyTakeoff(); return; }
   };
 }
@@ -11232,6 +11303,7 @@ document.getElementById('saveSigBtn').addEventListener('click',function(){
 
 // PRODUCTS
 function renderProds(){
+  try{ if(window._pcBanner) _pcBanner(); }catch(e){}
   var list=document.getElementById('productList');
   if(!products.length){list.innerHTML='<div class="empty"><div class="empty-icon">🗄️</div><div class="empty-title">No products</div></div>';return;}
   var cats={},catOrder=[];
