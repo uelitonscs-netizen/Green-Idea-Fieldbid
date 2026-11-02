@@ -1509,7 +1509,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261101-1300</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261102-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -1697,7 +1697,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
     <div id="ct-edit" class="ct-sec">
       <div class="fg"><label class="fl">Contract Title</label><input class="fi" id="ctTitle" type="text" value="INSULATION SERVICES AGREEMENT"></div>
       <div class="fg"><label class="fl">Introduction</label><textarea class="fta" id="ctIntro">This agreement is entered into between Green Idea Insulation ("Contractor") and the Client identified below. The Contractor agrees to perform insulation services as described in the Scope of Work, in a professional manner using quality materials appropriate for the application.</textarea></div>
-      <div class="fg"><label class="fl">Payment Terms</label><textarea class="fta" id="ctPayment" style="min-height:70px">50% deposit required before work begins. Remaining balance due upon project completion. Accepted: check, cash, Zelle, or credit card (3% fee applies).</textarea></div>
+      <div class="fg"><label class="fl">Payment Terms</label><textarea class="fta" id="ctPayment" style="min-height:70px">50% deposit required before work begins. Remaining balance due upon project completion. Accepted: check, cash, Zelle, or credit card (4% fee applies).</textarea></div>
       <div class="fg"><label class="fl">Warranty</label><textarea class="fta" id="ctWarranty" style="min-height:70px">Contractor warrants all labor for 1 year from completion. Material warranties are provided by the manufacturer. Warranty is void if materials are altered or damaged by others after installation.</textarea></div>
       <div class="fg"><label class="fl">Additional Terms</label><textarea class="fta" id="ctExtra">Client is responsible for clearing the work area before start date. Any unforeseen conditions requiring additional work will be discussed before proceeding.</textarea></div>
     </div>
@@ -1728,7 +1728,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 <div class="th-seg" id="themeSeg"><button type="button" data-th="auto">Auto<small>like the phone</small></button><button type="button" data-th="light">☀️ Light</button><button type="button" data-th="dark">🌙 Dark</button></div></div>
     <div class="st-g"><div class="st-t" style="color:#93c5fd">✍️ Your signature (Green Idea)</div><div id="mySigBox" style="padding:4px 14px 12px"></div></div>
     <div style="padding:12px 14px 0">
-      <button id="btnShowContract" class="nav-pill-btn">
+      <button id="btnShowContract" class="nav-pill-btn" style="display:none">
         <div class="inner"><span class="ico">📄</span><span class="lbl">Contract</span><span class="arr">›</span></div>
       </button>
     </div>
@@ -5760,6 +5760,7 @@ function openContractShareModal(){
     var d=CONTRACT_DEFS[i];
     html+='<div style="display:flex;align-items:center;gap:8px;background:#161b22;border:1px solid #2a3340;border-radius:10px;padding:11px 13px">'+
       '<span style="font-size:14px;color:#f0f0f0;font-weight:600;flex:1;min-width:0">'+d.name+'<br><span style="font-size:11px;color:#8b98a5;font-weight:400">'+d.cat+'</span></span>'+
+      '<button class="ct-one-view" data-key="'+d.key+'" style="background:#1a6b2a;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer">👁 View</button>'+
       '<button class="ct-one-qr" data-key="'+d.key+'" data-name="'+d.name+'" style="background:#3a2a5f;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer">▦ QR</button>'+
       '<button class="ct-one-share" data-key="'+d.key+'" style="background:#1e3a5f;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer">📤</button>'+
       '</div>';
@@ -5767,6 +5768,7 @@ function openContractShareModal(){
   list.innerHTML=html;
   var btns=list.querySelectorAll('.ct-one-share');
   for(var b=0;b<btns.length;b++){(function(btn){btn.addEventListener('click',function(){shareContractKeys([btn.getAttribute('data-key')]);});})(btns[b]);}
+  var vbtns=list.querySelectorAll('.ct-one-view'); for(var v=0;v<vbtns.length;v++){(function(btn){btn.addEventListener('click',function(){ var u=contractPublicUrl(btn.getAttribute('data-key')); try{ var w=window.open(u,'_blank'); if(!w) location.href=u; }catch(e){ location.href=u; } });})(vbtns[v]);}
   var qbtns=list.querySelectorAll('.ct-one-qr');
   for(var q=0;q<qbtns.length;q++){(function(btn){btn.addEventListener('click',function(){showContractQR(btn.getAttribute('data-key'),btn.getAttribute('data-name'));});})(qbtns[q]);}
   openOv('contractShareOverlay');
@@ -11219,7 +11221,7 @@ function showCtSec(id,idx){
 function applyCtFields(){
   document.getElementById('ctTitle').value=ctData.title||'INSULATION SERVICES AGREEMENT';
   document.getElementById('ctIntro').value=ctData.intro||'This agreement is entered into between Green Idea Insulation ("Contractor") and the Client identified below. The Contractor agrees to perform insulation services as described in the Scope of Work, in a professional manner using quality materials appropriate for the application.';
-  document.getElementById('ctPayment').value=ctData.payment||'50% deposit required before work begins. Remaining balance due upon project completion. Accepted: check, cash, Zelle, or credit card (3% fee applies).';
+  document.getElementById('ctPayment').value=ctData.payment||'50% deposit required before work begins. Remaining balance due upon project completion. Accepted: check, cash, Zelle, or credit card (4% fee applies).';
   document.getElementById('ctWarranty').value=ctData.warranty||'Contractor warrants all labor for 1 year from completion. Material warranties are provided by the manufacturer. Warranty is void if materials are altered or damaged by others after installation.';
   document.getElementById('ctExtra').value=ctData.extra||'Client is responsible for clearing the work area before start date. Any unforeseen conditions requiring additional work will be discussed before proceeding.';
 }
