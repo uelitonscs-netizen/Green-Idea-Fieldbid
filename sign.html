@@ -47,6 +47,7 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
 .acts button{flex:1;padding:14px 8px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer}
 .acts .dl{background:#fff;border:1px solid #cfd6cc;color:#1d2a20} .acts .ap{background:#1a6b2a;border:none;color:#fff}
 @media print{ .acts,.foot{display:none!important} }
+.ctc .ctn{font-size:15px;color:#1d2a20;margin-bottom:6px}.ctc .ctp{font-size:13px;color:#4b5650;line-height:1.5;margin:0 0 10px}.ctb{display:block;text-align:center;background:#eef6ef;border:1.5px solid #1a6b2a;color:#1a6b2a;border-radius:10px;padding:11px;font-weight:700;text-decoration:none}
 </style>
 </head>
 <body>
@@ -85,6 +86,7 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
     var tr=d.terms||[]; if(tr.length){ h+='<div class="card"><div class="lbl" style="margin-bottom:6px">Terms &amp; conditions</div><div class="terms">'; for(var j=0;j<tr.length;j++) h+='<p>'+esc(tr[j])+'</p>'; h+='</div>';
       if(d.contractorSig) h+='<div class="mysig"><img src="'+esc(d.contractorSig)+'" alt=""><div style="font-size:12px;color:#6b7570">'+esc(d.company&&d.company.name||'')+(d.contractorName?'<br><b style="color:#1d2a20">'+esc(d.contractorName)+'</b>':'')+'</div></div>';
       h+='</div>'; }
+    if(d.contract&&d.contract.url){ h+='<div class="card ctc"><div class="lbl" style="margin-bottom:6px">Contract</div><div class="ctn">📄 <b>'+esc(d.contract.name||'Insulation Services Agreement')+'</b></div><p class="ctp">This estimate comes with our service agreement and the 3-year workmanship warranty. Please read it before signing — your signature below covers both.</p><a class="ctb" href="'+esc(d.contract.url)+'" target="_blank" rel="noopener">👁 Open the contract (PDF)</a></div>'; }
     return h;
   }
   function acts(d,isSigned){ return '<div class="acts">'+(d.pdf?'<button type="button" class="dl" id="dlb">⬇ Download PDF</button>':'<button type="button" class="dl" id="prb">🖨 Print / Save PDF</button>')+(isSigned?'':'<button type="button" class="ap" id="gos">✍️ Approve &amp; sign</button>')+'</div>'; }
@@ -94,10 +96,10 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
     var g=document.getElementById('gos'); if(g) g.onclick=function(){ var t=document.getElementById('ag'); if(t){ t.scrollIntoView({behavior:'smooth',block:'center'}); } };
   }
   function signed(d){
-    show(body(d)+'<div class="card msg done"><div style="font-size:34px">✅</div><h2>Signed — thank you!</h2><p>Signed by <b>'+esc(d.signedName||'')+'</b>'+(d.signedAt?' on '+esc(new Date(d.signedAt).toLocaleDateString('en-US')):'')+'</p>'+(d.img?'<img src="'+esc(d.img)+'" alt="signature">':'')+'<p>We will be in touch to schedule the work.</p></div>'+acts(d,true)); wire(d);
+    show(body(d)+'<div class="card msg done"><div style="font-size:34px">✅</div><h2>Signed — thank you!</h2><p>Signed by <b>'+esc(d.signedName||'')+'</b>'+(d.signedAt?' on '+esc(new Date(d.signedAt).toLocaleDateString('en-US')):'')+'</p>'+(d.contract&&d.contract.url?'<p style="font-size:13px">Estimate and contract approved. <a href="'+esc(d.contract.url)+'" target="_blank" rel="noopener">Open the contract</a></p>':'')+(d.img?'<img src="'+esc(d.img)+'" alt="signature">':'')+'<p>We will be in touch to schedule the work.</p></div>'+acts(d,true)); wire(d);
   }
   function form(d){
-    show(body(d)+'<div class="card"><label class="agree"><input type="checkbox" id="ag"> <span>I approve this estimate and agree to the services, price and terms above.</span></label>'+
+    show(body(d)+'<div class="card"><label class="agree"><input type="checkbox" id="ag"> <span>'+(d.contract&&d.contract.url?'I approve this estimate and agree to the services, price and terms above, and to the attached '+esc(d.contract.name||'Insulation Services Agreement')+'.':'I approve this estimate and agree to the services, price and terms above.')+'</span></label>'+
       '<label class="f">Full name</label><input class="n" id="nm" value="'+esc(d.client&&d.client.name||'')+'" autocomplete="name">'+
       '<label class="f">Signature</label><div class="padw"><canvas id="pad"></canvas><span class="x">✕ sign here with your finger or mouse</span></div>'+
       '<div class="row"><button type="button" class="sec2" id="clr">Clear</button></div>'+
@@ -122,7 +124,7 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
       o.getContext('2d').drawImage(cv,x0,y0,x1-x0,y1-y0,0,0,o.width,o.height); return o.toDataURL('image/png'); }
     document.getElementById('ok').onclick=function(){
       var b=this, er=document.getElementById('er'); b.disabled=true; b.textContent='Saving…'; er.textContent='';
-      var rec={status:'signed',signedName:document.getElementById('nm').value.trim(),signedAt:new Date().toISOString(),img:png()};
+      var rec={status:'signed',signedName:document.getElementById('nm').value.trim(),signedAt:new Date().toISOString(),img:png()}; if(d.contract&&d.contract.url){ rec.contractAccepted=true; rec.contractName=d.contract.name||''; }
       ref.update(rec).then(function(){ var x={}; for(var k in d) x[k]=d[k]; for(var q in rec) x[q]=rec[q]; signed(x); })
         .catch(function(e){ b.disabled=false; b.innerHTML='✍️ Approve &amp; sign'; er.textContent='Could not save — check your internet and try again.'; });
     };
