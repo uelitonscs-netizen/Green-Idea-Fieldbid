@@ -1522,7 +1522,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261104-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261104-1100</span></div>
 </div>
 
 <div id="field-app">
@@ -7888,7 +7888,7 @@ function renderJobsList(){
       h += '<div class="jc-top"><div class="jc-name">'+esc(_jn)+(isActive?' <span class="jc-edit">EDITING</span>':'')+(_jt?'<div class="jc-title">'+esc(_jt)+'</div>':'')+'</div>'+
          '<button type="button" class="jc-st st-'+estStatus+'" data-act="stmenu" data-pid="'+p.id+'">'+stTxt+' ▾</button></div>';
     if(p.address){ h += '<div class="jc-addr">📍 '+esc(p.address)+'</div>'; }
-      var _eg=_etGroup(p); if(_eg.length) h += '<button type="button" class="jc-tog" data-act="emailtog" data-pid="'+p.id+'">🔗 '+(_eg.length+1)+' estimates for this client · <b>Email together</b></button>';
+      var _eg=_etGroup(p); if(_eg.length) h += '<button type="button" class="jc-tog" data-act="emailtog" data-pid="'+p.id+'">🔗 '+(_eg.length+1)+' estimates at this address · <b>Email together</b></button>';
     if(p.estOptions&&p.estOptions.list&&p.estOptions.list.length>1) h += '<div class="jc-opt">📊 '+p.estOptions.list.length+' options'+(_oc?' · chosen: <b>'+esc(_oc)+'</b>':' · none chosen yet')+'</div>';
     (function(){ var np=0, L=p.areas||[]; for(var z=0;z<L.length;z++) if(L[z].source==='plans'&&!L[z].siteCheckedAt) np++;
       if(np) h+='<div class="jc-wait">📐 From plans · not checked on site</div>'; else if(p.siteCheck){ var d=Math.round((p.siteCheck.fieldSF-p.siteCheck.planSF)*10)/10; h+='<div class="jc-seen">✅ Checked on site '+esc(new Date(p.siteCheck.at).toLocaleDateString('en-US'))+' · '+(d>0?'+':'')+esc(String(d.toLocaleString('en-US')))+' SF vs plans</div>'; } })();
@@ -8047,7 +8047,11 @@ function _etSame(a,b){
   if((a.splitFrom&&_etName(a.splitFrom)===nb)||(b.splitFrom&&_etName(b.splitFrom)===na)) return true;
   return false;
 }
-function _etGroup(p){ var L=_etAll(), out=[]; for(var i=0;i<L.length;i++){ var q=L[i]; if(q.id!==p.id&&(q.estItems||[]).length&&_etSame(p,q)) out.push(q); } return out; }
+// Same job site: the address, ignoring punctuation, case, state and ZIP ("2 Kimball Rd, Arlington MA 02474" = "2 kimball rd arlington")
+function _etSite(p){ var q=p.quoteInfo||{}; var a=String(q.address||p.address||'').toLowerCase().replace(/\b(ma|massachusetts|usa)\b/g,' ').replace(/\b\d{5}(-\d{4})?\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim(); return a; }
+function _etSameSite(a,b){ var sa=_etSite(a), sb=_etSite(b); if(!sa||!sb) return false; if(sa===sb) return true; return (sa.length>=8&&sb.length>=8)&&(sa.indexOf(sb+' ')===0||sb.indexOf(sa+' ')===0); }
+// The "Email together" suggestion only groups estimates of the same client AT THE SAME ADDRESS
+function _etGroup(p){ var L=_etAll(), out=[]; for(var i=0;i<L.length;i++){ var q=L[i]; if(q.id!==p.id&&(q.estItems||[]).length&&_etSame(p,q)&&_etSameSite(p,q)) out.push(q); } return out; }
 function _etMoney(n){ return '$'+Math.round(Number(n)||0).toLocaleString('en-US'); }
 function openEmailTogether(pid){
   _etCache.t=0;
