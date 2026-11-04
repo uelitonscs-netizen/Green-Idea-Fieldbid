@@ -1387,6 +1387,14 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 .pc-prod{display:flex;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid var(--n-border);} .pc-em{font-size:18px;} .pc-pn{flex:1;min-width:0;display:flex;flex-direction:column;} .pc-pn b{font-size:13.5px;} .pc-pn small{font-size:11.5px;color:var(--n-muted);}
 .pc-apply{border:none;background:var(--n-green);color:#fff;border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:800;font-family:var(--n-font-m);} .pc-keep{font-size:11px;color:var(--n-muted);font-weight:700;} .pc-keep.done{color:var(--n-green-ink,#3fb950);}
 .pc-log{font-size:11.5px;color:var(--n-muted);padding:6px 2px;} .pc-log b{display:block;color:var(--n-text);margin-bottom:2px;}
+
+.rc-sum{font-size:12.5px;color:var(--n-muted);margin:0 2px 8px}
+.rc-h{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--n-muted);margin:12px 2px 6px}
+.rc-row{border:1px solid var(--n-border);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--n-surface)}.rc-row b{font-size:14px}.rc-row small{display:block;color:var(--n-muted);font-size:11.5px;margin-top:2px}
+.rc-th{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.rc-th img{width:56px;height:56px;object-fit:cover;border-radius:8px}.rc-th span{align-self:center;font-size:12px;color:var(--n-muted)}
+.rc-act{display:flex;gap:8px;margin-top:8px}.rc-sel{flex:1;min-width:0;padding:9px;border-radius:9px;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);font-size:13px}.rc-sv{border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:9px;padding:0 12px;font-weight:700;font-size:12.5px}
+.rc-go{width:100%;border:none;background:var(--n-green);color:#fff;border-radius:12px;padding:12px;font-weight:800;font-size:14px;margin:2px 0 6px;font-family:var(--n-font-m)}
+.rc-alt{display:block;width:100%;text-align:left;border:1px dashed var(--n-border);background:transparent;color:var(--n-text);border-radius:12px;padding:11px 12px;margin-bottom:8px;font-size:13px;font-family:var(--n-font-m)}
 </style>
 <script>
 // PDF / QR libraries are only needed when you make a PDF or a QR code: they load after the app is on screen
@@ -1509,7 +1517,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261102-1400</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261103-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -2697,6 +2705,13 @@ function backupPhotos(){
         if(window.DBG)DBG('fotos da nuvem preservadas ('+lose+')');
         if(!chunks.length) return;
       }
+      // Cloud photos whose area no longer matches anything here (renamed, moved, re-created, or not yet
+      // put back with Recover photos) are carried over to the new copy instead of being dropped —
+      // unless the user deleted this job's photos on purpose. Only photos not already on the phone count.
+      var sigLocal=sig;
+      if(!_phShrinkOk(proj.id)){ var local={}; for(var lk in map){ if(!map.hasOwnProperty(lk)) continue; for(var lz=0;lz<map[lk].length;lz++) local[map[lk][lz]]=1; } var kept=0;
+        for(var ck in cloudMap){ if(!cloudMap.hasOwnProperty(ck)||map[ck]) continue; var carr=cloudMap[ck]; if(!Array.isArray(carr)) continue; var uniq=[]; for(var cz=0;cz<carr.length;cz++){ if(carr[cz]&&!local[carr[cz]]) uniq.push(carr[cz]); } if(uniq.length){ map[ck]=uniq; kept+=uniq.length; } }
+        if(kept){ chunks=_chunkPhotoMap(map); console.warn('photo backup: carried over '+kept+' cloud photo(s) of '+proj.id+' that are not on this phone'); } }
       var batch=db.batch();
       // write chunk docs
       for(var ci=0;ci<chunks.length;ci++){
@@ -2706,7 +2721,7 @@ function backupPhotos(){
       // one useless document per project (90+ writes on every backup) and burned
       // through the free quota for nothing.
       return batch.commit().then(function(){
-        sigs[proj.id]=sig; changed++; _savePhSigs(sigs); _phShrinkClear(proj.id);
+        sigs[proj.id]=sigLocal; changed++; _savePhSigs(sigs); _phShrinkClear(proj.id);
       }).catch(function(e){
         console.warn('photo backup failed for '+proj.id+':', e&&e.message);
         if(e&&/permission|insufficient/i.test(e.message||'')){
@@ -7976,6 +7991,7 @@ function _jobSheet(pid,kind){
       '<button type="button" class="js-b row" data-js="cert">📋 <b>Generate Certificate</b></button>'+
        '<button type="button" class="js-b row" data-js="note">📝 <b>'+(hasNote?'Edit Note':'Add Note')+'</b></button>'+
        '<button type="button" class="js-b row" data-js="dup">⧉ <b>Duplicate</b></button>'+
+      '<button type="button" class="js-b row" data-js="phrecover">📷 <b>Recover photos</b><span style="margin-left:auto">from the cloud copy</span></button>'+
     '<button type="button" class="js-b row" data-js="emailtog">📧 <b>Email together with other estimates</b></button>'+
        '<div class="js-sep"></div>'+
        (p.invoice?'<button type="button" class="js-b row js-del" data-js="invdel">🗑 <b>Delete invoice '+esc(p.invoice.num||'')+'</b><span style="margin-left:auto">keeps the estimate</span></button>':'')+
@@ -8104,7 +8120,76 @@ function _etAttachDocs(jobs,bytes,done){
           finish((B.length+D.length+C.length)?[B,D,C]:[]); }); }); });
   }catch(e){ window._docItems=null; done(bytes); }
 }
-var _etJA=_jobAct; _jobAct=function(a,pid,btn){ if(a==='emailtog'){ openEmailTogether(pid); return; } return _etJA.apply(this,arguments); };
+
+// ══ RECOVER PHOTOS (job ⋯ → 📷 Recover photos) ══════════════════════════════════════════════
+// The cloud keeps each job's photos keyed by position + name ("a3:Roof attic"). When an area is
+// renamed, moved or re-created, the automatic restore can no longer place them. This sheet reads the
+// cloud copy, matches it by position, then by name, shows what is left over, and only ADDS photos.
+function _rcParse(k){ var m=/^([ae])(\d+):(.*)$/.exec(String(k)); return m?{t:m[1],i:parseInt(m[2],10),n:m[3]}:null; }
+function _rcNorm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+function _rcPlan(p,cmap){ var res={match:[],orphan:[],ok:0}, used={};
+  for(var k in cmap){ if(!cmap.hasOwnProperty(k)) continue; var c=cmap[k]; if(!Array.isArray(c)||!c.length) continue; var q=_rcParse(k); if(!q){ res.orphan.push({key:k,name:k,photos:c}); continue; }
+    var arr=(q.t==='a'?p.areas:p.estItems)||[], idx=-1;
+    if(arr[q.i]&&_rcNorm(arr[q.i].name)===_rcNorm(q.n)) idx=q.i; else { for(var j=0;j<arr.length;j++){ if(_rcNorm(arr[j]&&arr[j].name)===_rcNorm(q.n)&&!used[q.t+j]){ idx=j; break; } } }
+    if(idx<0){ res.orphan.push({key:k,name:q.n,type:q.t,photos:c}); continue; } used[q.t+idx]=1;
+    var have=(arr[idx].photos||[]), miss=[]; for(var z=0;z<c.length;z++) if(have.indexOf(c[z])<0) miss.push(c[z]);
+    if(miss.length) res.match.push({t:q.t,idx:idx,name:arr[idx].name||'',moved:idx!==q.i,miss:miss}); else res.ok+=c.length; }
+  return res; }
+function _rcTargets(p){ var out=[]; var A=p.areas||[], E=p.estItems||[]; for(var i=0;i<A.length;i++) out.push({v:'a'+i,l:'Takeoff · '+(A[i].name||'Area '+(i+1))}); for(var j=0;j<E.length;j++) out.push({v:'e'+j,l:'Estimate · '+(E[j].name||'Item '+(j+1))}); return out; }
+function _rcAdd(pid,adds){ var ps=loadProjs(), k=-1; for(var i=0;i<ps.length;i++) if(ps[i].id===pid){ k=i; break; } if(k<0) return 0; var p=ps[k], n=0;
+  for(var a=0;a<adds.length;a++){ var x=adds[a], arr=x.t==='a'?p.areas:p.estItems; if(!arr||!arr[x.idx]) continue; var o=arr[x.idx]; o.photos=Array.isArray(o.photos)?o.photos:[]; for(var z=0;z<x.photos.length;z++){ if(o.photos.indexOf(x.photos[z])<0){ o.photos.push(x.photos[z]); n++; } } if(o._phN) delete o._phN; }
+  if(n){ if(p.photosCloudOnly) delete p.photosCloudOnly; try{ saveProjs(ps); }catch(e){ toast('Not enough room on the phone to add them — free up space in More → Backups','err'); return 0; }
+    try{ if(currentProj&&currentProj.id===pid){ currentProj=p; if(typeof fieldAreas!=='undefined') fieldAreas=p.areas||[]; if(typeof estItems!=='undefined') estItems=p.estItems||[]; } }catch(e){}
+    try{ if(typeof window._phRefreshOpen==='function') window._phRefreshOpen(); }catch(e){} try{ if(window.schedulePhotoBackup) window.schedulePhotoBackup(); }catch(e){} }
+  return n; }
+function _rcSaveToPhone(photos,name){ var files=[]; for(var i=0;i<photos.length;i++){ try{ var m=/^data:(image\/[a-z]+);base64,(.*)$/.exec(photos[i]); if(!m) continue; var raw=atob(m[2]), u=new Uint8Array(raw.length); for(var k=0;k<raw.length;k++) u[k]=raw.charCodeAt(k); files.push(new File([u],(String(name||'photo').replace(/[^a-z0-9]+/gi,'-')+'-'+(i+1)+'.'+(m[1].split('/')[1]||'jpg')),{type:m[1]})); }catch(e){} }
+  if(!files.length){ toast('No photo data','err'); return; }
+  if(navigator.canShare&&navigator.canShare({files:files})){ navigator.share({files:files,title:'Photos'}).catch(function(){}); return; }
+  for(var f=0;f<files.length;f++){ (function(file){ var url=URL.createObjectURL(file), a=document.createElement('a'); a.href=url; a.download=file.name; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); },4000); })(files[f]); } }
+function fbPhotoRecover(pid){
+  var ov=document.getElementById('rcOv'); if(!ov){ ov=document.createElement('div'); ov.id='rcOv'; ov.className='overlay'; document.body.appendChild(ov); }
+  var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++) if(ps[i].id===pid){ p=ps[i]; break; } if(!p) return;
+  var st={cmap:null,err:'',others:null,othersBusy:false,src:'this job'};
+  function close(){ ov.classList.remove('on'); ov.style.display='none'; }
+  function thumbs(arr){ var h='<div class="rc-th">'; for(var i=0;i<Math.min(arr.length,6);i++) h+='<img src="'+arr[i]+'" alt="">'; return h+(arr.length>6?'<span>+'+(arr.length-6)+'</span>':'')+'</div>'; }
+  function draw(){ var h='<div class="modal cl-m"><div class="mhandle"></div><div class="mtitle">📷 Recover photos</div><div class="tk-sub" style="padding:0 16px 10px"><b>'+esc(p.name||'')+'</b> · photos are only added, never removed.</div><div class="cl-list">';
+    if(st.err) h+='<div class="pc-empty">Could not read the cloud copy: '+esc(st.err)+'</div>';
+    else if(!st.cmap) h+='<div class="pc-empty">⏳ Reading the cloud copy…</div>';
+    else { var P=_rcPlan(p,st.cmap), nm=0, no=0; for(var a=0;a<P.match.length;a++) nm+=P.match[a].miss.length; for(var b=0;b<P.orphan.length;b++) no+=P.orphan[b].photos.length;
+      h+='<div class="rc-sum">'+(st.src==='this job'?'Cloud copy of this job':'Cloud copy of <b>'+esc(st.src)+'</b>')+': '+(P.ok+nm+no)+' photo'+((P.ok+nm+no)===1?'':'s')+' · '+P.ok+' already on the phone</div>';
+      if(p.photosCloudOnly) h+='<div class="pc-note">This job\'s photos were moved to the cloud on purpose (More → Backups → Free up space). They are safe there; putting them back uses phone space again.</div>';
+      if(!(P.ok+nm+no)) h+='<div class="pc-empty">There is no copy of this job\'s photos in the cloud.</div>';
+      if(P.match.length){ h+='<div class="rc-h">Missing on the phone — their area still exists</div>'; for(var c=0;c<P.match.length;c++){ var M=P.match[c]; h+='<div class="rc-row"><div><b>'+esc(M.name)+'</b><small>'+M.miss.length+' photo'+(M.miss.length===1?'':'s')+(M.moved?' · area moved':'')+'</small>'+thumbs(M.miss)+'</div></div>'; }
+        h+='<button type="button" class="rc-go" id="rcGo">↩️ Put back '+nm+' photo'+(nm===1?'':'s')+'</button>'; }
+      if(P.orphan.length){ var T=_rcTargets(p); h+='<div class="rc-h">No matching area (renamed or deleted) — choose where they go</div>';
+        for(var d=0;d<P.orphan.length;d++){ var O=P.orphan[d]; h+='<div class="rc-row"><div><b>'+esc(O.name)+'</b><small>'+O.photos.length+' photo'+(O.photos.length===1?'':'s')+' · was '+(O.type==='e'?'an estimate item':'a takeoff area')+'</small>'+thumbs(O.photos)+'<div class="rc-act"><select data-o="'+d+'" class="rc-sel"><option value="">Attach to…</option>'+T.map(function(t){ return '<option value="'+t.v+'">'+esc(t.l)+'</option>'; }).join('')+'</select><button type="button" class="rc-sv" data-o="'+d+'">⬇ Save</button></div></div></div>'; } }
+      if(st.src==='this job'){ h+='<div class="rc-h">Recreated this quote? Its photos may be under the old (deleted) job</div>';
+        if(st.others===null) h+='<button type="button" class="rc-alt" id="rcOthers">'+(st.othersBusy?'⏳ Searching…':'🔎 Search photos of deleted jobs')+'</button>';
+        else if(!st.others.length) h+='<div class="pc-empty">No photos of deleted jobs in the cloud.</div>';
+        else for(var e=0;e<st.others.length;e++){ var X=st.others[e]; h+='<button type="button" class="rc-alt" data-oid="'+e+'"><b>'+X.n+' photo'+(X.n===1?'':'s')+'</b> · '+esc(X.names.slice(0,3).join(', '))+(X.names.length>3?'…':'')+'</button>'; } }
+      else h+='<button type="button" class="rc-alt" id="rcBack">← Back to this job\'s cloud copy</button>'; }
+    h+='</div><div style="padding:8px 16px 0"><button type="button" class="js-cancel" id="rcClose">Close</button></div></div>';
+    ov.innerHTML=h; ov.classList.add('on'); ov.style.display='flex';
+    document.getElementById('rcClose').onclick=close;
+    var P2=st.cmap?_rcPlan(p,st.cmap):null;
+    var go=document.getElementById('rcGo'); if(go) go.onclick=function(){ var adds=P2.match.map(function(M){ return {t:M.t,idx:M.idx,photos:M.miss}; }); var n=_rcAdd(pid,adds); toast(n?'✓ '+n+' photo'+(n===1?'':'s')+' back on the job':'Nothing added'); reload(); };
+    var sels=ov.querySelectorAll('.rc-sel'); for(var s1=0;s1<sels.length;s1++){ sels[s1].onchange=function(){ var v=this.value; if(!v) return; var O=P2.orphan[parseInt(this.getAttribute('data-o'),10)]; var n=_rcAdd(pid,[{t:v.charAt(0),idx:parseInt(v.slice(1),10),photos:O.photos}]); toast(n?'✓ '+n+' photo'+(n===1?'':'s')+' attached':'Already there'); reload(); }; }
+    var svs=ov.querySelectorAll('.rc-sv'); for(var s2=0;s2<svs.length;s2++){ svs[s2].onclick=function(){ var O=P2.orphan[parseInt(this.getAttribute('data-o'),10)]; _rcSaveToPhone(O.photos,O.name); }; }
+    var ob=document.getElementById('rcOthers'); if(ob) ob.onclick=function(){ if(st.othersBusy) return; st.othersBusy=true; draw(); searchOthers(); };
+    var al=ov.querySelectorAll('[data-oid]'); for(var s3=0;s3<al.length;s3++){ al[s3].onclick=function(){ var X=st.others[parseInt(this.getAttribute('data-oid'),10)]; st.cmap=X.map; st.src='a deleted job'; draw(); }; }
+    var bk=document.getElementById('rcBack'); if(bk) bk.onclick=function(){ st.src='this job'; st.cmap=null; draw(); load(); };
+  }
+  function reload(){ var ps2=loadProjs(); for(var i=0;i<ps2.length;i++) if(ps2[i].id===pid){ p=ps2[i]; break; } draw(); }
+  function load(){ try{ _cloudPhotoMap(db.collection(_PH_COL),pid).then(function(m){ st.cmap=m||{}; draw(); }).catch(function(e){ st.err=(e&&(e.code||e.message))||'error'; draw(); }); }catch(e){ st.err=e&&e.message; draw(); } }
+  function searchOthers(){ var col=db.collection(_PH_COL), live={}, L=loadProjs(); for(var i=0;i<L.length;i++) live[L[i].id]=1;
+    col.doc(_PH_PREFIX+'index').get().then(function(d){ var ids=[]; try{ ids=JSON.parse((d.exists&&d.data()&&d.data().ids)||'[]'); }catch(e){} ids=(ids||[]).filter(function(x){ return !live[x]; });
+      var out=[], chain=Promise.resolve(), cand=ids.slice(0,40); for(var ci=0;ci<cand.length;ci++){ (function(oid){ chain=chain.then(function(){ return _cloudPhotoMap(col,oid).then(function(m){ var n=0, names=[]; for(var k in m){ if(!m.hasOwnProperty(k)) continue; n+=(m[k]||[]).length; var q=_rcParse(k); names.push(q?q.n:k); } if(n) out.push({id:oid,n:n,names:names,map:m}); }).catch(function(){}); }); })(cand[ci]); }
+      return chain.then(function(){ st.others=out; st.othersBusy=false; draw(); }); }).catch(function(e){ st.others=[]; st.othersBusy=false; toast('Could not search: '+((e&&(e.code||e.message))||'error'),'err'); draw(); }); }
+  draw(); load();
+}
+window.fbPhotoRecover=fbPhotoRecover;
+
+var _etJA=_jobAct; _jobAct=function(a,pid,btn){ if(a==='emailtog'){ openEmailTogether(pid); return; } if(a==='phrecover'){ fbPhotoRecover(pid); return; } return _etJA.apply(this,arguments); };
 
 // ── Job header on the Items tab (client, address, phone, email, status, quote #) ──
 function renderJobHeader(){
