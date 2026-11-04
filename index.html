@@ -1396,6 +1396,10 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 .rc-go{width:100%;border:none;background:var(--n-green);color:#fff;border-radius:12px;padding:12px;font-weight:800;font-size:14px;margin:2px 0 6px;font-family:var(--n-font-m)}
 .rc-alt{display:block;width:100%;text-align:left;border:1px dashed var(--n-border);background:transparent;color:var(--n-text);border-radius:12px;padding:11px 12px;margin-bottom:8px;font-size:13px;font-family:var(--n-font-m)}
 .rc-alt.likely{border:1.5px solid var(--n-green);background:rgba(46,160,67,.08)}.rc-lk{display:inline-block;font-size:10.5px;font-weight:800;color:var(--n-green-ink,#3fb950);margin-bottom:3px}
+
+.cl-sites-hd{font-size:11px;color:var(--n-muted);margin:0 0 6px}
+.cl-sites{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.cl-site{border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:999px;padding:7px 11px;font-size:12.5px;font-weight:700;font-family:var(--n-font-m);text-align:left}.cl-site.office{border-color:var(--n-green);color:var(--n-green-ink,#3fb950)}.cl-site.static{font-weight:600;color:var(--n-muted)}
 </style>
 <script>
 // PDF / QR libraries are only needed when you make a PDF or a QR code: they load after the app is on screen
@@ -1518,7 +1522,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261103-1100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261104-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -1842,7 +1846,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
         <div style="flex:1;min-width:0"><label class="fl">Phone</label><input class="fi af" id="newProjPhone" type="text" inputmode="tel" autocapitalize="off" placeholder="(508) 555-0000" autocomplete="off" style="width:100%;box-sizing:border-box"></div>
         <div style="flex:1;min-width:0"><label class="fl">Email</label><input class="fi af" id="newProjEmail" type="text" inputmode="email" autocapitalize="off" placeholder="client@email.com" autocomplete="off" style="width:100%;box-sizing:border-box"></div>
       </div>
-      <label class="fl">Address</label>
+      <label class="fl">Address</label><div id="newProjSites" style="display:none"></div>
       <div style="display:flex;gap:8px">
         <input class="fi af" id="newProjAddress" type="text" placeholder="e.g. 8 Farm St, Dover MA" style="flex:1" autocomplete="off">
         <button class="btn ba" id="createProjBtn" style="flex:none;width:80px;height:50px;font-size:13px">Create</button>
@@ -4230,6 +4234,21 @@ function _clBook(){
   out.sort(function(a,b){ return _clNorm(a.name)<_clNorm(b.name)?-1:1; }); return out;
 }
 // Keep the saved list in step when a Quote is saved
+
+// ══ CLIENT ADDRESSES: a client has an optional OFFICE address (company / billing) and a history of JOB SITES.
+// Picking a client fills name, phone and email only; the job address is chosen from chips (previous sites,
+// office) or typed — every project has its own site.
+function _clSites(c){ var out=[], seen={}; var J=(c&&c.jobs)||[]; for(var i=J.length-1;i>=0;i--){ var a=String(J[i].address||'').trim(); if(!a) continue; var k=_clNorm(a); if(seen[k]) continue; seen[k]=1; out.push(a); if(out.length>=6) break; } if(!out.length&&c&&c.address){ out.push(c.address); } return out; }
+function _clSiteChips(c,inp,holderId){ var h=document.getElementById(holderId); if(!h||!inp) return; var sites=_clSites(c), chips=[];
+  if(c&&c.office) chips.push({l:'🏢 '+c.office,v:c.office,t:'office'}); for(var i=0;i<sites.length;i++) chips.push({l:'📍 '+sites[i],v:sites[i],t:'site'});
+  if(!chips.length){ h.innerHTML=''; h.style.display='none'; return; }
+  h.innerHTML='<div class="cl-sites-hd">Job address for this project — tap to use, or type a new one</div><div class="cl-sites">'+chips.map(function(x,i){ return '<button type="button" class="cl-site'+(x.t==='office'?' office':'')+'" data-i="'+i+'">'+esc(x.l)+'</button>'; }).join('')+'</div>'; h.style.display='block';
+  var bs=h.querySelectorAll('.cl-site'); for(var b=0;b<bs.length;b++){ bs[b].onclick=function(){ inp.value=chips[parseInt(this.getAttribute('data-i'),10)].v; try{ inp.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){} h.style.display='none'; }; } }
+function _clSiteSheet(c,cb){ var sites=_clSites(c), opts=[]; if(c&&c.office) opts.push({l:'🏢 Office · '+c.office,v:c.office}); for(var i=0;i<sites.length;i++) opts.push({l:'📍 '+sites[i],v:sites[i]}); if(!opts.length){ cb(null); return; }
+  var ov=_clOv('clSiteOv'); ov.innerHTML='<div class="modal cl-m"><div class="mhandle"></div><div class="mtitle">📍 Job address</div><div class="tk-sub" style="padding:0 16px 10px">'+esc(c.name||'')+' — which address is this estimate for?</div><div class="cl-list">'+opts.map(function(o,i){ return '<button type="button" class="cl-card" data-i="'+i+'"><b>'+esc(o.l)+'</b></button>'; }).join('')+'<button type="button" class="cl-card" data-i="-1"><b>✏️ New address (type it in the Quote)</b></button></div><div style="padding:8px 16px 0"><button type="button" class="js-cancel" id="clSiteClose">Keep as is</button></div></div>'; ov.classList.add('on'); ov.style.display='flex';
+  function close(){ ov.classList.remove('on'); ov.style.display='none'; } document.getElementById('clSiteClose').onclick=function(){ close(); cb(null); };
+  var bs=ov.querySelectorAll('.cl-card'); for(var b=0;b<bs.length;b++){ bs[b].onclick=function(){ var i=parseInt(this.getAttribute('data-i'),10); close(); cb(i<0?'':opts[i].v); }; } }
+window._clSites=_clSites; window._clSiteChips=_clSiteChips; window._clSiteSheet=_clSiteSheet;
 function _clUpsert(q){ q=q||{}; var nm=String(q.client||'').trim(); if(!nm) return; var L=_clLoad(), k=_clNorm(nm), c=null;
   for(var i=0;i<L.length;i++) if(_clKey(L[i])===k||(L[i].aliases||[]).indexOf(k)>=0){ c=L[i]; break; }
   if(!c){ c={id:'c_'+Date.now().toString(36),name:nm,phone:'',email:'',address:'',notes:''}; L.push(c); }
@@ -4291,7 +4310,7 @@ function _clAutocomplete(inp,onPick){ if(!inp||inp._clAc) return; inp._clAc=1;
   function show(){ var q=_clNorm(inp.value), qd=_clDigits(inp.value); if(q.length<2){ hide(); return; } var B=_clBook(), hits=[];
     for(var i=0;i<B.length&&hits.length<6;i++){ var c=B[i], hay=_clNorm(c.name)+' '+(c.aliases||[]).join(' ')+' '+_clNorm(c.email)+' '+_clNorm(c.address); if(hay.indexOf(q)>=0||(qd.length>=3&&_clDigits(c.phone).indexOf(qd)>=0)) hits.push(c); }
     if(!hits.length){ hide(); return; }
-    dd.innerHTML=hits.map(function(c,i){ return '<button type="button" data-i="'+i+'"><b>'+esc(c.name)+'</b><span>'+esc([c.address,c.phone,c.email].filter(function(x){return x;}).join(' · ')||((c.jobs||[]).length+' job'+((c.jobs||[]).length!==1?'s':'')))+'</span></button>'; }).join('');
+    dd.innerHTML=hits.map(function(c,i){ return '<button type="button" data-i="'+i+'"><b>'+esc(c.name)+'</b><span>'+esc([c.office?'🏢 '+c.office:(c.address?'last job: '+c.address:''),c.phone,c.email].filter(function(x){return x;}).join(' · ')||((c.jobs||[]).length+' job'+((c.jobs||[]).length!==1?'s':'')))+'</span></button>'; }).join('');
     dd.style.display='block';
     var bs=dd.querySelectorAll('button'); for(var j=0;j<bs.length;j++){ bs[j].addEventListener('pointerdown',function(e){ e.preventDefault(); var c=hits[parseInt(this.getAttribute('data-i'),10)]; hide(); onPick(c); }); } }
   inp.addEventListener('input',show); inp.addEventListener('focus',show); inp.addEventListener('blur',function(){ setTimeout(hide,180); });
@@ -4300,7 +4319,7 @@ window._clAutocomplete=_clAutocomplete;
 
 function _clOv(id){ var ov=document.getElementById(id); if(!ov){ ov=document.createElement('div'); ov.id=id; ov.className='overlay'; document.body.appendChild(ov); } return ov; }
 function _clCard(c,pickMode){ var n=c.jobs?c.jobs.length:0;
-  return '<button type="button" class="cl-card" data-cid="'+esc(c.id)+'"><b>'+esc(c.name)+'</b>'+(c.address?'<span>📍 '+esc(c.address)+'</span>':'')+'<span>'+(c.phone?'📞 '+esc(c.phone):'')+(c.phone&&c.email?' · ':'')+(c.email?'✉️ '+esc(c.email):'')+((!c.phone&&!c.email)?'<i>no phone or email yet</i>':'')+'</span>'+(pickMode?'':'<small>'+n+' job'+(n!==1?'s':'')+'</small>')+'</button>'; }
+  return '<button type="button" class="cl-card" data-cid="'+esc(c.id)+'"><b>'+esc(c.name)+'</b>'+(c.office?'<span>🏢 '+esc(c.office)+'</span>':'')+(c.address?'<span>📍 last job: '+esc(c.address)+(_clSites(c).length>1?' · '+_clSites(c).length+' sites':'')+'</span>':'')+'<span>'+(c.phone?'📞 '+esc(c.phone):'')+(c.phone&&c.email?' · ':'')+(c.email?'✉️ '+esc(c.email):'')+((!c.phone&&!c.email)?'<i>no phone or email yet</i>':'')+'</span>'+(pickMode?'':'<small>'+n+' job'+(n!==1?'s':'')+'</small>')+'</button>'; }
 // More → Clients
 function fbClients(){
   var ov=_clOv('clOv'); ov.classList.add('on'); ov.style.display='flex';
@@ -4325,7 +4344,7 @@ function fbClientEdit(c,onDone){
   var jobs=(c.jobs||[]).map(function(j){ return '<button type="button" class="cl-job" data-pid="'+esc(j.id)+'"><b>'+esc(j.name)+'</b><span>'+esc(j.address||'')+(j.created?' · '+esc(j.created):'')+'</span></button>'; }).join('');
   ov.innerHTML='<div class="modal cl-m"><div class="mhandle"></div><div class="mtitle">'+(isNew?'👤 New client':'👤 '+esc(c.name))+'</div>'+
     '<div class="ce-g"><label>Name<input id="clName" value="'+esc(c.name)+'" placeholder="Client or company"></label><div class="ce-2"><label>Phone<input id="clPhone" inputmode="tel" value="'+esc(c.phone||'')+'" placeholder="(508) 555-0000"></label><label>Email<input id="clEmail" inputmode="email" autocapitalize="off" value="'+esc(c.email||'')+'" placeholder="client@email.com"></label></div>'+
-    '<label>Address<input id="clAddr" value="'+esc(c.address||'')+'" placeholder="Street, town"></label><label>Notes<textarea id="clNotes" rows="2">'+esc(c.notes||'')+'</textarea></label></div>'+
+    '<label>Office / billing address <small style="color:var(--n-muted);font-weight:500">(company, not the job)</small><input id="clOffice" value="'+esc(c.office||'')+'" placeholder="Optional · e.g. 12 Main St, Newton MA"></label>'+(function(){ var S=_clSites(c); return S.length?'<div class="ce-h">Job sites</div><div class="cl-sites">'+S.map(function(a){ return '<span class="cl-site static">📍 '+esc(a)+'</span>'; }).join('')+'</div>':''; })()+'<input id="clAddr" type="hidden" value="'+esc(c.address||'')+'"><label>Notes<textarea id="clNotes" rows="2">'+esc(c.notes||'')+'</textarea></label></div>'+
     (jobs?'<div class="ce-h">Jobs</div><div class="cl-jobs">'+jobs+'</div>':'')+
     '<div class="ce-btns"><button type="button" class="ce-cancel" id="clCancel">Cancel</button><button type="button" class="ce-go" id="clSave">✓ Save</button></div>'+
     (isNew?'':'<button type="button" class="cl-del" id="clMerge" style="color:var(--n-blue)">🔗 Same client as… (merge)</button><button type="button" class="cl-del" id="clDel">🗑 Remove from the list</button>')+'</div>';
@@ -4336,7 +4355,7 @@ function fbClientEdit(c,onDone){
   document.getElementById('clSave').onclick=function(){ var nm=document.getElementById('clName').value.trim(); if(!nm){ toast('Enter the name','err'); return; }
     var L=_clLoad(), found=null; for(var i=0;i<L.length;i++) if(L[i].id===c.id||_clKey(L[i])===_clNorm(c.name)){ found=L[i]; break; }
     if(!found){ found={id:c.id}; L.push(found); }
-    found.name=nm; found.phone=document.getElementById('clPhone').value.trim(); found.email=document.getElementById('clEmail').value.trim(); found.address=document.getElementById('clAddr').value.trim(); found.notes=document.getElementById('clNotes').value.trim(); found.updatedAt=new Date().toISOString();
+    found.name=nm; found.phone=document.getElementById('clPhone').value.trim(); found.email=document.getElementById('clEmail').value.trim(); found.address=document.getElementById('clAddr').value.trim(); found.office=document.getElementById('clOffice').value.trim(); found.notes=document.getElementById('clNotes').value.trim(); found.updatedAt=new Date().toISOString();
     _clSave(L); close(); toast('✓ Client saved'); if(onDone) onDone(found); };
   var del=document.getElementById('clDel'); if(del) del.onclick=function(){ appConfirm('Remove "'+c.name+'" from the client list? The jobs are not touched.',function(){ var L=_clLoad().filter(function(x){ return x.id!==c.id&&_clKey(x)!==_clNorm(c.name); }); _clSave(L); close(); toast('Removed'); if(onDone) onDone(null); },{confirmLabel:'Remove'}); };
   var jb=ov.querySelectorAll('.cl-job'); for(var k=0;k<jb.length;k++){ jb[k].onclick=function(){ var pid=this.getAttribute('data-pid'); close(); var o2=document.getElementById('clOv'); if(o2){ o2.classList.remove('on'); o2.style.display='none'; } try{ openJobFromList(pid); }catch(e){} }; }
@@ -4850,9 +4869,9 @@ document.getElementById('projCloseBtn').addEventListener('click',function(){
   closeOv('projOverlay');
 });
 document.getElementById('createProjBtn').addEventListener('click',function(){createProj();});
-try{ _clAutocomplete(document.getElementById('newProjName'),function(c){ document.getElementById('newProjName').value=c.name||''; if(c.address) document.getElementById('newProjAddress').value=c.address; var ph=document.getElementById('newProjPhone'), em=document.getElementById('newProjEmail'); if(ph&&c.phone) ph.value=c.phone; if(em&&c.email) em.value=c.email; }); }catch(e){}
-document.getElementById('npPick').addEventListener('click',function(){ window.fbClientPick(function(c){ document.getElementById('newProjName').value=c.name||''; document.getElementById('newProjAddress').value=c.address||''; var ph=document.getElementById('newProjPhone'), em=document.getElementById('newProjEmail'); if(ph) ph.value=c.phone||''; if(em) em.value=c.email||''; }); });
-document.addEventListener('click',function(e){ if(e.target&&e.target.id==='qPick'){ window.fbClientPick(function(c){ quoteInfo.client=c.name||quoteInfo.client; if(c.address) quoteInfo.address=c.address; if(c.phone) quoteInfo.phone=c.phone; if(c.email) quoteInfo.email=c.email; saveQI(); renderQuote(); toast('👥 '+c.name); }); } });
+try{ _clAutocomplete(document.getElementById('newProjName'),function(c){ document.getElementById('newProjName').value=c.name||''; var ph=document.getElementById('newProjPhone'), em=document.getElementById('newProjEmail'); if(ph&&c.phone) ph.value=c.phone; if(em&&c.email) em.value=c.email; _clSiteChips(c,document.getElementById('newProjAddress'),'newProjSites'); }); }catch(e){}
+document.getElementById('npPick').addEventListener('click',function(){ window.fbClientPick(function(c){ document.getElementById('newProjName').value=c.name||''; var ph=document.getElementById('newProjPhone'), em=document.getElementById('newProjEmail'); if(ph) ph.value=c.phone||''; if(em) em.value=c.email||''; _clSiteChips(c,document.getElementById('newProjAddress'),'newProjSites'); }); });
+document.addEventListener('click',function(e){ if(e.target&&e.target.id==='qPick'){ window.fbClientPick(function(c){ quoteInfo.client=c.name||quoteInfo.client; if(c.phone) quoteInfo.phone=c.phone; if(c.email) quoteInfo.email=c.email; saveQI(); renderQuote(); toast('👥 '+c.name); _clSiteSheet(c,function(addr){ if(addr===null) return; quoteInfo.address=addr; saveQI(); renderQuote(); }); }); } });
 function openProjModal(){
   var f=document.getElementById('newProjForm');
   if(f) f.style.display='';
@@ -5125,13 +5144,13 @@ function openEditProjModal(pid){
   ov.innerHTML='<div class="modal cl-m"><div class="mhandle"></div><div class="mtitle">✏️ Edit job</div>'+
     '<div class="ce-g"><label>Name / client<div style="display:flex;gap:8px"><input id="pjEdName" style="flex:1;min-width:0" value="'+esc(p.name||'')+'"><button type="button" class="q-pick" id="pjEdPick">👥 Pick</button></div></label>'+
     '<div class="ce-2"><label>Phone<input id="pjEdPhone" inputmode="tel" value="'+esc(q.phone||'')+'" placeholder="(508) 555-0000"></label><label>Email<input id="pjEdEmail" inputmode="email" autocapitalize="off" value="'+esc(q.email||'')+'" placeholder="client@email.com"></label></div>'+
-    '<label>Address<input id="pjEdAddr" value="'+esc(p.address||q.address||'')+'" placeholder="Street, town"></label></div>'+
+    '<label>Address<div id="pjEdSites" style="display:none"></div><input id="pjEdAddr" value="'+esc(p.address||q.address||'')+'" placeholder="Street, town"></label></div>'+
     '<div class="ce-btns"><button type="button" class="ce-cancel" id="pjEdCancel">Cancel</button><button type="button" class="ce-go" id="pjEdSave">✓ Save</button></div></div>';
   ov.classList.add('on'); ov.style.display='flex';
   function close(){ ov.classList.remove('on'); ov.style.display='none'; }
   document.getElementById('pjEdCancel').onclick=close;
-  try{ _clAutocomplete(document.getElementById('pjEdName'),function(c){ document.getElementById('pjEdName').value=c.name||''; if(c.phone) document.getElementById('pjEdPhone').value=c.phone; if(c.email) document.getElementById('pjEdEmail').value=c.email; if(c.address&&!document.getElementById('pjEdAddr').value) document.getElementById('pjEdAddr').value=c.address; }); }catch(e){}
-  document.getElementById('pjEdPick').onclick=function(){ if(!window.fbClientPick) return; window.fbClientPick(function(c){ document.getElementById('pjEdName').value=c.name||''; if(c.phone) document.getElementById('pjEdPhone').value=c.phone; if(c.email) document.getElementById('pjEdEmail').value=c.email; if(c.address) document.getElementById('pjEdAddr').value=c.address; }); };
+  try{ _clAutocomplete(document.getElementById('pjEdName'),function(c){ document.getElementById('pjEdName').value=c.name||''; if(c.phone) document.getElementById('pjEdPhone').value=c.phone; if(c.email) document.getElementById('pjEdEmail').value=c.email; _clSiteChips(c,document.getElementById('pjEdAddr'),'pjEdSites'); }); }catch(e){}
+  document.getElementById('pjEdPick').onclick=function(){ if(!window.fbClientPick) return; window.fbClientPick(function(c){ document.getElementById('pjEdName').value=c.name||''; if(c.phone) document.getElementById('pjEdPhone').value=c.phone; if(c.email) document.getElementById('pjEdEmail').value=c.email; _clSiteChips(c,document.getElementById('pjEdAddr'),'pjEdSites'); }); };
   document.getElementById('pjEdSave').onclick=function(){
     var nm=document.getElementById('pjEdName').value.trim(), ph=document.getElementById('pjEdPhone').value.trim(), em=document.getElementById('pjEdEmail').value.trim(), ad=document.getElementById('pjEdAddr').value.trim();
     var ps=loadProjs(), pj=null; for(var k=0;k<ps.length;k++) if(ps[k].id===pid) pj=ps[k]; if(!pj){ close(); return; }
