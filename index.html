@@ -1395,6 +1395,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 .rc-act{display:flex;gap:8px;margin-top:8px}.rc-sel{flex:1;min-width:0;padding:9px;border-radius:9px;border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);font-size:13px}.rc-sv{border:1px solid var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:9px;padding:0 12px;font-weight:700;font-size:12.5px}
 .rc-go{width:100%;border:none;background:var(--n-green);color:#fff;border-radius:12px;padding:12px;font-weight:800;font-size:14px;margin:2px 0 6px;font-family:var(--n-font-m)}
 .rc-alt{display:block;width:100%;text-align:left;border:1px dashed var(--n-border);background:transparent;color:var(--n-text);border-radius:12px;padding:11px 12px;margin-bottom:8px;font-size:13px;font-family:var(--n-font-m)}
+.rc-alt.likely{border:1.5px solid var(--n-green);background:rgba(46,160,67,.08)}.rc-lk{display:inline-block;font-size:10.5px;font-weight:800;color:var(--n-green-ink,#3fb950);margin-bottom:3px}
 </style>
 <script>
 // PDF / QR libraries are only needed when you make a PDF or a QR code: they load after the app is on screen
@@ -1517,7 +1518,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261103-0900</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261103-1100</span></div>
 </div>
 
 <div id="field-app">
@@ -2713,6 +2714,7 @@ function backupPhotos(){
         for(var ck in cloudMap){ if(!cloudMap.hasOwnProperty(ck)||map[ck]) continue; var carr=cloudMap[ck]; if(!Array.isArray(carr)) continue; var uniq=[]; for(var cz=0;cz<carr.length;cz++){ if(carr[cz]&&!local[carr[cz]]) uniq.push(carr[cz]); } if(uniq.length){ map[ck]=uniq; kept+=uniq.length; } }
         if(kept){ chunks=_chunkPhotoMap(map); console.warn('photo backup: carried over '+kept+' cloud photo(s) of '+proj.id+' that are not on this phone'); } }
       var batch=db.batch();
+      try{ if(window._phMetaDoc) batch.set(col.doc(_PH_PREFIX+proj.id+'__meta'),window._phMetaDoc(proj)); }catch(e){ console.warn('photo meta card skipped',e&&e.message); }
       // write chunk docs
       for(var ci=0;ci<chunks.length;ci++){
         batch.set(col.doc(_PH_PREFIX+proj.id+'__'+ci),{data:JSON.stringify(chunks[ci]),n:chunks.length,updatedAt:new Date().toISOString()});
@@ -8131,7 +8133,8 @@ function _rcPlan(p,cmap){ var res={match:[],orphan:[],ok:0}, used={};
   for(var k in cmap){ if(!cmap.hasOwnProperty(k)) continue; var c=cmap[k]; if(!Array.isArray(c)||!c.length) continue; var q=_rcParse(k); if(!q){ res.orphan.push({key:k,name:k,photos:c}); continue; }
     var arr=(q.t==='a'?p.areas:p.estItems)||[], idx=-1;
     if(arr[q.i]&&_rcNorm(arr[q.i].name)===_rcNorm(q.n)) idx=q.i; else { for(var j=0;j<arr.length;j++){ if(_rcNorm(arr[j]&&arr[j].name)===_rcNorm(q.n)&&!used[q.t+j]){ idx=j; break; } } }
-    if(idx<0){ res.orphan.push({key:k,name:q.n,type:q.t,photos:c}); continue; } used[q.t+idx]=1;
+    if(idx<0){ var mm=_phMeta(c[0]); if(mm&&mm.area){ for(var j2=0;j2<arr.length;j2++){ if(_rcNorm(arr[j2]&&arr[j2].name)===_rcNorm(mm.area)&&!used[q.t+j2]){ idx=j2; break; } } }   // the stamp knows the area it was taken for
+      if(idx<0){ res.orphan.push({key:k,name:q.n,type:q.t,photos:c,meta:mm}); continue; } } used[q.t+idx]=1;
     var have=(arr[idx].photos||[]), miss=[]; for(var z=0;z<c.length;z++) if(have.indexOf(c[z])<0) miss.push(c[z]);
     if(miss.length) res.match.push({t:q.t,idx:idx,name:arr[idx].name||'',moved:idx!==q.i,miss:miss}); else res.ok+=c.length; }
   return res; }
@@ -8162,11 +8165,11 @@ function fbPhotoRecover(pid){
       if(P.match.length){ h+='<div class="rc-h">Missing on the phone — their area still exists</div>'; for(var c=0;c<P.match.length;c++){ var M=P.match[c]; h+='<div class="rc-row"><div><b>'+esc(M.name)+'</b><small>'+M.miss.length+' photo'+(M.miss.length===1?'':'s')+(M.moved?' · area moved':'')+'</small>'+thumbs(M.miss)+'</div></div>'; }
         h+='<button type="button" class="rc-go" id="rcGo">↩️ Put back '+nm+' photo'+(nm===1?'':'s')+'</button>'; }
       if(P.orphan.length){ var T=_rcTargets(p); h+='<div class="rc-h">No matching area (renamed or deleted) — choose where they go</div>';
-        for(var d=0;d<P.orphan.length;d++){ var O=P.orphan[d]; h+='<div class="rc-row"><div><b>'+esc(O.name)+'</b><small>'+O.photos.length+' photo'+(O.photos.length===1?'':'s')+' · was '+(O.type==='e'?'an estimate item':'a takeoff area')+'</small>'+thumbs(O.photos)+'<div class="rc-act"><select data-o="'+d+'" class="rc-sel"><option value="">Attach to…</option>'+T.map(function(t){ return '<option value="'+t.v+'">'+esc(t.l)+'</option>'; }).join('')+'</select><button type="button" class="rc-sv" data-o="'+d+'">⬇ Save</button></div></div></div>'; } }
+        for(var d=0;d<P.orphan.length;d++){ var O=P.orphan[d]; h+='<div class="rc-row"><div><b>'+esc(O.name)+'</b><small>'+O.photos.length+' photo'+(O.photos.length===1?'':'s')+' · was '+(O.type==='e'?'an estimate item':'a takeoff area')+(O.meta?' · 📎 '+esc((O.meta.job||O.meta.client||'')+(O.meta.area?' · '+O.meta.area:'')+(O.meta.at?' · '+new Date(O.meta.at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'')):'')+'</small>'+thumbs(O.photos)+'<div class="rc-act"><select data-o="'+d+'" class="rc-sel"><option value="">Attach to…</option>'+T.map(function(t){ return '<option value="'+t.v+'">'+esc(t.l)+'</option>'; }).join('')+'</select><button type="button" class="rc-sv" data-o="'+d+'">⬇ Save</button></div></div></div>'; } }
       if(st.src==='this job'){ h+='<div class="rc-h">Recreated this quote? Its photos may be under the old (deleted) job</div>';
         if(st.others===null) h+='<button type="button" class="rc-alt" id="rcOthers">'+(st.othersBusy?'⏳ Searching…':'🔎 Search photos of deleted jobs')+'</button>';
         else if(!st.others.length) h+='<div class="pc-empty">No photos of deleted jobs in the cloud.</div>';
-        else for(var e=0;e<st.others.length;e++){ var X=st.others[e]; h+='<button type="button" class="rc-alt" data-oid="'+e+'"><b>'+X.n+' photo'+(X.n===1?'':'s')+'</b> · '+esc(X.names.slice(0,3).join(', '))+(X.names.length>3?'…':'')+'</button>'; } }
+        else for(var e=0;e<st.others.length;e++){ var X=st.others[e]; h+='<button type="button" class="rc-alt'+(X.likely?' likely':'')+'" data-oid="'+e+'">'+(X.likely?'<span class="rc-lk">likely this job ✓</span>':'')+(X.label?'<b>'+esc(X.label)+'</b><br>':'')+'<b>'+X.n+' photo'+(X.n===1?'':'s')+'</b> · '+esc(X.names.slice(0,3).join(', '))+(X.names.length>3?'…':'')+'</button>'; } }
       else h+='<button type="button" class="rc-alt" id="rcBack">← Back to this job\'s cloud copy</button>'; }
     h+='</div><div style="padding:8px 16px 0"><button type="button" class="js-cancel" id="rcClose">Close</button></div></div>';
     ov.innerHTML=h; ov.classList.add('on'); ov.style.display='flex';
@@ -8183,8 +8186,12 @@ function fbPhotoRecover(pid){
   function load(){ try{ _cloudPhotoMap(db.collection(_PH_COL),pid).then(function(m){ st.cmap=m||{}; draw(); }).catch(function(e){ st.err=(e&&(e.code||e.message))||'error'; draw(); }); }catch(e){ st.err=e&&e.message; draw(); } }
   function searchOthers(){ var col=db.collection(_PH_COL), live={}, L=loadProjs(); for(var i=0;i<L.length;i++) live[L[i].id]=1;
     col.doc(_PH_PREFIX+'index').get().then(function(d){ var ids=[]; try{ ids=JSON.parse((d.exists&&d.data()&&d.data().ids)||'[]'); }catch(e){} ids=(ids||[]).filter(function(x){ return !live[x]; });
-      var out=[], chain=Promise.resolve(), cand=ids.slice(0,40); for(var ci=0;ci<cand.length;ci++){ (function(oid){ chain=chain.then(function(){ return _cloudPhotoMap(col,oid).then(function(m){ var n=0, names=[]; for(var k in m){ if(!m.hasOwnProperty(k)) continue; n+=(m[k]||[]).length; var q=_rcParse(k); names.push(q?q.n:k); } if(n) out.push({id:oid,n:n,names:names,map:m}); }).catch(function(){}); }); })(cand[ci]); }
-      return chain.then(function(){ st.others=out; st.othersBusy=false; draw(); }); }).catch(function(e){ st.others=[]; st.othersBusy=false; toast('Could not search: '+((e&&(e.code||e.message))||'error'),'err'); draw(); }); }
+      var out=[], chain=Promise.resolve(), cand=ids.slice(0,40), me=_rcNorm(p.name), meC=_rcNorm((p.quoteInfo||{}).client), meA=_rcNorm((p.quoteInfo||{}).address||p.address);
+      for(var ci=0;ci<cand.length;ci++){ (function(oid){ chain=chain.then(function(){ return _cloudPhotoMap(col,oid).then(function(m){ var n=0, names=[], first=null; for(var k in m){ if(!m.hasOwnProperty(k)) continue; n+=(m[k]||[]).length; var q=_rcParse(k); names.push(q?q.n:k); if(!first&&m[k]&&m[k][0]) first=_phMeta(m[k][0]); } if(!n) return;
+          return col.doc(_PH_PREFIX+oid+'__meta').get().then(function(md){ var d=(md&&md.exists)?md.data():null; var label=''; if(d&&(d.name||d.client)) label=(d.name||d.client)+(d.address?' · '+d.address:'')+(d.quote?' · #'+d.quote:''); else if(first&&(first.job||first.client)) label=(first.job||first.client)+(first.address?' · '+first.address:'')+(first.quote?' · #'+first.quote:'');
+            var nm=_rcNorm(d?d.name:(first&&first.job)), cl=_rcNorm(d?d.client:(first&&first.client)), ad=_rcNorm(d?d.address:(first&&first.address)); var likely=!!((nm&&nm===me)||(cl&&cl===meC)||(ad&&meA&&ad===meA));
+            out.push({id:oid,n:n,names:names,map:m,label:label,likely:likely}); }).catch(function(){ out.push({id:oid,n:n,names:names,map:m,label:(first&&(first.job||first.client))||'',likely:false}); }); }).catch(function(){}); }); })(cand[ci]); }
+      return chain.then(function(){ out.sort(function(a,b){ return (b.likely?1:0)-(a.likely?1:0); }); st.others=out; st.othersBusy=false; draw(); }); }).catch(function(e){ st.others=[]; st.othersBusy=false; toast('Could not search: '+((e&&(e.code||e.message))||'error'),'err'); draw(); }); }
   draw(); load();
 }
 window.fbPhotoRecover=fbPhotoRecover;
@@ -9974,7 +9981,7 @@ document.getElementById('faSaveBtn').addEventListener('click',function(){
   if(saveWallRows.length===0&&calcMode==='walls') saveWallRows=JSON.parse(JSON.stringify(wallRows));
   if(saveFloorRows.length===0&&calcMode==='floor') saveFloorRows=JSON.parse(JSON.stringify(floorRows));
   var _faPriceVal=parseFloat(document.getElementById('fa_price').value);
-  var area=Object.assign({name:name,productId:null,sf:sf,sfBase:sfBase,spec:spec,notes:notes,photos:faPendPh.slice(),mult:multVal},matData,{
+  var area=Object.assign({name:name,productId:null,sf:sf,sfBase:sfBase,spec:spec,notes:notes,photos:_phStampAll(faPendPh,{area:name,type:'area'}),mult:multVal},matData,{
     calcMode:calcMode||'manual',
     roofRows:(calcMode==='roof')?JSON.parse(JSON.stringify(roofRows)):null,
     roofWaste:(calcMode==='roof'&&document.getElementById('roofWaste'))?document.getElementById('roofWaste').checked:false,
@@ -10305,7 +10312,7 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
     if(!inch||inch<=0){toast('Enter thickness (inches)');return;}
     linePrice=Math.round(price*inch*1000000)/1000000;
   }
-  var item={name:name,productId:eiProd,sf:sf,price:linePrice,pricePerInch:(!isHybridItem&&isPerInch())?price:0,inches:inch,notes:notes,photos:eiPendPh.slice()};
+  var item={name:name,productId:eiProd,sf:sf,price:linePrice,pricePerInch:(!isHybridItem&&isPerInch())?price:0,inches:inch,notes:notes,photos:_phStampAll(eiPendPh,{area:name,type:'item'})};
   // Carry material fields derived from the chosen product so WorkLog matBudget
   // works even when the item is created manually (not imported from takeoff).
   // Preserve any existing material data when editing an imported item.
@@ -10445,6 +10452,27 @@ document.getElementById('faCam').addEventListener('change',function(){handlePH(t
 document.getElementById('faGal').addEventListener('change',function(){handlePH(this,'fa');});
 document.getElementById('eiCam').addEventListener('change',function(){handlePH(this,'ei');});
 document.getElementById('eiGal').addEventListener('change',function(){handlePH(this,'ei');});
+
+// ══ PHOTO METADATA: every new photo carries, inside the JPEG itself (a COM segment the viewers
+// ignore), the job, client, address, quote #, area and date it was taken for. It travels with the
+// photo wherever it goes (cloud copy, backup file, PDF, share), so Recover photos can place it even
+// after an area is renamed, moved or the job is re-created. Old photos are left untouched.
+var _PH_TAG='FieldBid:';
+function _phB64ToBytes(b64){ var raw=atob(b64), u=new Uint8Array(raw.length); for(var i=0;i<raw.length;i++) u[i]=raw.charCodeAt(i); return u; }
+function _phBytesToB64(u){ var s='', CH=0x8000; for(var i=0;i<u.length;i+=CH) s+=String.fromCharCode.apply(null,u.subarray(i,i+CH)); return btoa(s); }
+function _phUtf8(str){ return unescape(encodeURIComponent(str)); }
+function _phMeta(src){ try{ if(!/^data:image\/jpe?g;base64,/i.test(src)) return null; var b64=src.slice(src.indexOf(',')+1,src.indexOf(',')+1+4000); b64=b64.slice(0,b64.length-(b64.length%4)); var raw=atob(b64); if(raw.charCodeAt(0)!==0xFF||raw.charCodeAt(1)!==0xD8||raw.charCodeAt(2)!==0xFF||raw.charCodeAt(3)!==0xFE) return null; var len=(raw.charCodeAt(4)<<8)|raw.charCodeAt(5); var txt=raw.substr(6,len-2); if(txt.indexOf(_PH_TAG)!==0) return null; return JSON.parse(decodeURIComponent(escape(txt.slice(_PH_TAG.length)))); }catch(e){ return null; } }
+function _phStamp(src,ctx){ try{ if(!/^data:image\/jpe?g;base64,/i.test(src)||_phMeta(src)) return src; var p=(typeof currentProj!=='undefined'&&currentProj)?currentProj:null, qi=(typeof quoteInfo!=='undefined'&&quoteInfo)?quoteInfo:{};
+    var m={v:1,jobId:p?p.id:'',job:p?(p.name||''):'',client:qi.client||'',address:qi.address||(p?(p.address||''):''),quote:qi.quoteNum||'',area:(ctx&&ctx.area)||'',type:(ctx&&ctx.type)||'',at:new Date().toISOString()};
+    var txt=_phUtf8(_PH_TAG+JSON.stringify(m)); if(txt.length>65000) return src; var u=_phB64ToBytes(src.slice(src.indexOf(',')+1)); if(u[0]!==0xFF||u[1]!==0xD8) return src;
+    var seg=new Uint8Array(4+txt.length); seg[0]=0xFF; seg[1]=0xFE; seg[2]=((txt.length+2)>>8)&0xFF; seg[3]=(txt.length+2)&0xFF; for(var i=0;i<txt.length;i++) seg[4+i]=txt.charCodeAt(i);
+    var out=new Uint8Array(u.length+seg.length); out.set(u.subarray(0,2),0); out.set(seg,2); out.set(u.subarray(2),2+seg.length);
+    return 'data:image/jpeg;base64,'+_phBytesToB64(out); }catch(e){ return src; } }
+function _phStampAll(arr,ctx){ var out=[]; if(!Array.isArray(arr)) return out; for(var i=0;i<arr.length;i++) out.push(_phStamp(arr[i],ctx)); return out; }
+window._phMeta=_phMeta; window._phStamp=_phStamp; window._phMetaDoc=_phMetaDoc;
+// A short card of the job next to its cloud photos, so copies of deleted jobs can be named
+function _phMetaDoc(proj){ var qi=proj.quoteInfo||{}, areas=[]; var L=[[proj.areas,'a'],[proj.estItems,'e']]; for(var l=0;l<L.length;l++){ var arr=L[l][0]||[]; for(var i=0;i<arr.length;i++){ if(arr[i]&&Array.isArray(arr[i].photos)&&arr[i].photos.length) areas.push(L[l][1]+i+':'+(arr[i].name||'')); } }
+  return {name:proj.name||'',client:qi.client||'',address:qi.address||proj.address||'',quote:qi.quoteNum||'',areas:JSON.stringify(areas),updatedAt:new Date().toISOString()}; }
 function validatePhoto(f){
   if(!f)return 'No file';
   if(!/^image\//.test(f.type||''))return 'Not an image';
@@ -10536,7 +10564,7 @@ function qkPH(mode,btn){
       var v=validatePhoto(f);
       if(v){done++;if(done===count){if(mode==='field'){saveFA();renderFA();}else{saveEI();renderEst();}toast(ok?('📷 '+ok+' added, '+(count-ok)+' skipped'):v,ok?'warn':'err');gal.onchange=null;gal.value='';}return;}
       var r=new FileReader();
-      r.onload=function(e){it.photos.push(e.target.result);ok++;done++;if(done===count){if(mode==='field'){saveFA();renderFA();}else{saveEI();renderEst();}toast('📷 '+ok+' added');gal.onchange=null;gal.value='';}};
+      r.onload=function(e){it.photos.push(_phStamp(e.target.result,{area:it.name||'',type:mode==='field'?'area':'item'}));ok++;done++;if(done===count){if(mode==='field'){saveFA();renderFA();}else{saveEI();renderEst();}toast('📷 '+ok+' added');gal.onchange=null;gal.value='';}};
       r.onerror=function(){done++;if(done===count){toast(ok?('📷 '+ok+' added'):'Read error',ok?'':'err');gal.onchange=null;gal.value='';}};
       r.readAsDataURL(f);
     })(files[i]);}
