@@ -1522,7 +1522,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261104-1100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261111-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -2072,6 +2072,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
       <div class="fg"><label class="fl" id="ei_price_label">Price / SF ($)</label><input class="fi" id="ei_price" type="number" inputmode="decimal" placeholder="0.00" step="0.01"></div>
     </div>
     <div class="hint" id="eiHint">Line total: <strong>$0.00</strong></div>
+      <div id="ei_hyb_wrap" style="display:none;margin-top:8px"><div class="frow"><div class="fg"><label class="fl">Closed cell (in)</label><input class="fi" id="ei_cc_inch" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0"></div><div class="fg" id="ei_oc_wrap"><label class="fl">Open cell (in)</label><input class="fi" id="ei_oc_inch" type="number" inputmode="decimal" placeholder="0" step="0.5" min="0"></div></div><button type="button" id="ei_hyb_hint" style="display:none;width:100%;text-align:left;margin-top:4px;border:1px dashed var(--n-border);background:var(--n-surface2);color:var(--n-text);border-radius:10px;padding:9px 11px;font-size:12px;line-height:1.4"></button></div>
     <div class="fg" style="margin-top:10px"><label class="fl">Notes</label><textarea class="fi fi-ta" id="ei_notes" rows="2" placeholder="R-value, fire-rated..."></textarea></div>
     <div class="fg"><label class="fl">Photos</label>
       <div class="ph-row"><button class="ph-btn" id="eiCamBtn">📷 Camera</button><button class="ph-btn" id="eiGalBtn">🖼️ Gallery</button></div>
@@ -10223,6 +10224,7 @@ function openEIModal(idx){
       }
     }
     document.getElementById('ei_inch').value=_itInch||'';
+  try{ var _hc=Number(it.ccInch)||0, _ho=Number(it.ocInch)||0; if(!(_hc||_ho)&&_ta){ _hc=Number(_ta.ccInch)||0; _ho=Number(_ta.ocInch)||0; } document.getElementById('ei_cc_inch').value=_hc||''; document.getElementById('ei_oc_inch').value=_ho||''; }catch(e){}
     document.getElementById('ei_notes').value=it.notes||'';
     eiProd=it.productId||null; window._eiNoteLast=_eiNoteKey(eiProd,it.name);
     eiPendPh=it.photos?it.photos.slice():[];
@@ -10295,23 +10297,37 @@ function updateEIHint(){
     document.getElementById('eiHint').innerHTML='Line total (w/ markup): <strong>'+fmt(total*lineMarkupMult())+'</strong>';
   }
 }
+// Hybrid: the inches of each foam live on the item (material, Work Order, WorkLog); the combined $/SF stays yours.
+function _eiHybKind(pr){ if(!pr||pr.cat!=='Hybrid') return ''; var k=(window._PROD_CAT&&_PROD_CAT[pr.id])?_PROD_CAT[pr.id][0]:''; if(k==='hybrid') return 'ccoc'; if(k==='hybrid_foam_mw') return 'ccmw'; if(k==='hybrid_foam_fg') return 'ccfg'; return /mineral/i.test(pr.name)?'ccmw':(/fiber/i.test(pr.name)?'ccfg':'ccoc'); }
+function _eiHybHint(){ var pr=null; try{ pr=eiProd?getProd(eiProd):null; }catch(e){} var kind=_eiHybKind(pr), h=document.getElementById('ei_hyb_hint'); if(!h) return; if(!kind){ h.style.display='none'; return; }
+  var cc=parseFloat(document.getElementById('ei_cc_inch').value)||0, oc=parseFloat(document.getElementById('ei_oc_inch').value)||0; var pc=null,po=null; try{ pc=getProd('p2'); po=getProd('p1'); }catch(e){}
+  var ccP=(pc&&Number(pc.price))||0, ocP=(po&&Number(po.price))||0;
+  if(kind==='ccoc'){ if(!(cc>0||oc>0)||!(ccP>0&&ocP>0)){ h.style.display='none'; return; } var tot=Math.round((ccP*cc+ocP*oc)*100)/100; var cur=parseFloat(document.getElementById('ei_price').value)||0;
+    h.innerHTML='💡 At product prices: '+(cc>0?'CC $'+ccP.toFixed(2)+'/in × '+cc+'"':'')+(cc>0&&oc>0?' + ':'')+(oc>0?'OC $'+ocP.toFixed(2)+'/in × '+oc+'"':'')+' = <b>$'+tot.toFixed(2)+'/SF</b>'+(Math.abs(cur-tot)<0.005?' · in use ✓':' — tap to use'); h._tot=tot; h.style.display='block'; }
+  else { if(!(cc>0)||!(ccP>0)){ h.style.display='none'; return; } h.innerHTML='💡 Closed cell part at product price: $'+ccP.toFixed(2)+'/in × '+cc+'" = <b>$'+(ccP*cc).toFixed(2)+'/SF</b> + the '+(kind==='ccmw'?'mineral wool':'fiberglass')+' — your combined price stays as typed'; h._tot=null; h.style.display='block'; } }
 function updateEIPricingUI(){
   var perInch=isPerInch();
   var pr=null; try{ pr=eiProd?getProd(eiProd):null; }catch(e){}
   var isHybrid=pr&&(pr.cat==='Hybrid');
   var wrap=document.getElementById('ei_inch_wrap');
   var lbl=document.getElementById('ei_price_label');
+  var hw=document.getElementById('ei_hyb_wrap');
   if(isHybrid){
     if(wrap) wrap.style.display='none';
     if(lbl) lbl.textContent='Price / SF (combined $)';
+    if(hw){ hw.style.display='block'; var ow=document.getElementById('ei_oc_wrap'); if(ow) ow.style.display=(_eiHybKind(pr)==='ccoc')?'block':'none'; }
+    _eiHybHint();
   } else {
     if(wrap) wrap.style.display=perInch?'block':'none';
     if(lbl) lbl.textContent=perInch?'Price / inch ($)':'Price / SF ($)';
+    if(hw) hw.style.display='none';
   }
   updateEIHint();
 }
+document.getElementById('ei_cc_inch').addEventListener('input',_eiHybHint); document.getElementById('ei_oc_inch').addEventListener('input',_eiHybHint);
+document.getElementById('ei_hyb_hint').addEventListener('click',function(){ if(this._tot==null) return; document.getElementById('ei_price').value=this._tot.toFixed(2); updateEIHint(); _eiHybHint(); });
 document.getElementById('ei_sf').addEventListener('input',updateEIHint);
-document.getElementById('ei_price').addEventListener('input',updateEIHint);
+document.getElementById('ei_price').addEventListener('input',function(){ updateEIHint(); _eiHybHint(); });
 document.getElementById('ei_inch').addEventListener('input',updateEIHint);
 document.getElementById('eiCancelBtn').addEventListener('click',function(){
   if(hasEIDirtyData()&&editEIIdx<0){
@@ -10351,6 +10367,7 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
   item.matCat =(_prevItem&&_prevItem.matCat) ?_prevItem.matCat :_mat.matCat;
   item.ccInch =(_prevItem&&_prevItem.ccInch) ?_prevItem.ccInch :_mat.ccInch;
   item.ocInch =(_prevItem&&_prevItem.ocInch) ?_prevItem.ocInch :_mat.ocInch;
+  if(isHybridItem){ var _hk=_eiHybKind(pr2); var _tc=parseFloat(document.getElementById('ei_cc_inch').value)||0, _to=(_hk==='ccoc')?(parseFloat(document.getElementById('ei_oc_inch').value)||0):0; if(_tc>0||_to>0){ item.ccInch=_tc; item.ocInch=_to; item.inches=Math.round((_tc+_to)*100)/100; } }
   item.fgR    =(_prevItem&&_prevItem.fgR)    ?_prevItem.fgR    :_mat.fgR;
   item.celR   =(_prevItem&&_prevItem.celR)   ?_prevItem.celR   :_mat.celR;
   item.mwR    =(_prevItem&&_prevItem.mwR)    ?_prevItem.mwR    :_mat.mwR;
