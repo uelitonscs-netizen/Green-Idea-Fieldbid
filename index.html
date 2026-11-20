@@ -1527,7 +1527,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-1400</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-1600</span></div>
 </div>
 
 <div id="field-app">
@@ -2620,6 +2620,64 @@ window._phLogAppend=_phLogAppend;
     return _set.apply(this,arguments);
   };
 })();
+// ══ Deleted jobs bin (build v20261120-1600) ══
+// Whenever a job leaves the job list — deleted on this phone, removed by a cloud update from another phone,
+// or replaced by a restore — a copy goes to this bin (60 days, on this phone AND in the cloud doc fieldbid/jobbin),
+// with when and how it left. Photos are not copied: they stay in the cloud and come back when the job is restored.
+var _JB_KEY='fb6_jobbin', _JB_DAYS=60, _JB_MAX=80;
+function _jbLoad(){ try{ var a=JSON.parse(localStorage.getItem(_JB_KEY)||'[]'); if(!Array.isArray(a)) return []; var lim=Date.now()-_JB_DAYS*86400000; return a.filter(function(t){ return t&&t.job&&t.at>=lim; }); }catch(e){ return []; } }
+function _jbSave(a){ a=a.slice(-_JB_MAX); try{ while(a.length>1&&JSON.stringify(a).length>900000) a.shift(); }catch(e){} try{ (window.__jbSet||Storage.prototype.setItem).call(localStorage,_JB_KEY,JSON.stringify(a)); }catch(e){} return a; }
+function _jbCloud(a){ try{ var u=firebase.auth().currentUser; if(typeof db!=='undefined'&&db&&u&&!u.isAnonymous) db.collection('fieldbid').doc('jobbin').set({data:JSON.stringify(a),updatedAt:new Date().toISOString()}).catch(function(){}); }catch(e){} }
+function _jbAdd(jobs,why){
+  var a=_jbLoad(), at=Date.now(), b=String((document.getElementById('fbBuild')||{}).textContent||'').replace('build ','');
+  for(var i=0;i<jobs.length;i++){ var j=null; try{ j=JSON.parse(_stripPhotosFromJson(JSON.stringify([jobs[i]])))[0]; }catch(e){ j=jobs[i]; }
+    a.push({id:'j'+at.toString(36)+i+Math.random().toString(36).slice(2,5),at:at,why:why,build:b,job:j}); }
+  a=_jbSave(a); _jbCloud(a);
+}
+(function(){
+  if(window.__jbSet) return;
+  var _set=Storage.prototype.setItem; window.__jbSet=_set; var last=null;
+  function idsOf(raw){ var m={}; var a=JSON.parse(raw||'[]'); if(!Array.isArray(a)) return null; for(var i=0;i<a.length;i++){ if(a[i]&&a[i].id) m[a[i].id]=1; } return m; }
+  Storage.prototype.setItem=function(k,v){
+    if(this===window.localStorage&&k==='fb6_projs'){
+      var before=last, after=null, gone=[];
+      try{ if(!before) before=idsOf(window.localStorage.getItem('fb6_projs')); after=idsOf(v); }catch(e){ after=null; }
+      if(before&&after){ for(var id in before){ if(before.hasOwnProperty(id)&&!after[id]) gone.push(id); } }
+      var oldRaw=null; if(gone.length){ try{ oldRaw=window.localStorage.getItem('fb6_projs'); }catch(e){} }
+      var r=_set.apply(this,arguments);
+      if(after) last=after;
+      if(gone.length&&oldRaw){ try{ var old=JSON.parse(oldRaw), g={}, out=[]; for(var q=0;q<gone.length;q++) g[gone[q]]=1; for(var w=0;w<old.length;w++){ if(old[w]&&g[old[w].id]) out.push(old[w]); }
+        _jbAdd(out,window._jbWhy||'removed without being deleted on this phone (cloud update from another device, or a restore)'); }catch(e){} }
+      return r;
+    }
+    return _set.apply(this,arguments);
+  };
+})();
+// the bin also lives in the cloud: bring entries from there that this phone does not have (e.g. after clearing Chrome's data)
+(function(){ try{ firebase.auth().onAuthStateChanged(function(u){
+  if(!u||u.isAnonymous||window._jbPullRan) return; window._jbPullRan=true;
+  db.collection('fieldbid').doc('jobbin').get().then(function(d){ var c=[]; try{ c=JSON.parse((d&&d.exists&&d.data()&&d.data().data)||'[]'); }catch(e){ c=[]; }
+    var a=_jbLoad(), seen={}, add=0; for(var i=0;i<a.length;i++) seen[a[i].id]=1;
+    for(var j=0;j<c.length;j++){ if(c[j]&&c[j].id&&!seen[c[j].id]){ a.push(c[j]); add++; } }
+    a.sort(function(x,y){ return x.at-y.at; }); a=_jbSave(a); if(add||c.length!==a.length) _jbCloud(a);
+  }).catch(function(){});
+}); }catch(e){} })();
+function fbJobBin(){
+  var live={}; try{ var P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); for(var i=0;i<P.length;i++) if(P[i]&&P[i].id) live[P[i].id]=1; }catch(e){}
+  var L=_jbLoad().filter(function(t){ return !live[t.job.id]; }).reverse();
+  var h='<div style="padding:0 20px"><div style="font-size:12px;opacity:.7;margin-bottom:8px">Jobs that left the list in the last '+_JB_DAYS+' days. Restoring puts the job back; your other jobs are not changed.</div>';
+  if(!L.length) h+='<div class="mut" style="padding:20px 0;text-align:center">No deleted jobs.</div>';
+  for(var k=0;k<L.length;k++){ var t=L[k], j=t.job, np=0, X=[].concat(j.areas||[],j.estItems||[]); for(var q=0;q<X.length;q++){ if(X[q]&&X[q]._phN) np+=X[q]._phN; }
+    var when=new Date(t.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+    h+='<div style="display:flex;gap:10px;align-items:center;padding:10px 2px;border-bottom:1px solid rgba(128,128,128,.25)"><div style="flex:1;min-width:0"><b>'+_bkEsc(j.name||'(no name)')+'</b>'+(j.signed?' <span style="color:#3fb950">✍️ signed</span>':'')+
+       '<small style="display:block;opacity:.7">'+_bkEsc(j.address||'')+(np?' · '+np+' photo'+(np>1?'s':''):'')+'</small><small style="display:block;opacity:.6">'+_bkEsc(when)+' · '+_bkEsc(t.why||'')+'</small></div>'+
+       '<button type="button" class="sig-sec jb-res" data-k="'+k+'" style="flex:none">↩ Restore</button></div>';
+  }
+  h+='</div>';
+  var ov=_bkSheet(h); var t0=ov.querySelector('.mtitle'); if(t0) t0.textContent='♻️ Deleted jobs';
+  var bs=ov.querySelectorAll('.jb-res'); for(var b=0;b<bs.length;b++) bs[b].onclick=function(){ var t=L[+this.getAttribute('data-k')]; if(t) _bkAddJobs([t.job],'the deleted jobs bin'); };
+}
+window.fbJobBin=fbJobBin;
 function _phBar(state,html){
   var b=document.getElementById('phRestoreBar');
   if(state==='hide'){ if(b) b.parentNode.removeChild(b); return; }
@@ -5164,7 +5222,7 @@ function deleteProjById(pid){
   appConfirm('Delete this project?',function(){
     var projs=loadProjs();
     projs=projs.filter(function(p){return p.id!==pid;});
-    saveProjs(projs);
+    window._jbWhy='deleted on this phone'; try{ saveProjs(projs); } finally { window._jbWhy=''; }
     if(currentProj&&currentProj.id===pid){currentProj=projs.length?projs[0]:null;fieldAreas=currentProj&&currentProj.areas?JSON.parse(JSON.stringify(currentProj.areas)):[];window.fieldAreas=fieldAreas;}
     renderProjList();if(typeof renderJobsList==='function')renderJobsList();updateProjHeader();renderFA();renderFWO();toast('🗑 Deleted');
   });
@@ -8022,17 +8080,20 @@ function renderJobsList(){
   var _pd=null; try{ _pd=_pipeData(); h+=_pipeStrip(_pd); }catch(_pe){ _pd=null; }
   if(_pd&&window._pipeView){ container.innerHTML=h+_pipeList(window._pipeView,_pd); _bindJobsList(container); return; }   // the panel lists need the tap listener too
   // Status filter (counts follow the search)
-  var _SF=window._jobStatusF||'all', _cnt={all:projs.length,none:0,sent:0,approved:0,rejected:0};
-  for(var _c=0;_c<projs.length;_c++){ var _st=projs[_c].estStatus||'none'; if(_cnt[_st]!==undefined) _cnt[_st]++; }
-  var _chips=[['all','All'],['none','Draft'],['sent','Sent'],['approved','Approved'],['rejected','Rejected']];
+  var _SF=window._jobStatusF||'all', _cnt={all:projs.length,none:0,sent:0,approved:0,rejected:0,signed:0};
+  for(var _c=0;_c<projs.length;_c++){ var _st=projs[_c].estStatus||'none'; if(_cnt[_st]!==undefined) _cnt[_st]++; if(projs[_c].signed) _cnt.signed++; }
+  var _chips=[['all','All'],['signed','✍️ Signed'],['none','Draft'],['sent','Sent'],['approved','Approved'],['rejected','Rejected']];
   h+='<div class="jf-row">';
-  for(var _k=0;_k<_chips.length;_k++){ var _ck=_chips[_k][0]; if(_ck!=='all'&&!_cnt[_ck]&&_SF!==_ck) continue;
+  for(var _k=0;_k<_chips.length;_k++){ var _ck=_chips[_k][0]; if(_ck!=='all'&&_ck!=='signed'&&!_cnt[_ck]&&_SF!==_ck) continue;
     h+='<button type="button" class="jf'+(_SF===_ck?' on':'')+'" data-act="filter" data-st="'+_ck+'">'+_chips[_k][1]+' <span>'+_cnt[_ck]+'</span></button>'; }
   h+='</div>';
   var _JS='worked'; try{ _JS=localStorage.getItem('fb6_jobsSort')||'worked'; }catch(e){}
   h+='<div class="jf-row js-sort"><span class="js-lbl">Sort</span><button type="button" class="jf'+(_JS==='worked'?' on':'')+'" data-act="jsort" data-v="worked">↻ Last worked</button><button type="button" class="jf'+(_JS==='created'?' on':'')+'" data-act="jsort" data-v="created">📅 Created</button></div>';
-  if(_SF!=='all') projs=projs.filter(function(p){ return (p.estStatus||'none')===_SF; });
+  if(_SF==='signed') projs=projs.filter(function(p){ return !!p.signed; });
+  else if(_SF!=='all') projs=projs.filter(function(p){ return (p.estStatus||'none')===_SF; });
   projs=_sortJobs(projs,_JS);
+  // Signed: newest signature first
+  if(_SF==='signed') projs.sort(function(a,b){ return (Date.parse(b.signed.date||'')||0)-(Date.parse(a.signed.date||'')||0); });
   if(!projs.length) h+='<div style="text-align:center;padding:30px 20px;color:#4d5560;font-size:13px">No jobs with this status.</div>';
   var _STL={none:'Draft',sent:'Sent',approved:'Approved',rejected:'Rejected'};
   for(var i=0; i<projs.length; i++){
@@ -8446,7 +8507,7 @@ function nvMore(){
     '<div class="nvm-h">Estimator</div><div class="nvm-g">'+it('prods','🗄️','Products','prices and coverage')+it('settings','⚙️','Settings','company, costs, signature')+'</div>'+
     '<div class="nvm-g">'+it('pricecheck','💡','Price check','WorkLog results vs your prices · suggestions only')+'</div>'+
     '<div class="nvm-h">Documents</div><div class="nvm-g nvm-3">'+it('broch','📄','Brochures','')+it('ds','📋','Data sheets','')+it('ct','✍️','Contract','')+'</div>'+
-    '<div class="nvm-h">Data</div><div class="nvm-g">'+it('clients','👥','Clients','phone, email, address — from your jobs')+it('backups','🗄️','Backups','daily copies · download · restore')+'</div>'+
+    '<div class="nvm-h">Data</div><div class="nvm-g">'+it('clients','👥','Clients','phone, email, address — from your jobs')+it('backups','🗄️','Backups','daily copies · download · restore')+it('jobbin','♻️','Deleted jobs','kept 60 days · restore')+'</div>'+
     '<div class="nvm-g nvm-2">'+it('imp','📥','Import takeoff','paste the block')+it('tkcopy','📤','Copy takeoff','of the open job')+'</div>'+
     '<div class="nvm-h">App</div><div class="nvm-g nvm-3">'+sm('diag','🩺','Diagnostics')+sm('refresh','↺','Refresh')+sm('classic','↩️','Classic')+'</div>'+
     '<div style="padding:10px 20px 0"><button type="button" class="js-cancel" id="nvmClose">Close</button></div>'+
@@ -8464,6 +8525,7 @@ function nvMore(){
     if(m==='classic'){ location.href='classico.html'; return; }
     if(m==='refresh'){ location.reload(); return; }
     if(m==='backups'){ if(window.fbBackups) window.fbBackups(); return; }
+    if(m==='jobbin'){ if(window.fbJobBin) window.fbJobBin(); return; }
     if(m==='imp'){ if(window.fbImportTakeoff) window.fbImportTakeoff(); return; }
     if(m==='clients'){ if(window.fbClients) window.fbClients(); return; } if(m==='pricecheck'){ if(window.openPriceCheck) window.openPriceCheck(); return; }
     if(m==='tkcopy'){ if(window.fbCopyTakeoff) window.fbCopyTakeoff(); return; }
