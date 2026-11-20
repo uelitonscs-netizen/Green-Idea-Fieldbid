@@ -1527,7 +1527,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-1600</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-1800</span></div>
 </div>
 
 <div id="field-app">
@@ -2628,26 +2628,29 @@ var _JB_KEY='fb6_jobbin', _JB_DAYS=60, _JB_MAX=80;
 function _jbLoad(){ try{ var a=JSON.parse(localStorage.getItem(_JB_KEY)||'[]'); if(!Array.isArray(a)) return []; var lim=Date.now()-_JB_DAYS*86400000; return a.filter(function(t){ return t&&t.job&&t.at>=lim; }); }catch(e){ return []; } }
 function _jbSave(a){ a=a.slice(-_JB_MAX); try{ while(a.length>1&&JSON.stringify(a).length>900000) a.shift(); }catch(e){} try{ (window.__jbSet||Storage.prototype.setItem).call(localStorage,_JB_KEY,JSON.stringify(a)); }catch(e){} return a; }
 function _jbCloud(a){ try{ var u=firebase.auth().currentUser; if(typeof db!=='undefined'&&db&&u&&!u.isAnonymous) db.collection('fieldbid').doc('jobbin').set({data:JSON.stringify(a),updatedAt:new Date().toISOString()}).catch(function(){}); }catch(e){} }
-function _jbAdd(jobs,why){
+function _jbAdd(jobs,why,kind){
   var a=_jbLoad(), at=Date.now(), b=String((document.getElementById('fbBuild')||{}).textContent||'').replace('build ','');
   for(var i=0;i<jobs.length;i++){ var j=null; try{ j=JSON.parse(_stripPhotosFromJson(JSON.stringify([jobs[i]])))[0]; }catch(e){ j=jobs[i]; }
-    a.push({id:'j'+at.toString(36)+i+Math.random().toString(36).slice(2,5),at:at,why:why,build:b,job:j}); }
+    a.push({id:'j'+at.toString(36)+i+Math.random().toString(36).slice(2,5),at:at,why:why,build:b,kind:kind||'job',job:j}); }
   a=_jbSave(a); _jbCloud(a);
 }
 (function(){
   if(window.__jbSet) return;
   var _set=Storage.prototype.setItem; window.__jbSet=_set; var last=null;
-  function idsOf(raw){ var m={}; var a=JSON.parse(raw||'[]'); if(!Array.isArray(a)) return null; for(var i=0;i<a.length;i++){ if(a[i]&&a[i].id) m[a[i].id]=1; } return m; }
+  function idsOf(raw){ var m={}; var a=JSON.parse(raw||'[]'); if(!Array.isArray(a)) return null; for(var i=0;i<a.length;i++){ if(a[i]&&a[i].id) m[a[i].id]=1+((a[i].estItems&&a[i].estItems.length)||0); } return m; }
   Storage.prototype.setItem=function(k,v){
     if(this===window.localStorage&&k==='fb6_projs'){
       var before=last, after=null, gone=[];
       try{ if(!before) before=idsOf(window.localStorage.getItem('fb6_projs')); after=idsOf(v); }catch(e){ after=null; }
-      if(before&&after){ for(var id in before){ if(before.hasOwnProperty(id)&&!after[id]) gone.push(id); } }
-      var oldRaw=null; if(gone.length){ try{ oldRaw=window.localStorage.getItem('fb6_projs'); }catch(e){} }
+      var emptied=[];
+      if(before&&after){ for(var id in before){ if(!before.hasOwnProperty(id)) continue; if(!after[id]) gone.push(id); else if(before[id]>1&&after[id]===1) emptied.push(id); } }
+      var oldRaw=null; if(gone.length||emptied.length){ try{ oldRaw=window.localStorage.getItem('fb6_projs'); }catch(e){} }
       var r=_set.apply(this,arguments);
       if(after) last=after;
       if(gone.length&&oldRaw){ try{ var old=JSON.parse(oldRaw), g={}, out=[]; for(var q=0;q<gone.length;q++) g[gone[q]]=1; for(var w=0;w<old.length;w++){ if(old[w]&&g[old[w].id]) out.push(old[w]); }
         _jbAdd(out,window._jbWhy||'removed without being deleted on this phone (cloud update from another device, or a restore)'); }catch(e){} }
+      if(emptied.length&&oldRaw){ try{ var old2=JSON.parse(oldRaw), g2={}, out2=[]; for(var q2=0;q2<emptied.length;q2++) g2[emptied[q2]]=1; for(var w2=0;w2<old2.length;w2++){ if(old2[w2]&&g2[old2[w2].id]) out2.push(old2[w2]); }
+        _jbAdd(out2,'estimate items emptied ('+(window._jbWhy||'the job stayed; only its items were removed')+')','items'); }catch(e){} }
       return r;
     }
     return _set.apply(this,arguments);
@@ -2663,19 +2666,19 @@ function _jbAdd(jobs,why){
   }).catch(function(){});
 }); }catch(e){} })();
 function fbJobBin(){
-  var live={}; try{ var P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); for(var i=0;i<P.length;i++) if(P[i]&&P[i].id) live[P[i].id]=1; }catch(e){}
-  var L=_jbLoad().filter(function(t){ return !live[t.job.id]; }).reverse();
+  var live={}; try{ var P=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); for(var i=0;i<P.length;i++) if(P[i]&&P[i].id) live[P[i].id]=1+((P[i].estItems&&P[i].estItems.length)||0); }catch(e){}
+  var L=_jbLoad().filter(function(t){ return t.kind==='items'?live[t.job.id]===1:!live[t.job.id]; }).reverse();
   var h='<div style="padding:0 20px"><div style="font-size:12px;opacity:.7;margin-bottom:8px">Jobs that left the list in the last '+_JB_DAYS+' days. Restoring puts the job back; your other jobs are not changed.</div>';
   if(!L.length) h+='<div class="mut" style="padding:20px 0;text-align:center">No deleted jobs.</div>';
   for(var k=0;k<L.length;k++){ var t=L[k], j=t.job, np=0, X=[].concat(j.areas||[],j.estItems||[]); for(var q=0;q<X.length;q++){ if(X[q]&&X[q]._phN) np+=X[q]._phN; }
     var when=new Date(t.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
     h+='<div style="display:flex;gap:10px;align-items:center;padding:10px 2px;border-bottom:1px solid rgba(128,128,128,.25)"><div style="flex:1;min-width:0"><b>'+_bkEsc(j.name||'(no name)')+'</b>'+(j.signed?' <span style="color:#3fb950">✍️ signed</span>':'')+
        '<small style="display:block;opacity:.7">'+_bkEsc(j.address||'')+(np?' · '+np+' photo'+(np>1?'s':''):'')+'</small><small style="display:block;opacity:.6">'+_bkEsc(when)+' · '+_bkEsc(t.why||'')+'</small></div>'+
-       '<button type="button" class="sig-sec jb-res" data-k="'+k+'" style="flex:none">↩ Restore</button></div>';
+       '<button type="button" class="sig-sec jb-res" data-k="'+k+'" style="flex:none">'+(t.kind==='items'?'↩ Put back '+((j.estItems||[]).length)+' items':'↩ Restore')+'</button></div>';
   }
   h+='</div>';
   var ov=_bkSheet(h); var t0=ov.querySelector('.mtitle'); if(t0) t0.textContent='♻️ Deleted jobs';
-  var bs=ov.querySelectorAll('.jb-res'); for(var b=0;b<bs.length;b++) bs[b].onclick=function(){ var t=L[+this.getAttribute('data-k')]; if(t) _bkAddJobs([t.job],'the deleted jobs bin'); };
+  var bs=ov.querySelectorAll('.jb-res'); for(var b=0;b<bs.length;b++) bs[b].onclick=function(){ var t=L[+this.getAttribute('data-k')]; if(!t) return; if(t.kind==='items'){ if(window._jbPutItems) window._jbPutItems(t.job); } else _bkAddJobs([t.job],'the deleted jobs bin'); };
 }
 window.fbJobBin=fbJobBin;
 function _phBar(state,html){
@@ -8076,6 +8079,9 @@ function renderJobsList(){
   }
   try{ _sigFetchMissing(); }catch(_sf){}
   try{ _signCheckPending(false); }catch(_sc){}
+  try{ var _rb=_rbCands(); if(_rb.length){ h+='<div style="margin:0 0 12px;padding:12px 14px;border-radius:12px;border:1.5px solid #d29922;background:rgba(210,153,34,.10)"><div style="font-weight:800;margin-bottom:4px">⚠️ '+_rb.length+' job'+(_rb.length>1?'s have':' has')+' a client link but no estimate items</div><div style="font-size:12px;opacity:.75;margin-bottom:8px">They do not show in this list. The link keeps every item, so they can be rebuilt.</div>';
+    for(var _r=0;_r<_rb.length;_r++) h+='<div style="display:flex;gap:10px;align-items:center;padding:6px 0"><div style="flex:1;min-width:0"><b>'+esc(_rb[_r].name||'')+'</b>'+(_rb[_r].signReq.status==='signed'||_rb[_r].signed?' ✍️':'')+'<small style="display:block;opacity:.7">'+esc(_rb[_r].address||'')+'</small></div><button type="button" class="sig-sec rb-go" data-pid="'+esc(_rb[_r].id)+'" style="flex:none">Rebuild from link</button></div>';
+    h+='</div>'; } }catch(_rbe){}
   // Pipeline (all jobs, ignores the search) — a tile shows only those jobs
   var _pd=null; try{ _pd=_pipeData(); h+=_pipeStrip(_pd); }catch(_pe){ _pd=null; }
   if(_pd&&window._pipeView){ container.innerHTML=h+_pipeList(window._pipeView,_pd); _bindJobsList(container); return; }   // the panel lists need the tap listener too
@@ -9308,6 +9314,69 @@ function _applyRemoteSign(pid,v){
   },{confirmLabel:'📧 Email signed copy',confirmStyle:'accent'}); },500);
 }
 
+// ══ Put back estimate items / rebuild them from the client link (build v20261120-1800) ══
+// Give a job a new list of estimate items (also the open one in memory, so the next save keeps them).
+function _setJobItems(pid,items,qiFill,msg){
+  var ps=loadProjs(), k=-1; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ k=i; break; } } if(k<0){ toast('Job not found','err'); return false; }
+  ps[k].estItems=JSON.parse(JSON.stringify(items)); ps[k].touchedAt=new Date().toISOString();
+  var qi=ps[k].quoteInfo=ps[k].quoteInfo||{}; if(qiFill){ if(!qi.client&&qiFill.client) qi.client=qiFill.client; if(!qi.address&&qiFill.address) qi.address=qiFill.address; }
+  saveProjs(ps);
+  if(currentProj&&currentProj.id===pid){ currentProj=ps[k]; estItems=JSON.parse(JSON.stringify(items)); window.estItems=estItems; quoteInfo=JSON.parse(JSON.stringify(ps[k].quoteInfo)); window.quoteInfo=quoteInfo;
+    try{ localStorage.setItem('fb6_ei',JSON.stringify(estItems)); localStorage.setItem('fb6_qi',JSON.stringify(quoteInfo)); }catch(e){} }
+  try{ if(window.renderJobsList) renderJobsList(); }catch(e){} try{ if(window.renderEst) renderEst(); }catch(e){} try{ if(window.renderNHome) renderNHome(); }catch(e){}
+  toast(msg); return true;
+}
+function _jbPutItems(job){
+  var ps=loadProjs(), cur=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===job.id){ cur=ps[i]; break; } }
+  if(!cur){ _bkAddJobs([job],'the deleted jobs bin'); return; }
+  var n=(job.estItems||[]).length; if((cur.estItems||[]).length){ toast('This job already has items again','err'); return; }
+  if(!confirm('Put back '+n+' estimate item'+(n!==1?'s':'')+' on "'+(cur.name||'job')+'"?')) return;
+  _setJobItems(job.id,job.estItems||[],job.quoteInfo||null,'↩ '+n+' items back on '+(cur.name||'the job'));
+  try{ var o=document.getElementById('bkOv'); if(o){ o.classList.remove('on'); o.style.display='none'; } }catch(e){}
+}
+// Jobs that have a client link but lost their estimate items: the link keeps every item and amount,
+// and the job's takeoff areas keep the material and size, so the items can be rebuilt exactly.
+var _RB_MT={cc:'p2',oc:'p1',hybrid:'p3',hybrid_foam_fg:'p21',hybrid_foam_mw:'p14',ign:'p13',other:'p15',custom:'p15'};
+function _rbCands(){ var P=[], out=[]; try{ P=loadProjs(); }catch(e){} for(var i=0;i<P.length;i++){ var p=P[i]; if(p&&p.signReq&&p.signReq.token&&!(p.estItems||[]).length&&(p.areas||[]).length) out.push(p); } return out; }
+function fbRebuildFromLink(pid){
+  var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } }
+  if(!p||!p.signReq||!p.signReq.token){ toast('This job has no client link','err'); return; }
+  toast('Reading the client link…');
+  db.collection('sign_requests').doc(p.signReq.token).get().then(function(d){
+    var v=d&&d.exists&&d.data(); if(!v){ alert('The client link was not found. Nothing was changed.'); return; }
+    var L=[]; (v.sections||[]).forEach(function(s){ (s.items||[]).forEach(function(it){ L.push(it); }); });
+    if(!L.length){ alert('The client link has no items. Nothing was changed.'); return; }
+    var areas=p.areas||[], used={}, rows=[], total=0, noArea=[];
+    for(var k=0;k<L.length;k++){ var it=L[k], amt=parseFloat(it.amount)||0, a=null;
+      for(var j=0;j<areas.length;j++){ if(!used[j]&&areas[j]&&String(areas[j].name||'').trim()===String(it.name||'').trim()){ a=areas[j]; used[j]=1; break; } }
+      total+=amt;
+      if(!a){ noArea.push(it.name); rows.push({A:{name:it.name,productId:'p15',sf:1,price:Math.round(amt*100)/100,pricePerInch:0,inches:0,notes:it.notes||'',photos:[],calcMode:'',wallRows:null,floorRows:null,matType:'other',matCat:'other',ccInch:0,ocInch:0,fgR:0,celR:0,mwR:0,spec:it.spec||'',fromArea:it.name||''}}); continue; }
+      var pid2=a.productId||a.lastProdId||_RB_MT[a.matCat]||_RB_MT[a.matType]||'p15', pr=null; try{ pr=getProd(pid2); }catch(e){} if(!pr){ pid2='p15'; try{ pr=getProd('p15'); }catch(e){} }
+      var sf=parseFloat(a.sf)||1, price=Math.round(amt/sf*1e6)/1e6, inch=0, mt=a.matType||'';
+      if(mt==='hybrid'&&a.ccInch>0&&a.ocInch>0) inch=parseFloat(a.ccInch)+parseFloat(a.ocInch); else if(mt==='hybrid_foam_fg'||mt==='hybrid_foam_mw') inch=parseFloat(a.ccInch)||0;
+      else if(a.ccInch>0) inch=parseFloat(a.ccInch); else if(a.ocInch>0) inch=parseFloat(a.ocInch); else if(a.fgInch>0) inch=parseFloat(a.fgInch); else if(a.celInch>0) inch=parseFloat(a.celInch);
+      var perInch=pr&&pr.pricingType==='per_inch'&&pr.cat!=='Hybrid'&&inch>0;
+      var A={name:a.name,productId:pid2,sf:a.sf,price:price,pricePerInch:perInch?Math.round(price/inch*1e6)/1e6:0,inches:inch,notes:a.notes||it.notes||'',photos:a.photos?a.photos.slice():[],calcMode:a.calcMode||'',
+        wallRows:a.wallRows?JSON.parse(JSON.stringify(a.wallRows)):null,floorRows:a.floorRows?JSON.parse(JSON.stringify(a.floorRows)):null,
+        matType:a.matType||a.matCat||'',matCat:a.matCat||'',ccInch:a.ccInch||0,ocInch:a.ocInch||0,fgR:a.fgR||0,celR:a.celR||0,mwR:a.mwR||0,spec:a.spec||'',fromArea:a.name||''};
+      if(a.aid) A.areaId=a.aid; if(a._phN&&!(A.photos&&A.photos.length)) A._phN=a._phN;
+      var B=JSON.parse(JSON.stringify(A)); B.inches=0; B.pricePerInch=0; B.photos=A.photos;   // an item edited after import can have no inches
+      rows.push({A:A,B:B});
+    }
+    // pick the version whose fingerprint equals the one saved when the link was sent (= exactly the signed estimate)
+    var items=rows.map(function(r){ return r.A; }), exact=false, want=p.signReq.hash, n=rows.length;
+    if(want&&n<=12){ for(var m=0;m<(1<<n)&&!exact;m++){ var tryI=[]; for(var b=0;b<n;b++) tryI.push(((m>>b)&1)&&rows[b].B?rows[b].B:rows[b].A);
+        if(_estHash({quoteInfo:p.quoteInfo||{},estItems:tryI})===want){ items=tryI; exact=true; } } }
+    var money='$'+total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    var msg='Rebuild '+items.length+' estimate item'+(items.length!==1?'s':'')+' for "'+(p.name||'job')+'" from the client link?\n\n'+L.map(function(it){ return '• '+it.name+' — $'+(parseFloat(it.amount)||0).toLocaleString('en-US',{minimumFractionDigits:2}); }).join('\n')+'\n\nTotal '+money+
+      (exact?'\n✓ Exactly the estimate the client '+(v.status==='signed'?'signed':'received')+'.':'\n(The total matches the link; check prices and materials after.)')+(noArea.length?'\n\nNo takeoff area for: '+noArea.join(', ')+' — added as Other.':'');
+    if(!confirm(msg)) return;
+    if(_setJobItems(pid,items,{client:(v.client||{}).name||p.name||'',address:(v.client||{}).address||p.address||''},'✓ '+items.length+' items rebuilt · '+money)){ setTimeout(function(){ try{ _signCheckPending(true); }catch(e){} },800); }
+  }).catch(function(e){ alert('Could not read the client link: '+((e&&e.message)||'error')+'\nNothing was changed.'); });
+}
+window.fbRebuildFromLink=fbRebuildFromLink;
+document.addEventListener('click',function(e){ var b=e.target&&e.target.closest?e.target.closest('.rb-go'):null; if(!b) return; e.preventDefault(); e.stopPropagation(); fbRebuildFromLink(b.getAttribute('data-pid')); },true);
+window._jbPutItems=_jbPutItems;
 function removeClientSign(pid){
   appConfirm('Remove the client signature from this estimate? The job stays Approved.',function(){
     var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ delete ps[i].signed; break; } }
