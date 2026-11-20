@@ -187,7 +187,7 @@ button{font-family:system-ui,-apple-system,sans-serif;cursor:pointer;-webkit-tap
 .q-thead{display:grid;grid-template-columns:minmax(0,1fr) minmax(44px,52px) minmax(44px,52px) minmax(56px,68px);padding:9px 14px;background:#1e2530;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#4d5560;}
 .q-trow{display:grid;grid-template-columns:minmax(0,1fr) minmax(44px,52px) minmax(44px,52px) minmax(56px,68px);padding:10px 14px;border-top:1px solid #2a3340;font-size:12px;}
 .q-tn{color:#e6edf3;font-weight:600;}
-.q-tnote{font-size:11px;color:#7d8590;margin-top:2px;font-weight:400;}
+.q-tnote{font-size:11px;color:#7d8590;margin-top:2px;font-weight:400;white-space:pre-line;}
 .q-tv{font-family:ui-monospace,monospace;color:#7d8590;text-align:right;}
 .q-tt{font-family:ui-monospace,monospace;color:#3fb950;text-align:right;font-weight:500;}
 .q-foot{background:#1e2530;padding:12px 16px;border-top:1px solid #2a3340;}
@@ -1527,7 +1527,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-0800</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-1030</span></div>
 </div>
 
 <div id="field-app">
@@ -4474,7 +4474,9 @@ setTimeout(function(){ try{ _clPull(); }catch(e){} },9000);
 var IGN_NOTE='Exposed foam plastic insulation shall be separated from the building interior by a code-compliant thermal barrier meeting the applicable requirements of 780 CMR Section R316, unless an approved exception or alternative assembly applies.';
 function _isIgnProd(pid){ var pr=null; try{ pr=pid?getProd(pid):null; }catch(e){} if(!pr) return false; var c=String(pr.cat||'').toLowerCase(), n=String(pr.name||'').toLowerCase(); return c.indexOf('air')>=0||c.indexOf('ignition')>=0||n.indexOf('ignition')>=0; }
 // on: the material is now ignition barrier. Acts only when the material CHANGES to/from it (opening a saved item never rewrites its notes).
-var CAT_NOTES={ign:IGN_NOTE, dome:'Thermal cover for attic pulled down stairs.', prep:"Plastic windows, doors, floor, and homeowner's belongings that was not moved from work area.", wd:'Low expandable foam around window and doors'};
+// Fire blocking: scope of work written by Ueliton (20/11/2026)
+var FB_NOTE="FIREBLOCKING — SCOPE OF WORK\nScope: Install fireblocking per 2021 IRC Section R302.11 (as adopted by 780 CMR, 10th Edition) to seal concealed draft openings, before the insulation/framing inspection.\nLocations included:\nTop plates and bottom plates: all penetrations for electrical wiring, plumbing, and low-voltage lines at floor and ceiling levels.\nPlumbing, vent, and drain penetrations through plates and floor/ceiling assemblies.\nDuct, flue, and exhaust fan penetrations at ceiling and floor levels, using noncombustible material where required.\nGaps between the chimney, fireplace, or flue chase and the framing, using noncombustible material (unfaced mineral wool or approved sealant).\nSoffits, drop ceilings, and dropped or chase framing where they connect to wall cavities.\nStairs: concealed spaces at the top and bottom of the stringers.\nTubs and showers on exterior or interior walls: open framing behind them at the plate line.\nVertical cavities taller than 10 ft (for example, balloon framing or tall walls): blocking at 10 ft intervals.\nRim or band joist penetrations and gaps at the foundation sill.";
+var CAT_NOTES={ign:IGN_NOTE, fb:FB_NOTE, dome:'Thermal cover for attic pulled down stairs.', prep:"Plastic windows, doors, floor, and homeowner's belongings that was not moved from work area.", wd:'Low expandable foam around window and doors'};
 // key: the category now chosen (only keys in CAT_NOTES carry a sentence). Acts only when it CHANGES;
 // the previous automatic sentence leaves, the new one comes in, the user's own text stays.
 function _catNoteSync(elId,key,lastKey,silent){
@@ -4486,7 +4488,8 @@ function _catNoteSync(elId,key,lastKey,silent){
 }
 // Estimator: the sentence follows the product (ignition barrier) or, for a new item, the description (thermal dome, prep work)
 function _eiNoteKey(pid,name){ if(_isIgnProd(pid)) return 'ign'; var pr=null; try{ pr=pid?getProd(pid):null; }catch(e){} var pn=String(pr&&pr.name||'');
-  if(/dome/i.test(pn)) return 'dome'; if(/\bprep/i.test(pn)) return 'prep'; if(/window|door/i.test(pn)) return 'wd'; var c=null; try{ c=faCatFromName(name||''); }catch(e){} return (c==='dome'||c==='prep'||c==='wd')?c:null; }
+  if(/fire\s*-?block/i.test(pn+' '+String(pr&&pr.cat||''))) return 'fb';
+  if(/dome/i.test(pn)) return 'dome'; if(/\bprep/i.test(pn)) return 'prep'; if(/window|door/i.test(pn)) return 'wd'; var c=null; try{ c=faCatFromName(name||''); }catch(e){} return (c==='dome'||c==='prep'||c==='wd'||c==='fb')?c:null; }
 function _ignNoteSync(elId,on,lastKey,silent){
   var el=document.getElementById(elId), last=!!window[lastKey]; window[lastKey]=!!on; if(!el||silent||on===last) return;
   var v=String(el.value||'');
@@ -11590,7 +11593,7 @@ function renderCtDoc(){
   h+='<div class="ct-ig"><div class="ct-ic"><div class="ct-il">Client</div><div class="ct-iv">'+(quoteInfo.client||'—')+'</div></div><div class="ct-ic"><div class="ct-il">Address</div><div class="ct-iv">'+(quoteInfo.address||'—')+'</div></div></div>';
   h+='<p style="font-size:13px;color:#444;line-height:1.7;margin-bottom:12px">'+esc(intro).replace(/\n/g,'<br>')+'</p>';
   h+='<div class="ct-sh">Scope of Work</div>';
-  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);h+='<div class="ct-sr"><div class="ct-se">'+(pr?pr.emoji:'📦')+'</div><div class="ct-sd"><strong>'+esc(it.name)+'</strong> — '+(pr?esc(pr.name):'Custom')+(it.notes?'<br><em style="font-size:12px;color:#888">'+esc(it.notes)+'</em>':'')+'</div><div class="ct-sf">'+fmtN(it.sf)+' SF</div></div>';}
+  for(var i=0;i<estItems.length;i++){var it=estItems[i];var pr=getProd(it.productId);h+='<div class="ct-sr"><div class="ct-se">'+(pr?pr.emoji:'📦')+'</div><div class="ct-sd"><strong>'+esc(it.name)+'</strong> — '+(pr?esc(pr.name):'Custom')+(it.notes?'<br><em style="font-size:12px;color:#888;white-space:pre-line">'+esc(it.notes)+'</em>':'')+'</div><div class="ct-sf">'+fmtN(it.sf)+' SF</div></div>';}
   h+='<div class="ct-total"><span class="ct-tl">Total Contract Value</span><span class="ct-tv">'+fmt(totals.total)+'</span></div>';
   h+='<div class="ct-th">Payment Terms</div><div class="ct-tb">'+esc(payment).replace(/\n/g,'<br>')+'</div>';
   h+='<div class="ct-th">Warranty</div><div class="ct-tb">'+esc(warranty).replace(/\n/g,'<br>')+'</div>';
