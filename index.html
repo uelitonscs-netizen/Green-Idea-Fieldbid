@@ -1527,7 +1527,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261119-1500</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-0800</span></div>
 </div>
 
 <div id="field-app">
@@ -2627,7 +2627,7 @@ function _phBar(state,html){
   b.className='ph-bar '+state; b.innerHTML=html;
 }
 function phRetryRestore(){
-  window._phRetry=0; window._phRestoreErr=0; window._phRestoreErrMsg='';
+  window._phForce=true; window._phRetry=0; window._phRestoreErr=0; window._phRestoreErrMsg='';
   _phBar('busy','📷 Restoring photos…');
   restoreMissingPhotos().then(function(n){
     if(n>0){ try{ if(window.load) load(); }catch(e){} try{ if(window.renderFA) renderFA(); }catch(e){} try{ if(window.renderEst) renderEst(); }catch(e){} }
@@ -2767,6 +2767,21 @@ function backupPhotos(){
 }
 window.backupPhotos=backupPhotos;
 
+// A project is "missing photos" here when some area/item says it had photos (_phN) and holds none on this device.
+function _phMissing(p){ var L=[p&&p.areas,p&&p.estItems]; for(var a=0;a<L.length;a++){ var arr=L[a]; if(!Array.isArray(arr)) continue; for(var i=0;i<arr.length;i++){ var o=arr[i]; if(o&&typeof o==='object'&&o._phN&&!(Array.isArray(o.photos)&&o.photos.length)) return true; } } return false; }
+// Fingerprint of a project's photos on THIS phone: every area/item with its position, name, how many photos it
+// holds, their size, and how many the cloud copy says it should have (_phN). Any photo added, removed or LOST
+// here, and any change announced by the cloud copy, changes the fingerprint.
+function _phLocalSig(p){ var L=[[p&&p.areas,'a'],[p&&p.estItems,'e']], s='', h1=2166136261, h2=5381;
+  for(var a=0;a<L.length;a++){ var arr=L[a][0]; if(!Array.isArray(arr)) continue; for(var i=0;i<arr.length;i++){ var o=arr[i]; if(!o||typeof o!=='object') continue;
+    var n=Array.isArray(o.photos)?o.photos.length:0, c=o._phN||0; if(!n&&!c) continue; var len=0; for(var z=0;z<n;z++) len+=(o.photos[z]||'').length;
+    s+=L[a][1]+i+':'+(o.name||'')+'|'+n+'|'+len+'|'+c+';'; } }
+  for(var k=0;k<s.length;k++){ var ch=s.charCodeAt(k); h1^=ch; h1=Math.imul(h1,16777619)>>>0; h2=((h2<<5)+h2+ch)>>>0; }
+  return s.length.toString(36)+'_'+h1.toString(36)+h2.toString(36); }
+// fb6_phSeen: for each project, the fingerprint it had when its cloud photos were last checked without error.
+// Same fingerprint at the next start = nothing changed here since that check = no need to download it again.
+function _phSeenLoad(){ try{ var t=JSON.parse(localStorage.getItem('fb6_phSeen')||'{}'); return (t&&typeof t==='object')?t:{}; }catch(e){ return {}; } }
+var _PH_SWEEP_MS=7*86400000;
 // Restore photos from the cloud for projects that are missing them on this device.
 function restoreMissingPhotos(){
   if (typeof db === 'undefined' || !db) return Promise.resolve(0);
@@ -2820,8 +2835,15 @@ function restoreMissingPhotos(){
       allow=null;
     }
     if(allow){
-      // Only projects listed in the index; every one of them, no cap.
-      need=projs.filter(function(p){ return p&&p.id&&allow[p.id]&&!p.photosCloudOnly; });
+      // Projects listed in the index whose photos CHANGED on this phone since their last clean check (see
+      // _phLocalSig): never checked, photos lost, added, removed, or announced by the cloud copy. Downloading every
+      // project on every start (the old behaviour) was slow and the count never went down. A phone whose data was
+      // cleared has no record at all, so everything is downloaded, as before. Once a week every project is still
+      // checked as a safety net; "Try again" (window._phForce) also checks everything.
+      var _seen=_phSeenLoad(), _now=Date.now(), _sw=0; try{ _sw=parseInt(localStorage.getItem('fb6_phSweep')||'0',10)||0; }catch(e){}
+      var _full=!!window._phForce||!_sw||(_now-_sw)>_PH_SWEEP_MS||_sw>_now; window._phSweepRun=_full; window._phForce=false;
+      need=projs.filter(function(p){ if(!(p&&p.id&&allow[p.id]&&!p.photosCloudOnly)) return false; if(_full) return true;
+        return _seen[p.id]!==_phLocalSig(p); });
     } else if(projs.length){
       // No usable index: check every project's photo doc directly. Costs more
       // reads once, but it rebuilds the index and nothing is left behind.
@@ -2829,12 +2851,15 @@ function restoreMissingPhotos(){
     } else if(need.length>8){
       need=need.slice(-8); // no index yet: keep startup reasonable
     }
-    if(!need.length)return 0;
+    // Nothing to bring back: the restore is finished, so photos taken now are backed up right away
+    // (without this the upload lock stayed closed for 30 seconds after every quiet start).
+    if(!need.length){ window._phRestoreDone=true; return 0; }
     // How many of these projects are missing photos on this device right now?
-    var _miss=0; for(var _m=0;_m<need.length;_m++){ var _p=need[_m], _c=0, _h=0;
+    var _miss=0; for(var _m=0;_m<need.length;_m++){ if(_phMissing(need[_m])) _miss++; }
+    var _missOld=0; for(var _m=0;_m<0;_m++){ var _p=need[_m], _c=0, _h=0;
       var _sc=function(arr){ if(!Array.isArray(arr)) return; for(var _i=0;_i<arr.length;_i++){ var _o=arr[_i]; if(!_o||typeof _o!=='object') continue; if(_o._phN) _c+=_o._phN; if(Array.isArray(_o.photos)) _h+=_o.photos.length; } };
       _sc(_p.areas); _sc(_p.estItems); if(_c>0&&_h===0) _miss++; }
-    window._phBarTotal=need.length; window._phBarDone=0; window._phBarPhotos=0; window._phBarShow=_miss>0; window._phRestoreErr=0; window._phRestoreErrMsg='';
+    window._phBarTotal=need.length; window._phNeedList=need; window._phBarDone=0; window._phBarPhotos=0; window._phBarShow=_miss>0; window._phRestoreErr=0; window._phRestoreErrMsg='';
     if(window._phBarShow) _phBar('busy','📷 Restoring photos… (0 of '+need.length+' projects)');
     return _doPhotoRestore(need, col, projs);
   }).catch(function(){
@@ -2878,10 +2903,20 @@ function _doPhotoRestore(need, col, projs){
           // put photos back onto the project
           function apply(arr,prefix){
             if(!Array.isArray(arr))return;
-            for(var i=0;i<arr.length;i++){
-              var o=arr[i]; if(!o||typeof o!=='object')continue;
-              var k=prefix+i+':'+(o.name||'');
-              if(merged[k]){ o.photos=merged[k]; restored+=merged[k].length; }
+            var used={}, i, o, k;
+            for(i=0;i<arr.length;i++){
+              o=arr[i]; if(!o||typeof o!=='object')continue;
+              k=prefix+i+':'+(o.name||'');
+              if(merged[k]){ used[k]=1; if(!(Array.isArray(o.photos)&&o.photos.length)){ o.photos=merged[k]; restored+=merged[k].length; } }
+            }
+            // The position changed since the backup (an area was deleted or moved above it): match by name,
+            // only when exactly one area here and one entry in the cloud have that name.
+            for(i=0;i<arr.length;i++){
+              o=arr[i]; if(!o||typeof o!=='object'||!o._phN||(Array.isArray(o.photos)&&o.photos.length)) continue;
+              var nm=o.name||'', same=0, j, cand=[];
+              for(j=0;j<arr.length;j++){ var q=arr[j]; if(q&&typeof q==='object'&&(q.name||'')===nm&&q._phN&&!(Array.isArray(q.photos)&&q.photos.length)) same++; }
+              for(k in merged){ if(!merged.hasOwnProperty(k)||used[k]) continue; var mm=/^([ae])(\d+):([\s\S]*)$/.exec(k); if(mm&&mm[1]===prefix&&mm[3]===nm&&Array.isArray(merged[k])&&merged[k].length) cand.push(k); }
+              if(same===1&&cand.length===1){ used[cand[0]]=1; o.photos=merged[cand[0]]; restored+=merged[cand[0]].length; }
             }
           }
           apply(proj.areas,'a'); apply(proj.estItems,'e');
@@ -2930,6 +2965,17 @@ function _doPhotoRestore(need, col, projs){
       }
     }catch(e){ console.warn('photo persist skipped:', e); }
     window._phRestoreDone = true;
+    // Record the fingerprint of every project just checked — only when the whole run had no error (download or
+    // saving on the phone). With any error nothing is recorded, so the next start checks them again.
+    try{ if(!window._phRestoreErr){
+      var _sn=_phSeenLoad(), _nl=need||[], _chk={}, _now2=[], _ids={};
+      for(var _t=0;_t<_nl.length;_t++){ if(_nl[_t]&&_nl[_t].id) _chk[_nl[_t].id]=1; }
+      try{ _now2=JSON.parse(localStorage.getItem('fb6_projs')||'[]'); }catch(e){ _now2=[]; }
+      for(var _u=0;_u<_now2.length;_u++){ var _pp=_now2[_u]; if(!_pp||!_pp.id) continue; _ids[_pp.id]=1; if(_chk[_pp.id]) _sn[_pp.id]=_phLocalSig(_pp); }
+      for(var _k in _sn){ if(_sn.hasOwnProperty(_k)&&!_ids[_k]) delete _sn[_k]; }
+      localStorage.setItem('fb6_phSeen',JSON.stringify(_sn));
+      if(window._phSweepRun) localStorage.setItem('fb6_phSweep',String(Date.now()));
+    } }catch(e){}
     // Republish a correct index from what this device now holds.
     try{
       if(restored){
