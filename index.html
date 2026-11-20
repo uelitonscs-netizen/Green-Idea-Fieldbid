@@ -1527,7 +1527,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-1030</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-1200</span></div>
 </div>
 
 <div id="field-app">
@@ -3188,6 +3188,22 @@ function _bkBuild(){
   var d=new Date();
   return {n:n,photos:o.photos||0,blob:new Blob([JSON.stringify(o)],{type:'application/json'}),name:'fieldbid-backup-'+_bkDay(d)+'-'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2)+'.json'};
 }
+// Date of the last backup: kept on this phone AND in the cloud (its own doc fieldbid/bkinfo), so clearing
+// Chrome's data no longer turns it into "last: never". Separate doc: the project/photo sync never reads or writes it.
+function _bkMarkDone(){
+  var iso=new Date().toISOString();
+  try{ localStorage.setItem('fb6_lastDownload',iso); }catch(e){}
+  try{ var u=firebase.auth().currentUser; if(typeof db!=='undefined'&&db&&u&&!u.isAnonymous) db.collection('fieldbid').doc('bkinfo').set({lastDownload:iso},{merge:true}).catch(function(){}); }catch(e){}
+}
+(function(){ try{ firebase.auth().onAuthStateChanged(function(u){
+  if(!u||u.isAnonymous||window._bkInfoRan) return; window._bkInfoRan=true;
+  db.collection('fieldbid').doc('bkinfo').get().then(function(d){
+    var c=(d&&d.exists&&d.data())?String(d.data().lastDownload||''):'', l=''; try{ l=localStorage.getItem('fb6_lastDownload')||''; }catch(e){}
+    var ct=Date.parse(c)||0, lt=Date.parse(l)||0;
+    if(ct>lt){ try{ localStorage.setItem('fb6_lastDownload',c); }catch(e){} try{ if(window.renderNHome) window.renderNHome(); }catch(e){} }
+    else if(lt>ct){ db.collection('fieldbid').doc('bkinfo').set({lastDownload:l},{merge:true}).catch(function(){}); }
+  }).catch(function(){});
+}); }catch(e){} })();
 // Save to Google Drive: opens Android's Share sheet with the backup file -> tap Drive -> Save.
 function fbBkDrive(){
   var B=_bkBuild(), f=null;
@@ -3195,7 +3211,7 @@ function fbBkDrive(){
   try{ f=new File([B.blob],B.name.replace(/\.json$/,'.txt'),{type:'text/plain'}); }catch(e){ f=null; }
   if(f&&navigator.canShare&&navigator.share&&navigator.canShare({files:[f]})){
     navigator.share({files:[f]}).then(function(){
-      try{ localStorage.setItem('fb6_lastDownload',new Date().toISOString()); }catch(e){}
+      _bkMarkDone();
       _bkToast('☁️ Backup shared ('+B.n+' projects, '+B.photos+' photos, '+Math.round(B.blob.size/1024)+' KB) — check that Drive says "Uploaded"');
       try{ if(window.renderNHome) window.renderNHome(); }catch(e){}
     }).catch(function(e){ if(e&&e.name==='AbortError') return; _bkToast('Sharing did not work — the file was downloaded instead','err'); fbBkDownload(); });
@@ -3208,7 +3224,7 @@ function fbBkDownload(){
   var B=_bkBuild(), n=B.n, blob=B.blob, a=document.createElement('a');
   a.href=URL.createObjectURL(blob); a.download=B.name;
   document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },4000);
-  try{ localStorage.setItem('fb6_lastDownload',new Date().toISOString()); }catch(e){}
+  _bkMarkDone();
   _bkToast('⬇️ Backup file saved to Downloads ('+n+' projects)');
   try{ if(window.renderNHome) window.renderNHome(); }catch(e){}
 }
