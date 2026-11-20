@@ -1229,6 +1229,8 @@ body.n5-bar #est-app .page{padding-bottom:170px;}
 .jc-seen{font-size:12.5px;font-weight:700;color:var(--n-green-ink);background:var(--n-green-soft);border-radius:9px;padding:5px 9px;margin-top:6px;display:inline-block;}
 .nh-open{display:block;width:calc(100% - 40px);margin:0 20px 8px;text-align:left;border:1px solid #c9d6f3;background:var(--n-blue-soft);color:var(--n-blue);border-radius:14px;padding:11px 13px;font-size:13.5px;font-family:var(--n-font-m);}
 .nh-open b{color:var(--n-text);}
+.nh-open.nh-sgd{border-color:#3fb950;background:rgba(63,185,80,.12);color:#2f8f3f;font-weight:700;}
+.nh-open.nh-ntf{border-style:dashed;}
 .sl-v{flex:1;align-self:center;font-size:12.5px;font-weight:700;color:var(--n-green-ink);text-align:center;}
 
 .ce-m{max-height:92vh;overflow:auto;padding-bottom:20px;}
@@ -1527,7 +1529,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-1800</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-2000</span></div>
 </div>
 
 <div id="field-app">
@@ -8556,7 +8558,10 @@ function renderNHome(){
     if(d.ti.length) tiles+='<button type="button" class="nh-tile b" data-pv="ti"><b>'+d.ti.length+'</b><span>✅ To invoice</span></button>';
     if(d.tc.length) tiles+='<button type="button" class="nh-tile c" data-pv="tc"><b>'+_nvMoney(d.due)+'</b><span>💵 To collect'+(d.overdue?' · <i>'+d.overdue+' late</i>':'')+'</span></button>'; }
   var _op=''; try{ var _all=loadProjs(), _now=Date.now(); for(var _q=0;_q<_all.length;_q++){ var _r=_all[_q].signReq; if(_r&&_r.status==='pending'&&Number(_r.views)>0){ var _t=Date.parse(_r.lastViewedAt||''); if(_t&&_now-_t<3*86400000&&(!_r.ackAt||Date.parse(_r.ackAt)<_t)) _op+='<button type="button" class="nh-open" data-op="'+esc(_all[_q].id)+'">👁 <b>'+esc(_all[_q].name)+'</b> opened your estimate · '+_r.views+'× · last '+esc(_lkWhen(_r.lastViewedAt))+'</button>'; } } }catch(e){}
-  h+=(tiles?'<div class="nh-tiles">'+tiles+'</div>':(_op?'':'<div class="nh-ok">✓ Nothing pending today</div>'))+_op;
+  // Signed by the client (link) and not looked at yet: stays here until tapped (14 days)
+  var _sg=''; try{ var _all2=loadProjs(), _now2=Date.now(); for(var _q2=0;_q2<_all2.length;_q2++){ var _s=_all2[_q2].signed; if(_s&&_s.via==='link'&&!_s.seenAt){ var _st2=Date.parse(_s.date||''); if(_st2&&_now2-_st2<14*86400000) _sg+='<button type="button" class="nh-open nh-sgd" data-sg="'+esc(_all2[_q2].id)+'">✍️ <b>'+esc(_all2[_q2].name)+'</b> signed your estimate · $'+Number(_s.total||0).toLocaleString('en-US')+' · '+esc(_s.dateUS||'')+'</button>'; } } }catch(e){}
+  if(_sg&&window.Notification&&Notification.permission==='default') _sg+='<button type="button" class="nh-open nh-ntf" id="nhNtf">🔔 Turn on notifications on this phone — FieldBid tells you when a client signs</button>';
+  h+=(tiles?'<div class="nh-tiles">'+tiles+'</div>':((_op||_sg)?'':'<div class="nh-ok">✓ Nothing pending today</div>'))+_sg+_op;
   var _ld=null; try{ _ld=localStorage.getItem('fb6_lastDownload'); }catch(e){}
   var _dd=_ld?Math.floor((Date.now()-Date.parse(_ld))/86400000):null;
   if(_dd===null||_dd>=7) h+='<button type="button" class="nh-bk" id="nhBk">☁️ <b>Back up to Google Drive</b><span>last: '+(_dd===null?'never':_dd+' days ago')+' ›</span></button>';
@@ -8583,6 +8588,8 @@ function renderNHome(){
   document.getElementById('nhNewT').onclick=function(){ var b=document.getElementById('btnField'); if(b) b.click(); nvMark(); };
   document.getElementById('nhNewE').onclick=function(){ nvGo('est'); var b=document.getElementById('newEstBtn'); if(b) b.click(); };
   document.getElementById('nhAll').onclick=function(){ nvGo('jobs'); };
+  var _sb=box.querySelectorAll('.nh-open[data-sg]'); for(var _w2=0;_w2<_sb.length;_w2++){ _sb[_w2].onclick=function(){ var id=this.getAttribute('data-sg'), ps=loadProjs(); for(var z=0;z<ps.length;z++){ if(ps[z].id===id&&ps[z].signed){ ps[z].signed.seenAt=new Date().toISOString(); saveProjs(ps); break; } } try{ openJobFromList(id); }catch(e){} try{ nvGo('jobs'); }catch(e){} }; }
+  var _nf=document.getElementById('nhNtf'); if(_nf) _nf.onclick=function(){ try{ Notification.requestPermission().then(function(){ renderNHome(); }); }catch(e){} };
   var _ob=box.querySelectorAll('.nh-open[data-op]'); for(var _w=0;_w<_ob.length;_w++){ _ob[_w].onclick=function(){ var id=this.getAttribute('data-op'), ps=loadProjs(); for(var z=0;z<ps.length;z++){ if(ps[z].id===id&&ps[z].signReq){ ps[z].signReq.ackAt=new Date().toISOString(); saveProjs(ps); break; } } try{ openJobFromList(id); }catch(e){} try{ nvGo('jobs'); }catch(e){} }; }
   var _hsb=box.querySelectorAll('.nh-sort [data-hs]'); for(var _q=0;_q<_hsb.length;_q++){ _hsb[_q].onclick=function(){ try{ localStorage.setItem('fb6_homeSort',this.getAttribute('data-hs')); }catch(e){} renderNHome(); }; }
   var tl=box.querySelectorAll('.nh-tile'); for(var a=0;a<tl.length;a++){ tl[a].onclick=function(){ window._pipeView=this.getAttribute('data-pv'); nvGo('jobs'); try{ renderJobsList(); }catch(e){} }; }
@@ -9193,15 +9200,29 @@ function _signReqData(p,opts){
     terms:ESTIMATE_TERMS.slice(),contract:((opts.ctKeys||p.ctKeys||[]).indexOf('general')>=0)?{key:'general',name:'Insulation Services Agreement & 3-Year Workmanship Warranty',url:contractPublicUrl('general')}:null,contractorSig:(cfg&&cfg.mySig)||'',contractorName:(cfg&&cfg.mySigName)||'',
     showPrices:!!opts.showPrices, pdf:opts.pdf||'', pdfName:opts.pdfName||''};
 }
+// Before a new link replaces the one already sent: if the client has signed that one, apply the signature
+// instead (making a new link used to delete the signed one). go() runs only when it is safe.
+function _lkGuard(pid,cur,go){
+  if(!(cur&&cur.status==='pending'&&cur.token)){ go(); return; }
+  db.collection('sign_requests').doc(cur.token).get().then(function(d){ var v=d&&d.exists&&d.data();
+    if(v&&v.status==='signed'&&v.img){ _applyRemoteSign(pid,v); alert('✍️ '+(v.signedName||'The client')+' already signed this estimate'+(v.signedAt?' on '+new Date(v.signedAt).toLocaleDateString('en-US'):'')+'.\n\nNo new link was made, so the signed one is kept.'); return; }
+    go(); }).catch(function(){ go(); });
+}
+// delete an old link only if it was not signed in the meantime
+function _lkDropOld(tok){ try{ db.collection('sign_requests').doc(tok).get().then(function(d){ var v=d&&d.exists&&d.data(); if(v&&v.status==='signed') return; db.collection('sign_requests').doc(tok).delete(); }).catch(function(){}); }catch(e){} }
+// the client must see THIS job's estimate number (links made without one showed the number of whatever estimate was open)
+function _lkEnsureNum(pid){ try{ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ if(!(parseInt((ps[i].quoteInfo||{}).quoteNum)>0)){ _qnAssignTo(ps[i]); saveProjs(ps); } return ps[i]; } } }catch(e){} return null; }
 function sendForSignature(pid){
   var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } } if(!p) return;
   if(!(p.estItems&&p.estItems.length)){ toast('This job has no estimate items yet','err'); return; }
+  if(!window._lkGuardOk){ _lkGuard(pid,p.signReq,function(){ window._lkGuardOk=true; try{ sendForSignature(pid); } finally { window._lkGuardOk=false; } }); return; }
+  p=_lkEnsureNum(pid)||p;
   var cur=p.signReq, h=_estHash(p);
   if(cur&&cur.status==='pending'&&cur.hash===h){ _signLinkSheet(pid); return; }
   var tok=_signToken(), data=_signReqData(p); data.hash=h;
   toast('🔗 Creating the signature link…');
   db.collection('sign_requests').doc(tok).set(data).then(function(){
-    if(cur&&cur.status==='pending'&&cur.token){ try{ db.collection('sign_requests').doc(cur.token).delete(); }catch(e){} }
+    if(cur&&cur.status==='pending'&&cur.token) _lkDropOld(cur.token);
     var ps2=loadProjs(); for(var k=0;k<ps2.length;k++){ if(ps2[k].id===pid){ ps2[k].signReq={token:tok,status:'pending',sentAt:new Date().toISOString(),sentUS:new Date().toLocaleDateString('en-US'),total:data.totals.total,hash:h}; break; } }
     saveProjs(ps2); if(window.renderJobsList) renderJobsList(); _signLinkSheet(pid);
   }).catch(function(){ toast('Could not create the link — check internet and that you are signed in','err'); });
@@ -9240,9 +9261,13 @@ function _signCheckPending(force){
     db.collection('sign_requests').doc(p.signReq.token).get().then(function(d){ var v=d&&d.exists&&d.data(); if(!v) return;
       var _st=p.estStatus||'none';
       if((Number(v.views)||0)!==(Number(p.signReq.views)||0)||((Number(v.views)||0)>0&&(_st==='none'||_st==='draft'))) _lkSaveViews(p.id,v);
-      if(v.status==='signed'&&v.img) _applyRemoteSign(p.id,v); }).catch(function(){}); })(ps[i]); }
+      if(v.status==='signed'&&v.img) _applyRemoteSign(p.id,v);
+      // a link still waiting for the client shows THIS job's estimate number (older links showed the number of whatever estimate was open)
+      else if(v.status==='pending'){ var _qn=parseInt((p.quoteInfo||{}).quoteNum)||0; if(_qn>0&&String(v.quoteNum||'')!==String(_qn)) db.collection('sign_requests').doc(p.signReq.token).update({quoteNum:String(_qn)}).catch(function(){}); } }).catch(function(){}); })(ps[i]); }
 }
 window._signCheckPending=_signCheckPending;
+setInterval(function(){ try{ if(document.visibilityState==='visible') _signCheckPending(false); }catch(e){} },120000);
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ try{ _signCheckPending(true); }catch(e){} } });
 
 // ══ Estimate by link: open tracking ══
 // Draft → Sent (or a new date if it was Sent). Approved / Rejected stay as they are.
@@ -9265,6 +9290,9 @@ function _lkSaveViews(pid,v){ var ps=loadProjs(); for(var i=0;i<ps.length;i++){ 
 function _lkB64(bytes){ var u=new Uint8Array(bytes), s='', CH=0x8000; for(var i=0;i<u.length;i+=CH) s+=String.fromCharCode.apply(null,u.subarray(i,i+CH)); return btoa(s); }
 // Make (or replace) the client link for this estimate. cb(url) on success.
 function _lkMake(pid,showPrices,pdfBytes,pdfName,cb){
+  var ps0=loadProjs(), p0=null; for(var i0=0;i0<ps0.length;i0++){ if(ps0[i0].id===pid){ p0=ps0[i0]; break; } } if(!p0){ toast('Job not found','err'); return; }
+  if(!window._lkGuardOk){ _lkGuard(pid,p0.signReq,function(){ window._lkGuardOk=true; try{ _lkMake(pid,showPrices,pdfBytes,pdfName,cb); } finally { window._lkGuardOk=false; } }); return; }
+  _lkEnsureNum(pid);
   var ps=loadProjs(), p=null; for(var i=0;i<ps.length;i++){ if(ps[i].id===pid){ p=ps[i]; break; } } if(!p){ toast('Job not found','err'); return; }
   var b64=''; try{ if(pdfBytes&&pdfBytes.byteLength<480000) b64=_lkB64(pdfBytes); }catch(e){ b64=''; }
   if(window._ctKeysForLink){ ps[i].ctKeys=window._ctKeysForLink.slice(); p.ctKeys=ps[i].ctKeys; saveProjs(ps); }
@@ -9274,7 +9302,7 @@ function _lkMake(pid,showPrices,pdfBytes,pdfName,cb){
   toast('🔗 Creating the link…');
   db.collection('sign_requests').doc(tok).set(data).then(function(){
     // the previous link is removed only when the estimate changed (it would show outdated items)
-    if(cur&&cur.status==='pending'&&cur.token&&cur.hash!==data.hash){ try{ db.collection('sign_requests').doc(cur.token).delete(); }catch(e){} }
+    if(cur&&cur.status==='pending'&&cur.token&&cur.hash!==data.hash) _lkDropOld(cur.token);
     var ps2=loadProjs(); for(var k=0;k<ps2.length;k++){ if(ps2[k].id===pid){ ps2[k].signReq={token:tok,status:'pending',sentAt:new Date().toISOString(),sentUS:new Date().toLocaleDateString('en-US'),total:data.totals.total,hash:data.hash,showPrices:!!showPrices,byEmail:true,views:0,contract:!!data.contract}; break; } }
     saveProjs(ps2); try{ if(window.renderJobsList) renderJobsList(); }catch(e){}
     cb(SIGN_URL+tok);
@@ -9305,9 +9333,12 @@ function _applyRemoteSign(pid,v){
   try{ db.collection('fieldbid').doc('sig__'+pid).set({img:v.img,name:v.signedName||'',date:dt.toISOString(),total:p.signReq.total,via:'link'}); }catch(e){}
   ps[k].signed={name:v.signedName||'',date:dt.toISOString(),dateUS:dt.toLocaleDateString('en-US'),total:p.signReq.total,hash:p.signReq.hash,via:'link'};
   ps[k].estStatus='approved'; ps[k].signReq.status='signed';
-  saveProjs(ps); if(window.renderJobsList) renderJobsList(); try{ renderJobHeader(); }catch(e){}
+  saveProjs(ps); if(window.renderJobsList) renderJobsList(); try{ renderJobHeader(); }catch(e){} try{ if(window.renderNHome) renderNHome(); }catch(e){}
   var qi=p.quoteInfo||{}, who=qi.client||p.name||'The client';
   toast('✍️ '+who+' signed the estimate');
+  try{ if(window.Notification&&Notification.permission==='granted'){ var _nt='✍️ '+who+' signed the estimate', _nb='$'+Number(p.signReq.total||0).toLocaleString('en-US')+' · '+dt.toLocaleDateString('en-US');
+    if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration().then(function(r){ if(r&&r.showNotification) r.showNotification(_nt,{body:_nb,icon:'icon-192.png',tag:'sig-'+pid}); else new Notification(_nt,{body:_nb,icon:'icon-192.png'}); }).catch(function(){});
+    else new Notification(_nt,{body:_nb,icon:'icon-192.png'}); } }catch(e){}
   setTimeout(function(){ appConfirm('✍️ '+who+' signed the estimate online. Email the signed copy?',function(){
     var r=null; try{ r=generateEstimatePDF(pid,false,{returnBytes:true}); }catch(e){}
     if(r&&r.bytes) _signedWithContract(pid,r.bytes,function(b){ openEstimateEmail(b,r.filename.replace(/^Estimate/,'Signed-Estimate'),pid,'signed'); });
