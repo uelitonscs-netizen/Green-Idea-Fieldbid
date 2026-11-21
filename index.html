@@ -1529,7 +1529,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261121-0900</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261121-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -3182,7 +3182,10 @@ function _bkToast(m,t){ try{ if(typeof window.toast==='function'){ window.toast(
 function _bkDay(d){ d=d||new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 function _bkEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 function _bkSheet(html){
-  var ov=document.getElementById('bkOv'); if(!ov){ ov=document.createElement('div'); ov.id='bkOv'; ov.className='overlay'; document.body.appendChild(ov); }
+  // A fresh sheet every time: reusing the old one kept every earlier click listener, so the second time
+  // "Daily copies" was tapped it opened and closed at once (and the third time it opened again).
+  var _old=document.getElementById('bkOv'); if(_old&&_old.parentNode) _old.parentNode.removeChild(_old);
+  var ov=document.createElement('div'); ov.id='bkOv'; ov.className='overlay'; document.body.appendChild(ov);
   ov.innerHTML='<div class="modal nvm" style="max-height:88vh;overflow:auto"><div class="mhandle"></div><div class="mtitle">🗄️ Backups</div>'+html+'<div style="padding:6px 20px 0"><button type="button" class="js-cancel" id="bkClose">Close</button></div></div>';
   ov.classList.add('on'); ov.style.display='flex';
   document.getElementById('bkClose').onclick=function(){ ov.classList.remove('on'); ov.style.display='none'; };
