@@ -1529,7 +1529,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261120-2100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261121-0900</span></div>
 </div>
 
 <div id="field-app">
@@ -10783,7 +10783,7 @@ document.getElementById('eiSaveBtn').addEventListener('click',function(){
   item.celR   =(_prevItem&&_prevItem.celR)   ?_prevItem.celR   :_mat.celR;
   item.mwR    =(_prevItem&&_prevItem.mwR)    ?_prevItem.mwR    :_mat.mwR;
   if(_prevItem&&_prevItem.spec)item.spec=_prevItem.spec;
-  if(item.matChanged&&inch>0){ if(item.matType==='cc') item.ccInch=inch; else if(item.matType==='oc') item.ocInch=inch; }
+  if(!isHybridItem&&inch>0){ if(item.matType==='cc') item.ccInch=inch; else if(item.matType==='oc') item.ocInch=inch; }
   if(editEIIdx>=0)window.estItems[editEIIdx]=item;else window.estItems.push(item);
   estItems=window.estItems;
   // Material changed in the Estimator: the matching TAKEOFF area follows it, so the
@@ -12961,13 +12961,16 @@ function _wlBuildMatBudget(){
       var pr=null; try{pr=getProd(a.productId);}catch(e){}
       var cat=pr?pr.cat:'';
 
+      // Thickness: the PRICED thickness (inches the item is charged at) wins over the stored material
+      // field, which kept the takeoff value when the inches were changed in the Estimator.
+      var _pin=(Number(a.pricePerInch)>0&&Number(a.inches)>0)?Number(a.inches):0;
       if(mtype==='cc'){
         ccSqft+=sf;
-        var ci=a.ccInch||0;
+        var ci=_pin||a.ccInch||0;
         if(ci>0){ccInchTotal+=ci*sf;ccCount+=sf;}
       } else if(mtype==='oc'){
         ocSqft+=sf;
-        var oi=a.ocInch||0;
+        var oi=_pin||a.ocInch||0;
         if(oi>0){ocInchTotal+=oi*sf;ocCount+=sf;}
       } else if(mtype==='hybrid'){
         ccSqft+=sf; ocSqft+=sf;
