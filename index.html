@@ -1529,7 +1529,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261121-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261122-1000</span></div>
 </div>
 
 <div id="field-app">
@@ -2683,6 +2683,21 @@ function fbJobBin(){
   var bs=ov.querySelectorAll('.jb-res'); for(var b=0;b<bs.length;b++) bs[b].onclick=function(){ var t=L[+this.getAttribute('data-k')]; if(!t) return; if(t.kind==='items'){ if(window._jbPutItems) window._jbPutItems(t.job); } else _bkAddJobs([t.job],'the deleted jobs bin'); };
 }
 window.fbJobBin=fbJobBin;
+// ✉️ Signature email: the client page (sign.html) emails Green Idea when a client signs, through FormSubmit.
+// FormSubmit sends ONE activation email the first time; this test triggers it without waiting for a client.
+var SIG_NOTIFY_URL='https://formsubmit.co/ajax/greenideainsulation@gmail.com';
+function fbSigMailTest(){
+  if(!confirm('Send a test "client signed" email to greenideainsulation@gmail.com?\n\nThe first time, FormSubmit sends an ACTIVATION email instead: open it and tap "Activate Form". After that, every client signature arrives by email.')) return;
+  _bkToast('✉️ Sending…');
+  fetch(SIG_NOTIFY_URL,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({_subject:'✍️ TEST · FieldBid signature email',_template:'table',_captcha:'false',
+    Signed_by:'Test client',Client:'Test client',Address:'—',Estimate:'#0000',Total:'$0.00',Signed_at:new Date().toLocaleString('en-US'),Contract:'—',Link:'(test)',Next_step:'If you got this, signature emails work.'})})
+  .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return {ok:r.ok,j:j}; }); })
+  .then(function(x){ var msg=String((x.j&&x.j.message)||'');
+    if(x.ok&&String(x.j&&x.j.success)==='true') alert('✓ Test email sent to greenideainsulation@gmail.com.\n\nIf this is the first time, look for the FormSubmit ACTIVATION email (check Spam too) and tap "Activate Form", then send the test again.');
+    else alert('FormSubmit answered: '+(msg||('HTTP '+(x.j&&x.j.status||'?')))+'\n\nIf it asks for activation: open the FormSubmit email in greenideainsulation@gmail.com (check Spam) and tap "Activate Form".'); })
+  .catch(function(){ alert('Could not reach FormSubmit — check the internet and try again.'); });
+}
+window.fbSigMailTest=fbSigMailTest;
 function _phBar(state,html){
   var b=document.getElementById('phRestoreBar');
   if(state==='hide'){ if(b) b.parentNode.removeChild(b); return; }
@@ -8519,7 +8534,7 @@ function nvMore(){
     '<div class="nvm-h">Estimator</div><div class="nvm-g">'+it('prods','🗄️','Products','prices and coverage')+it('settings','⚙️','Settings','company, costs, signature')+'</div>'+
     '<div class="nvm-g">'+it('pricecheck','💡','Price check','WorkLog results vs your prices · suggestions only')+'</div>'+
     '<div class="nvm-h">Documents</div><div class="nvm-g nvm-3">'+it('broch','📄','Brochures','')+it('ds','📋','Data sheets','')+it('ct','✍️','Contract','')+'</div>'+
-    '<div class="nvm-h">Data</div><div class="nvm-g">'+it('clients','👥','Clients','phone, email, address — from your jobs')+it('backups','🗄️','Backups','daily copies · download · restore')+it('jobbin','♻️','Deleted jobs','kept 60 days · restore')+'</div>'+
+    '<div class="nvm-h">Data</div><div class="nvm-g">'+it('clients','👥','Clients','phone, email, address — from your jobs')+it('backups','🗄️','Backups','daily copies · download · restore')+it('jobbin','♻️','Deleted jobs','kept 60 days · restore')+it('sigmail','✉️','Signature email','test it · activate the first time')+'</div>'+
     '<div class="nvm-g nvm-2">'+it('imp','📥','Import takeoff','paste the block')+it('tkcopy','📤','Copy takeoff','of the open job')+'</div>'+
     '<div class="nvm-h">App</div><div class="nvm-g nvm-3">'+sm('diag','🩺','Diagnostics')+sm('refresh','↺','Refresh')+sm('classic','↩️','Classic')+'</div>'+
     '<div style="padding:10px 20px 0"><button type="button" class="js-cancel" id="nvmClose">Close</button></div>'+
@@ -8538,6 +8553,7 @@ function nvMore(){
     if(m==='refresh'){ location.reload(); return; }
     if(m==='backups'){ if(window.fbBackups) window.fbBackups(); return; }
     if(m==='jobbin'){ if(window.fbJobBin) window.fbJobBin(); return; }
+    if(m==='sigmail'){ if(window.fbSigMailTest) window.fbSigMailTest(); return; }
     if(m==='imp'){ if(window.fbImportTakeoff) window.fbImportTakeoff(); return; }
     if(m==='clients'){ if(window.fbClients) window.fbClients(); return; } if(m==='pricecheck'){ if(window.openPriceCheck) window.openPriceCheck(); return; }
     if(m==='tkcopy'){ if(window.fbCopyTakeoff) window.fbCopyTakeoff(); return; }

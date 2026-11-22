@@ -69,6 +69,22 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
     firebase.initializeApp({apiKey:"AIzaSyBHQWTKirZQZ_ua9chnaLy7lnXi0KDygPA",authDomain:"work-log-5aa9f.firebaseapp.com",projectId:"work-log-5aa9f",storageBucket:"work-log-5aa9f.firebasestorage.app",messagingSenderId:"919924820811",appId:"1:919924820811:web:00460b91d51023d718b6ce"});
   }catch(e){}
   var ref=firebase.firestore().collection('sign_requests').doc(token);
+  // Email to Green Idea the moment the client signs (FormSubmit). It runs after the signature is saved and never
+  // blocks it: if the email fails, the signature is still there and FieldBid picks it up as usual.
+  var NOTIFY_URL='https://formsubmit.co/ajax/greenideainsulation@gmail.com';
+  function notifySigned(d){
+    try{
+      if(/[?&]preview=1/.test(location.search)) return;
+      var T=d.totals||{}, tot=Number(T.total)||0, when=new Date(d.signedAt||Date.now());
+      var body={_subject:'✍️ '+(d.signedName||'Client')+' signed estimate #'+(d.quoteNum||'')+' · $'+tot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),
+        _template:'table', _captcha:'false',
+        Signed_by:d.signedName||'', Client:(d.client&&d.client.name)||'', Address:(d.client&&d.client.address)||'',
+        Estimate:'#'+(d.quoteNum||''), Total:'$'+tot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),
+        Signed_at:when.toLocaleString('en-US'), Contract:d.contractAccepted?('Accepted · '+(d.contractName||'')):'No contract with this estimate',
+        Link:location.href.replace(/[?&]preview=1/,''), Next_step:'Open FieldBid: the job is marked Approved with the signature, and you can email the signed copy.'};
+      fetch(NOTIFY_URL,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(body),keepalive:true}).catch(function(){});
+    }catch(e){}
+  }
 
   function body(d){
     var h='<div class="card"><div class="hd"><div class="co"><b>'+esc(d.company&&d.company.name||'Green Idea Insulation')+'</b>';
@@ -125,7 +141,7 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
     document.getElementById('ok').onclick=function(){
       var b=this, er=document.getElementById('er'); b.disabled=true; b.textContent='Saving…'; er.textContent='';
       var rec={status:'signed',signedName:document.getElementById('nm').value.trim(),signedAt:new Date().toISOString(),img:png()}; if(d.contract&&d.contract.url){ rec.contractAccepted=true; rec.contractName=d.contract.name||''; }
-      ref.update(rec).then(function(){ var x={}; for(var k in d) x[k]=d[k]; for(var q in rec) x[q]=rec[q]; signed(x); })
+      ref.update(rec).then(function(){ var x={}; for(var k in d) x[k]=d[k]; for(var q in rec) x[q]=rec[q]; signed(x); notifySigned(x); })
         .catch(function(e){ b.disabled=false; b.innerHTML='✍️ Approve &amp; sign'; er.textContent='Could not save — check your internet and try again.'; });
     };
   }
