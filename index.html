@@ -1529,7 +1529,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261125-1100</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261125-1400</span></div>
 </div>
 
 <div id="field-app">
@@ -3988,6 +3988,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 window.fieldAreas=window.fieldAreas||[]; var fieldAreas=window.fieldAreas;
 window.estItems=window.estItems||[]; var estItems=window.estItems;
+window._fbEI=function(){ return estItems; };   // the Estimator list as this scope has it (work order for WorkLog)
 window.products=window.products||[]; var products=window.products;
 window.cfg=window.cfg||{taxRate:0,company:'Green Idea Insulation',contact:'',license:'',showLicense:false}; var cfg=window.cfg;
 window.quoteInfo=window.quoteInfo||{client:'',address:''}; var quoteInfo=window.quoteInfo;
@@ -5578,6 +5579,7 @@ function formatDimText(a, indent){
 }
 // Format saved measurement rows for display on cards / work orders.
 // Returns HTML string or empty string if no rows.
+window.formatDimRows=function(a,o){ return formatDimRows(a,o); };   // WorkLog work order (outside this scope)
 function formatDimRows(a, opts){
   if(!a||!a.calcMode)return '';
   if(a.calcMode==='roof'){
@@ -11055,8 +11057,10 @@ function phSig(s){
   return 'v2:'+n+':'+h1.toString(36)+':'+h2.toString(36);
 }
 function phGet(src,k){ var m=(quoteInfo&&quoteInfo.photoMarks)||{}, r=m[phSig(src)]; return k==='wo'?!(r&&r.wo===0):!!(r&&r.est===1); }
+window.phSig=phSig; window.phGet=phGet;   // used by the WorkLog work order (outside this scope)
 function phCls(src){ return (phGet(src,'wo')?' wo':'')+(phGet(src,'est')?' est':''); }
 function phFor(arr,k){ var out=[]; if(!arr) return out; for(var i=0;i<arr.length;i++){ if(phGet(arr[i],k)) out.push(arr[i]); } return out; }
+window.phFor=phFor;
 function phSet(src,k,v){
   if(!quoteInfo.photoMarks) quoteInfo.photoMarks={};
   var sg=phSig(src), r=quoteInfo.photoMarks[sg]||{}; r[k]=v?1:0; quoteInfo.photoMarks[sg]=r;
@@ -12816,12 +12820,29 @@ function _wlSummaryNow(){
           clientPhone:_wlQiOrScreen('phone','qPhone'), clientEmail:_wlQiOrScreen('email','qEmail'),
           budget:budget, matBudget:mb, estimate:_wlEstimateBlock(mb,budget), workOrder:_wlWorkOrder()};
 }
-// Work order for the crew (WorkLog helper app): the Estimator's areas — no prices, no photos (kept small)
+// Work order for the crew (WorkLog helper app): the Estimator's areas — no prices. Photos marked "Work Order"
+// go one by one to woPhotos/<id> (_wlWoPhotosUpload); the work order only lists their ids (ph).
+function _wlWoPhId(pid,src){ return (String(pid)+'__'+window.phSig(src)).replace(/[^A-Za-z0-9_.-]/g,'_').slice(0,140); }
+function _wlWoPhotoList(it){ var out=[]; try{ var a=window.phFor(it.photos||[],'wo'); for(var i=0;i<a.length;i++){ var src=a[i]; if(typeof src==='string'&&src.indexOf('data:image')===0&&src.length<900000) out.push(src); } }catch(e){} return out; }
+var _wlPhBusy=false;
+function _wlWoPhotosUpload(){
+  try{ var cp=window.currentProj; if(!cp||!cp.id||typeof db==='undefined'||!db||!firebase.auth().currentUser||_wlPhBusy) return;
+    var seen={}; try{ seen=JSON.parse(localStorage.getItem('fb6_wlph')||'{}')||{}; }catch(e){ seen={}; }
+    var todo=[], L=(window._fbEI?window._fbEI():window.estItems)||[];
+    for(var i=0;i<L.length;i++){ var ph=_wlWoPhotoList(L[i]); for(var j=0;j<ph.length;j++){ var id=_wlWoPhId(cp.id,ph[j]); if(!seen[id]) todo.push({id:id,src:ph[j]}); } }
+    if(!todo.length) return; _wlPhBusy=true;
+    (function next(k){ if(k>=todo.length){ _wlPhBusy=false; return; } var t=todo[k];
+      db.collection('woPhotos').doc(t.id).set({fbProjectId:cp.id,data:t.src,at:new Date().toISOString()}).then(function(){
+        seen[t.id]=1; try{ localStorage.setItem('fb6_wlph',JSON.stringify(seen)); }catch(e){} next(k+1);
+      }).catch(function(e){ _wlPhBusy=false; console.warn('Work order photo not sent:',e&&e.message); }); })(0);   // one at a time; tries again next time
+  }catch(e){ _wlPhBusy=false; } }
+window._wlWoPhotosUpload=_wlWoPhotosUpload;
 function _wlWorkOrder(){
-  try{ var L=window.estItems||[], out=[];
+  try{ var L=(window._fbEI?window._fbEI():window.estItems)||[], out=[], cpid=(window.currentProj&&window.currentProj.id)||'';
     for(var i=0;i<L.length;i++){ var it=L[i]||{}, pr=null; try{ pr=getProd(it.productId); }catch(e){}
-      var dims=''; try{ var hh=formatDimRows(it,{wo:true}); if(hh){ var d=document.createElement('div'); d.innerHTML=hh; dims=String(d.innerText||d.textContent||'').replace(/[ \t]+/g,' ').replace(/\n\s*\n+/g,'\n').trim().slice(0,600); } }catch(e){}
-      out.push({n:String(it.name||'').slice(0,120), e:(pr&&pr.emoji)||'', p:(pr&&pr.name)?String(pr.name).slice(0,120):'', sf:Math.round((Number(it.sf)||0)*100)/100, notes:String(it.notes||'').slice(0,1000), dims:dims}); }
+      var dims=''; try{ var hh=window.formatDimRows(it,{wo:true}); if(hh){ var d=document.createElement('div'); d.innerHTML=String(hh).replace(/<\/div>/gi,'</div>\n'); dims=String(d.textContent||'').replace(/[ \t]+/g,' ').replace(/\n\s*\n+/g,'\n').trim().slice(0,600); } }catch(e){}
+      var ph=[]; if(cpid){ var pl=_wlWoPhotoList(it); for(var q=0;q<pl.length&&q<12;q++) ph.push(_wlWoPhId(cpid,pl[q])); }
+      out.push({n:String(it.name||'').slice(0,120), e:(pr&&pr.emoji)||'', p:(pr&&pr.name)?String(pr.name).slice(0,120):'', sf:Math.round((Number(it.sf)||0)*100)/100, notes:String(it.notes||'').slice(0,1000), dims:dims, ph:ph}); }
     if(!out.length) return null;
     return {num:window.quoteNum||'', items:out};
   }catch(e){ return null; } }
@@ -12851,6 +12872,7 @@ function _wlSyncSummary(){
         if(_O&&_O.list&&_O.list.length>1&&(!_O.chosen||_O.active!==_O.chosen)) return;   // options: only the chosen one goes to WorkLog
       }catch(_oe){}
       var sm=_wlSummaryNow(); if(!sm||!(sm.budget>0)) return;
+      try{ _wlWoPhotosUpload(); }catch(_pe){}   // work order photos: only the ones not sent yet
       var _chk=JSON.parse(JSON.stringify(sm)); if(_chk.estimate) delete _chk.estimate.savedAt;   // timestamp alone is not a change
       var js=JSON.stringify(sm), hs=_wlHash(JSON.stringify(_chk)), last={};
       try{ last=JSON.parse(localStorage.getItem('fb6_wlsum')||'{}'); }catch(e){ last={}; }
@@ -13189,7 +13211,7 @@ function sendToWorkLog(){
     fieldbidTotal:budget,
     fbProjectId:(window.currentProj&&window.currentProj.id)||null,
     estimate:(function(){ try{ return _wlEstimateBlock(matBudget,budget); }catch(e){ return null; } })(),
-    workOrder:(function(){ try{ return _wlWorkOrder(); }catch(e){ return null; } })()
+    workOrder:(function(){ try{ _wlWoPhotosUpload(); }catch(e){} try{ return _wlWorkOrder(); }catch(e){ return null; } })()
   })
   .then(function(){
     clearTimeout(_sendWatchdog);
