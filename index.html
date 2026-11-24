@@ -1529,7 +1529,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261122-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261125-1100</span></div>
 </div>
 
 <div id="field-app">
@@ -12814,8 +12814,18 @@ function _wlSummaryNow(){
   var mb=_wlBuildMatBudget();
   return {fbProjectId:cp.id, projName:cp.name||'', client:client, address:address,
           clientPhone:_wlQiOrScreen('phone','qPhone'), clientEmail:_wlQiOrScreen('email','qEmail'),
-          budget:budget, matBudget:mb, estimate:_wlEstimateBlock(mb,budget)};
+          budget:budget, matBudget:mb, estimate:_wlEstimateBlock(mb,budget), workOrder:_wlWorkOrder()};
 }
+// Work order for the crew (WorkLog helper app): the Estimator's areas — no prices, no photos (kept small)
+function _wlWorkOrder(){
+  try{ var L=window.estItems||[], out=[];
+    for(var i=0;i<L.length;i++){ var it=L[i]||{}, pr=null; try{ pr=getProd(it.productId); }catch(e){}
+      var dims=''; try{ var hh=formatDimRows(it,{wo:true}); if(hh){ var d=document.createElement('div'); d.innerHTML=hh; dims=String(d.innerText||d.textContent||'').replace(/[ \t]+/g,' ').replace(/\n\s*\n+/g,'\n').trim().slice(0,600); } }catch(e){}
+      out.push({n:String(it.name||'').slice(0,120), e:(pr&&pr.emoji)||'', p:(pr&&pr.name)?String(pr.name).slice(0,120):'', sf:Math.round((Number(it.sf)||0)*100)/100, notes:String(it.notes||'').slice(0,1000), dims:dims}); }
+    if(!out.length) return null;
+    return {num:window.quoteNum||'', items:out};
+  }catch(e){ return null; } }
+window._wlWorkOrder=_wlWorkOrder;
 // Estimated labor / overhead / materials for this job (Quote tab), for WorkLog's
 // "Estimated vs Actual". Labor = workers × hours × $/h; overhead = days × daily overhead.
 function _wlEstimateBlock(mb,budget){
@@ -13178,7 +13188,8 @@ function sendToWorkLog(){
     source:'fieldbid',
     fieldbidTotal:budget,
     fbProjectId:(window.currentProj&&window.currentProj.id)||null,
-    estimate:(function(){ try{ return _wlEstimateBlock(matBudget,budget); }catch(e){ return null; } })()
+    estimate:(function(){ try{ return _wlEstimateBlock(matBudget,budget); }catch(e){ return null; } })(),
+    workOrder:(function(){ try{ return _wlWorkOrder(); }catch(e){ return null; } })()
   })
   .then(function(){
     clearTimeout(_sendWatchdog);
