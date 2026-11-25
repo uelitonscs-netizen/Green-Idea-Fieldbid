@@ -1529,7 +1529,7 @@ textarea.fi-ta{resize:none;min-height:44px;line-height:1.35;font-family:inherit;
 
   </div>
 
-  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261126-1000</span></div>
+  <div style="margin-top:auto;padding:16px 24px 32px;text-align:center;font-size:11px;color:#d1d5db">FieldBid · Green Idea Insulation<br><span id="fbBuild" style="font-size:10px;color:#9ca3af">build v20261126-1200</span></div>
 </div>
 
 <div id="field-app">
@@ -12757,10 +12757,35 @@ function computeMaterialUsage(items){
   function _priced(it){ return _num(it.pricePerInch)>0?_num(it.inches):0; }
   function _rbOf(it){ var pr=null; try{ pr=it.productId?getProd(it.productId):null; }catch(e){} if(!pr) return null; var c=String(pr.cat||'').toLowerCase(); if(c.indexOf('rigid')<0&&c.indexOf('board')<0) return null; return (pr.id==='p16'||/\b2\s*"/.test(String(pr.name||'')))?'rb2':'rb1'; }
 
+  // Material of an item. Items created straight in the Estimator can have no material type, or a variant
+  // ("fg_r19", "mw_r15", "cel_dense"): they were left out of the material cost although the job is priced
+  // with them. Read it from the variant, then the product's category, then the item's name.
+  function _typeOf(it){
+    var t=String(it.matType||'').toLowerCase();
+    if(/^fg(_|$)/.test(t)&&t!=='fg_blown') return 'fg';
+    if(/^mw(_|$)/.test(t)) return 'mw';
+    if(/^cel(_|$)/.test(t)) return 'cel';
+    if(t) return t;
+    var pr=null; try{ pr=it.productId?getProd(it.productId):null; }catch(e){}
+    var c=pr?String(pr.cat||''):'', pn=pr?String(pr.name||'').toLowerCase():'', nm=String(it.name||'').toLowerCase();
+    if(/fire\s*-?block/.test(nm)) return '';          // fire blocking is not insulation coverage
+    if(c==='Batt') return 'fg';
+    if(c==='Mineral Wool') return 'mw';
+    if(c==='Spray Foam') return pn.indexOf('closed')>=0?'cc':'oc';
+    if(c==='Hybrid') return 'hybrid';
+    if(c==='Blown-In'&&pn.indexOf('cellulose')>=0) return 'cel';
+    if(c==='Air Barrier'||/ignition|intumescent|thermal\s*barrier/.test(pn+' '+nm)) return 'ign';
+    if(/closed\s*-?\s*cell/.test(nm)) return 'cc';
+    if(/open\s*-?\s*cell/.test(nm)) return 'oc';
+    if(/cellulose/.test(nm)) return 'cel';
+    if(/roxul|rockwool|mineral\s*wool/.test(nm)) return 'mw';
+    if(/fiber\s*glass|fibreglass|\bbatts?\b/.test(nm)&&!/blown/.test(nm)) return 'fg';
+    return '';
+  }
   (items||[]).forEach(function(it){
     if(!it)return;
     var sf=Number(it.sf)||0; if(sf<=0)return;
-    var t=String(it.matType||'').toLowerCase();
+    var t=_typeOf(it);
     if(!t){ var rk=covRollKind(it); if(rk) rollSf[rk]+=sf; }
     if(t==='cc'){ var ci=_priced(it)||_num(it.ccInch); if(!ci) assumed.push((it.name||'item')+': no closed cell thickness'); ccBF+=sf*ci; }
     else if(t==='oc'){ var oi=_priced(it)||_num(it.ocInch); if(!oi) assumed.push((it.name||'item')+': no open cell thickness'); ocBF+=sf*oi; }
@@ -12955,6 +12980,8 @@ function _wlBuildMatBudget(){
     return map[nearest]||51;
   }
   var ccSqft=0, ocSqft=0, ccInchTotal=0, ocInchTotal=0, ccCount=0, ocCount=0;
+  // R-value written in the item's or the product's name ("Fiber glass R19 unfaced", "Fiberglass Batt R-19")
+  function _rOfName(a){ var pr=null; try{ pr=getProd(a.productId); }catch(e){} var m=String(a.name||'').match(/R[\-\s]?(\d{2})/i)||String((pr&&pr.name)||'').match(/R[\-\s]?(\d{2})/i); return m?parseInt(m[1],10):0; }
   var IGN_SQFT_BUCKET=covGet('cov_ign'); // Settings → Coverage (default 800 sq ft / bucket)
   var celSqft=0, celBagsTotal=0, roxBagsTotal=0, fbgBagsTotal=0, ignSqft=0, ignBuckets=0, fbSqft=0;
   var rb2Sqft=0, rb1Sqft=0;
@@ -13021,8 +13048,9 @@ function _wlBuildMatBudget(){
     else if(_c==='Hybrid') _t='hybrid';
     else if(_c==='Blown-In'&&_pn.indexOf('cellulose')>=0) _t='cel';
     else if(_c==='Mineral Wool') _t='mw';
+    else if(_c==='Batt') _t='fg';
     else if(!_fireBlock&&/ignition|intumescent|thermal\s*barrier/.test(_txt)) _t='ign';
-    else if(!_p){
+    else if(!_p||_c==='Other'){
       // No product chosen ("Custom" line): read the material from the item's name.
       if(/closed\s*-?\s*cell/.test(_nm)) _t='cc';
       else if(/open\s*-?\s*cell/.test(_nm)) _t='oc';
@@ -13080,7 +13108,7 @@ function _wlBuildMatBudget(){
         var ci4=a.ccInch||0;
         if(ci4>0){ccInchTotal+=ci4*sf;ccCount+=sf;}
       } else if(mtype==='fg'){
-        fbgBagsTotal+=Math.ceil(sf/getFgSqftPerBag(a.fgR||0));
+        fbgBagsTotal+=Math.ceil(sf/getFgSqftPerBag(a.fgR||_rOfName(a)||0));
       } else if(mtype==='cel'||mtype==='cel_blown'){
         var _rCel=a.celR||a.mwR||0;
         // Extract R from name if not set
@@ -13106,7 +13134,7 @@ function _wlBuildMatBudget(){
         else if(cat==='Blown-In'){
           var pname2=(pr&&pr.name)?pr.name.toLowerCase():'';
           if(pname2.indexOf('cellulose')>=0) celSqft+=sf; else fbgBagsTotal+=Math.ceil(sf/getFgSqftPerBag(0));
-        } else if(cat==='Batt') fbgBagsTotal+=Math.ceil(sf/getFgSqftPerBag(0));
+        } else if(cat==='Batt'||/^fg_r\d/.test(mtype)) fbgBagsTotal+=Math.ceil(sf/getFgSqftPerBag(a.fgR||_rOfName(a)||0));
         else if(cat==='Air Barrier'){ignSqft+=sf; ignBuckets+=Math.ceil(sf/IGN_SQFT_BUCKET);}
         else if(cat==='Rigid Board'){
           var pname3=(pr&&pr.name)?pr.name.toLowerCase():'';
