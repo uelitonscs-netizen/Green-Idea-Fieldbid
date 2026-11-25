@@ -99,6 +99,7 @@ canvas{display:block;width:100%;height:170px;touch-action:none;border-radius:10p
     if(T.tax) h+='<div><span>'+esc(T.taxLabel||'Tax')+'</span><span>'+money(T.tax)+'</span></div>';
     if(T.discount) h+='<div class="dc"><span>'+esc(T.discountLabel||'Discount')+'</span><span>-'+money(Math.abs(T.discount))+'</span></div>';
     h+='<div class="big"><span>Total</span><span>'+money(T.total)+'</span></div></div></div>';
+    if(d.planNote) h+='<div class="card" style="border:1.5px solid #d29922;background:#fff8e6"><div class="lbl" style="margin-bottom:6px;color:#8a5a00">📐 Measurements</div><p style="margin:0;font-size:14px;line-height:1.5;color:#1d2a20">'+esc(d.planNote)+'</p></div>';
     var tr=d.terms||[]; if(tr.length){ h+='<div class="card"><div class="lbl" style="margin-bottom:6px">Terms &amp; conditions</div><div class="terms">'; for(var j=0;j<tr.length;j++) h+='<p>'+esc(tr[j])+'</p>'; h+='</div>';
       if(d.contractorSig) h+='<div class="mysig"><img src="'+esc(d.contractorSig)+'" alt=""><div style="font-size:12px;color:#6b7570">'+esc(d.company&&d.company.name||'')+(d.contractorName?'<br><b style="color:#1d2a20">'+esc(d.contractorName)+'</b>':'')+'</div></div>';
       h+='</div>'; }
